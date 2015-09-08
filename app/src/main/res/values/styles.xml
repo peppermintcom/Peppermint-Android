@@ -1,0 +1,54 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme"
+        parent="AppThemeActionBar">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
+    <style name="AppThemeActionBar"
+        parent="@android:style/Theme.Holo.Light">
+        <item name="android:actionBarStyle">@style/CustomActionBar</item>
+        <item name="android:windowActionBarOverlay">true</item>
+
+        <item name="android:windowBackground">@drawable/background</item>
+        <item name="android:colorBackground">@android:color/transparent</item>
+
+        <item name="android:textColorPrimary">@color/black</item>
+        <item name="android:textColorSecondary">@color/grey_dark</item>
+        <item name="android:textColorTertiary">@color/grey_light</item>
+        <item name="android:textColorPrimaryInverse">@color/white</item>
+        <item name="android:textColorSecondaryInverse">@color/grey_light</item>
+        <item name="android:textColorTertiaryInverse">@color/grey_dark</item>
+
+        <item name="android:windowContentOverlay">@null</item>
+
+        <!--
+        <item name="android:textColorPrimaryDisableOnly">@color/primary_text_light_disable_only</item>
+        <item name="android:textColorPrimaryInverseDisableOnly">@color/primary_text_dark_disable_only</item>
+        <item name="android:textColorPrimaryNoDisable">@color/primary_text_light_nodisable</item>
+        <item name="android:textColorSecondaryNoDisable">@color/secondary_text_light_nodisable</item>
+        <item name="android:textColorPrimaryInverseNoDisable">@color/primary_text_dark_nodisable</item>
+        <item name="android:textColorSecondaryInverseNoDisable">@color/secondary_text_dark_nodisable</item>
+        <item name="android:textColorHint">@color/hint_foreground_light</item>
+        <item name="android:textColorHintInverse">@color/hint_foreground_dark</item>
+        <item name="android:textColorHighlight">@color/highlighted_text_light</item>
+        <item name="android:textColorHighlightInverse">@color/highlighted_text_dark</item>
+        <item name="android:textColorLink">@color/link_text_light</item>
+        <item name="android:textColorLinkInverse">@color/link_text_dark</item>
+
+        <item name="android:listDivider">@drawable/divider_horizontal_bright</item>
+-->
+
+    </style>
+
+    <style name="CustomActionBar"
+        parent="@android:style/Widget.Holo.Light.ActionBar">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:logo">@android:color/transparent</item>
+
+        <item name="android:layout_margin">8dp</item>
+    </style>
+
+</resources>
