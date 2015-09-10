@@ -5,10 +5,7 @@ import android.animation.PropertyValuesHolder;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
-import android.content.ContentUris;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,13 +20,14 @@ import android.widget.TextView;
 import com.peppermint.app.R;
 import com.peppermint.app.RecordService;
 import com.peppermint.app.RecordServiceManager;
+import com.peppermint.app.SendRecordServiceManager;
+import com.peppermint.app.data.Recipient;
+import com.peppermint.app.senders.Sender;
 import com.peppermint.app.utils.PepperMintPreferences;
 
-import java.io.File;
+public class RecordFragment extends Fragment implements RecordServiceManager.Listener, SendRecordServiceManager.Listener {
 
-public class RecordFragment extends Fragment implements RecordServiceManager.Listener {
-
-    public static final String RECIPIENT_URI_EXTRA = "PepperMint_RecipientUriExtra";
+    public static final String RECIPIENT_EXTRA = "PepperMint_RecipientExtra";
 
     private TextView mDuration;
     private TextView mTap;
@@ -37,6 +35,8 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
     private ImageView mRecordState;
 
     private RecordServiceManager mRecordManager;
+    private SendRecordServiceManager mSendRecordManager;
+
     private boolean mFirstRun = false;
     private boolean mSavedState = false;
     private float mLastLoudnessFactor = 1.0f;
@@ -53,6 +53,9 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
         mRecordManager = new RecordServiceManager(activity);
         mRecordManager.setListener(this);
 
+        mSendRecordManager = new SendRecordServiceManager(activity);
+        mSendRecordManager.setListener(this);
+
         mPreferences = new PepperMintPreferences(activity);
     }
 
@@ -65,14 +68,17 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
     public void onStopRecording(RecordService.Event event) {
         onBoundRecording();
         if(mPressedSend) {
-            Uri recipientUri = (Uri) getActivity().getIntent().getExtras().get(RECIPIENT_URI_EXTRA);
-            long id = ContentUris.parseId(recipientUri);
-            mPreferences.addRecentContactUri(id);
+            Recipient recipient = (Recipient) getActivity().getIntent().getExtras().get(RECIPIENT_EXTRA);
+            mPreferences.addRecentContactUri(recipient.getId());
 
-            Intent intent = new Intent();
+            mSendRecordManager.send(recipient, event.getFullFilePaths().get(0));
+            getActivity().finish();
+            /*Intent intent = new Intent();
             intent.setAction(android.content.Intent.ACTION_VIEW);
             intent.setDataAndType(Uri.fromFile(new File(event.getFullFilePaths().get(0))), "audio/mp3");
             startActivityForResult(intent, 10);
+            */
+
         }
     }
 
@@ -185,12 +191,14 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
         mSavedState = false;
         mPressedSend = false;
         mRecordManager.start();
+        mSendRecordManager.start();
     }
 
     @Override
     public void onPause() {
         super.onPause();
         mRecordManager.unbind();
+        mSendRecordManager.unbind();
     }
 
     @Override
@@ -201,7 +209,7 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
 
     @Override
     public void onDestroy() {
-        if(!mSavedState) {
+        if(!mSavedState && !mPressedSend) {
             mRecordManager.stopRecording();
             mRecordManager.discard();
             mRecordManager.shouldStop();
@@ -222,5 +230,29 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
                 }
             });
         builder.create().show();
+    }
+
+    @Override
+    public void onBoundSendService() {
+
+    }
+
+    @Override
+    public void onSendStarted(Sender.SenderEvent event) {
+
+    }
+
+    @Override
+    public void onSendCancelled(Sender.SenderEvent event) {
+
+    }
+
+    @Override
+    public void onSendError(Sender.SenderEvent event) {
+    }
+
+    @Override
+    public void onSendFinished(Sender.SenderEvent event) {
+
     }
 }

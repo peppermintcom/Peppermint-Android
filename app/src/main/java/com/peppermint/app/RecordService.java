@@ -45,6 +45,9 @@ public class RecordService extends Service {
     public static final int EVENT_STOP = 4;
     public static final int EVENT_LOUDNESS = 5;
 
+    public static final int EVENT_START_SEND = 6;
+    public static final int EVENT_FINISHED_SEND = 7;
+
     protected RecordServiceBinder mBinder = new RecordServiceBinder();
 
     /**
@@ -157,6 +160,10 @@ public class RecordService extends Service {
                 stop();
             }
             stopSelf();
+        }
+
+        ArrayList<String> getFullFilePaths() {
+            return mFullFilePaths;
         }
     }
 
@@ -330,13 +337,14 @@ public class RecordService extends Service {
     }
 
     private boolean discard() {
+        boolean allDeleted = true;
         for(String filePath : mFullFilePaths) {
             File f = new File(filePath);
             if(f.exists()) {
-                return f.delete();
+                allDeleted = f.delete() && allDeleted;
             }
         }
-        return false;
+        return allDeleted;
     }
 
     // https://stackoverflow.com/questions/23129561/how-to-concat-mp4-files/23144266#23144266

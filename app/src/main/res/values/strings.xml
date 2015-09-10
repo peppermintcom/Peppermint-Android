@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">PepperMint</string>
+    <string name="app_name">Peppermint</string>
     <string name="menu_history">History</string>
     <string name="menu_record">Record</string>
     <string name="menu_settings">Settings</string>
@@ -49,5 +49,14 @@
         <item>2</item>
         <item>3</item>
     </integer-array>
+
+    <string name="default_mail_subject">I sent you a voice message</string>
+    <string name="default_mail_body">I sent you a voice message using <a href="http://peppermint.com">Peppermint.com</a></string>
+    <string name="default_mail_body_listen">Please listen at %1$s or through the attached audio file.</string>
+    <string name="default_mail_body_reply">Reply with <a href="%1$s">Peppermint</a></string>
+    <string name="sending">Sending…</string>
+    <string name="send_record">Send Record</string>
+
+    <string name="msg_cancelled_gmail_api">No permission to send emails. You will be forwarded to the native email app from now on.</string>
 
 </resources>

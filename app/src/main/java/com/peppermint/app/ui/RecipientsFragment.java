@@ -2,12 +2,10 @@ package com.peppermint.app.ui;
 
 import android.app.Activity;
 import android.app.ListFragment;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -17,7 +15,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
-import android.widget.CursorAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
@@ -38,7 +35,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private Spinner mRecipientTypeSpinner;
     private RecipientTypeAdapter mRecipientTypeAdapter;
 
-    private CursorAdapter mCursorAdapter;
+    private RecipientAdapter mCursorAdapter;
 
     private PepperMintPreferences mPreferences;
 
@@ -97,9 +94,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mSearchText = (EditText) v.findViewById(R.id.search);
         mSearchText.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
             @Override
             public void afterTextChanged(Editable s) {
                 if (s.length() >= 2) {
@@ -110,7 +111,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mSearchText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
-                if(hasFocus) {
+                if (hasFocus) {
                     mRecipientTypeSpinner.setSelection(1, true);
                 }
             }
@@ -132,6 +133,14 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         filterData();
     }
 
+    @Override
+    public void onDestroy() {
+        if(mCursorAdapter != null) {
+            mCursorAdapter.changeCursor(null);
+        }
+        super.onDestroy();
+    }
+
     public void filterData() {
         String filter = mSearchText.getText().toString();
         if(filter.length() < 3) {
@@ -146,8 +155,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             recentArray = recentList.toArray(new Long[recentList.size()]);
         }
 
-        mCursorAdapter = RecipientAdapter.get(getActivity(), recentArray, filter, recentArray == null ? recipientType.isStarred() : null, recipientType.getMimeTypes());
-        getListView().setAdapter(mCursorAdapter);
+        if(mCursorAdapter != null) {
+            mCursorAdapter.changeCursor(RecipientAdapter.getContactsCursor(getActivity(), recentArray, filter, recentArray == null ? recipientType.isStarred() : null, recipientType.getMimeTypes()));
+        } else {
+            mCursorAdapter = RecipientAdapter.get(getActivity(), recentArray, filter, recentArray == null ? recipientType.isStarred() : null, recipientType.getMimeTypes());
+            getListView().setAdapter(mCursorAdapter);
+        }
+
         mCursorAdapter.notifyDataSetChanged();
     }
 
@@ -183,7 +197,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Intent recordIntent = new Intent(getActivity(), RecordActivity.class);
-        recordIntent.putExtra(RecordFragment.RECIPIENT_URI_EXTRA, ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, id));
+        recordIntent.putExtra(RecordFragment.RECIPIENT_EXTRA, mCursorAdapter.getRecipient(position));
         startActivity(recordIntent);
     }
 

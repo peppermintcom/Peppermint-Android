@@ -13,4 +13,6 @@
     <color name="grey_dark">#676767</color>
     <color name="grey_light">#d5d5d5</color>
 
+    <color name="black_50percent">#99000000</color>
+
 </resources>

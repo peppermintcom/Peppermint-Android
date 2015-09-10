@@ -1,10 +1,13 @@
 package com.peppermint.app.data;
 
+import java.io.Serializable;
+
 /**
  * Created by NunoLuz on 26/08/2015.
  */
-public class Recipient {
+public class Recipient implements Serializable {
 
+    private long mId;
     private long mRawId;
     private boolean mStarred;
     private String mMimeType;
@@ -13,7 +16,8 @@ public class Recipient {
     private String mType;
     private String mVia;
 
-    public Recipient(long rawId, boolean starred, String mimeType, String name, String type, String photo, String via) {
+    public Recipient(long id, long rawId, boolean starred, String mimeType, String name, String type, String photo, String via) {
+        this.mId = id;
         this.mRawId = rawId;
         this.mStarred = starred;
         this.mMimeType = mimeType;
@@ -21,6 +25,14 @@ public class Recipient {
         this.mType = type;
         this.mPhotoUri = photo;
         this.mVia = via;
+    }
+
+    public long getId() {
+        return mId;
+    }
+
+    public void setId(long mId) {
+        this.mId = mId;
     }
 
     public String getName() {
@@ -78,5 +90,4 @@ public class Recipient {
     public void setVia(String mVia) {
         this.mVia = mVia;
     }
-
 }

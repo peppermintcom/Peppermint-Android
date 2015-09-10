@@ -6,7 +6,6 @@ import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.ContactsContract;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.peppermint.app.R;
+import com.peppermint.app.data.Recipient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -113,5 +113,20 @@ public class RecipientAdapter extends CursorAdapter {
 
         txtName.setText(name);
         txtVia.setText(via);
+    }
+
+    public Recipient getRecipient(int position) {
+        Cursor cursor = (Cursor) getItem(position);
+
+        long id = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data._ID));
+        long rawId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data.RAW_CONTACT_ID));
+        boolean starred = cursor.getInt(cursor.getColumnIndex(ContactsContract.Data.STARRED)) != 0;
+        String mime = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.MIMETYPE));
+        String via = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
+        String photoUri = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Photo.PHOTO_URI));
+        String name = cursor.getString(cursor.getColumnIndex(DISPLAY_NAME));
+        String accountType = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_TYPE));
+
+        return new Recipient(id, rawId, starred, mime, name, accountType, photoUri, via);
     }
 }

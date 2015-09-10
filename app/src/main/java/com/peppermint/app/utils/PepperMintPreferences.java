@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import com.peppermint.app.R;
+
 import java.util.ArrayList;
 
 /**
@@ -14,13 +16,16 @@ import java.util.ArrayList;
  */
 public class PepperMintPreferences {
 
-    public static final String RECENT_CONTACT_URIS_KEY = "recentContactUris";
+    protected static final String RECENT_CONTACT_URIS_KEY = "recentContactUris";
 
-    public static final String HIDE_NONMAIN_CONTACTS_KEY = "hideNonMainContacts";
-    public static final boolean HIDE_NONMAIN_CONTACTS_DEFAULT = false;
+    protected static final String HIDE_NONMAIN_CONTACTS_KEY = "hideNonMainContacts";
+    protected static final boolean HIDE_NONMAIN_CONTACTS_DEFAULT = false;
 
-    protected SharedPreferences mSettings = null;
-    protected SharedPreferences.Editor mEditor = null;
+    protected static final String MAIL_SUBJECT_KEY = "mailSubject";
+    protected static final String MAIL_BODY_KEY = "mailBody";
+
+    protected SharedPreferences mSettings;
+    protected SharedPreferences.Editor mEditor;
     protected Context mContext;
 
     public PepperMintPreferences(Context context) {
@@ -115,6 +120,26 @@ public class PepperMintPreferences {
 
     public boolean isHideNonMainContacts() {
         return mSettings.getBoolean(HIDE_NONMAIN_CONTACTS_KEY, HIDE_NONMAIN_CONTACTS_DEFAULT);
+    }
+
+    public void setMailSubject(String subject) {
+        edit();
+        mEditor.putString(MAIL_SUBJECT_KEY, subject);
+        commit();
+    }
+
+    public String getMailSubject() {
+        return mSettings.getString(MAIL_SUBJECT_KEY, mContext.getString(R.string.default_mail_subject));
+    }
+
+    public void setMailBody(String body) {
+        edit();
+        mEditor.putString(MAIL_BODY_KEY, body);
+        commit();
+    }
+
+    public String getMailBody() {
+        return mSettings.getString(MAIL_BODY_KEY, mContext.getString(R.string.default_mail_body));
     }
 
 }
