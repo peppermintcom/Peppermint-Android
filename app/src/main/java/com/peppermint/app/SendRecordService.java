@@ -177,7 +177,10 @@ public class SendRecordService extends Service {
             throw new NullPointerException("Sender for mime type " + to.getMimeType() + " not found!");
         }
         Sender sender = mSenderMap.get(to.getMimeType());
-        Sender.SenderTask task = sender.sendAsync(to.getVia(), mPreferences.getMailSubject(), mPreferences.getMailBody(), filePath, RECORD_CONTENT_TYPE);;
+        Sender.SenderTask task = sender.sendAsync(to.getVia(), mPreferences.getMailSubject(),
+                "<p>" + String.format(getString(R.string.default_mail_body_listen), "http://peppermint.com/msg?id=1234-1234-1234-DUMMY") +
+                        "</p><br />" + String.format(getString(R.string.default_mail_body_reply), "123456767"),       // FIXME use proper URLsc
+                filePath, RECORD_CONTENT_TYPE);
         return task.getUUID();
     }
 

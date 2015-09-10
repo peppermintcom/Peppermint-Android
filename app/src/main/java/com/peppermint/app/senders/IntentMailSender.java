@@ -3,6 +3,7 @@ package com.peppermint.app.senders;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.text.Html;
 
 import java.io.File;
 
@@ -29,7 +30,7 @@ public class IntentMailSender extends Sender {
         //i.setType("text/html");
         //i.putExtra(Intent.EXTRA_EMAIL, new String[]{to});
         i.putExtra(Intent.EXTRA_SUBJECT, subject);
-        i.putExtra(Intent.EXTRA_TEXT, bodyText);
+        i.putExtra(Intent.EXTRA_TEXT, Html.fromHtml(bodyText));
         Uri uri = Uri.parse("file://" + file.getAbsolutePath());
         i.putExtra(Intent.EXTRA_STREAM, uri);
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

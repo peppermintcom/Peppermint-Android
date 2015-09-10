@@ -139,7 +139,7 @@ public class PepperMintPreferences {
     }
 
     public String getMailBody() {
-        return mSettings.getString(MAIL_BODY_KEY, mContext.getString(R.string.default_mail_body));
+        return mSettings.getString(MAIL_BODY_KEY, "");
     }
 
 }

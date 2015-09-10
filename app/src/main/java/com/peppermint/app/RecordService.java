@@ -92,15 +92,7 @@ public class RecordService extends Service {
             mOngoing = true;
             startRecording();
 
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(RecordService.this)
-                    .setSmallIcon(R.drawable.ic_mic)
-                    .setContentTitle(getString(R.string.app_name))
-                    .setContentText(getString(R.string.recording));
-
-            Notification notification = builder.build();
-            Intent notificationIntent = new Intent(RecordService.this, RecordActivity.class);
-            PendingIntent pendingIntent = PendingIntent.getActivity(RecordService.this, 0, notificationIntent, 0);
-            startForeground(RecordService.class.hashCode(), notification);
+            startForeground(RecordService.class.hashCode(), getNotification());
 
             Event e = new Event(0, mFullDuration, mFullFilePaths, ((System.currentTimeMillis() - mCurrentStartTime) / 1000), mCurrentFilePath, EVENT_START);
             mEventBus.post(e);
@@ -317,18 +309,27 @@ public class RecordService extends Service {
 
     private long stopRecording() {
         if(mRecorder != null) {
-            mRecorder.stop();
-            mRecorder.release();
-            mRecorder = null;
-            long currentDuration = ((System.currentTimeMillis() - mCurrentStartTime) / 1000);
-            mFullDuration += currentDuration;
-            mFullFilePaths.add(mCurrentFilePath);
-            mCurrentStartTime = 0;
-            mCurrentFilePath = null;
+            long currentDuration = 0;
             try {
-                mergeFiles();
-            } catch (Exception e) {
-                Log.e(TAG, "Unable to merge files", e);
+                mRecorder.stop();
+                currentDuration = ((System.currentTimeMillis() - mCurrentStartTime) / 1000);
+                mFullDuration += currentDuration;
+                mFullFilePaths.add(mCurrentFilePath);
+                try {
+                    mergeFiles();
+                } catch (Exception e) {
+                    Log.e(TAG, "Unable to merge files", e);
+                }
+            } catch(RuntimeException e) {
+                File f = new File(mCurrentFilePath);
+                if(f.exists()) {
+                    f.delete();
+                }
+            } finally {
+                mRecorder.release();
+                mRecorder = null;
+                mCurrentStartTime = 0;
+                mCurrentFilePath = null;
             }
             return currentDuration;
         }
@@ -415,15 +416,21 @@ public class RecordService extends Service {
         }
     }
 
-    private void updateNotification() {
+    private Notification getNotification() {
+        Intent notificationIntent = new Intent(RecordService.this, RecordActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(RecordService.this, 0, notificationIntent, 0);
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(RecordService.this)
                 .setSmallIcon(R.drawable.ic_mic)
                 .setContentTitle(getString(R.string.app_name))
-                .setContentText(getString(mBinder.isPaused() ? R.string.paused : R.string.recording));
+                .setContentText(getString(mBinder.isPaused() ? R.string.paused : R.string.recording))
+                .setContentIntent(pendingIntent);
 
-        Notification notification = builder.build();
+        return builder.build();
+    }
 
+    private void updateNotification() {
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(RecordService.class.hashCode(), notification);
+        mNotificationManager.notify(RecordService.class.hashCode(), getNotification());
     }
 }

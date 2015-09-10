@@ -222,8 +222,8 @@ public class GmailSender extends Sender {
         email.setSubject(subject);
 
         MimeBodyPart mimeBodyPart = new MimeBodyPart();
-        mimeBodyPart.setContent(bodyText, "text/plain");
-        mimeBodyPart.setHeader("Content-Type", "text/plain; charset=\"UTF-8\"");
+        mimeBodyPart.setContent(bodyText, "text/html");
+        mimeBodyPart.setHeader("Content-Type", "text/html; charset=\"UTF-8\"");
 
         Multipart multipart = new MimeMultipart();
         multipart.addBodyPart(mimeBodyPart);
