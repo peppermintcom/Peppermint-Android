@@ -234,7 +234,6 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
 
     @Override
     public void onBoundSendService() {
-
     }
 
     @Override

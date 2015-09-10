@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,6 +22,8 @@ import de.greenrobot.event.EventBus;
  * Created by Nuno Luz on 08-09-2015.
  */
 public abstract class Sender {
+    private static final String TAG = Sender.class.getSimpleName();
+
     public static final String INTENT_BROADCAST_TYPE = "SenderBase_BroadcastType";
     public static final String INTENT_ID = "SenderBase_Id";
     public static final String INTENT_REQUESTCODE = "SenderBase_RequestCode";
@@ -206,6 +209,7 @@ public abstract class Sender {
                 send(mToAddress, mSubject, mBody, mFilePath, mContentType);
             } catch (Throwable e) {
                 mError = e;
+                Log.w(TAG, e);
             }
             return null;
         }

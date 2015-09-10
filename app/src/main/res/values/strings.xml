@@ -58,5 +58,7 @@
     <string name="send_record">Send Record</string>
 
     <string name="msg_cancelled_gmail_api">No permission to send emails. You will be forwarded to the native email app from now on.</string>
+    <string name="msg_message_sent">Your message has been sent!</string>
+    <string name="msg_message_send_error">An error occurred while trying to send the message. Please try again later.</string>
 
 </resources>

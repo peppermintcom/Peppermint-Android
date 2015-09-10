@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.provider.ContactsContract;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.senders.GmailSender;
@@ -157,6 +158,7 @@ public class SendRecordService extends Service {
                 }
                 break;
             case Sender.SenderEvent.EVENT_ERROR:
+                Toast.makeText(this, R.string.msg_message_send_error, Toast.LENGTH_SHORT).show();
             case Sender.SenderEvent.EVENT_CANCELLED:
             case Sender.SenderEvent.EVENT_FINISHED:
                 mTaskMap.remove(event.getTask().getUUID());

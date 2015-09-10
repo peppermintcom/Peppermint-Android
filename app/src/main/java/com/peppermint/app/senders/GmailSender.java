@@ -7,12 +7,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.ContactsContract;
+import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -100,6 +105,16 @@ public class GmailSender extends Sender {
             return true;
         }
 
+        if(e instanceof GoogleJsonResponseException) {
+            try {
+                GoogleAuthUtil.invalidateToken(mContext, mCredential.getToken());
+                return true;
+            } catch (Exception ex) {
+                Log.w(TAG, ex);
+                return false;
+            }
+        }
+
         return false;
     }
 
@@ -172,6 +187,13 @@ public class GmailSender extends Sender {
         MimeMessage email = createEmailWithAttachment(to, getPreferredAccountName(), getUserName(), subject, bodyText, file.getParent(), file.getName(), contentType);
         Message message = createMessageWithEmail(email);
         mService.users().messages().send("me", message).execute();
+
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(mContext, R.string.msg_message_sent, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /**
