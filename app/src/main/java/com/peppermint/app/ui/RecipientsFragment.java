@@ -13,6 +13,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.EditText;
@@ -23,11 +24,14 @@ import android.widget.Spinner;
 import com.peppermint.app.R;
 import com.peppermint.app.RecordActivity;
 import com.peppermint.app.data.RecipientType;
+import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.PepperMintPreferences;
 
 import java.util.List;
 
 public class RecipientsFragment extends ListFragment implements AdapterView.OnItemClickListener, AdapterView.OnItemSelectedListener {
+
+    private static final int REQUEST_RECORD = 1;
 
     private ImageButton mMenuButton;
     private EditText mSearchText;
@@ -38,6 +42,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private RecipientAdapter mCursorAdapter;
 
     private PepperMintPreferences mPreferences;
+
+    private boolean mListShown;
+    private View mProgressContainer;
+    private View mListContainer;
 
     public RecipientsFragment() {
     }
@@ -76,6 +84,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 return false;
             }
         });
+
+        mListContainer =  v.findViewById(R.id.listContainer);
+        mProgressContainer = v.findViewById(R.id.progressContainer);
+        mListShown = true;
 
         mRecipientTypeAdapter = new RecipientTypeAdapter(getActivity(), RecipientType.getAll(getActivity()));
 
@@ -141,9 +153,52 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         super.onDestroy();
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == REQUEST_RECORD) {
+            if(resultCode == Activity.RESULT_OK) {
+                mRecipientTypeSpinner.setSelection(0);
+                clearSearchFilter();
+            }
+        }
+    }
+
+    public void setListShown(boolean shown, boolean animate){
+        if (mListShown == shown) {
+            return;
+        }
+        mListShown = shown;
+        if (shown) {
+            if (animate) {
+                mProgressContainer.startAnimation(AnimationUtils.loadAnimation(
+                        getActivity(), android.R.anim.fade_out));
+                mListContainer.startAnimation(AnimationUtils.loadAnimation(
+                        getActivity(), android.R.anim.fade_in));
+            }
+            mProgressContainer.setVisibility(View.GONE);
+            mListContainer.setVisibility(View.VISIBLE);
+        } else {
+            if (animate) {
+                mProgressContainer.startAnimation(AnimationUtils.loadAnimation(
+                        getActivity(), android.R.anim.fade_in));
+                mListContainer.startAnimation(AnimationUtils.loadAnimation(
+                        getActivity(), android.R.anim.fade_out));
+            }
+            mProgressContainer.setVisibility(View.VISIBLE);
+            mListContainer.setVisibility(View.INVISIBLE);
+        }
+    }
+    public void setListShown(boolean shown){
+        setListShown(shown, true);
+    }
+    public void setListShownNoAnimation(boolean shown) {
+        setListShown(shown, false);
+    }
+
     public void filterData() {
         String filter = mSearchText.getText().toString();
-        if(filter.length() < 3) {
+        if(filter.length() < 2) {
             filter = null;
         }
 
@@ -155,14 +210,21 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             recentArray = recentList.toArray(new Long[recentList.size()]);
         }
 
-        if(mCursorAdapter != null) {
-            mCursorAdapter.changeCursor(RecipientAdapter.getContactsCursor(getActivity(), recentArray, filter, recentArray == null ? recipientType.isStarred() : null, recipientType.getMimeTypes()));
-        } else {
-            mCursorAdapter = RecipientAdapter.get(getActivity(), recentArray, filter, recentArray == null ? recipientType.isStarred() : null, recipientType.getMimeTypes());
-            getListView().setAdapter(mCursorAdapter);
-        }
-
-        mCursorAdapter.notifyDataSetChanged();
+        FilteredCursor cursor = RecipientAdapter.getContactsCursor(getActivity(), recentArray, filter, recentArray == null ? recipientType.isStarred() : null, recipientType.getMimeTypes());
+        setListShown(false);
+        cursor.filterAsync(new FilteredCursor.FilterCallback() {
+            @Override
+            public void done(FilteredCursor cursor) {
+                if (mCursorAdapter != null) {
+                    mCursorAdapter.changeCursor(cursor);
+                } else {
+                    mCursorAdapter = new RecipientAdapter(getActivity(), cursor);
+                    getListView().setAdapter(mCursorAdapter);
+                }
+                mCursorAdapter.notifyDataSetChanged();
+                setListShown(true);
+            }
+        });
     }
 
     public boolean clearSearchFilter() {
@@ -175,7 +237,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         return false;
     }
 
-
+    // show the options menu
     public void showMenu(View v) {
         PopupMenu popup = new PopupMenu(getActivity(), v);
         popup.inflate(R.menu.menu_main);
@@ -184,7 +246,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 switch (item.getItemId()) {
-
                     default:
                         return false;
                 }
@@ -198,7 +259,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Intent recordIntent = new Intent(getActivity(), RecordActivity.class);
         recordIntent.putExtra(RecordFragment.RECIPIENT_EXTRA, mCursorAdapter.getRecipient(position));
-        startActivity(recordIntent);
+        startActivityForResult(recordIntent, REQUEST_RECORD);
     }
 
     @Override

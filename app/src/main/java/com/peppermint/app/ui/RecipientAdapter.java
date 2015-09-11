@@ -15,12 +15,18 @@ import android.widget.TextView;
 
 import com.peppermint.app.R;
 import com.peppermint.app.data.Recipient;
+import com.peppermint.app.utils.FilteredCursor;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by NunoLuz on 27/08/2015.
+ *
+ * CursorAdapter to show recipients in a ListView
+ * It contains utility static methods to get the proper FilteredCursor.
  */
 public class RecipientAdapter extends CursorAdapter {
 
@@ -48,16 +54,27 @@ public class RecipientAdapter extends CursorAdapter {
         super(context, cursor, 0);
     }
 
-    public static Cursor getContactsCursor(Context context, Long[] allowedIds, String freeTextSearch, Boolean areStarred, String[] allowedMimeTypes) {
+    public static FilteredCursor getContactsCursor(Context context, Long[] allowedIds, String freeTextSearch, Boolean areStarred, String[] allowedMimeTypes) {
         List<String> args = new ArrayList<>();
         String condStarred = (areStarred == null ? "" : " AND " + ContactsContract.Contacts.STARRED + "=" + (areStarred ? "1" : "0"));
         String condFreeSearch = (freeTextSearch == null ? "" : " AND (LOWER(" + DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString("%" + freeTextSearch + "%") + " OR LOWER(" + ContactsContract.Data.DATA1 + ") LIKE " + DatabaseUtils.sqlEscapeString("%" + freeTextSearch + "%") + ")");
         String condMimeTypes = getConditions(ContactsContract.Data.MIMETYPE, allowedMimeTypes, args, false);
         String condIds = getConditions(ContactsContract.Data._ID, allowedIds, null, false);
 
-        return context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, PROJECTION,
+        return new FilteredCursor(context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, PROJECTION,
                 "1" + condStarred + condFreeSearch + " AND (" + condMimeTypes + ")" + " AND (" + condIds + ")",
-                args.toArray(new String[args.size()]), DISPLAY_NAME);
+                args.toArray(new String[args.size()]), DISPLAY_NAME + " COLLATE NOCASE"), new FilteredCursor.Filter() {
+            private Set<String> mViaSet = new HashSet<>();
+            @Override
+            public boolean isValid(Cursor cursor) {
+                String via = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1)).trim().toLowerCase();
+                if(!mViaSet.contains(via)) {
+                    mViaSet.add(via);
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     protected static <T> String getConditions(String field, T[] allowed, List<String> args, boolean isAnd) {
@@ -70,7 +87,6 @@ public class RecipientAdapter extends CursorAdapter {
             if(i != 0) {
                 b.append(isAnd ? " AND " : " OR ");
             }
-
 
             if(args != null) {
                 args.add(allowed[i].toString());
@@ -92,11 +108,11 @@ public class RecipientAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View v, Context context, Cursor cursor) {
-
+        String via = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
         long rawId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data.RAW_CONTACT_ID));
         boolean starred = cursor.getInt(cursor.getColumnIndex(ContactsContract.Data.STARRED)) != 0;
         String mime = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.MIMETYPE));
-        String via = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
+
         String photoUri = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Photo.PHOTO_URI));
         String name = cursor.getString(cursor.getColumnIndex(DISPLAY_NAME));
         String accountType = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_TYPE));

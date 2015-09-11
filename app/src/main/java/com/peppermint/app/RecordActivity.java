@@ -49,9 +49,10 @@ public class RecordActivity extends Activity {
         }
         return true;
     }
-
+/*
     @Override
     public void onBackPressed() {
         mFragment.onBackPressed();
     }
+    */
 }

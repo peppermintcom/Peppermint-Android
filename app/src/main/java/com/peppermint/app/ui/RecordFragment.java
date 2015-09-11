@@ -3,9 +3,8 @@ package com.peppermint.app.ui;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Fragment;
-import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -22,12 +21,12 @@ import com.peppermint.app.RecordService;
 import com.peppermint.app.RecordServiceManager;
 import com.peppermint.app.SendRecordServiceManager;
 import com.peppermint.app.data.Recipient;
-import com.peppermint.app.senders.Sender;
 import com.peppermint.app.utils.PepperMintPreferences;
 
-public class RecordFragment extends Fragment implements RecordServiceManager.Listener, SendRecordServiceManager.Listener {
+public class RecordFragment extends Fragment implements RecordServiceManager.Listener {//, SendRecordServiceManager.Listener {
 
     public static final String RECIPIENT_EXTRA = "PepperMint_RecipientExtra";
+    public static final String RESULT_SENDING_EXTRA = "PepperMint_ResultSendingExtra";
 
     private TextView mDuration;
     private TextView mTap;
@@ -35,7 +34,7 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
     private ImageView mRecordState;
 
     private RecordServiceManager mRecordManager;
-    private SendRecordServiceManager mSendRecordManager;
+    //private SendRecordServiceManager mSendRecordManager;
 
     private boolean mFirstRun = false;
     private boolean mSavedState = false;
@@ -53,8 +52,8 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
         mRecordManager = new RecordServiceManager(activity);
         mRecordManager.setListener(this);
 
-        mSendRecordManager = new SendRecordServiceManager(activity);
-        mSendRecordManager.setListener(this);
+        //mSendRecordManager = new SendRecordServiceManager(activity);
+        //mSendRecordManager.setListener(this);
 
         mPreferences = new PepperMintPreferences(activity);
     }
@@ -71,7 +70,12 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
             Recipient recipient = (Recipient) getActivity().getIntent().getExtras().get(RECIPIENT_EXTRA);
             mPreferences.addRecentContactUri(recipient.getId());
 
-            mSendRecordManager.send(recipient, event.getFullFilePaths().get(0));
+            SendRecordServiceManager sendRecordServiceManager = new SendRecordServiceManager(getActivity());
+            sendRecordServiceManager.startAndSend(recipient, event.getFullFilePaths().get(0));
+
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra(RESULT_SENDING_EXTRA, true);
+            getActivity().setResult(Activity.RESULT_OK, resultIntent);
             getActivity().finish();
             /*Intent intent = new Intent();
             intent.setAction(android.content.Intent.ACTION_VIEW);
@@ -191,14 +195,14 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
         mSavedState = false;
         mPressedSend = false;
         mRecordManager.start();
-        mSendRecordManager.start();
+        //mSendRecordManager.start();
     }
 
     @Override
     public void onPause() {
         super.onPause();
         mRecordManager.unbind();
-        mSendRecordManager.unbind();
+        //mSendRecordManager.unbind();
     }
 
     @Override
@@ -217,6 +221,7 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
         super.onDestroy();
     }
 
+    /*
     public void onBackPressed() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setMessage(R.string.your_recording_will_be_discarded_are_you_sure)
@@ -231,27 +236,5 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
             });
         builder.create().show();
     }
-
-    @Override
-    public void onBoundSendService() {
-    }
-
-    @Override
-    public void onSendStarted(Sender.SenderEvent event) {
-
-    }
-
-    @Override
-    public void onSendCancelled(Sender.SenderEvent event) {
-
-    }
-
-    @Override
-    public void onSendError(Sender.SenderEvent event) {
-    }
-
-    @Override
-    public void onSendFinished(Sender.SenderEvent event) {
-
-    }
+    */
 }
