@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.text.Html;
 
 import java.io.File;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import de.greenrobot.event.EventBus;
 
@@ -18,8 +19,8 @@ public class IntentMailSender extends Sender {
 
     private static final String TAG = IntentMailSender.class.getSimpleName();
 
-    public IntentMailSender(Context context, EventBus eventBus) {
-        super(context, eventBus);
+    public IntentMailSender(Context context, EventBus eventBus, ThreadPoolExecutor executor) {
+        super(context, eventBus, executor);
     }
 
     @Override

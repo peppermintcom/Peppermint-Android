@@ -12,15 +12,21 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 import android.widget.ImageView;
 
 import org.apache.http.conn.util.InetAddressUtils;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.text.Normalizer;
 import java.util.Collections;
 import java.util.List;
 
@@ -86,11 +92,7 @@ public class Utils {
      * @return true if valid; false if not
      */
     public static boolean isValidEmail(CharSequence email) {
-        if (TextUtils.isEmpty(email)) {
-            return false;
-        } else {
-            return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
-        }
+        return !TextUtils.isEmpty(email) && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
     }
 
     /**
@@ -189,6 +191,7 @@ public class Utils {
                 for (InetAddress addr : addrs) {
                     if (!addr.isLoopbackAddress()) {
                         String sAddr = addr.getHostAddress().toUpperCase();
+                        //noinspection deprecation
                         boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
                         if (useIPv4) {
                             if (isIPv4)
@@ -226,5 +229,21 @@ public class Utils {
         drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         drawable.draw(canvas);
         return bitmap;
+    }
+
+    public static String normalizeAndCleanString(String str) {
+        return Normalizer.normalize(str, Normalizer.Form.NFC).replace(' ', '-').replaceAll("[^a-zA-Z0-9\\.]", "");
+    }
+
+    public static void printToFile(Context context, String filePath, String text, Throwable t) {
+        try {
+            PrintWriter printWriter = new PrintWriter(new FileOutputStream(new File(filePath), true));
+            printWriter.print("### " + text + "\n");
+            t.printStackTrace(printWriter);
+            printWriter.close();
+        }
+        catch (IOException e) {
+            Log.e(Utils.class.getSimpleName(), "File write failed: " + e.toString());
+        }
     }
 }

@@ -24,10 +24,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.UUID;
 
 import de.greenrobot.event.EventBus;
 
@@ -36,8 +37,10 @@ public class RecordService extends Service {
     private static final String TAG = RecordService.class.getSimpleName();
 
     public static final String INTENT_DATA_DOSTART = "RecordService_DoStart";
+    public static final String INTENT_DATA_FILENAME = "RecordService_Filename";
 
-    private static final String FILENAME = "PepperMintRecord";
+    private static final String DEFAULT_FILENAME = "Record";
+    private static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd'_'HH-mm-ss");
 
     public static final int EVENT_START = 1;
     public static final int EVENT_RESUME = 2;
@@ -82,9 +85,15 @@ public class RecordService extends Service {
         /**
          * Start a recording.
          */
-        void start() {
+        void start(String filename) {
             if(mOngoing) {
                 throw new RuntimeException("A recording is already in progress. Available actions are pause, resume and stop.");
+            }
+
+            if(filename == null) {
+                mFilename = DEFAULT_FILENAME;
+            } else {
+                mFilename = filename;
             }
 
             mFullFilePaths = new ArrayList<>();
@@ -243,6 +252,7 @@ public class RecordService extends Service {
     private long mFullDuration = 0;
     private long mCurrentStartTime = 0;
     private String mCurrentFilePath;
+    private String mFilename = DEFAULT_FILENAME;
 
     public RecordService() {
         mEventBus = new EventBus();
@@ -259,11 +269,17 @@ public class RecordService extends Service {
 
         if(intent != null && intent.hasExtra(INTENT_DATA_DOSTART)) {
             if(intent.getBooleanExtra(INTENT_DATA_DOSTART, false)) {
+                if(intent.hasExtra(INTENT_DATA_FILENAME)) {
+                    mFilename = intent.getStringExtra(INTENT_DATA_FILENAME);
+                }
+                if(mFilename == null) {
+                    mFilename = DEFAULT_FILENAME;
+                }
                 startRecording();
             }
         }
 
-        return START_REDELIVER_INTENT;
+        return START_NOT_STICKY;
     }
 
     @Override
@@ -287,7 +303,8 @@ public class RecordService extends Service {
             throw new NullPointerException("No access to external cache directory!");
         }
 
-        mCurrentFilePath = getExternalCacheDir().getAbsolutePath() + "/" + FILENAME + "_" + UUID.randomUUID().toString() + ".mp3";
+        Calendar now = Calendar.getInstance();
+        mCurrentFilePath = getExternalCacheDir().getAbsolutePath() + "/" + mFilename + "_" + DATETIME_FORMAT.format(now.getTime()) + "_" + mFullFilePaths.size() + ".mp3";
 
         mRecorder = new MediaRecorder();
         mRecorder.setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION);
@@ -351,7 +368,7 @@ public class RecordService extends Service {
     // https://stackoverflow.com/questions/23129561/how-to-concat-mp4-files/23144266#23144266
     // https://github.com/sannies/mp4parser
     private void mergeFiles() throws Exception {
-        if(mFullFilePaths == null || mFullFilePaths.size() <= 1) {
+        if(mFullFilePaths == null || mFullFilePaths.size() <= 0) {
             return;
         }
 
@@ -384,7 +401,9 @@ public class RecordService extends Service {
                     .toArray(new Track[audioTracks.size()])));
         }
 
-        String newFilePath = getExternalCacheDir().getAbsolutePath() + "/Merged" + FILENAME + "_" + UUID.randomUUID().toString() + ".mp3";
+        Calendar now = Calendar.getInstance();
+        String newFilePath = getExternalCacheDir().getAbsolutePath() + "/" + mFilename + "_" + DATETIME_FORMAT.format(now.getTime()) + ".mp3";
+
         Container out = new DefaultMp4Builder().build(result);
         RandomAccessFile ram = new RandomAccessFile(newFilePath, "rw");
         FileChannel fc = ram.getChannel();

@@ -23,6 +23,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import de.greenrobot.event.EventBus;
 
@@ -85,6 +89,11 @@ public class SendRecordService extends Service {
 
     private boolean mIsInForegroundMode = false;
 
+    private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
+    private ThreadPoolExecutor mExecutor = new ThreadPoolExecutor(CPU_COUNT + 1, CPU_COUNT * 2 + 1,
+                                                  60, TimeUnit.SECONDS,
+                                                  new SynchronousQueue<Runnable>());
+
     public SendRecordService() {
         mEventBus = new EventBus();
         mTaskMap = new HashMap<>();
@@ -97,10 +106,11 @@ public class SendRecordService extends Service {
         mPreferences = new PepperMintPreferences(this);
         mEventBus.register(this);
 
-        GmailSender gmailSender = new GmailSender(this, mEventBus);
-        gmailSender.init();
-        IntentMailSender intentMailSender = new IntentMailSender(this, mEventBus);
-        intentMailSender.init();
+        GmailSender gmailSender = new GmailSender(this, mEventBus, mExecutor);
+        gmailSender.getParameters().put(GmailSender.PARAM_DISPLAY_NAME, mPreferences.getDisplayName());
+        gmailSender.init(null);
+        IntentMailSender intentMailSender = new IntentMailSender(this, mEventBus, mExecutor);
+        intentMailSender.init(null);
         gmailSender.setFailureChainSender(intentMailSender);
 
         mSenderMap.put(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, gmailSender);
@@ -119,7 +129,7 @@ public class SendRecordService extends Service {
             }
         }
 
-        return START_REDELIVER_INTENT;
+        return START_NOT_STICKY;
     }
 
     @Override

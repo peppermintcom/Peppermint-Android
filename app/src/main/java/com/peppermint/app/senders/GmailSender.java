@@ -32,7 +32,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
@@ -67,8 +69,9 @@ public class GmailSender extends Sender {
 
     private static final String[] SCOPES = { GmailScopes.GMAIL_COMPOSE };
     public static final String PREF_ACCOUNT_NAME_KEY = "prefAccountName";
-    public static final String PREF_USER_NAME_KEY = "prefUserName";
     public static final String PREF_SKIP_IF_PERMISSION_REQ_KEY = "prefSkipIfPermissionRequired";
+
+    public static final String PARAM_DISPLAY_NAME = "paramDisplayName";
 
     protected Gmail mService;
     protected GoogleAccountCredential mCredential;
@@ -76,8 +79,8 @@ public class GmailSender extends Sender {
     private final HttpTransport transport = AndroidHttp.newCompatibleTransport();
     private final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
 
-    public GmailSender(Context context, EventBus eventBus) {
-        super(context, eventBus);
+    public GmailSender(Context context, EventBus eventBus, ThreadPoolExecutor executor) {
+        super(context, eventBus, executor);
     }
 
     @Override
@@ -151,18 +154,20 @@ public class GmailSender extends Sender {
     }
 
     @Override
-    public void init() {
-        super.init();
+    public void init(Map<String, Object> parameters) {
+        super.init(parameters);
 
-        if(getUserName() == null) {
+        if(!mParams.containsKey(PARAM_DISPLAY_NAME)) {
             Cursor cursor = mContext.getContentResolver().query(ContactsContract.Profile.CONTENT_URI, null, null, null, null);
-            if(cursor.getCount() == 1 && cursor.moveToFirst()) {
-                String userName = cursor.getString(cursor.getColumnIndex(ContactsContract.Profile.DISPLAY_NAME));
-                if(userName != null) {
-                    setUserName(userName);
+            if(cursor != null) {
+                if (cursor.getCount() == 1 && cursor.moveToFirst()) {
+                    String userName = cursor.getString(cursor.getColumnIndex(ContactsContract.Profile.DISPLAY_NAME));
+                    if (userName != null) {
+                        mParams.put(PARAM_DISPLAY_NAME, userName);
+                    }
                 }
+                cursor.close();
             }
-            cursor.close();
         }
 
         this.mCredential = GoogleAccountCredential.usingOAuth2(
@@ -184,7 +189,7 @@ public class GmailSender extends Sender {
             throw new PreferredAccountNotSetException("Preferred account is not set!");
         }
 
-        MimeMessage email = createEmailWithAttachment(to, getPreferredAccountName(), getUserName(), subject, bodyText, file.getParent(), file.getName(), contentType);
+        MimeMessage email = createEmailWithAttachment(to, getPreferredAccountName(), mParams.get(PARAM_DISPLAY_NAME).toString(), subject, bodyText, file.getParent(), file.getName(), contentType);
         Message message = createMessageWithEmail(email);
         mService.users().messages().send("me", message).execute();
 
@@ -267,16 +272,6 @@ public class GmailSender extends Sender {
 
     public String getPreferredAccountName() {
         return mSettings.getString(PREF_ACCOUNT_NAME_KEY, null);
-    }
-
-    public void setUserName(String userName) {
-        SharedPreferences.Editor editor = mSettings.edit();
-        editor.putString(PREF_USER_NAME_KEY, userName);
-        editor.commit();
-    }
-
-    public String getUserName() {
-        return mSettings.getString(PREF_USER_NAME_KEY, null);
     }
 
     public void setSkipIfPermissionRequired(boolean doSkip) {

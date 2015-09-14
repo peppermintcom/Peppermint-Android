@@ -22,11 +22,14 @@ import com.peppermint.app.RecordServiceManager;
 import com.peppermint.app.SendRecordServiceManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.utils.PepperMintPreferences;
+import com.peppermint.app.utils.Utils;
 
 public class RecordFragment extends Fragment implements RecordServiceManager.Listener {//, SendRecordServiceManager.Listener {
 
     public static final String RECIPIENT_EXTRA = "PepperMint_RecipientExtra";
     public static final String RESULT_SENDING_EXTRA = "PepperMint_ResultSendingExtra";
+
+    private static final String DEFAULT_FILENAME = "Peppermint";
 
     private TextView mDuration;
     private TextView mTap;
@@ -40,6 +43,7 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
     private boolean mSavedState = false;
     private float mLastLoudnessFactor = 1.0f;
     private boolean mPressedSend = false;
+    private String mFilename = DEFAULT_FILENAME;
 
     private PepperMintPreferences mPreferences;
 
@@ -56,6 +60,7 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
         //mSendRecordManager.setListener(this);
 
         mPreferences = new PepperMintPreferences(activity);
+        mFilename = getString(R.string.filename_message_from) + Utils.normalizeAndCleanString(mPreferences.getDisplayName());
     }
 
     @Override
@@ -82,7 +87,6 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
             intent.setDataAndType(Uri.fromFile(new File(event.getFullFilePaths().get(0))), "audio/mp3");
             startActivityForResult(intent, 10);
             */
-
         }
     }
 
@@ -137,7 +141,7 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
                 if(mRecordManager.isRecording()) {
                     mRecordManager.resumeRecording();
                 } else {
-                    mRecordManager.startRecording();
+                    mRecordManager.startRecording(mFilename);
                 }
             }
         } else {
@@ -168,7 +172,7 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
             @Override
             public void onClick(View v) {
                 if (!mRecordManager.isRecording()) {
-                    mRecordManager.startRecording();
+                    mRecordManager.startRecording(mFilename);
                     return;
                 }
 

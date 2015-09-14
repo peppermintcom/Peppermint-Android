@@ -6,20 +6,27 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+
+import com.peppermint.app.utils.Utils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import de.greenrobot.event.EventBus;
 
 /**
  * Created by Nuno Luz on 08-09-2015.
+ *
+ * Base class for Senders. A Sender represents a method of sending an audio/video recording.
+ * For instance, there's a sender for emails and a sender for SMS/text messages.
  */
 public abstract class Sender {
     private static final String TAG = Sender.class.getSimpleName();
@@ -36,29 +43,37 @@ public abstract class Sender {
     protected EventBus mEventBus;
     protected Map<UUID, SenderTask> mTaskMap;
     protected Map<UUID, SenderTask> mRecoveringTaskMap;
+    protected Map<String, Object> mParams;
+
+    private ThreadPoolExecutor mExecutor;
 
     protected Sender mFailureChainSender;
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(intent != null && intent.hasExtra(INTENT_ID) && mRecoveringTaskMap.containsKey((UUID) intent.getSerializableExtra(INTENT_ID))) {
-                onActivityResult(mRecoveringTaskMap.get((UUID) intent.getSerializableExtra(INTENT_ID)), intent.getIntExtra(INTENT_REQUESTCODE, -1), intent.getIntExtra(INTENT_RESULTCODE, -1), (Intent) intent.getParcelableExtra(INTENT_DATA));
+            if(intent != null && intent.hasExtra(INTENT_ID) && mRecoveringTaskMap.containsKey(intent.getSerializableExtra(INTENT_ID))) {
+                onActivityResult(mRecoveringTaskMap.get(intent.getSerializableExtra(INTENT_ID)), intent.getIntExtra(INTENT_REQUESTCODE, -1), intent.getIntExtra(INTENT_RESULTCODE, -1), (Intent) intent.getParcelableExtra(INTENT_DATA));
             }
         }
     };
     private final String mBroadcastType = this.getClass().getSimpleName() + "-" + mUuid.toString();
     private final IntentFilter mFilter = new IntentFilter(mBroadcastType);
 
-    protected Sender(Context context, EventBus eventBus) {
+    protected Sender(Context context, EventBus eventBus, ThreadPoolExecutor executor) {
+        this.mExecutor = executor;
         this.mContext = context;
         this.mSettings = PreferenceManager.getDefaultSharedPreferences(mContext);
         this.mTaskMap = new HashMap<>();
         this.mRecoveringTaskMap = new HashMap<>();
         this.mEventBus = eventBus;
+        this.mParams = new HashMap<>();
     }
 
-    public void init() {
+    public void init(Map<String, Object> parameters) {
+        if(parameters != null) {
+            this.mParams.putAll(parameters);
+        }
         LocalBroadcastManager.getInstance(mContext).registerReceiver(mReceiver, mFilter);
     }
 
@@ -68,13 +83,13 @@ public abstract class Sender {
 
     public SenderTask sendAsync(String toAddress, String subject, String body, String fullFilePath, String contentType) {
         SenderTask task = new SenderTask(fullFilePath, toAddress, subject, body, contentType, mEventBus);
-        task.execute();
+        task.executeOnExecutor(mExecutor);
         return task;
     }
 
     protected SenderTask resendAsync(SenderTask oldTask) {
         SenderTask task = new SenderTask(oldTask);
-        task.execute();
+        task.executeOnExecutor(mExecutor);
         return task;
     }
 
@@ -120,6 +135,10 @@ public abstract class Sender {
 
     public void setFailureChainSender(Sender mFailureChainSender) {
         this.mFailureChainSender = mFailureChainSender;
+    }
+
+    public Map<String, Object> getParameters() {
+        return mParams;
     }
 
     public class SenderEvent {
@@ -210,6 +229,8 @@ public abstract class Sender {
             } catch (Throwable e) {
                 mError = e;
                 Log.w(TAG, e);
+                // FIXME temporary code to print errors to file
+                Utils.printToFile(mContext, Environment.getExternalStorageDirectory().getAbsolutePath() + "/PeppermintSenderErrors.txt", this.mUuid.toString(), e);
             }
             return null;
         }

@@ -2,7 +2,9 @@ package com.peppermint.app.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.preference.PreferenceManager;
+import android.provider.ContactsContract;
 
 import com.peppermint.app.R;
 
@@ -23,6 +25,7 @@ public class PepperMintPreferences {
 
     protected static final String MAIL_SUBJECT_KEY = "mailSubject";
     protected static final String MAIL_BODY_KEY = "mailBody";
+    protected static final String DISPLAY_NAME_KEY = "displayName";
 
     protected SharedPreferences mSettings;
     protected SharedPreferences.Editor mEditor;
@@ -140,6 +143,30 @@ public class PepperMintPreferences {
 
     public String getMailBody() {
         return mSettings.getString(MAIL_BODY_KEY, "");
+    }
+
+    public void setDisplayName(String name) {
+        edit();
+        mEditor.putString(DISPLAY_NAME_KEY, name);
+        commit();
+    }
+
+    public String getDisplayName() {
+        String name = mSettings.getString(DISPLAY_NAME_KEY, null);
+        if(name == null) {
+            Cursor cursor = mContext.getContentResolver().query(ContactsContract.Profile.CONTENT_URI, null, null, null, null);
+            if(cursor != null) {
+                if (cursor.getCount() == 1 && cursor.moveToFirst()) {
+                    String userName = cursor.getString(cursor.getColumnIndex(ContactsContract.Profile.DISPLAY_NAME));
+                    if (userName != null) {
+                        name = userName;
+                        setDisplayName(userName);
+                    }
+                }
+                cursor.close();
+            }
+        }
+        return name;
     }
 
 }

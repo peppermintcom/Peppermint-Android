@@ -11,6 +11,8 @@ import java.util.ArrayList;
 
 /**
  * Created by NunoLuz on 28/08/2015.
+ * Manages the Android Service that records audio/video files.
+ * It allows an easier interaction with the Android Service API.
  */
 public class RecordServiceManager {
 
@@ -124,8 +126,8 @@ public class RecordServiceManager {
         }
     }
 
-    public void startRecording() {
-        mService.start();
+    public void startRecording(String filename) {
+        mService.start(filename);
     }
 
     public void stopRecording() {

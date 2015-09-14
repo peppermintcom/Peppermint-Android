@@ -1,11 +1,14 @@
 package com.peppermint.app.ui;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ListFragment;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -26,6 +29,7 @@ import com.peppermint.app.RecordActivity;
 import com.peppermint.app.data.RecipientType;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.PepperMintPreferences;
+import com.peppermint.app.utils.Utils;
 
 import java.util.List;
 
@@ -47,6 +51,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private View mProgressContainer;
     private View mListContainer;
 
+    private AlertDialog mInternetDialog;
+
     public RecipientsFragment() {
     }
 
@@ -54,6 +60,18 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         mPreferences = new PepperMintPreferences(activity);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setMessage(R.string.msg_no_internet);
+        builder.setPositiveButton(R.string.go_to_internet_settings, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent intent = new Intent(Settings.ACTION_SETTINGS);
+                startActivity(intent);
+            }
+        });
+        builder.setNegativeButton(R.string.cancel, null);
+        mInternetDialog = builder.create();
     }
 
     protected void removeSearchTextFocus() {
@@ -157,7 +175,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == REQUEST_RECORD) {
-            if(resultCode == Activity.RESULT_OK) {
+            if(resultCode == Activity.RESULT_OK && mRecipientTypeSpinner.getSelectedItemPosition() != 0) {
                 mRecipientTypeSpinner.setSelection(0);
                 clearSearchFilter();
             }
@@ -197,7 +215,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     }
 
     public void filterData() {
-        String filter = mSearchText.getText().toString();
+        String filter = mSearchText.getText().toString().trim();
         if(filter.length() < 2) {
             filter = null;
         }
@@ -257,9 +275,15 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Intent recordIntent = new Intent(getActivity(), RecordActivity.class);
-        recordIntent.putExtra(RecordFragment.RECIPIENT_EXTRA, mCursorAdapter.getRecipient(position));
-        startActivityForResult(recordIntent, REQUEST_RECORD);
+        if(Utils.isInternetAvailable(getActivity())) {
+            Intent recordIntent = new Intent(getActivity(), RecordActivity.class);
+            recordIntent.putExtra(RecordFragment.RECIPIENT_EXTRA, mCursorAdapter.getRecipient(position));
+            startActivityForResult(recordIntent, REQUEST_RECORD);
+        } else {
+            if(!mInternetDialog.isShowing()) {
+                mInternetDialog.show();
+            }
+        }
     }
 
     @Override
