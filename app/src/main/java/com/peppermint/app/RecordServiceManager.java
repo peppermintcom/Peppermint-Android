@@ -10,19 +10,58 @@ import android.util.Log;
 import com.peppermint.app.data.Recipient;
 
 /**
- * Created by NunoLuz on 28/08/2015.
+ * Created by Nuno Luz on 28/08/2015.
+ *
  * Manages the Android Service that records audio/video files.
  * It allows an easier interaction with the Android Service API.
  */
 public class RecordServiceManager {
 
+    /**
+     * Listener for recording events (see {@link com.peppermint.app.RecordService.Event}).
+     */
     public interface Listener {
+        /**
+         * Invoked when a binding to the service is performed.
+         */
         void onBoundRecording();
+
+        /**
+         * Invoked when a new recording starts.
+         * @param event the event
+         */
         void onStartRecording(RecordService.Event event);
+
+        /**
+         * Invoked when the current recording stops.
+         * @param event the event
+         */
         void onStopRecording(RecordService.Event event);
+
+        /**
+         * Invoked when the current recording is resumed (only after being paused).
+         * @param event the event
+         */
         void onResumeRecording(RecordService.Event event);
+
+        /**
+         * Invoked when the current recording is paused.
+         * @param event the event
+         */
         void onPauseRecording(RecordService.Event event);
+
+        /**
+         * Invoked in 100 ms intervals while the recording is in progress.
+         * It provides loudness (wave amplitude) information.
+         * @param event the event
+         */
         void onLoudnessRecording(RecordService.Event event);
+
+        /**
+         * Invoked when an error occurs. The error can be obtained through
+         * {@link RecordService.Event#getError()}
+         * @param event the event
+         */
         void onErrorRecording(RecordService.Event event);
     }
 
@@ -68,7 +107,6 @@ public class RecordServiceManager {
             mService.register(RecordServiceManager.this);
 
             mListener.onBoundRecording();
-
             Log.d(TAG, "onServiceConnected");
         }
 
@@ -85,7 +123,7 @@ public class RecordServiceManager {
 
     /**
      * Starts the service.
-     * Also binds this manager to the service.
+     * <b>Also binds this manager to the service.</b>
      */
     public void start() {
         Intent intent = new Intent(mContext, RecordService.class);
@@ -95,7 +133,7 @@ public class RecordServiceManager {
 
     /**
      * Tries to stop the service.
-     * Also unbinds this manager from the service.
+     * <b>Also unbinds this manager from the service.</b>
      * The service will only stop after stopping the current recording.
      */
     public void shouldStop() {
@@ -126,30 +164,58 @@ public class RecordServiceManager {
         }
     }
 
+    /**
+     * Start a recording. You can only start a recording if no other recording is currently
+     * active (even if it is paused).
+     * @param filePrefix the filename prefix of the record
+     * @param recipient the recipient of the record
+     */
     public void startRecording(String filePrefix, Recipient recipient) {
         mService.start(filePrefix, recipient);
     }
 
+    /**
+     * Stop and finish the current recording.
+     */
     public void stopRecording() {
         mService.stop();
     }
 
+    /**
+     * Pause the current recording.
+     */
     public void pauseRecording() {
         mService.pause();
     }
 
+    /**
+     * Resume the current recording.
+     */
     public void resumeRecording() {
         mService.resume();
     }
 
+    /**
+     * Checks if the service is recording. Notice that the recording process can be paused.
+     * It is still considered as an ongoing recording.
+     * @return true if recording; false if not
+     */
     public boolean isRecording() {
         return mService.isRecording();
     }
 
+    /**
+     * Checks if the service is recording and paused.
+     * @return true if recording and paused; false if not
+     */
     public boolean isPaused() {
         return mService.isPaused();
     }
 
+    /**
+     * Discard the current recording and all files associated with it.
+     * It also stops the current recording if it is ongoing.
+     */
     public void discard() {
         mService.discard();
     }

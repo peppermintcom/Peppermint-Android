@@ -183,10 +183,16 @@ public class GmailSender extends Sender {
     }
 
     @Override
-    public void send(String to, String subject, String bodyText, String filePath, String contentType) throws Throwable {
+    public void send(final String toName, String toAddress, String subject, String bodyText, String filePath, String contentType) throws Throwable {
         File file = validateFile(filePath);
 
         if(!Utils.isInternetAvailable(mContext)) {
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(mContext, R.string.msg_no_internet, Toast.LENGTH_SHORT).show();
+                }
+            });
             throw new RuntimeException("Internet connection not available!");
         }
 
@@ -194,14 +200,14 @@ public class GmailSender extends Sender {
             throw new PreferredAccountNotSetException("Preferred account is not set!");
         }
 
-        MimeMessage email = createEmailWithAttachment(to, getPreferredAccountName(), mParams.get(PARAM_DISPLAY_NAME).toString(), subject, bodyText, file.getParent(), file.getName(), contentType);
+        MimeMessage email = createEmailWithAttachment(toAddress, getPreferredAccountName(), mParams.get(PARAM_DISPLAY_NAME).toString(), subject, bodyText, file.getParent(), file.getName(), contentType);
         Message message = createMessageWithEmail(email);
         mService.users().messages().send("me", message).execute();
 
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(mContext, R.string.msg_message_sent, Toast.LENGTH_SHORT).show();
+                Toast.makeText(mContext, String.format(mContext.getString(R.string.msg_message_sent), toName), Toast.LENGTH_SHORT).show();
             }
         });
     }

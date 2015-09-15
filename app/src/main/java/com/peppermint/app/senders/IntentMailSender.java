@@ -24,7 +24,7 @@ public class IntentMailSender extends Sender {
     }
 
     @Override
-    public void send(String to, String subject, String bodyText, String filePath, String contentType) throws Throwable {
+    public void send(String toName, String to, String subject, String bodyText, String filePath, String contentType) throws Throwable {
         File file = validateFile(filePath);
 
         Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + to));

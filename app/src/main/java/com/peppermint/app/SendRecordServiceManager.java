@@ -13,15 +13,45 @@ import com.peppermint.app.senders.Sender;
 import java.util.UUID;
 
 /**
- * Created by NunoLuz on 28/08/2015.
+ * Created by Nuno Luz on 28/08/2015.
+ *
+ * Manages the Android Service that sends files through different methods.
+ * Allows sending multiple files concurrently.
+ * It allows an easier interaction with the Android Service API.
  */
 public class SendRecordServiceManager {
 
+    /**
+     * Listener for file send events (see {@link com.peppermint.app.senders.Sender.SenderEvent}).
+     */
     public interface Listener {
+        /**
+         * Invoked when a binding to the service is performed.
+         */
         void onBoundSendService();
+
+        /**
+         * Invoked when a send file request starts.
+         * @param event the event
+         */
         void onSendStarted(Sender.SenderEvent event);
+
+        /**
+         * Invoked when a send file request is cancelled.
+         * @param event the event
+         */
         void onSendCancelled(Sender.SenderEvent event);
+
+        /**
+         * Invoked when a send file request fails.
+         * @param event the event
+         */
         void onSendError(Sender.SenderEvent event);
+
+        /**
+         * Invoked when a send file request finishes.
+         * @param event the event
+         */
         void onSendFinished(Sender.SenderEvent event);
     }
 
@@ -62,7 +92,6 @@ public class SendRecordServiceManager {
             mService.register(SendRecordServiceManager.this);
 
             mListener.onBoundSendService();
-
             Log.d(TAG, "onServiceConnected");
         }
 
@@ -77,16 +106,21 @@ public class SendRecordServiceManager {
         this.mContext = context;
     }
 
-    public void startAndSend(Recipient to, String filePath) {
+    /**
+     * Starts the service and sends an intent to start sending the supplied file to the supplied recipient.
+     * @param recipient the recipient of the file
+     * @param filePath the location of the file to send
+     */
+    public void startAndSend(Recipient recipient, String filePath) {
         Intent intent = new Intent(mContext, SendRecordService.class);
         intent.putExtra(SendRecordService.INTENT_DATA_FILEPATH, filePath);
-        intent.putExtra(SendRecordService.INTENT_DATA_TO, to);
+        intent.putExtra(SendRecordService.INTENT_DATA_RECIPIENT, recipient);
         mContext.startService(intent);
     }
 
     /**
      * Starts the service.
-     * Also binds this manager to the service.
+     * <b>Also binds this manager to the service.</b>
      */
     public void start() {
         Intent intent = new Intent(mContext, SendRecordService.class);
@@ -96,8 +130,7 @@ public class SendRecordServiceManager {
 
     /**
      * Tries to stop the service.
-     * Also unbinds this manager from the service.
-     * The service will only stop after stopping the current recording.
+     * <b>Also unbinds this manager from the service.</b>
      */
     public void shouldStop() {
         mService.shutdown();
@@ -127,10 +160,21 @@ public class SendRecordServiceManager {
         }
     }
 
-    public UUID send(Recipient to, String filePath) {
-        return mService.send(to, filePath);
+    /**
+     * Sends the supplied file to the supplied recipient.
+     * Can only be used if the manager is bound to the service.
+     * @param recipient the recipient of the file
+     * @param filePath the file location
+     * @return the {@link UUID} of the send file request/task
+     */
+    public UUID send(Recipient recipient, String filePath) {
+        return mService.send(recipient, filePath);
     }
 
+    /**
+     * Cancels the send file request with the supplied {@link UUID}.
+     * @param uuid the {@link UUID} of the send file request/task
+     */
     public void cancel(UUID uuid) {
         mService.cancel(uuid);
     }

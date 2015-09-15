@@ -80,8 +80,8 @@ public abstract class Sender {
         LocalBroadcastManager.getInstance(mContext).unregisterReceiver(mReceiver);
     }
 
-    public SenderTask sendAsync(String toAddress, String subject, String body, String fullFilePath, String contentType) {
-        SenderTask task = new SenderTask(fullFilePath, toAddress, subject, body, contentType, mEventBus);
+    public SenderTask sendAsync(String toName, String toAddress, String subject, String body, String fullFilePath, String contentType) {
+        SenderTask task = new SenderTask(fullFilePath, toName, toAddress, subject, body, contentType);
         task.executeOnExecutor(mExecutor);
         return task;
     }
@@ -96,7 +96,7 @@ public abstract class Sender {
         task.cancel(true);
     }
 
-    protected abstract void send(String toAddress, String subject, String body, String fullFilePath, String contentType) throws Throwable;
+    protected abstract void send(String toName, String toAddress, String subject, String body, String fullFilePath, String contentType) throws Throwable;
 
     protected void onActivityResult(SenderTask recoveredTask, int requestCode, int resultCode, Intent data) {
         recoveredTask.doNotRecover();   // nothing to recover; must be overriden to include additional behaviour
@@ -192,13 +192,15 @@ public abstract class Sender {
         private UUID mUuid = UUID.randomUUID();
 
         private String mFilePath;
+        private String mToName;
         private String mToAddress;
         private String mSubject, mBody;
         private String mContentType;
         private Throwable mError;
 
-        public SenderTask(String mFilePath, String toAddress, String subject, String body, String contentType, EventBus eventBus) {
+        public SenderTask(String mFilePath, String toName, String toAddress, String subject, String body, String contentType) {
             this.mFilePath = mFilePath;
+            this.mToName = toName;
             this.mToAddress = toAddress;
             this.mSubject = subject;
             this.mBody = body;
@@ -208,6 +210,7 @@ public abstract class Sender {
         public SenderTask(SenderTask task) {
             this.mUuid = task.mUuid;
             this.mFilePath = task.mFilePath;
+            this.mToName = task.mToName;
             this.mToAddress = task.mToAddress;
             this.mSubject = task.mSubject;
             this.mBody = task.mBody;
@@ -224,7 +227,7 @@ public abstract class Sender {
         @Override
         protected Void doInBackground(Void... params) {
             try {
-                send(mToAddress, mSubject, mBody, mFilePath, mContentType);
+                send(mToName, mToAddress, mSubject, mBody, mFilePath, mContentType);
             } catch (Throwable e) {
                 mError = e;
                 Log.w(TAG, e);
@@ -259,10 +262,6 @@ public abstract class Sender {
             }
         }
 
-        public UUID getUUID() {
-            return this.mUuid;
-        }
-
         public void doNotRecover() {
             if(mError != null) {
                 Crashlytics.logException(mError);
@@ -280,5 +279,12 @@ public abstract class Sender {
         public void doRecover() {
             resendAsync(this);
         }
+
+        public UUID getUUID() {
+            return this.mUuid;
+        }
+
+        public String getToName() { return this.mToName; }
+        public String getToAddress() { return this.mToAddress; }
     }
 }

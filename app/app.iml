@@ -108,8 +108,8 @@
     <orderEntry type="library" exported="" name="google-http-client-gson-1.20.0" level="project" />
     <orderEntry type="library" exported="" name="play-services-base-7.8.0" level="project" />
     <orderEntry type="library" exported="" name="crashlytics-2.5.2" level="project" />
-    <orderEntry type="library" exported="" name="gson-2.1" level="project" />
     <orderEntry type="library" exported="" name="aspectjrt-1.8.2" level="project" />
+    <orderEntry type="library" exported="" name="gson-2.1" level="project" />
     <orderEntry type="library" exported="" name="eventbus-2.4.0" level="project" />
     <orderEntry type="library" exported="" name="additionnal" level="project" />
     <orderEntry type="library" exported="" name="support-v4-22.2.1" level="project" />
