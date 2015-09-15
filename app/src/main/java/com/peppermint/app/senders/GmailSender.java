@@ -27,6 +27,7 @@ import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.Message;
 import com.peppermint.app.R;
+import com.peppermint.app.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -184,6 +185,10 @@ public class GmailSender extends Sender {
     @Override
     public void send(String to, String subject, String bodyText, String filePath, String contentType) throws Throwable {
         File file = validateFile(filePath);
+
+        if(!Utils.isInternetAvailable(mContext)) {
+            throw new RuntimeException("Internet connection not available!");
+        }
 
         if(getPreferredAccountName() == null) {
             throw new PreferredAccountNotSetException("Preferred account is not set!");

@@ -6,31 +6,22 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.media.MediaRecorder;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
-import com.coremedia.iso.boxes.Container;
-import com.googlecode.mp4parser.authoring.Movie;
-import com.googlecode.mp4parser.authoring.Track;
-import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
-import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
-import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
+import com.crashlytics.android.Crashlytics;
+import com.peppermint.app.data.Recipient;
+import com.peppermint.app.ui.RecordFragment;
+import com.peppermint.app.utils.ExtendedMediaRecorder;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.channels.FileChannel;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.LinkedList;
-import java.util.List;
 
 import de.greenrobot.event.EventBus;
+import io.fabric.sdk.android.Fabric;
 
 public class RecordService extends Service {
 
@@ -38,18 +29,14 @@ public class RecordService extends Service {
 
     public static final String INTENT_DATA_DOSTART = "RecordService_DoStart";
     public static final String INTENT_DATA_FILENAME = "RecordService_Filename";
-
-    private static final String DEFAULT_FILENAME = "Record";
-    private static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd'_'HH-mm-ss");
+    public static final String INTENT_DATA_RECIPIENT = "RecordService_Recipient";
 
     public static final int EVENT_START = 1;
     public static final int EVENT_RESUME = 2;
     public static final int EVENT_PAUSE = 3;
     public static final int EVENT_STOP = 4;
     public static final int EVENT_LOUDNESS = 5;
-
-    public static final int EVENT_START_SEND = 6;
-    public static final int EVENT_FINISHED_SEND = 7;
+    public static final int EVENT_ERROR = 6;
 
     protected RecordServiceBinder mBinder = new RecordServiceBinder();
 
@@ -59,11 +46,11 @@ public class RecordService extends Service {
     public class RecordServiceBinder extends Binder {
 
         boolean isRecording() {
-            return mOngoing;
+            return RecordService.this.isRecording();
         }
 
         boolean isPaused() {
-            return mOngoing && mRecorder == null;
+            return RecordService.this.isPaused();
         }
 
         /**
@@ -85,104 +72,53 @@ public class RecordService extends Service {
         /**
          * Start a recording.
          */
-        void start(String filename) {
-            if(mOngoing) {
-                throw new RuntimeException("A recording is already in progress. Available actions are pause, resume and stop.");
-            }
-
-            if(filename == null) {
-                mFilename = DEFAULT_FILENAME;
-            } else {
-                mFilename = filename;
-            }
-
-            mFullFilePaths = new ArrayList<>();
-            mFullDuration = 0;
-            mOngoing = true;
-            startRecording();
-
-            startForeground(RecordService.class.hashCode(), getNotification());
-
-            Event e = new Event(0, mFullDuration, mFullFilePaths, ((System.currentTimeMillis() - mCurrentStartTime) / 1000), mCurrentFilePath, EVENT_START);
-            mEventBus.post(e);
+        void start(String filePrefix, Recipient recipient) {
+            RecordService.this.start(filePrefix, recipient);
         }
 
         void pause() {
-            if(!mOngoing) {
-                throw new RuntimeException("Cannot pause. Nothing is currently being recorded. Use start.");
-            }
-
-            String currentFilePath = mCurrentFilePath;
-            long currentDuration = stopRecording();
-
-            updateNotification();
-
-            Event e = new Event(0, mFullDuration, mFullFilePaths, currentDuration, currentFilePath, EVENT_PAUSE);
-            mEventBus.post(e);
+            RecordService.this.pause();
         }
 
         void resume() {
-            if(!mOngoing) {
-                throw new RuntimeException("Cannot resume. Nothing is currently being recorded. Use start.");
-            }
-
-            startRecording();
-
-            updateNotification();
-
-            Event e = new Event(0, mFullDuration, mFullFilePaths, 0, mCurrentFilePath, EVENT_RESUME);
-            mEventBus.post(e);
+            RecordService.this.resume();
         }
 
         /**
          * Stop the recording with the specified UUID.
          */
         void stop() {
-            String currentFilePath = mCurrentFilePath;
-            long currentDuration = stopRecording();
-
-            stopForeground(true);
-            mOngoing = false;
-
-            Event e = new Event(0, mFullDuration, mFullFilePaths, currentDuration, currentFilePath, EVENT_STOP);
-            mEventBus.post(e);
+            RecordService.this.stop();
         }
 
         void discard() {
-            if(mOngoing) {
-                stop();
-            }
-
             RecordService.this.discard();
         }
 
         void shutdown() {
-            if(mOngoing) {
-                stop();
-            }
-            stopSelf();
-        }
-
-        ArrayList<String> getFullFilePaths() {
-            return mFullFilePaths;
+            RecordService.this.shutdown();
         }
     }
 
     public class Event {
         private float mLoudness;
         private long mFullDuration;
-        private ArrayList<String> mFullFilePaths;
+        private ArrayList<String> mIntermediateFilePaths;
         private long mCurrentDuration;
         private String mCurrentFilePath;
+        private String mFilePath;
         private int mType;
+        private Recipient mRecipient;
+        private Throwable mError;
 
-        public Event(float mLoudness, long mFullDuration, ArrayList<String> mFullFilePaths, long mCurrentDuration, String mCurrentFilePath, int mType) {
+        public Event(float mLoudness, long mFullDuration, ArrayList<String> mIntermediateFilePaths, long mCurrentDuration, String mCurrentFilePath, int mType, Recipient recipient) {
             this.mLoudness = mLoudness;
             this.mFullDuration = mFullDuration;
-            this.mFullFilePaths = mFullFilePaths;
+            this.mIntermediateFilePaths = mIntermediateFilePaths;
             this.mCurrentDuration = mCurrentDuration;
             this.mCurrentFilePath = mCurrentFilePath;
             this.mType = mType;
+            this.mRecipient = recipient;
         }
 
         public float getLoudness() {
@@ -201,12 +137,12 @@ public class RecordService extends Service {
             this.mFullDuration = mFullDuration;
         }
 
-        public ArrayList<String> getFullFilePaths() {
-            return mFullFilePaths;
+        public ArrayList<String> getIntermediateFilePaths() {
+            return mIntermediateFilePaths;
         }
 
-        public void setFullFilePaths(ArrayList<String> mFullFilePaths) {
-            this.mFullFilePaths = mFullFilePaths;
+        public void setIntermediateFilePaths(ArrayList<String> mIntermediateFilePaths) {
+            this.mIntermediateFilePaths = mIntermediateFilePaths;
         }
 
         public long getCurrentDuration() {
@@ -232,6 +168,30 @@ public class RecordService extends Service {
         public void setType(int mType) {
             this.mType = mType;
         }
+
+        public String getFilePath() {
+            return mFilePath;
+        }
+
+        public void setFilePath(String mFilePath) {
+            this.mFilePath = mFilePath;
+        }
+
+        public Recipient getRecipient() {
+            return mRecipient;
+        }
+
+        public void setRecipient(Recipient mRecipient) {
+            this.mRecipient = mRecipient;
+        }
+
+        public Throwable getError() {
+            return mError;
+        }
+
+        public void setError(Throwable mError) {
+            this.mError = mError;
+        }
     }
 
     private final Handler mHandler = new Handler();
@@ -243,16 +203,8 @@ public class RecordService extends Service {
     };
 
     private EventBus mEventBus;
-
-    private ArrayList<String> mFullFilePaths;
-
-    private MediaRecorder mRecorder = null;
-    private boolean mOngoing = false;
-
-    private long mFullDuration = 0;
-    private long mCurrentStartTime = 0;
-    private String mCurrentFilePath;
-    private String mFilename = DEFAULT_FILENAME;
+    private ExtendedMediaRecorder mRecorder;
+    private Recipient mRecipient;
 
     public RecordService() {
         mEventBus = new EventBus();
@@ -261,21 +213,20 @@ public class RecordService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        Fabric.with(this, new Crashlytics());
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand: " + intent);
 
-        if(intent != null && intent.hasExtra(INTENT_DATA_DOSTART)) {
+        if(intent != null && intent.hasExtra(INTENT_DATA_DOSTART) && intent.hasExtra(INTENT_DATA_RECIPIENT)) {
             if(intent.getBooleanExtra(INTENT_DATA_DOSTART, false)) {
                 if(intent.hasExtra(INTENT_DATA_FILENAME)) {
-                    mFilename = intent.getStringExtra(INTENT_DATA_FILENAME);
+                    start(intent.getStringExtra(INTENT_DATA_FILENAME), (Recipient) intent.getSerializableExtra(INTENT_DATA_RECIPIENT));
+                } else {
+                    start(null, (Recipient) intent.getSerializableExtra(INTENT_DATA_RECIPIENT));
                 }
-                if(mFilename == null) {
-                    mFilename = DEFAULT_FILENAME;
-                }
-                startRecording();
             }
         }
 
@@ -294,131 +245,96 @@ public class RecordService extends Service {
 
     @Override
     public void onDestroy() {
-        mBinder.stop();
+        stop();
         super.onDestroy();
     }
 
-    private void startRecording() {
-        if(getExternalCacheDir() == null) {
-            throw new NullPointerException("No access to external cache directory!");
+    boolean isRecording() {
+        return mRecorder != null && mRecorder.isOngoing();
+    }
+
+    boolean isPaused() {
+        return mRecorder != null && mRecorder.isPaused();
+    }
+
+    void start(String filePrefix, Recipient recipient) {
+        if(isRecording()) {
+            throw new RuntimeException("A recording is already in progress. Available actions are pause, resume and stop.");
         }
 
-        Calendar now = Calendar.getInstance();
-        mCurrentFilePath = getExternalCacheDir().getAbsolutePath() + "/" + mFilename + "_" + DATETIME_FORMAT.format(now.getTime()) + "_" + mFullFilePaths.size() + ".mp3";
+        mRecipient = recipient;
 
-        mRecorder = new MediaRecorder();
-        mRecorder.setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION);
-        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        mRecorder.setOutputFile(mCurrentFilePath);
-        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-
-        try {
-            mRecorder.prepare();
-        } catch (IOException e) {
-            Log.e(TAG, "prepare() failed");
+        if(filePrefix == null) {
+            mRecorder = new ExtendedMediaRecorder(RecordService.this);
+        } else {
+            mRecorder = new ExtendedMediaRecorder(RecordService.this, filePrefix);
         }
-
-        mCurrentStartTime = System.currentTimeMillis();
         mRecorder.start();
+        updateLoudness();
+
+        startForeground(RecordService.class.hashCode(), getNotification());
+
+        Event e = new Event(0, mRecorder.getFullDuration(), mRecorder.getIntermediateFilePaths(), 0, mRecorder.getCurrentFilePath(), EVENT_START, mRecipient);
+        mEventBus.post(e);
+    }
+
+    void pause() {
+        if(!isRecording()) {
+            throw new RuntimeException("Cannot pause. Nothing is currently being recorded. Use start.");
+        }
+
+        String currentFilePath = mRecorder.getCurrentFilePath();
+        long currentDuration = mRecorder.pause();
+
+        updateNotification();
+
+        Event e = new Event(0, mRecorder.getFullDuration(), mRecorder.getIntermediateFilePaths(), currentDuration, currentFilePath, EVENT_PAUSE, mRecipient);
+        mEventBus.post(e);
+    }
+
+    void resume() {
+        if(!isRecording()) {
+            throw new RuntimeException("Cannot resume. Nothing is currently being recorded. Use start.");
+        }
+        mRecorder.resume();
 
         updateLoudness();
+        updateNotification();
+
+        Event e = new Event(0, mRecorder.getFullDuration(), mRecorder.getIntermediateFilePaths(), 0, mRecorder.getCurrentFilePath(), EVENT_RESUME, mRecipient);
+        mEventBus.post(e);
     }
 
-    private long stopRecording() {
-        if(mRecorder != null) {
-            long currentDuration = 0;
-            try {
-                mRecorder.stop();
-                currentDuration = ((System.currentTimeMillis() - mCurrentStartTime) / 1000);
-                mFullDuration += currentDuration;
-                mFullFilePaths.add(mCurrentFilePath);
-                try {
-                    mergeFiles();
-                } catch (Exception e) {
-                    Log.e(TAG, "Unable to merge files", e);
-                }
-            } catch(RuntimeException e) {
-                File f = new File(mCurrentFilePath);
-                if(f.exists()) {
-                    f.delete();
-                }
-            } finally {
-                mRecorder.release();
-                mRecorder = null;
-                mCurrentStartTime = 0;
-                mCurrentFilePath = null;
-            }
-            return currentDuration;
+    void stop() {
+        try {
+            String currentFilePath = mRecorder.getCurrentFilePath();
+            long currentDuration = mRecorder.stop();
+            Event e = new Event(0, mRecorder.getFullDuration(), mRecorder.getIntermediateFilePaths(), currentDuration, currentFilePath, EVENT_STOP, mRecipient);
+            e.setFilePath(mRecorder.getFilePath());
+            mEventBus.post(e);
+        } catch (Exception ex) {
+            mRecorder.discard();
+            Event e = new Event(0, mRecorder.getFullDuration(), mRecorder.getIntermediateFilePaths(), 0, mRecorder.getCurrentFilePath(), EVENT_ERROR, mRecipient);
+            e.setError(ex);
+            mEventBus.post(e);
+        } finally {
+            stopForeground(true);
         }
-
-        return 0;
     }
 
-    private boolean discard() {
-        boolean allDeleted = true;
-        for(String filePath : mFullFilePaths) {
-            File f = new File(filePath);
-            if(f.exists()) {
-                allDeleted = f.delete() && allDeleted;
-            }
-        }
-        return allDeleted;
+    void discard() {
+        mRecorder.discard();
     }
 
-    // https://stackoverflow.com/questions/23129561/how-to-concat-mp4-files/23144266#23144266
-    // https://github.com/sannies/mp4parser
-    private void mergeFiles() throws Exception {
-        if(mFullFilePaths == null || mFullFilePaths.size() <= 0) {
-            return;
+    void shutdown() {
+        if(isRecording()) {
+            stop();
         }
-
-        if(getExternalCacheDir() == null) {
-            throw new NullPointerException("No access to external cache directory!");
-        }
-
-        //List<Track> videoTracks = new LinkedList<Track>();
-        List<Track> audioTracks = new LinkedList<>();
-
-        for(String filePath : mFullFilePaths) {
-            Movie m = MovieCreator.build(filePath);
-            for (Track t : m.getTracks()) {
-                if (t.getHandler().equals("soun")) {
-                    audioTracks.add(t);
-                }
-                /*if (t.getHandler().equals("vide")) {
-                    videoTracks.add(t);
-                }*/
-            }
-        }
-
-        Movie result = new Movie();
-        /*if (videoTracks.size() > 0) {
-            result.addTrack(new AppendTrack(videoTracks
-                    .toArray(new Track[videoTracks.size()])));
-        }*/
-        if (audioTracks.size() > 0) {
-            result.addTrack(new AppendTrack(audioTracks
-                    .toArray(new Track[audioTracks.size()])));
-        }
-
-        Calendar now = Calendar.getInstance();
-        String newFilePath = getExternalCacheDir().getAbsolutePath() + "/" + mFilename + "_" + DATETIME_FORMAT.format(now.getTime()) + ".mp3";
-
-        Container out = new DefaultMp4Builder().build(result);
-        RandomAccessFile ram = new RandomAccessFile(newFilePath, "rw");
-        FileChannel fc = ram.getChannel();
-        out.writeContainer(fc);
-        ram.close();
-        fc.close();
-
-        discard();
-        mFullFilePaths.clear();
-        mFullFilePaths.add(newFilePath);
+        stopSelf();
     }
 
     private void updateLoudness() {
-        if(mOngoing && mRecorder != null) {
-
+        if(isRecording() && !mRecorder.isPaused()) {
             float amplitude = mRecorder.getMaxAmplitude();
             float topAmplitude = 500f;
 
@@ -428,7 +344,8 @@ public class RecordService extends Service {
 
             float factor = amplitude / topAmplitude;
 
-            Event e = new Event(factor, mFullDuration, mFullFilePaths, ((System.currentTimeMillis() - mCurrentStartTime) / 1000), mCurrentFilePath, EVENT_LOUDNESS);
+            Event e = new Event(factor, mRecorder.getFullDuration(), mRecorder.getIntermediateFilePaths(),
+                    ((System.currentTimeMillis() - mRecorder.getCurrentStartTime()) / 1000), mRecorder.getCurrentFilePath(), EVENT_LOUDNESS, mRecipient);
             mEventBus.post(e);
 
             mHandler.postDelayed(mLoudnessRunnable, 100);
@@ -436,8 +353,17 @@ public class RecordService extends Service {
     }
 
     private Notification getNotification() {
+
+        Intent notificationIntent = new Intent(this, RecordActivity.class);
+        notificationIntent.putExtra(RecordFragment.RECIPIENT_EXTRA, mRecipient);
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        stackBuilder.addParentStack(RecordActivity.class);
+        stackBuilder.addNextIntent(notificationIntent);
+        PendingIntent pendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+/*
         Intent notificationIntent = new Intent(RecordService.this, RecordActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(RecordService.this, 0, notificationIntent, 0);
+        notificationIntent.putExtra(RecordFragment.RECIPIENT_EXTRA, mRecipient);
+        PendingIntent pendingIntent = PendingIntent.getActivity(RecordService.this, 0, notificationIntent, 0);*/
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(RecordService.this)
                 .setSmallIcon(R.drawable.ic_mic)

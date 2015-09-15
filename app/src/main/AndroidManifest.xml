@@ -31,6 +31,9 @@
             android:label="@string/title_activity_record"
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppThemeActionBar" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity"/>
         </activity>
 
         <activity android:name=".senders.GetResultActivity"
@@ -52,6 +55,9 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="e8809814fc7d62266d6e3bb86faecc9e86696f83" />
     </application>
 
 </manifest>

@@ -57,7 +57,7 @@ public class RecipientAdapter extends CursorAdapter {
     public static FilteredCursor getContactsCursor(Context context, Long[] allowedIds, String freeTextSearch, Boolean areStarred, String[] allowedMimeTypes) {
         List<String> args = new ArrayList<>();
         String condStarred = (areStarred == null ? "" : " AND " + ContactsContract.Contacts.STARRED + "=" + (areStarred ? "1" : "0"));
-        String condFreeSearch = (freeTextSearch == null ? "" : " AND (LOWER(" + DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString("%" + freeTextSearch + "%") + " OR LOWER(" + ContactsContract.Data.DATA1 + ") LIKE " + DatabaseUtils.sqlEscapeString("%" + freeTextSearch + "%") + ")");
+        String condFreeSearch = (freeTextSearch == null ? "" : " AND (LOWER(" + DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString(/*"%" + */freeTextSearch + "%") + " OR LOWER(" + ContactsContract.Data.DATA1 + ") LIKE " + DatabaseUtils.sqlEscapeString(/*"%" + */freeTextSearch + "%") + ")");
         String condMimeTypes = getConditions(ContactsContract.Data.MIMETYPE, allowedMimeTypes, args, false);
         String condIds = getConditions(ContactsContract.Data._ID, allowedIds, null, false);
 

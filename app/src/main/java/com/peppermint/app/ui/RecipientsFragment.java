@@ -51,7 +51,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private View mProgressContainer;
     private View mListContainer;
 
-    private AlertDialog mInternetDialog;
+    //private AlertDialog mInternetDialog;
 
     public RecipientsFragment() {
     }
@@ -61,7 +61,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         super.onAttach(activity);
         mPreferences = new PepperMintPreferences(activity);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+     /*   AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setMessage(R.string.msg_no_internet);
         builder.setPositiveButton(R.string.go_to_internet_settings, new DialogInterface.OnClickListener() {
             @Override
@@ -71,7 +71,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             }
         });
         builder.setNegativeButton(R.string.cancel, null);
-        mInternetDialog = builder.create();
+        mInternetDialog = builder.create();*/
     }
 
     protected void removeSearchTextFocus() {
@@ -138,14 +138,14 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 }
             }
         });
-        mSearchText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+        /*mSearchText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (hasFocus) {
                     mRecipientTypeSpinner.setSelection(1, true);
                 }
             }
-        });
+        });*/
 
         return v;
     }
@@ -221,6 +221,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         }
 
         RecipientType recipientType = (RecipientType) mRecipientTypeSpinner.getSelectedItem();
+        if(mRecipientTypeSpinner.getSelectedItemPosition() == 0 && filter != null) {
+            mRecipientTypeSpinner.setSelection(1, true);
+        }
 
         List<Long> recentList = mPreferences.getRecentContactUris();
         Long[] recentArray = null;
@@ -275,15 +278,15 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        if(Utils.isInternetAvailable(getActivity())) {
+        //if(Utils.isInternetAvailable(getActivity())) {
             Intent recordIntent = new Intent(getActivity(), RecordActivity.class);
             recordIntent.putExtra(RecordFragment.RECIPIENT_EXTRA, mCursorAdapter.getRecipient(position));
             startActivityForResult(recordIntent, REQUEST_RECORD);
-        } else {
+        /*} else {
             if(!mInternetDialog.isShowing()) {
                 mInternetDialog.show();
             }
-        }
+        }*/
     }
 
     @Override

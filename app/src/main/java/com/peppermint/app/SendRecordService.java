@@ -13,6 +13,7 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.senders.GmailSender;
 import com.peppermint.app.senders.IntentMailSender;
@@ -29,6 +30,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import de.greenrobot.event.EventBus;
+import io.fabric.sdk.android.Fabric;
 
 public class SendRecordService extends Service {
 
@@ -103,6 +105,8 @@ public class SendRecordService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        Fabric.with(this, new Crashlytics());
+
         mPreferences = new PepperMintPreferences(this);
         mEventBus.register(this);
 

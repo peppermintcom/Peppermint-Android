@@ -72,11 +72,10 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
     public void onStopRecording(RecordService.Event event) {
         onBoundRecording();
         if(mPressedSend) {
-            Recipient recipient = (Recipient) getActivity().getIntent().getExtras().get(RECIPIENT_EXTRA);
-            mPreferences.addRecentContactUri(recipient.getId());
+            mPreferences.addRecentContactUri(event.getRecipient().getId());
 
             SendRecordServiceManager sendRecordServiceManager = new SendRecordServiceManager(getActivity());
-            sendRecordServiceManager.startAndSend(recipient, event.getFullFilePaths().get(0));
+            sendRecordServiceManager.startAndSend(event.getRecipient(), event.getFilePath());
 
             Intent resultIntent = new Intent();
             resultIntent.putExtra(RESULT_SENDING_EXTRA, true);
@@ -131,6 +130,11 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
     }
 
     @Override
+    public void onErrorRecording(RecordService.Event event) {
+        throw new RuntimeException(event.getError());
+    }
+
+    @Override
     public void onBoundRecording() {
         if(!mRecordManager.isRecording() || mRecordManager.isPaused()) {
             mRecordState.setImageResource(R.drawable.ic_paused);
@@ -141,7 +145,8 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
                 if(mRecordManager.isRecording()) {
                     mRecordManager.resumeRecording();
                 } else {
-                    mRecordManager.startRecording(mFilename);
+                    Recipient recipient = (Recipient) getActivity().getIntent().getExtras().get(RECIPIENT_EXTRA);
+                    mRecordManager.startRecording(mFilename, recipient);
                 }
             }
         } else {
@@ -172,7 +177,8 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
             @Override
             public void onClick(View v) {
                 if (!mRecordManager.isRecording()) {
-                    mRecordManager.startRecording(mFilename);
+                    Recipient recipient = (Recipient) getActivity().getIntent().getExtras().get(RECIPIENT_EXTRA);
+                    mRecordManager.startRecording(mFilename, recipient);
                     return;
                 }
 

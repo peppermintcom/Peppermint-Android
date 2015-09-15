@@ -9,10 +9,13 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.MenuItem;
 
+import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.ui.RecordFragment;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+
+import io.fabric.sdk.android.Fabric;
 
 public class RecordActivity extends Activity {
 
@@ -23,6 +26,7 @@ public class RecordActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Fabric.with(this, new Crashlytics());
         setContentView(R.layout.activity_record_layout);
 
         if(getActionBar() != null) {

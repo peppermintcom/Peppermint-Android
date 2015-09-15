@@ -6,12 +6,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.peppermint.app.utils.Utils;
+import com.crashlytics.android.Crashlytics;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -229,8 +228,6 @@ public abstract class Sender {
             } catch (Throwable e) {
                 mError = e;
                 Log.w(TAG, e);
-                // FIXME temporary code to print errors to file
-                Utils.printToFile(mContext, Environment.getExternalStorageDirectory().getAbsolutePath() + "/PeppermintSenderErrors.txt", this.mUuid.toString(), e);
             }
             return null;
         }
@@ -250,6 +247,7 @@ public abstract class Sender {
                 mEventBus.post(new SenderEvent(this, SenderEvent.EVENT_FINISHED));
             } else {
                 if(!recoverAndTryAgain(this, mError)) {
+                    Crashlytics.logException(mError);
                     if(mFailureChainSender == null) {
                         mEventBus.post(new SenderEvent(this, mError));
                     } else {
@@ -267,6 +265,7 @@ public abstract class Sender {
 
         public void doNotRecover() {
             if(mError != null) {
+                Crashlytics.logException(mError);
                 if(mFailureChainSender == null) {
                     mEventBus.post(new SenderEvent(this, mError));
                 } else {

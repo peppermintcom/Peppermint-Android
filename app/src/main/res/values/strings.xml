@@ -63,5 +63,6 @@
     <string name="go_to_internet_settings">Check Settings</string>
 
     <string name="filename_message_from">Message-from-</string>
+    <string name="msg_press_back_again_exit">Press \"back\" again to exit.</string>
 
 </resources>

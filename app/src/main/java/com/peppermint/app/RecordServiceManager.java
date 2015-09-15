@@ -7,7 +7,7 @@ import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.util.Log;
 
-import java.util.ArrayList;
+import com.peppermint.app.data.Recipient;
 
 /**
  * Created by NunoLuz on 28/08/2015.
@@ -23,6 +23,7 @@ public class RecordServiceManager {
         void onResumeRecording(RecordService.Event event);
         void onPauseRecording(RecordService.Event event);
         void onLoudnessRecording(RecordService.Event event);
+        void onErrorRecording(RecordService.Event event);
     }
 
     private static final String TAG = RecordServiceManager.class.getSimpleName();
@@ -49,6 +50,9 @@ public class RecordServiceManager {
                 break;
             case RecordService.EVENT_PAUSE:
                 mListener.onPauseRecording(event);
+                break;
+            case RecordService.EVENT_ERROR:
+                mListener.onErrorRecording(event);
                 break;
             default:
                 mListener.onLoudnessRecording(event);
@@ -77,10 +81,6 @@ public class RecordServiceManager {
 
     public RecordServiceManager(Context context) {
         this.mContext = context;
-    }
-
-    public ArrayList<String> getFullFilePaths() {
-        return mService.getFullFilePaths();
     }
 
     /**
@@ -126,8 +126,8 @@ public class RecordServiceManager {
         }
     }
 
-    public void startRecording(String filename) {
-        mService.start(filename);
+    public void startRecording(String filePrefix, Recipient recipient) {
+        mService.start(filePrefix, recipient);
     }
 
     public void stopRecording() {
