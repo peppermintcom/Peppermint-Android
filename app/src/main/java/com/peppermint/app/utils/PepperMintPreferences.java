@@ -27,6 +27,8 @@ public class PepperMintPreferences {
     protected static final String MAIL_BODY_KEY = "mailBody";
     protected static final String DISPLAY_NAME_KEY = "displayName";
 
+    protected static final int RECENT_CONTACTS_LIST_LIMIT = 50;
+
     protected SharedPreferences mSettings;
     protected SharedPreferences.Editor mEditor;
     protected Context mContext;
@@ -74,7 +76,7 @@ public class PepperMintPreferences {
             idList.add(0, id);
         }
 
-        while(idList.size() > 20) {
+        while(idList.size() > RECENT_CONTACTS_LIST_LIMIT) {
             idList.remove(idList.size()-1);
         }
 
