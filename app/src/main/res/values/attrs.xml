@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="PeppermintView">
+        <attr name="seconds" format="float"/>
+
+        <attr name="cornerRadius" format="dimension" />
+        <attr name="progressThickness" format="dimension" />
+        <attr name="fillBackground" format="boolean" />
+
+        <attr name="progressEmptyColor" format="color" />
+        <attr name="progressFillColor" format="color" />
+        <attr name="backgroundColor1" format="color"/>
+        <attr name="backgroundColor2" format="color"/>
+
+        <!-- PeppermintLoadingView -->
+        <attr name="textFont" format="string" />
+        <attr name="text" format="string" />
+        <attr name="textSpacing" format="dimension" />
+        <attr name="amplitude" format="dimension" />
+
+        <!-- RoundImageView -->
+        <attr name="borderWidth" format="dimension" />
+        <attr name="borderColor" format="color" />
+    </declare-styleable>
+
+    <declare-styleable name="ActionBarView">
+        <attr name="hint" format="string" />
+        <attr name="listSelector" format="reference" />
+    </declare-styleable>
+
+    <declare-styleable name="PeppermintTheme">
+        <attr name="recordProgressStyle" format="reference" />
+        <attr name="customActionBarStyle" format="reference" />
+
+        <attr name="relevantBoxStyle" format="reference" />
+        <attr name="relevantBoxRadius" format="dimension" />
+        <attr name="relevantBoxShadowSize" format="dimension" />
+
+        <attr name="normalBoxStyle" format="reference" />
+        <attr name="normalBoxRadius" format="dimension" />
+        <attr name="normalBoxShadowSize" format="dimension" />
+
+        <attr name="tutorialMargin" format="dimension" />
+    </declare-styleable>
+</resources>

@@ -77,7 +77,7 @@ public class HttpClientManager {
             mService = (HttpClientService.HttpClientServiceBinder) binder;
             mService.register(HttpClientManager.this);
 
-            // Some of the pending request might have finished while an activity was in the background.
+            // Some of the pending request might have finished while an activity was in the background_gradient.
             // Thus, re-trigger all events once a client binds to the service.
             // This also removes the event so that it will not be triggered again in future binds.
             for(UUID uuid : mPendingRequestMap.keySet()) {
@@ -168,7 +168,7 @@ public class HttpClientManager {
 	}
 
     /**
-     * Creates and submits a request to the service so that it is executed in a background thread.<br />
+     * Creates and submits a request to the service so that it is executed in a background_gradient thread.<br />
      * @param endpoint the request URL
      * @param requestMethod the request HTTP method
      * @param body the request body data
@@ -192,7 +192,7 @@ public class HttpClientManager {
 
     /**
      * Trigger the cancelling of the request with the specified UUID.<br />
-     * The cancel event is triggered immediately although the actual cancelling may still be ocurring in the background.
+     * The cancel event is triggered immediately although the actual cancelling may still be ocurring in the background_gradient.
      * @param uuid the UUID of the request
      */
     public void cancelRequest(UUID uuid) {

@@ -13,18 +13,17 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
-import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.data.Recipient;
-import com.peppermint.app.ui.RecordFragment;
+import com.peppermint.app.ui.recording.RecordFragment;
+import com.peppermint.app.ui.recording.RecordingActivity;
 import com.peppermint.app.utils.ExtendedMediaRecorder;
 
 import java.util.ArrayList;
 
 import de.greenrobot.event.EventBus;
-import io.fabric.sdk.android.Fabric;
 
 /**
- * Service that allows the background recording audio/video files.
+ * Service that allows the background_gradient recording audio/video files.
  */
 public class RecordService extends Service {
 
@@ -165,7 +164,7 @@ public class RecordService extends Service {
             this.mLoudness = 0;
             this.mFullDuration = recorder.getFullDuration();
             this.mIntermediateFilePaths = recorder.getIntermediateFilePaths();
-            this.mCurrentDuration = ((System.currentTimeMillis() - recorder.getCurrentStartTime()) / 1000);
+            this.mCurrentDuration = System.currentTimeMillis() - recorder.getCurrentStartTime();
             this.mCurrentFilePath = recorder.getCurrentFilePath();
             this.mFilePath = recorder.getFilePath();
             this.mType = type;
@@ -236,9 +235,9 @@ public class RecordService extends Service {
         }
     };
 
-    private EventBus mEventBus;                 // event bus to send events to registered listeners
-    private ExtendedMediaRecorder mRecorder;    // the recorder
-    private Recipient mRecipient;               // the recipient of the current recording
+    private transient EventBus mEventBus;                 // event bus to send events to registered listeners
+    private transient ExtendedMediaRecorder mRecorder;    // the recorder
+    private Recipient mRecipient;                         // the recipient of the current recording
 
     public RecordService() {
         mEventBus = new EventBus();
@@ -247,7 +246,6 @@ public class RecordService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Fabric.with(this, new Crashlytics());
     }
 
     @Override
@@ -371,11 +369,11 @@ public class RecordService extends Service {
     }
 
     private Notification getNotification() {
-        Intent notificationIntent = new Intent(this, RecordActivity.class);
-        notificationIntent.putExtra(RecordFragment.RECIPIENT_EXTRA, mRecipient);
+        Intent notificationIntent = new Intent(this, RecordingActivity.class);
+        notificationIntent.putExtra(RecordFragment.INTENT_RECIPIENT_EXTRA, mRecipient);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         // make sure that the main activity of the app is present in the backstack
-        stackBuilder.addParentStack(RecordActivity.class);
+        stackBuilder.addParentStack(RecordingActivity.class);
         stackBuilder.addNextIntent(notificationIntent);
         PendingIntent pendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 

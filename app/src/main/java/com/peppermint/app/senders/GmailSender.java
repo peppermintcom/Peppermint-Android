@@ -33,8 +33,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import javax.activation.DataHandler;
@@ -57,8 +59,15 @@ import de.greenrobot.event.EventBus;
  */
 public class GmailSender extends Sender {
 
+    private static final String TAG = GmailSender.class.getSimpleName();
+
     private static final int REQUEST_AUTHORIZATION = 1001;
     private static final int REQUEST_ACCOUNT_PICKER = 1002;
+
+    // Gmail API Permissions
+    private static final String[] SCOPES = { GmailScopes.GMAIL_COMPOSE };
+
+    private static final int MAX_RETRIES = 3;
 
     public static class PreferredAccountNotSetException extends RuntimeException {
         public PreferredAccountNotSetException(String detailMessage) {
@@ -66,12 +75,11 @@ public class GmailSender extends Sender {
         }
     }
 
-    private static final String TAG = GmailSender.class.getSimpleName();
-
-    private static final String[] SCOPES = { GmailScopes.GMAIL_COMPOSE };
+    // Sender Shared Preference Keys
     public static final String PREF_ACCOUNT_NAME_KEY = "prefAccountName";
     public static final String PREF_SKIP_IF_PERMISSION_REQ_KEY = "prefSkipIfPermissionRequired";
 
+    // Sender Parameter Keys
     public static final String PARAM_DISPLAY_NAME = "paramDisplayName";
 
     protected Gmail mService;
@@ -80,8 +88,12 @@ public class GmailSender extends Sender {
     private final HttpTransport transport = AndroidHttp.newCompatibleTransport();
     private final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
 
+    // Retry Map, which allows trying to send the Email up to MAX_RETRIES times if it fails.
+    protected Map<UUID, Integer> mRetryMap;
+
     public GmailSender(Context context, EventBus eventBus, ThreadPoolExecutor executor) {
         super(context, eventBus, executor);
+        mRetryMap = new HashMap<>();
     }
 
     @Override
@@ -112,6 +124,7 @@ public class GmailSender extends Sender {
         if(e instanceof GoogleJsonResponseException) {
             try {
                 GoogleAuthUtil.invalidateToken(mContext, mCredential.getToken());
+                task.doRecover();
                 return true;
             } catch (Exception ex) {
                 Log.w(TAG, ex);
@@ -119,7 +132,20 @@ public class GmailSender extends Sender {
             }
         }
 
-        return false;
+        if(!mRetryMap.containsKey(task.getUUID())) {
+            mRetryMap.put(task.getUUID(), 1);
+        } else {
+            mRetryMap.put(task.getUUID(), mRetryMap.get(task.getUUID()) + 1);
+        }
+
+        if(mRetryMap.get(task.getUUID()) > MAX_RETRIES) {
+            mRetryMap.remove(task.getUUID());
+            return false;
+        }
+
+        // just try again for MAX_RETRIES times tops
+        task.doRecover();
+        return true;
     }
 
     @Override

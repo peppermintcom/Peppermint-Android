@@ -12,17 +12,12 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.text.TextUtils;
 import android.util.Base64;
-import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 import android.widget.ImageView;
 
 import org.apache.http.conn.util.InetAddressUtils;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -235,15 +230,21 @@ public class Utils {
         return Normalizer.normalize(str, Normalizer.Form.NFC).replace(' ', '-').replaceAll("[^a-zA-Z0-9\\.]", "");
     }
 
-    public static void printToFile(Context context, String filePath, String text, Throwable t) {
-        try {
-            PrintWriter printWriter = new PrintWriter(new FileOutputStream(new File(filePath), true));
-            printWriter.print("### " + text + "\n");
-            t.printStackTrace(printWriter);
-            printWriter.close();
+    public static Drawable getDrawable(Context context, int drawableRes) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            return context.getResources().getDrawable(drawableRes, context.getTheme());
+        } else {
+            //noinspection deprecation
+            return context.getResources().getDrawable(drawableRes);
         }
-        catch (IOException e) {
-            Log.e(Utils.class.getSimpleName(), "File write failed: " + e.toString());
+    }
+
+    public static int getStatusBarHeight(Context context) {
+        int result = 0;
+        int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = context.getResources().getDimensionPixelSize(resourceId);
         }
+        return result;
     }
 }

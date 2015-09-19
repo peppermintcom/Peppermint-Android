@@ -23,6 +23,9 @@ import java.util.List;
 
 /**
  * Created by Nuno Luz on 14-09-2015.
+ *
+ * Extended MediaRecorder that allows to pause/resume recordings.
+ * Uses an external library isoparser/mp4parser to merge all recorded parts.
  */
 public class ExtendedMediaRecorder {
 
@@ -149,7 +152,7 @@ public class ExtendedMediaRecorder {
         if(mRecorder != null) {
             mRecorder.stop();
 
-            long currentDuration = ((System.currentTimeMillis() - mCurrentStartTime) / 1000);
+            long currentDuration = System.currentTimeMillis() - mCurrentStartTime;
             mFullDuration += currentDuration;
             mIntermediateFilePaths.add(mCurrentFilePath);
 

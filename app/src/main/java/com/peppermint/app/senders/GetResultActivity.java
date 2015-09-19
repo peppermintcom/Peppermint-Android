@@ -24,7 +24,7 @@ public class GetResultActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_getresult_layout);
+        setContentView(R.layout.a_getresult_layout);
 
         // obtain the intent with the data to start the new activity for result
         mUuid = (UUID) getIntent().getSerializableExtra(Sender.INTENT_ID);

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_marginBottom="6dp"
+    style="?attr/relevantBoxStyle">
+
+    <ImageView
+        android:id="@+id/imgAvatar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:src="@drawable/av_unknown_blue"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginLeft="10dp">
+
+        <TextView
+            android:id="@+id/txtName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:textSize="16dp"
+            android:textColor="@color/black"
+            android:text="Bob Adams"/>
+
+        <TextView
+            android:id="@+id/txtVia"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/txtName"
+            android:layout_alignParentLeft="true"
+            android:textSize="12dp"
+            android:textColor="@color/grey_text"
+            android:text="via"/>
+
+        <TextView
+            android:id="@+id/txtContact"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/txtName"
+            android:layout_toRightOf="@id/txtVia"
+            android:layout_marginLeft="5dp"
+            android:textSize="12dp"
+            android:textColor="@color/green_text"
+            android:text="bob@hotmail.com"/>
+
+    </RelativeLayout>
+
+</LinearLayout>

@@ -54,7 +54,7 @@ public class AnimatorBuilder {
      * Builds an animator that applies a photo effect to the target view:
      * <ol>
      *     <li>Slides in from the right and stops and the original position;</li>
-     *     <li>Fades out and in (a white background will give a flash effect);</li>
+     *     <li>Fades out and in (a white background_gradient will give a flash effect);</li>
      *     <li>Slides out from the original position to the left (only if slideOut is true).</li>
      * </ol>
      * @param v the target view

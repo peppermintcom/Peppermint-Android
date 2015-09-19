@@ -3,7 +3,9 @@ package com.peppermint.app.data;
 import java.io.Serializable;
 
 /**
- * Created by NunoLuz on 26/08/2015.
+ * Created by Nuno Luz on 26/08/2015.
+ *
+ * Represents a Recipient of a recorded message.
  */
 public class Recipient implements Serializable {
 

@@ -1,18 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="main">#4caf50</color>
-    <color name="main200">#b0bec5</color>
-    <color name="main800">#37474F</color>
-    <color name="secondary">#607d8b</color>
-    <color name="secondary100">#cfd8dc</color>
-    <color name="secondary700">#455A64</color>
-    <color name="background">#efeeee</color>
+
+    <color name="box_fill">#ffffff</color>
+    <color name="box_shadow">#53af95</color>
+    <color name="background0">#edf3f1</color>
+    <color name="background1">#68c4a3</color>
+    <color name="background2">#2fbdb2</color>
+
+    <color name="record_progress_empty">#d7e4e1</color>
+    <color name="record_progress_fill">#1f8479</color>
+
+    <color name="record_progress_empty_tutorial">#ffffff</color>
+    <color name="record_progress_fill_tutorial">#18776d</color>
+
+    <color name="green_text">#2fbdb2</color>
+    <color name="dark_green_text">#18776d</color>
+    <color name="grey_text">#8ca8a5</color>
+    <color name="dark_grey_text">#7b9592</color>
 
     <color name="white">#ffffff</color>
     <color name="black">#000000</color>
-    <color name="grey_dark">#676767</color>
-    <color name="grey_light">#d5d5d5</color>
-
     <color name="black_50percent">#99000000</color>
+    <color name="dark_green_60percent">#96074239</color>
 
 </resources>

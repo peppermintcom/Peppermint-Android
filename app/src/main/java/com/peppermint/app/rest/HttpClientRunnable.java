@@ -10,7 +10,7 @@ import java.net.HttpURLConnection;
  * Created by Nuno Luz (nluz@mobaton.com) on 02-07-2015.
  *
  * <p>
- *     The runnable that executes a {@link HttpRequest} in a background thread (pool).
+ *     The runnable that executes a {@link HttpRequest} in a background_gradient thread (pool).
  * </p>
  */
 public class HttpClientRunnable extends Thread {
@@ -32,8 +32,8 @@ public class HttpClientRunnable extends Thread {
      * Executes a {@link HttpRequest}.<br />
      * Its listener methods are invoked as follows:
      * <ol>
-     *     <li>{@link HttpClientRunnableListener#onConnect(HttpClientRunnable, HttpRequest)} - through the background thread handler</li>
-     *     <li>{@link HttpClientRunnableListener#onDisconnect(HttpClientRunnable, HttpRequest, HttpResponse)} - through the background thread handler</li>
+     *     <li>{@link HttpClientRunnableListener#onConnect(HttpClientRunnable, HttpRequest)} - through the background_gradient thread handler</li>
+     *     <li>{@link HttpClientRunnableListener#onDisconnect(HttpClientRunnable, HttpRequest, HttpResponse)} - through the background_gradient thread handler</li>
      * </ol>
      */
 	@Override

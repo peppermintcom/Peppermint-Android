@@ -17,8 +17,6 @@ import de.greenrobot.event.EventBus;
  */
 public class IntentMailSender extends Sender {
 
-    private static final String TAG = IntentMailSender.class.getSimpleName();
-
     public IntentMailSender(Context context, EventBus eventBus, ThreadPoolExecutor executor) {
         super(context, eventBus, executor);
     }
@@ -28,19 +26,13 @@ public class IntentMailSender extends Sender {
         File file = validateFile(filePath);
 
         Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + to));
-        //i.setType("text/html");
-        //i.putExtra(Intent.EXTRA_EMAIL, new String[]{to});
         i.putExtra(Intent.EXTRA_SUBJECT, subject);
         i.putExtra(Intent.EXTRA_TEXT, Html.fromHtml(bodyText));
         Uri uri = Uri.parse("file://" + file.getAbsolutePath());
         i.putExtra(Intent.EXTRA_STREAM, uri);
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        //Intent chooserIntent = Intent.createChooser(i, mContext.getString(R.string.send_record));
-        //chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
         try {
-            //mContext.startActivity(chooserIntent);
             mContext.startActivity(i);
         } catch (android.content.ActivityNotFoundException ex) {
             throw new RuntimeException("There are no email clients installed!");

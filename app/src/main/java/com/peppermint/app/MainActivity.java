@@ -4,10 +4,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.widget.Toast;
 
-import com.crashlytics.android.Crashlytics;
-import com.peppermint.app.ui.RecipientsFragment;
-
-import io.fabric.sdk.android.Fabric;
+import com.peppermint.app.ui.recipients.RecipientsFragment;
 
 public class MainActivity extends FragmentActivity {
 
@@ -18,8 +15,7 @@ public class MainActivity extends FragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Fabric.with(this, new Crashlytics());
-        setContentView(R.layout.activity_main_layout);
+        setContentView(R.layout.a_main_layout);
 
         if (savedInstanceState != null) {
             mFragment = (RecipientsFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
@@ -33,10 +29,14 @@ public class MainActivity extends FragmentActivity {
 
     @Override
     public void onBackPressed() {
-        if(mFragment.clearSearchFilter()) {
-            Toast.makeText(MainActivity.this, R.string.msg_press_back_again_exit, Toast.LENGTH_SHORT).show();
+        int stepsLeft = mFragment.clearFilters();
+        if(stepsLeft <= 0) {
+            super.onBackPressed();
             return;
         }
-        super.onBackPressed();
+
+        if(stepsLeft <= 1) {
+            Toast.makeText(MainActivity.this, R.string.msg_press_back_again_exit, Toast.LENGTH_SHORT).show();
+        }
     }
 }

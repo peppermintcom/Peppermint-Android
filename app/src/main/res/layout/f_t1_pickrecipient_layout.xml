@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="?attr/tutorialMargin"
+    android:paddingRight="?attr/tutorialMargin">
+
+    <RelativeLayout
+        android:id="@+id/lytFilter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="8dp"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingBottom="11dp"
+        android:layout_marginBottom="10dp"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentTop="true"
+        android:background="@drawable/background_box_relevant">
+
+        <TextView
+            android:id="@+id/txtSearch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:textSize="18dp"
+            android:text="@string/dummy_search"/>
+
+        <ImageView
+            android:layout_toRightOf="@id/txtSearch"
+            android:layout_width="2dp"
+            android:layout_height="24dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="2dp"
+            android:src="@drawable/background_flat"/>
+
+        <ImageView
+            android:layout_alignParentRight="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_search_tutorial"/>
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/lytContacts"
+        android:layout_below="@id/lytFilter"
+        android:layout_centerHorizontal="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="35dp">
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/txtSendAudioMessages"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/lytContacts"
+        android:gravity="center"
+        android:textColor="@color/white"
+        android:textSize="20dp"
+        android:text="@string/send_audio_messages_to_your_friends"/>
+
+</RelativeLayout>

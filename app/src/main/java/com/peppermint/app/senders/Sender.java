@@ -30,16 +30,18 @@ import de.greenrobot.event.EventBus;
 public abstract class Sender {
     private static final String TAG = Sender.class.getSimpleName();
 
-    public static final String INTENT_BROADCAST_TYPE = "SenderBase_BroadcastType";
     public static final String INTENT_ID = "SenderBase_Id";
+    public static final String INTENT_BROADCAST_TYPE = "SenderBase_BroadcastType";
     public static final String INTENT_REQUESTCODE = "SenderBase_RequestCode";
     public static final String INTENT_RESULTCODE = "SenderBase_ResultCode";
     public static final String INTENT_DATA = "SenderBase_Data";
 
     protected UUID mUuid = UUID.randomUUID();
+
     protected Context mContext;
     protected SharedPreferences mSettings;
     protected EventBus mEventBus;
+
     protected Map<UUID, SenderTask> mTaskMap;
     protected Map<UUID, SenderTask> mRecoveringTaskMap;
     protected Map<String, Object> mParams;

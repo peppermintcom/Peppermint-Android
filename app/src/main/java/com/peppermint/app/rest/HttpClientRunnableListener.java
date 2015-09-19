@@ -5,7 +5,7 @@ package com.peppermint.app.rest;
  *
  * <p>
  *     Listener of events related to {@link HttpRequest}, executed by a {@link HttpClientRunnable}.<br />
- *     These methods run in the {@link HttpClientRunnable}'s background thread.
+ *     These methods run in the {@link HttpClientRunnable}'s background_gradient thread.
  * </p>
  */
 public interface HttpClientRunnableListener {

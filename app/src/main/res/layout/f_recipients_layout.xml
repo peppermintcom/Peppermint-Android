@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:descendantFocusability="beforeDescendants"
+    android:focusableInTouchMode="true">
+
+    <LinearLayout
+        android:id="@+id/customActionBar"
+        android:layout_alignParentTop="true"
+        android:orientation="vertical"
+        style="?attr/customActionBarStyle">
+
+        <FrameLayout
+            android:id="@+id/customActionBarTopSpace"
+            android:layout_alignParentTop="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        </FrameLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageButton
+                android:id="@+id/menu"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/background_ripple"
+                android:src="@drawable/ic_menu_moreoverflow"/>
+
+            <com.peppermint.app.ui.views.ActionBarView
+                android:id="@+id/lytRecipientSearchAndList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_toLeftOf="@id/menu"
+                android:layout_marginRight="5dp"
+                custom:hint="@string/search_contacts" />
+
+        </RelativeLayout>
+
+
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/listContainer"
+        android:layout_below="@id/customActionBar"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ListView android:id="@id/android:list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:listSelector="@drawable/background_transparent_to_solid_pressed"
+            android:drawSelectorOnTop="false"/>
+
+
+        <LinearLayout android:id="@id/android:empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center_horizontal|top">
+
+            <TextView
+                android:id="@+id/txtEmpty1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="16dp"
+                android:layout_marginLeft="30dp"
+                android:layout_marginRight="30dp"
+                android:gravity="center"
+                android:textSize="20dp"
+                android:textColor="@color/grey_text"
+                android:text="@string/msg_no_contacts"/>
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="80dp"
+                android:layout_marginLeft="80dp"
+                android:src="@drawable/ic_no_contacts"/>
+
+            <TextView
+                android:id="@+id/txtEmpty2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="20dp"
+                android:layout_marginLeft="30dp"
+                android:layout_marginRight="30dp"
+                android:gravity="center"
+                android:textSize="14dp"
+                android:textColor="@color/dark_grey_text"
+                android:text="@string/msg_add_some_friends"/>
+
+        </LinearLayout>
+
+
+    </FrameLayout>
+
+    <LinearLayout android:id="@+id/progressContainer"
+        android:layout_below="@id/customActionBar"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/dark_green_60percent"
+        android:visibility="gone"
+        android:gravity="center">
+
+        <com.peppermint.app.ui.views.PeppermintLoadingView
+            android:id="@+id/loading"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="40dp"
+            android:layout_marginTop="40dp"
+            android:layout_marginRight="80dp"
+            android:layout_marginLeft="80dp"
+            custom:text="@string/loading_contacts" />
+
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/touchInterceptor"
+        android:layout_alignParentTop="true"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </FrameLayout>
+
+</RelativeLayout>

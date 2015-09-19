@@ -13,11 +13,11 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.senders.GmailSender;
 import com.peppermint.app.senders.IntentMailSender;
 import com.peppermint.app.senders.Sender;
+import com.peppermint.app.ui.recording.RecordingActivity;
 import com.peppermint.app.utils.PepperMintPreferences;
 
 import java.util.HashMap;
@@ -29,10 +29,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import de.greenrobot.event.EventBus;
-import io.fabric.sdk.android.Fabric;
 
 /**
- * Service that allows the background sending of files through different methods.
+ * Service that allows the background_gradient sending of files through different methods.
  */
 public class SendRecordService extends Service {
 
@@ -127,7 +126,6 @@ public class SendRecordService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Fabric.with(this, new Crashlytics());
 
         mPreferences = new PepperMintPreferences(this);
         mEventBus.register(this);
@@ -248,7 +246,7 @@ public class SendRecordService extends Service {
     }
 
     private Notification getNotification() {
-        Intent notificationIntent = new Intent(SendRecordService.this, RecordActivity.class);
+        Intent notificationIntent = new Intent(SendRecordService.this, RecordingActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(SendRecordService.this, 0, notificationIntent, 0);
 
         // FIXME use proper icons for these notifications

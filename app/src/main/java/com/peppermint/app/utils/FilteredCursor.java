@@ -60,9 +60,13 @@ public class FilteredCursor implements Cursor {
     private int mPos = -1;
     private Filter mFilter;
 
-    public FilteredCursor(Cursor cursor, Filter filter) {
+    public FilteredCursor(Cursor cursor) {
         this.mFilterList = new ArrayList<>();
         this.mCursor = cursor;
+    }
+
+    public FilteredCursor(Cursor cursor, Filter filter) {
+        this(cursor);
         this.mFilter = filter;
     }
 
@@ -71,6 +75,10 @@ public class FilteredCursor implements Cursor {
     }
 
     public void filter(Filter filter) {
+        if(filter == null) {
+            return;
+        }
+
         Log.d(TAG, "Cursor Count: " + mCursor.getCount());
         mCursor.moveToPosition(-1);
         while(mCursor.moveToNext()) {
@@ -322,5 +330,21 @@ public class FilteredCursor implements Cursor {
 
     public Cursor getOriginalCursor() {
         return mCursor;
+    }
+
+    public List<Integer> getFilterList() {
+        return mFilterList;
+    }
+
+    public void setFilterList(List<Integer> mFilterList) {
+        this.mFilterList = mFilterList;
+    }
+
+    public Filter getFilter() {
+        return mFilter;
+    }
+
+    public void setFilter(Filter mFilter) {
+        this.mFilter = mFilter;
     }
 }

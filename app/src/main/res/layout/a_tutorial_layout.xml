@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/txtPeppermint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_alignParentTop="true"
+                android:textColor="@color/dark_green_text"
+                android:textSize="24dp"
+                android:layout_marginTop="?attr/tutorialMargin"
+                android:layout_marginBottom="40dp"
+                android:layout_gravity="center_horizontal"
+                android:text="@string/peppermint_com"/>
+
+            <ImageView
+                android:id="@+id/imgPaginator"
+                android:layout_centerInParent="true"
+                android:layout_alignParentBottom="true"
+                android:layout_marginTop="35dp"
+                android:layout_marginBottom="?attr/tutorialMargin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/paginator1"/>
+
+            <FrameLayout
+                android:id="@+id/container"
+                android:layout_below="@id/txtPeppermint"
+                android:layout_above="@id/imgPaginator"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+            </FrameLayout>
+
+        </RelativeLayout>
+
+        <Button
+            android:id="@+id/lytRoot"
+            android:clickable="true"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@null">
+        </Button>
+
+    </FrameLayout>
+
+</ScrollView>

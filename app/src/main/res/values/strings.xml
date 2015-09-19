@@ -9,7 +9,6 @@
     <string name="action_settings">Settings</string>
 
     <string name="touch_to_record">Touch to record</string>
-    <string name="msg_no_recent_contacts">No recent contacts. Please search and select a contact to send an audio message.</string>
     <string name="drawer_open_desc">Drawer menu is open!</string>
     <string name="drawer_closed_desc">Drawer menu is closed!</string>
 
@@ -18,9 +17,9 @@
     <string name="resume">Resume</string>
     <string name="pause">Pause</string>
     <string name="finish">Finish</string>
-    <string name="loading">Loading</string>
+    <string name="loading_contacts">Loading\nContacts…</string>
     <string name="via">via</string>
-    <string name="search_contacts">Search contacts</string>
+    <string name="search_contacts">Search for Contacts</string>
 
     <string name="recipient_type_email">Email Contacts</string>
     <string name="recipient_type_all">All Contacts</string>
@@ -36,20 +35,6 @@
     <string name="discard">Discard</string>
     <string name="cancel">Cancel</string>
 
-    <string-array name="contact_type_array">
-        <item>Recent Contacts</item>
-        <item>All Contacts</item>
-        <item>Email Contacts</item>
-        <item>Phone Contacts</item>
-    </string-array>
-
-    <integer-array name="contact_type_val_array">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
-    </integer-array>
-
     <string name="default_mail_subject">I sent you a voice message</string>
     <string name="default_mail_body_listen">Here\'s my message.</string>
     <string name="default_mail_body_reply"><![CDATA[Reply via <a href="http://www.peppermint.com/">Peppermint.com</a>]]></string>
@@ -64,5 +49,35 @@
 
     <string name="filename_message_from">Message-from-</string>
     <string name="msg_press_back_again_exit">Press \"back\" again to exit.</string>
+
+    <!-- TUTORIAL -->
+    <string name="peppermint_com">Peppermint.com</string>
+    <string name="dummy_search">Bo</string>
+    <string-array name="dummy_name_array">
+        <item>Bob Adams</item>
+        <item>Bob Adams</item>
+        <item>Bob Bigboy</item>
+        <item>Bob Bigboy</item>
+    </string-array>
+    <string-array name="dummy_contact_array">
+        <item>bob@hotmail.com</item>
+        <item>0493829889</item>
+        <item>elephantbob@gmail.com</item>
+        <item>3889289399</item>
+    </string-array>
+    <string-array name="dummy_avatar_array">
+        <item>av_unknown_green_tutorial</item>
+        <item>av_unknown_blue_tutorial</item>
+        <item>av_unknown_green_tutorial</item>
+        <item>av_unknown_blue_tutorial</item>
+    </string-array>
+    <string name="send_audio_messages_to_your_friends">Send audio messages to your\nfriends or work mates</string>
+    <string name="sent">Sent</string>
+    <string name="record_and_send_to_their_email">Record and send to their\nemail or send a text message</string>
+    <string name="your_friend_doesnt_need_peppermint">Your friend doesn\'t need\nPeppermint to receive the\nmessage</string>
+    <string name="action_help_feedback"><![CDATA[Help & Feedback]]></string>
+    
+    <string name="msg_no_contacts">No contacts\nhave been found</string>
+    <string name="msg_add_some_friends"><![CDATA[Add some friends to your contact book first and come back to <font color="%1$s">Peppermint</font>]]></string>
 
 </resources>

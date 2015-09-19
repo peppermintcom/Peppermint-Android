@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="?attr/tutorialMargin"
+    android:paddingRight="?attr/tutorialMargin">
+
+    <ImageView
+        android:id="@+id/imgDoodleMessage"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentTop="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/doodle_message_tutorial"/>
+
+    <ImageView
+        android:id="@+id/imgDoodle"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/imgDoodleMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="40dp"
+        android:src="@drawable/doodle_tutorial"/>
+
+    <TextView
+        android:id="@+id/txtYourFriendDoesntNeedPeppermint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/imgDoodle"
+        android:gravity="center"
+        android:textColor="@color/white"
+        android:textSize="20dp"
+        android:text="@string/your_friend_doesnt_need_peppermint"/>
+
+</RelativeLayout>

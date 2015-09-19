@@ -48,7 +48,7 @@ public class HttpClientService extends Service {
         /**
          * Retrieves and pops the finish (error or success) HTTP request event associated with the
          * specified request UUID. <br />
-         * This is useful for activities that are in the background when a particular HTTP request finishes.<br />
+         * This is useful for activities that are in the background_gradient when a particular HTTP request finishes.<br />
          * Through this method, the finish event can be checked and retrieved later during {@link Activity#onStart()}.
          * @param requestUuid the request UUID
          * @return the finish HTTP request event
@@ -79,8 +79,8 @@ public class HttpClientService extends Service {
     }
 
     /**
-     * Runnable that cancels a particular request in a secondary/background thread.<br />
-     * This must happen in a background thread since the {@link HttpClientRunnable#cancel()} invokes the {@link HttpURLConnection#disconnect()} method.
+     * Runnable that cancels a particular request in a secondary/background_gradient thread.<br />
+     * This must happen in a background_gradient thread since the {@link HttpClientRunnable#cancel()} invokes the {@link HttpURLConnection#disconnect()} method.
      */
     public class CancelRunnable implements Runnable {
         private HttpRequest mRequest;
@@ -156,7 +156,7 @@ public class HttpClientService extends Service {
     protected Map<UUID, HttpClientServiceEvent> mFinishedRequests = new HashMap<>();
 
     /**
-     * Listens for events triggered by the {@link HttpClientRunnable} in a background thread.
+     * Listens for events triggered by the {@link HttpClientRunnable} in a background_gradient thread.
      */
     protected HttpClientRunnableListener mListener = new HttpClientRunnableListener() {
         @Override
