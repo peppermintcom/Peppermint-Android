@@ -46,7 +46,7 @@ public class TutorialActivity extends Activity implements FragmentManager.OnBack
         mFragmentClassList.add(T2RecordFragment.class);
         mFragmentClassList.add(T3ReceiveFragment.class);
 
-        mPaginatorRes = new int[]{R.drawable.paginator1, R.drawable.paginator2, R.drawable.paginator3};
+        mPaginatorRes = new int[]{R.drawable.img_paginator1, R.drawable.img_paginator2, R.drawable.img_paginator3};
     }
 
     @Override

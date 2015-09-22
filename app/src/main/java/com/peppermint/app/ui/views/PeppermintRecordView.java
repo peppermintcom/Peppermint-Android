@@ -187,8 +187,8 @@ public class PeppermintRecordView extends View {
 
         float angle = (mProgress / mTotalLength * 360f) + 45f;
 
-        Drawable eye = Utils.getDrawable(getContext(), R.drawable.logo_eye);
-        Drawable mouth = Utils.getDrawable(getContext(), R.drawable.logo_mouth);
+        Drawable eye = Utils.getDrawable(getContext(), R.drawable.img_logo_eye);
+        Drawable mouth = Utils.getDrawable(getContext(), R.drawable.img_logo_mouth);
 
         float xxRef =  (mCenterX - (mFullSideLength/6.5f));
         float yyRef =  (mCenterY - (mFullSideLength/5.5f));

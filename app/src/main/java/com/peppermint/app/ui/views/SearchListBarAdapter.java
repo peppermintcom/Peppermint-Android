@@ -18,19 +18,19 @@ import java.util.List;
  *
  * Adapter for the Custom Action Bar List Items.
  */
-public class ActionBarListAdapter<T extends ActionBarView.ListItem> extends ArrayAdapter<T> {
+public class SearchListBarAdapter<T extends SearchListBarView.ListItem> extends ArrayAdapter<T> {
 
     private LayoutInflater mLayoutInflater;
     private Typeface mTypeface;
     private List<T> mObjects;
 
-    public ActionBarListAdapter(Context context, List<T> objects) {
+    public SearchListBarAdapter(Context context, List<T> objects) {
         super(context, 0, objects);
         this.mObjects = objects;
         this.mLayoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
-    public ActionBarListAdapter(Typeface font, Context context, List<T> objects) {
+    public SearchListBarAdapter(Typeface font, Context context, List<T> objects) {
         super(context, 0, objects);
         this.mObjects = objects;
         this.mTypeface = font;
@@ -50,7 +50,7 @@ public class ActionBarListAdapter<T extends ActionBarView.ListItem> extends Arra
             nameView.setTypeface(mTypeface);
         }
 
-        ActionBarView.ListItem item = getItem(position);
+        SearchListBarView.ListItem item = getItem(position);
 
         iconView.setImageResource(item.getDrawableResource());
         nameView.setText(item.getText());

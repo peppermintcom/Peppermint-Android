@@ -5,6 +5,7 @@ import android.animation.PropertyValuesHolder;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -72,7 +73,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) getActivity().getApplication();
 
-        View v = inflater.inflate(R.layout.f_record_layout, container, false);
+        View v = inflater.inflate(R.layout.f_recording_layout, container, false);
 
         mTxtDuration = (TextView) v.findViewById(R.id.duration);
         mTxtTap = (TextView) v.findViewById(R.id.tap);
@@ -206,6 +207,8 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     public void onStopRecording(RecordService.Event event) {
         mRecordView.stop();
         onBoundRecording();
+        mLastLoudnessFactor = 1f;
+
         if(mPressedSend) {
             mPreferences.addRecentContactUri(event.getRecipient().getId());
 
@@ -269,7 +272,11 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     public void onBoundRecording() {
         if(!mRecordManager.isRecording() || mRecordManager.isPaused()) {
             mBtnPauseResume.setText(R.string.resume);
-            mBtnPauseResume.setCompoundDrawablesWithIntrinsicBounds(null, Utils.getDrawable(getActivity(), R.drawable.ic_resume_states), null, null);
+            if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+                mBtnPauseResume.setCompoundDrawablesWithIntrinsicBounds(null, Utils.getDrawable(getActivity(), R.drawable.ic_resume_states), null, null);
+            } else {
+                mBtnPauseResume.setCompoundDrawablesWithIntrinsicBounds(Utils.getDrawable(getActivity(), R.drawable.ic_resume_states), null, null, null);
+            }
 
             if(mFirstRun) {
                 mFirstRun = false;
@@ -282,7 +289,11 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
             }
         } else {
             mBtnPauseResume.setText(R.string.pause);
-            mBtnPauseResume.setCompoundDrawablesWithIntrinsicBounds(null, Utils.getDrawable(getActivity(), R.drawable.ic_pause_states), null, null);
+            if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+                mBtnPauseResume.setCompoundDrawablesWithIntrinsicBounds(null, Utils.getDrawable(getActivity(), R.drawable.ic_resume_states), null, null);
+            } else {
+                mBtnPauseResume.setCompoundDrawablesWithIntrinsicBounds(Utils.getDrawable(getActivity(), R.drawable.ic_resume_states), null, null, null);
+            }
         }
     }
 }

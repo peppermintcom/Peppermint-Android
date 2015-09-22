@@ -1,42 +1,43 @@
 package com.peppermint.app;
 
-import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.app.Fragment;
 import android.widget.Toast;
 
+import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.recipients.RecipientsFragment;
+import com.peppermint.app.ui.views.NavigationItem;
 
-public class MainActivity extends FragmentActivity {
+import java.util.ArrayList;
+import java.util.List;
 
-    private static final String FRAGMENT_TAG = "RecipientsFragment";
-
-    private RecipientsFragment mFragment;
+public class MainActivity extends CustomActionBarActivity {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.a_main_layout);
-
-        if (savedInstanceState != null) {
-            mFragment = (RecipientsFragment) getFragmentManager().findFragmentByTag(FRAGMENT_TAG);
-            return; // avoids duplicate fragments
-        }
-
-        // show intro screen
-        mFragment = new RecipientsFragment();
-        getFragmentManager().beginTransaction().add(R.id.container, mFragment, FRAGMENT_TAG).commit();
+    protected List<NavigationItem> getNavigationItems() {
+        final List<NavigationItem> navItems = new ArrayList<>();
+        navItems.add(new NavigationItem("Contacts", R.drawable.ic_drawer_contacts, RecipientsFragment.class));
+        navItems.add(new NavigationItem("Settings", R.drawable.ic_drawer_settings, RecipientsFragment.class));
+        navItems.add(new NavigationItem("Help & Feedback", R.drawable.ic_drawer_help, RecipientsFragment.class, true));
+        return navItems;
     }
 
     @Override
     public void onBackPressed() {
-        int stepsLeft = mFragment.clearFilters();
-        if(stepsLeft <= 0) {
-            super.onBackPressed();
+        Fragment fragment = getCurrentFragment();
+
+        if(fragment instanceof RecipientsFragment) {
+            int stepsLeft = ((RecipientsFragment) fragment).clearFilters();
+            if (stepsLeft <= 0) {
+                super.onBackPressed();
+                return;
+            }
+
+            if (stepsLeft <= 1) {
+                Toast.makeText(MainActivity.this, R.string.msg_press_back_again_exit, Toast.LENGTH_SHORT).show();
+            }
             return;
         }
 
-        if(stepsLeft <= 1) {
-            Toast.makeText(MainActivity.this, R.string.msg_press_back_again_exit, Toast.LENGTH_SHORT).show();
-        }
+        super.onBackPressed();
     }
 }

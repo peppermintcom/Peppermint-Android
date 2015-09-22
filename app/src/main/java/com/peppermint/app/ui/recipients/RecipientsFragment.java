@@ -6,48 +6,39 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Html;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
-import android.widget.ImageButton;
-import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientType;
-import com.peppermint.app.ui.recording.RecordingFragment;
+import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.recording.RecordingActivity;
-import com.peppermint.app.ui.views.ActionBarListAdapter;
-import com.peppermint.app.ui.views.ActionBarView;
+import com.peppermint.app.ui.recording.RecordingFragment;
 import com.peppermint.app.ui.views.PeppermintLoadingView;
+import com.peppermint.app.ui.views.SearchListBarAdapter;
+import com.peppermint.app.ui.views.SearchListBarView;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.PepperMintPreferences;
-import com.peppermint.app.utils.Utils;
 
 import java.util.List;
 
-public class RecipientsFragment extends ListFragment implements AdapterView.OnItemClickListener, ActionBarView.OnSearchListener {
+public class RecipientsFragment extends ListFragment implements AdapterView.OnItemClickListener, SearchListBarView.OnSearchListener {
 
-    private static final int REQUEST_RECORD = 1;
+    public static final int REQUEST_RECORD = 1;
 
     // Keys to save the Instance State
     private static final String RECIPIENT_TYPE_POS_KEY = "RecipientsFragment_RecipientTypePosition";
     private static final String RECIPIENT_TYPE_SEARCH_KEY = "RecipientsFragment_RecipientTypeSearch";
 
     private PepperMintPreferences mPreferences;
-
-    // The Menu Button
-    private ImageButton mMenuButton;
-
-    // The Custom Action Bar (with Recipient Type Filter and Recipient Search)
-    private ActionBarView mActionBarView;
-    private ActionBarListAdapter<RecipientType> mRecipientTypeAdapter;
+    private CustomActionBarActivity mActivity;
 
     // The Recipient List
     private View mRecipientListContainer;
@@ -56,6 +47,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private boolean mRecipientListShown;
     private BaseAdapter mRecipientAdapter;
 
+    // The Custom Action Bar (with Recipient Type Filter and Recipient Search)
+    private SearchListBarView mSearchListBarView;
+    private SearchListBarAdapter<RecipientType> mRecipientTypeAdapter;
+
     public RecipientsFragment() {
     }
 
@@ -63,54 +58,42 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         mPreferences = new PepperMintPreferences(activity);
+        mActivity = (CustomActionBarActivity) activity;
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) getActivity().getApplication();
 
-        View v = inflater.inflate(R.layout.f_recipients_layout, container, false);
-
-        // bo: adjust status bar height
-        int statusBarHeight = Utils.getStatusBarHeight(getActivity());
-        v.findViewById(R.id.customActionBarTopSpace).getLayoutParams().height = statusBarHeight;
-        View lytActionBar = v.findViewById(R.id.customActionBar);
-        lytActionBar.getLayoutParams().height = lytActionBar.getLayoutParams().height + statusBarHeight;
-        // eo: adjust status bar height
-
         // global touch interceptor to hide keyboard
-        v.findViewById(R.id.touchInterceptor).setOnTouchListener(new View.OnTouchListener() {
+        mActivity.getTouchInterceptor().setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    mActionBarView.removeSearchTextFocus(event);
+                    mSearchListBarView.removeSearchTextFocus(event);
                 }
                 return false;
             }
         });
 
-        // init custom action bar view
-        mRecipientTypeAdapter = new ActionBarListAdapter(app.getFontSemibold(), getActivity(), RecipientType.getAll(getActivity()));
-
-        mActionBarView = (ActionBarView) v.findViewById(R.id.lytRecipientSearchAndList);
-        mActionBarView.setTypeface(app.getFontRegular());
-        mActionBarView.setListAdapter(mRecipientTypeAdapter);
+        // inflate and init custom action bar view
+        mSearchListBarView = (SearchListBarView) inflater.inflate(R.layout.f_recipients_actionbar, null, false);
+        mRecipientTypeAdapter = new SearchListBarAdapter(app.getFontSemibold(), mActivity, RecipientType.getAll(mActivity));
+        mSearchListBarView.setListAdapter(mRecipientTypeAdapter);
+        mSearchListBarView.setTypeface(app.getFontRegular());
 
         int selectedItemPosition = 0;
-        if(savedInstanceState != null) {
+        if (savedInstanceState != null) {
             selectedItemPosition = savedInstanceState.getInt(RECIPIENT_TYPE_POS_KEY, 0);
-            mActionBarView.setSearchText(savedInstanceState.getString(RECIPIENT_TYPE_SEARCH_KEY, null));
+            mSearchListBarView.setSearchText(savedInstanceState.getString(RECIPIENT_TYPE_SEARCH_KEY, null));
         }
-        mActionBarView.setSelectedItemPosition(selectedItemPosition);
+        mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
+        mSearchListBarView.setOnSearchListener(this);
 
-        // init menu view
-        mMenuButton = (ImageButton) v.findViewById(R.id.menu);
-        mMenuButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showMenu(v);
-            }
-        });
+        mActivity.getCustomActionBar().setContents(mSearchListBarView, false);
+
+        // inflate the view
+        View v = inflater.inflate(R.layout.f_recipients_layout, container, false);
 
         // init no recipients view
         TextView txtEmpty1 = (TextView) v.findViewById(R.id.txtEmpty1);
@@ -139,29 +122,29 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        outState.putInt(RECIPIENT_TYPE_POS_KEY, mActionBarView.getSelectedItemPosition());
-        outState.putString(RECIPIENT_TYPE_SEARCH_KEY, mActionBarView.getSearchText());
+        outState.putInt(RECIPIENT_TYPE_POS_KEY, mSearchListBarView.getSelectedItemPosition());
+        outState.putString(RECIPIENT_TYPE_SEARCH_KEY, mSearchListBarView.getSearchText());
         super.onSaveInstanceState(outState);
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        onSearch(mActionBarView.getSearchText());
-        mActionBarView.setOnSearchListener(this);
+        onSearch(mSearchListBarView.getSearchText());
+        mSearchListBarView.setOnSearchListener(this);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        mActionBarView.setOnSearchListener(null);
+        mSearchListBarView.setOnSearchListener(null);
         // just stop the loading view in case it is animated
         mRecipientLoadingView.stop();
     }
 
     @Override
     public void onDestroy() {
-        mActionBarView.deinit();
+        mSearchListBarView.deinit();
         if(mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
             // this closes the cursor inside the adapter
             ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(null);
@@ -176,9 +159,17 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             if(resultCode == Activity.RESULT_OK) {
                 // if the user has gone through the sending process without
                 // discarding the recording, then clear the search filter
-                mActionBarView.clearSearch(0);
+                mSearchListBarView.clearSearch(0);
             }
         }
+    }
+
+    public int clearFilters() {
+        if(mSearchListBarView.isShowingList()) {
+            mSearchListBarView.hideList();
+            return 2;
+        }
+        return (mSearchListBarView.clearSearch(0) ? 1 : 0);
     }
 
     protected void setListShown(boolean shown, boolean animate){
@@ -217,23 +208,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         setListShown(shown, false);
     }
 
-    private void showMenu(View v) {
-        PopupMenu popup = new PopupMenu(getActivity(), v);
-        popup.inflate(R.menu.menu_main);
-        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch (item.getItemId()) {
-                    default:
-                        return false;
-                }
-            }
-
-        });
-        popup.show();
-    }
-
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Intent recordIntent = new Intent(getActivity(), RecordingActivity.class);
@@ -246,18 +220,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         startActivityForResult(recordIntent, REQUEST_RECORD);
     }
 
-    public int clearFilters() {
-        if(mActionBarView.isShowingList()) {
-            mActionBarView.hideList();
-            return 2;
-        }
-        return (mActionBarView.clearSearch(0) ? 1 : 0);
-    }
-
     @Override
     public void onSearch(String filter) {
-        RecipientType recipientType = (RecipientType) mActionBarView.getSelectedItem();
-
+        RecipientType recipientType = (RecipientType) mSearchListBarView.getSelectedItem();
         List<Long> recentList = mPreferences.getRecentContactUris();
 
         if(recentList != null && recentList.size() > 0 && recipientType.isStarred() != null && recipientType.isStarred()) {
@@ -287,4 +252,5 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             }
         });
     }
+
 }

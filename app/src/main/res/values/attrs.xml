@@ -25,7 +25,7 @@
         <attr name="borderColor" format="color" />
     </declare-styleable>
 
-    <declare-styleable name="ActionBarView">
+    <declare-styleable name="SearchListBarView">
         <attr name="hint" format="string" />
         <attr name="listSelector" format="reference" />
     </declare-styleable>

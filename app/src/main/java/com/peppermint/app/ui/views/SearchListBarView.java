@@ -26,7 +26,7 @@ import com.peppermint.app.utils.Utils;
 /**
  * Created by Nuno Luz on 17-09-2015.
  */
-public class ActionBarView extends FrameLayout implements AdapterView.OnItemClickListener {
+public class SearchListBarView extends FrameLayout implements AdapterView.OnItemClickListener {
 
     private static final int MIN_SEARCH_CHARACTERS = 1;
 
@@ -47,7 +47,7 @@ public class ActionBarView extends FrameLayout implements AdapterView.OnItemClic
     private EditText mTxtSearch;
     private ListPopupWindow mListPopupWindow;
 
-    private ActionBarListAdapter mAdapter;
+    private SearchListBarAdapter mAdapter;
     private int mMinSearchCharacters = MIN_SEARCH_CHARACTERS;
     private int mSelectedItemPosition = 0;
 
@@ -71,23 +71,23 @@ public class ActionBarView extends FrameLayout implements AdapterView.OnItemClic
 
     private OnSearchListener mListener;
 
-    public ActionBarView(Context context) {
+    public SearchListBarView(Context context) {
         super(context);
         init(null);
     }
 
-    public ActionBarView(Context context, AttributeSet attrs) {
+    public SearchListBarView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(attrs);
     }
 
-    public ActionBarView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public SearchListBarView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(attrs);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public ActionBarView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public SearchListBarView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         init(attrs);
     }
@@ -134,12 +134,12 @@ public class ActionBarView extends FrameLayout implements AdapterView.OnItemClic
         if(attrs != null) {
             a = getContext().getTheme().obtainStyledAttributes(
                     attrs,
-                    R.styleable.ActionBarView,
+                    R.styleable.SearchListBarView,
                     0, 0);
 
             try {
-                mTxtSearch.setHint(a.getString(R.styleable.ActionBarView_hint));
-                mListPopupWindow.setListSelector(Utils.getDrawable(getContext(), a.getResourceId(R.styleable.ActionBarView_listSelector, R.drawable.background_transparent_to_solid_pressed)));
+                mTxtSearch.setHint(a.getString(R.styleable.SearchListBarView_hint));
+                mListPopupWindow.setListSelector(Utils.getDrawable(getContext(), a.getResourceId(R.styleable.SearchListBarView_listSelector, R.drawable.background_transparent_to_solid_pressed)));
             } finally {
                 a.recycle();
             }
@@ -214,12 +214,12 @@ public class ActionBarView extends FrameLayout implements AdapterView.OnItemClic
         mListPopupWindow.dismiss();
     }
 
-    public void setListAdapter(ActionBarListAdapter adapter) {
+    public void setListAdapter(SearchListBarAdapter adapter) {
         mAdapter = adapter;
         mListPopupWindow.setAdapter(adapter);
     }
 
-    public ActionBarListAdapter getListAdapter() {
+    public SearchListBarAdapter getListAdapter() {
         return mAdapter;
     }
 

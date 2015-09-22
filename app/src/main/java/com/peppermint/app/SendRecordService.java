@@ -253,7 +253,7 @@ public class SendRecordService extends Service {
         // TODO add cancel action to notification perhaps?
         // TODO add progress percentage to the notification whenever possible (depends on sender)
         NotificationCompat.Builder builder = new NotificationCompat.Builder(SendRecordService.this)
-                .setSmallIcon(R.drawable.ic_email_black_36dp)
+                .setSmallIcon(R.drawable.ic_email_36dp)
                 .setContentTitle(getString(R.string.app_name))
                 .setContentText(getString(R.string.sending))
                 .setContentIntent(pendingIntent);

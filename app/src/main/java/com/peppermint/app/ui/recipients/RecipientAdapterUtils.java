@@ -164,9 +164,9 @@ public class RecipientAdapterUtils {
             imgPhoto.setImageURI(Uri.parse(recipient.getPhotoUri()));
         } else {
             if(recipient.getMimeType().equals(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)) {
-                imgPhoto.setImageResource(R.drawable.av_unknown_green);
+                imgPhoto.setImageResource(R.drawable.ic_anonymous_green_30dp);
             } else {
-                imgPhoto.setImageResource(R.drawable.av_unknown_blue);
+                imgPhoto.setImageResource(R.drawable.ic_anonymous_blue_30dp);
             }
         }
 

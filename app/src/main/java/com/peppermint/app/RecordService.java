@@ -381,7 +381,7 @@ public class RecordService extends Service {
         // TODO add pause/resume + send + discard? actions to notification perhaps?
         // TODO add progress in time and perhaps also the recipient's name to notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(RecordService.this)
-                .setSmallIcon(R.drawable.ic_mic)
+                .setSmallIcon(R.drawable.ic_mic_24dp)
                 .setContentTitle(getString(R.string.app_name))
                 .setContentText(getString(mBinder.isPaused() ? R.string.paused : R.string.recording))
                 .setContentIntent(pendingIntent);

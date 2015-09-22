@@ -33,7 +33,7 @@
                 android:layout_marginBottom="?attr/tutorialMargin"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/paginator1"/>
+                android:src="@drawable/img_paginator1"/>
 
             <FrameLayout
                 android:id="@+id/container"

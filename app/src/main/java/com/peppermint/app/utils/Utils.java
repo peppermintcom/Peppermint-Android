@@ -1,6 +1,8 @@
 package com.peppermint.app.utils;
 
+import android.content.ContentUris;
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -10,6 +12,7 @@ import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
+import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.view.Display;
@@ -246,5 +249,23 @@ public class Utils {
             result = context.getResources().getDimensionPixelSize(resourceId);
         }
         return result;
+    }
+
+    public static String[] getUserData(Context context) {
+        String[] data = new String[2];
+        Cursor cursor = context.getContentResolver().query(ContactsContract.Profile.CONTENT_URI, null, null, null, null);
+        if(cursor != null) {
+            if (cursor.getCount() == 1 && cursor.moveToFirst()) {
+                data[0] = cursor.getString(cursor.getColumnIndex(ContactsContract.Profile.DISPLAY_NAME));
+                long photoId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Profile.PHOTO_URI));
+                if(photoId > 0) {
+                    data[1] = ContentUris.withAppendedId(ContactsContract.Data.CONTENT_URI,
+                            photoId).toString();
+                }
+            }
+            cursor.close();
+        }
+
+        return data;
     }
 }

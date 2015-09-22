@@ -181,7 +181,7 @@ public class PeppermintLoadingView extends View {
         canvas.drawPath(fullPath, mBackground1Paint);
         canvas.drawPath(progressPath, mBackground2Paint);
 
-        Drawable eye = Utils.getDrawable(getContext(), R.drawable.logo_eye);
+        Drawable eye = Utils.getDrawable(getContext(), R.drawable.img_logo_eye);
         eye.setColorFilter(mBackground2Paint.getColor(), PorterDuff.Mode.MULTIPLY);
 
         float xxRef =  (mCenterX - (mFullSideLength/6.5f));

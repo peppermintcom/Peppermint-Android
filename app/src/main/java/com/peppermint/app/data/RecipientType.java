@@ -4,7 +4,7 @@ import android.content.Context;
 import android.provider.ContactsContract;
 
 import com.peppermint.app.R;
-import com.peppermint.app.ui.views.ActionBarView;
+import com.peppermint.app.ui.views.SearchListBarView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.List;
  *
  * Represents the allowed types of Recipients and the restrictions that define them.
  */
-public class RecipientType implements ActionBarView.ListItem {
+public class RecipientType implements SearchListBarView.ListItem {
 
     private long mId;
     private String mName;

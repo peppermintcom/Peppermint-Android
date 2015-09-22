@@ -12,7 +12,7 @@
         android:layout_alignParentTop="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/doodle_message_tutorial"/>
+        android:src="@drawable/img_doodle_message_tutorial"/>
 
     <ImageView
         android:id="@+id/imgDoodle"
@@ -21,7 +21,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="40dp"
-        android:src="@drawable/doodle_tutorial"/>
+        android:src="@drawable/img_doodle_tutorial"/>
 
     <TextView
         android:id="@+id/txtYourFriendDoesntNeedPeppermint"

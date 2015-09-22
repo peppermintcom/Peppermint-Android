@@ -4,6 +4,6 @@
     <item android:right="30dp">
         <bitmap
             android:gravity="center_vertical|left"
-            android:src="@drawable/ic_arrow_down" />
+            android:src="@drawable/ic_arrow_down_5dp" />
     </item>
 </layer-list>
