@@ -21,7 +21,7 @@ import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientType;
-import com.peppermint.app.ui.recording.RecordFragment;
+import com.peppermint.app.ui.recording.RecordingFragment;
 import com.peppermint.app.ui.recording.RecordingActivity;
 import com.peppermint.app.ui.views.ActionBarListAdapter;
 import com.peppermint.app.ui.views.ActionBarView;
@@ -242,7 +242,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 ((RecipientCursorAdapter) mRecipientAdapter).getRecipient(position) :
                 ((RecipientArrayAdapter) mRecipientAdapter).getItem(position);
 
-        recordIntent.putExtra(RecordFragment.INTENT_RECIPIENT_EXTRA, recipient);
+        recordIntent.putExtra(RecordingFragment.INTENT_RECIPIENT_EXTRA, recipient);
         startActivityForResult(recordIntent, REQUEST_RECORD);
     }
 

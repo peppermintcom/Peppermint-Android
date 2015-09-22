@@ -14,7 +14,7 @@ import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import com.peppermint.app.data.Recipient;
-import com.peppermint.app.ui.recording.RecordFragment;
+import com.peppermint.app.ui.recording.RecordingFragment;
 import com.peppermint.app.ui.recording.RecordingActivity;
 import com.peppermint.app.utils.ExtendedMediaRecorder;
 
@@ -370,7 +370,7 @@ public class RecordService extends Service {
 
     private Notification getNotification() {
         Intent notificationIntent = new Intent(this, RecordingActivity.class);
-        notificationIntent.putExtra(RecordFragment.INTENT_RECIPIENT_EXTRA, mRecipient);
+        notificationIntent.putExtra(RecordingFragment.INTENT_RECIPIENT_EXTRA, mRecipient);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         // make sure that the main activity of the app is present in the backstack
         stackBuilder.addParentStack(RecordingActivity.class);

@@ -11,6 +11,8 @@
         <attr name="progressFillColor" format="color" />
         <attr name="backgroundColor1" format="color"/>
         <attr name="backgroundColor2" format="color"/>
+        <attr name="pressedBackgroundColor1" format="color"/>
+        <attr name="pressedBackgroundColor2" format="color"/>
 
         <!-- PeppermintLoadingView -->
         <attr name="textFont" format="string" />

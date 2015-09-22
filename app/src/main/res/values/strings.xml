@@ -26,8 +26,7 @@
     <string name="recipient_type_phone">Phone Contacts</string>
     <string name="recipient_type_recent">Recent Contacts</string>
     <string name="send">Send</string>
-    <string name="tap_to_pause">Tap to Pause</string>
-    <string name="tap_to_resume">Tap to Resume</string>
+    <string name="tap_to_send">Tap to Send</string>
 
     <string name="recording">Recording…</string>
     <string name="paused">Paused</string>
@@ -79,5 +78,8 @@
     
     <string name="msg_no_contacts">No contacts\nhave been found</string>
     <string name="msg_add_some_friends"><![CDATA[Add some friends to your contact book first and come back to <font color="%1$s">Peppermint</font>]]></string>
+    <string name="rerecord">Re-Record</string>
+    <string name="record_message">Record Message</string>
+    <string name="msg_record_at_least">Please record at least 2 seconds before sending</string>
 
 </resources>

@@ -42,14 +42,16 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="40dp"
                 android:textSize="50dp"
-                android:text="0m 0s"/>
+                android:textColor="@color/dark_green_text"
+                android:text="0:00"/>
 
             <TextView
                 android:id="@+id/tap"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="24dp"
-                android:text="@string/tap_to_pause"/>
+                android:textColor="@color/grey_text"
+                android:text="@string/tap_to_send"/>
 
         </LinearLayout>
 

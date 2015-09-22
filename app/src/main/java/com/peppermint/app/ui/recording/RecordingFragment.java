@@ -6,23 +6,30 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.RecordService;
 import com.peppermint.app.RecordServiceManager;
 import com.peppermint.app.SendRecordServiceManager;
 import com.peppermint.app.data.Recipient;
-import com.peppermint.app.ui.views.PeppermintRecordView;
+import com.peppermint.app.ui.views.AnimatedGIFView;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
 
-public class RecordFragment extends Fragment implements RecordServiceManager.Listener {//, SendRecordServiceManager.Listener {
+public class RecordingFragment extends Fragment implements RecordServiceManager.Listener {//, SendRecordServiceManager.Listener {
+
+    private static final String TAG = RecordingFragment.class.getSimpleName();
 
     private static final String DEFAULT_FILENAME = "Peppermint";
 
@@ -34,18 +41,20 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
     private PepperMintPreferences mPreferences;
     private RecordServiceManager mRecordManager;
 
-    private PeppermintRecordView mRecordView;
+    //private PeppermintRecordView mRecordView;
+    private AnimatedGIFView mRecordView;
+
     private TextView mTxtDuration;
     private TextView mTxtTap;
-    private Button mBtnSend;
+    private Button mBtnRestart, mBtnPauseResume;
 
     private boolean mFirstRun = false;
     private boolean mSavedState = false;
     private float mLastLoudnessFactor = 1.0f;
-    private boolean mPressedSend = false;
+    private boolean mPressedSend = false, mPressedRestart = false;
     private String mFilename = DEFAULT_FILENAME;
 
-    public RecordFragment() {
+    public RecordingFragment() {
     }
 
     @Override
@@ -61,38 +70,75 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        PeppermintApp app = (PeppermintApp) getActivity().getApplication();
+
         View v = inflater.inflate(R.layout.f_record_layout, container, false);
 
         mTxtDuration = (TextView) v.findViewById(R.id.duration);
         mTxtTap = (TextView) v.findViewById(R.id.tap);
-        mBtnSend = (Button) v.findViewById(R.id.send);
-        mRecordView = (PeppermintRecordView) v.findViewById(R.id.record_state);
+        mBtnRestart = (Button) v.findViewById(R.id.btnRestart);
+        mBtnPauseResume = (Button) v.findViewById(R.id.btnPauseResume);
+        //mRecordView = (PeppermintRecordView) v.findViewById(R.id.record_state);
+        mRecordView = (AnimatedGIFView) v.findViewById(R.id.record_state);
 
-        mBtnSend.setOnClickListener(new View.OnClickListener() {
+        mBtnRestart.setTypeface(app.getFontSemibold());
+        mBtnRestart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mPressedSend = true;
+                mPressedRestart = true;
                 mRecordManager.stopRecording();
+                mRecordManager.discard();
+                Recipient recipient = (Recipient) getActivity().getIntent().getExtras().get(INTENT_RECIPIENT_EXTRA);
+                mRecordManager.startRecording(mFilename, recipient);
             }
         });
 
-        View lytTap = v.findViewById(R.id.tapLayout);
-        lytTap.setOnClickListener(new View.OnClickListener() {
+        mBtnPauseResume.setTypeface(app.getFontSemibold());
+        mBtnPauseResume.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 if (!mRecordManager.isRecording()) {
                     Recipient recipient = (Recipient) getActivity().getIntent().getExtras().get(INTENT_RECIPIENT_EXTRA);
                     mRecordManager.startRecording(mFilename, recipient);
                     return;
                 }
 
-                if (mRecordManager.isPaused()) {
-                    mRecordManager.resumeRecording();
-                } else {
-                    mRecordManager.pauseRecording();
+                try {
+                    if (mRecordManager.isPaused()) {
+                        mRecordManager.resumeRecording();
+                    } else {
+                        mRecordManager.pauseRecording();
+                    }
+                } catch (RuntimeException e) {
+                    Log.e(TAG, e.getMessage(), e);
                 }
             }
         });
+
+        mTxtDuration.setTypeface(app.getFontSemibold());
+        mTxtTap.setTypeface(app.getFontSemibold());
+
+        mRecordView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(RecordingFragment.this.getActivity(), R.string.msg_record_at_least, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mRecordView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        mPressedSend = true;
+                        mRecordManager.stopRecording();
+                    }
+                });
+            }
+        }, 2000);
 
         if(savedInstanceState != null) {
             return v;
@@ -152,11 +198,13 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
 
     @Override
     public void onStartRecording(RecordService.Event event) {
+        mRecordView.start();
         onBoundRecording();
     }
 
     @Override
     public void onStopRecording(RecordService.Event event) {
+        mRecordView.stop();
         onBoundRecording();
         if(mPressedSend) {
             mPreferences.addRecentContactUri(event.getRecipient().getId());
@@ -174,17 +222,19 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
     @Override
     public void onResumeRecording(RecordService.Event event) {
         onBoundRecording();
+        mRecordView.start();
     }
 
     @Override
     public void onPauseRecording(RecordService.Event event) {
         onBoundRecording();
+        mRecordView.stop();
     }
 
     @Override
     public void onLoudnessRecording(RecordService.Event event) {
         float duration = ((float)(event.getFullDuration() + event.getCurrentDuration())) / 1000f;
-        mRecordView.setSeconds(duration);
+        //mRecordView.setSeconds(duration);
 
         long mins = (long) duration / 60;
         long secs = (long) duration % 60;
@@ -193,7 +243,7 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
             mins = mins % 60;
         }
 
-        mTxtDuration.setText((hours > 0 ? hours + "h " : "") + mins + "m " + secs + "s");
+        mTxtDuration.setText((hours > 0 ? hours + ":" : "") + mins + ":" + (secs < 10 ? "0" : "") + secs);
 
         ObjectAnimator scaleAnimator = new ObjectAnimator();
         scaleAnimator.setDuration(100);
@@ -218,7 +268,8 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
     @Override
     public void onBoundRecording() {
         if(!mRecordManager.isRecording() || mRecordManager.isPaused()) {
-            mTxtTap.setText(R.string.tap_to_resume);
+            mBtnPauseResume.setText(R.string.resume);
+            mBtnPauseResume.setCompoundDrawablesWithIntrinsicBounds(null, Utils.getDrawable(getActivity(), R.drawable.ic_resume_states), null, null);
 
             if(mFirstRun) {
                 mFirstRun = false;
@@ -230,7 +281,8 @@ public class RecordFragment extends Fragment implements RecordServiceManager.Lis
                 }
             }
         } else {
-            mTxtTap.setText(R.string.tap_to_pause);
+            mBtnPauseResume.setText(R.string.pause);
+            mBtnPauseResume.setCompoundDrawablesWithIntrinsicBounds(null, Utils.getDrawable(getActivity(), R.drawable.ic_pause_states), null, null);
         }
     }
 }

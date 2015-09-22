@@ -150,16 +150,28 @@ public class ExtendedMediaRecorder {
 
     protected long stopRecording() {
         if(mRecorder != null) {
-            mRecorder.stop();
+            RuntimeException e = null;
+
+            try {
+                mRecorder.stop();
+            } catch(RuntimeException ex) {
+                e = ex;
+            }
 
             long currentDuration = System.currentTimeMillis() - mCurrentStartTime;
-            mFullDuration += currentDuration;
-            mIntermediateFilePaths.add(mCurrentFilePath);
+            if(e == null) {
+                mFullDuration += currentDuration;
+                mIntermediateFilePaths.add(mCurrentFilePath);
+            }
 
             mRecorder.release();
             mRecorder = null;
             mCurrentStartTime = 0;
             mCurrentFilePath = null;
+
+            if(e != null) {
+                throw e;
+            }
 
             return currentDuration;
         }

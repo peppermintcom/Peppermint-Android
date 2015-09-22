@@ -27,6 +27,8 @@ import com.peppermint.app.utils.Utils;
  */
 public class PeppermintRecordView extends View {
 
+    private static final int DEF_DESIRED_SIZE_DP = 150;
+
     private static final int DEF_CORNER_RADIUS_DP = 50;
     private static final int DEF_PROGRESS_THICKNESS_DP = 10;
 
@@ -34,6 +36,8 @@ public class PeppermintRecordView extends View {
     private static final String DEF_PROGRESS_FILL_COLOR = "#1f8479";
     private static final String DEF_BACKGROUND_COLOR1 = "#68c4a3";
     private static final String DEF_BACKGROUND_COLOR2 = "#2ebdb2";
+    private static final String DEF_PRESSED_BACKGROUND_COLOR1 = "#000000";
+    private static final String DEF_PRESSED_BACKGROUND_COLOR2 = "#000000";
 
     private float mHeight, mWidth;
     private float mCornerRadius;
@@ -48,9 +52,9 @@ public class PeppermintRecordView extends View {
     private float mProgress;
 
     private float mHalfEyeSize;
-    private int mProgressEmptyColor, mProgressFillColor, mBackgroundColor1, mBackgroundColor2;
+    private int mProgressEmptyColor, mProgressFillColor, mBackgroundColor1, mBackgroundColor2, mPressedBackgroundColor1, mPressedBackgroundColor2;
 
-    private Paint mProgressPaint, mEmptyProgressPaint, mPaintMask, mPaintBackground;
+    private Paint mProgressPaint, mEmptyProgressPaint, mPaintMask, mPaintBackground, mPaintBackgroundPressed;
     private boolean mFillBackground;
 
     public PeppermintRecordView(Context context) {
@@ -91,6 +95,8 @@ public class PeppermintRecordView extends View {
                 mProgressFillColor = a.getColor(R.styleable.PeppermintView_progressFillColor, Color.parseColor(DEF_PROGRESS_FILL_COLOR));
                 mBackgroundColor1 = a.getColor(R.styleable.PeppermintView_backgroundColor1, Color.parseColor(DEF_BACKGROUND_COLOR1));
                 mBackgroundColor2 = a.getColor(R.styleable.PeppermintView_backgroundColor2, Color.parseColor(DEF_BACKGROUND_COLOR2));
+                mPressedBackgroundColor1 = a.getColor(R.styleable.PeppermintView_pressedBackgroundColor1, Color.parseColor(DEF_PRESSED_BACKGROUND_COLOR1));
+                mPressedBackgroundColor2 = a.getColor(R.styleable.PeppermintView_pressedBackgroundColor2, Color.parseColor(DEF_PRESSED_BACKGROUND_COLOR2));
 
                 mSeconds = a.getFloat(R.styleable.PeppermintView_seconds, 0);
 
@@ -111,6 +117,9 @@ public class PeppermintRecordView extends View {
 
                 mPaintBackground = new Paint(Paint.ANTI_ALIAS_FLAG);
                 mPaintBackground.setStyle(Paint.Style.FILL);
+
+                mPaintBackgroundPressed = new Paint(Paint.ANTI_ALIAS_FLAG);
+                mPaintBackgroundPressed.setStyle(Paint.Style.FILL);
             } finally {
                 a.recycle();
             }
@@ -125,8 +134,13 @@ public class PeppermintRecordView extends View {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         mWidth = MeasureSpec.getSize(widthMeasureSpec);
         mHeight = MeasureSpec.getSize(heightMeasureSpec);
+        if(MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.UNSPECIFIED) {
+            mHeight = Utils.dpToPx(getContext(), DEF_DESIRED_SIZE_DP);
+        }
+        if(MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED) {
+            mWidth = Utils.dpToPx(getContext(), DEF_DESIRED_SIZE_DP);
+        }
         this.setMeasuredDimension((int) mWidth, (int) mHeight);
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
         mFullSideLength = (mHeight < mWidth ? mHeight : mWidth);
         mTotalLength = ((mFullSideLength - (2f * mCornerRadius)) * 4f) + (mCornerLength * 4f);
@@ -138,6 +152,9 @@ public class PeppermintRecordView extends View {
 
         calculateProgress();
         mPaintBackground.setShader(new LinearGradient(0, 0, mWidth, mHeight, mBackgroundColor1, mBackgroundColor2, Shader.TileMode.MIRROR));
+        mPaintBackgroundPressed.setShader(new LinearGradient(0, 0, mWidth, mHeight, mPressedBackgroundColor1, mPressedBackgroundColor2, Shader.TileMode.MIRROR));
+
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
     @Override
     public void draw(Canvas canvas) {
@@ -158,10 +175,14 @@ public class PeppermintRecordView extends View {
             canvas.drawPath(progressPath, mProgressPaint);
         }
 
-        if(mFillBackground) {
-            canvas.drawPath(maskPath, mPaintBackground);
+        if(isPressed()) {
+            canvas.drawPath(maskPath, mPaintBackgroundPressed);
         } else {
-            canvas.drawPath(maskPath, mPaintMask);
+            if (mFillBackground) {
+                canvas.drawPath(maskPath, mPaintBackground);
+            } else {
+                canvas.drawPath(maskPath, mPaintMask);
+            }
         }
 
         float angle = (mProgress / mTotalLength * 360f) + 45f;

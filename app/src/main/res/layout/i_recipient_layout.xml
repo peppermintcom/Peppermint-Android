@@ -44,15 +44,14 @@
                 android:layout_height="wrap_content"
                 android:text="@string/via"
                 android:textColor="@drawable/color_grey_to_white_pressed"
-                android:layout_marginRight="5dp"/>
+                android:layout_marginRight="5dp" />
 
             <TextView
                 android:id="@+id/txtContact"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@drawable/color_green_to_white_pressed"
-                android:textStyle="bold"
-                />
+                android:textStyle="bold" />
         </LinearLayout>
 
 

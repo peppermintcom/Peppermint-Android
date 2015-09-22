@@ -1,11 +1,64 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_marginTop="?android:attr/actionBarSize">
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/customActionBar"
+        android:layout_alignParentTop="true"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        style="?attr/customActionBarStyle">
+
+        <FrameLayout
+            android:id="@+id/customActionBarTopSpace"
+            android:layout_alignParentTop="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        </FrameLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="10dp"
+                android:padding="5dp"
+                android:background="@drawable/background_ripple"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_back"/>
+
+            <TextView
+                android:id="@+id/txtRecordMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:textColor="@color/white"
+                android:layout_marginLeft="33dp"
+                android:textSize="18dp"
+                android:text="@string/record_message"/>
+
+            <TextView
+                android:id="@+id/txtRecipient"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginLeft="33dp"
+                android:textColor="@color/dark_green_text"
+                android:layout_below="@id/txtRecordMessage"
+                android:text="for Bob Adams"/>
+
+        </RelativeLayout>
+    </LinearLayout>
 
     <FrameLayout
-        android:layout_alignParentTop="true"
+        android:layout_below="@id/customActionBar"
         android:id="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="match_parent">

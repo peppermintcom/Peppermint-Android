@@ -62,6 +62,9 @@ public class ActionBarView extends FrameLayout implements AdapterView.OnItemClic
 
         @Override
         public void afterTextChanged(Editable s) {
+            if(mTxtSearch.length() <= 0) {
+                innerSetSelectedItemPosition(0);
+            }
             doSearch();
         }
     };

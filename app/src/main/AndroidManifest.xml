@@ -35,7 +35,9 @@
         </activity>
         <activity
             android:name=".ui.recording.RecordingActivity"
+            android:hardwareAccelerated="false"
             android:label="@string/title_activity_record"
+            android:theme="@style/Peppermint.Theme.NoActionBar"
             android:parentActivityName=".MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
