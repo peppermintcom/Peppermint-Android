@@ -4,12 +4,15 @@ import android.app.Fragment;
 
 /**
  * Created by Nuno Luz (nluz@mobaton.com) on 21-08-2015.
+ *
+ * Represents the data of an item in the navigation drawer menu.
  */
 public class NavigationItem {
 
     protected String mTitle;
     protected int mIconResId;
     protected Class<? extends Fragment> mFragmentClass;
+    protected Runnable mRunnable;
     protected String mTag;
     protected boolean mShowSeparator = false;
 
@@ -17,12 +20,20 @@ public class NavigationItem {
         this.mIconResId = iconResId;
         this.mTitle = title;
         this.mFragmentClass = fragmentClass;
-        this.mTag = fragmentClass.getName();
+        if(fragmentClass != null) {
+            this.mTag = fragmentClass.getName();
+        }
     }
 
     public NavigationItem(String title, int iconResId, Class<? extends Fragment> fragmentClass, boolean showSeparator) {
         this(title, iconResId, fragmentClass);
         this.mShowSeparator = showSeparator;
+    }
+
+    public NavigationItem(String title, int iconResId, Runnable runnable, boolean showSeparator) {
+        this(title, iconResId, null);
+        this.mShowSeparator = showSeparator;
+        this.mRunnable = runnable;
     }
 
     public String getTitle() {
@@ -63,5 +74,13 @@ public class NavigationItem {
 
     public void setShowSeparator(boolean mShowSeparator) {
         this.mShowSeparator = mShowSeparator;
+    }
+
+    public Runnable getRunnable() {
+        return mRunnable;
+    }
+
+    public void setRunnable(Runnable mRunnable) {
+        this.mRunnable = mRunnable;
     }
 }

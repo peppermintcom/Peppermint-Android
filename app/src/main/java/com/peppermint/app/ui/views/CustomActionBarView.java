@@ -18,6 +18,8 @@ import java.util.List;
 
 /**
  * Created by Nuno Luz on 22-09-2015.
+ *
+ * Peppermint's custom action bar view.
  */
 public class CustomActionBarView extends RelativeLayout {
 
@@ -49,9 +51,6 @@ public class CustomActionBarView extends RelativeLayout {
     }
 
     private void init(AttributeSet attrs) {
-        if(attrs != null) {
-
-        }
     }
 
     public void initViews() {

@@ -21,17 +21,18 @@
         <activity
             android:name=".ui.tutorial.TutorialActivity"
             android:label="@string/app_name"
-            android:theme="@style/Peppermint.Theme.Fullscreen.Tutorial">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            android:theme="@style/Peppermint.Theme.Fullscreen.Tutorial"
+            android:screenOrientation="portrait">
         </activity>
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
+            android:windowSoftInputMode="stateHidden"
             android:theme="@style/Peppermint.Theme.NoActionBar">
-
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
         <activity
             android:name=".ui.recording.RecordingActivity"

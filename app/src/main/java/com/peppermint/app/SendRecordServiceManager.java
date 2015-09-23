@@ -179,6 +179,10 @@ public class SendRecordServiceManager {
         mService.cancel(uuid);
     }
 
+    public boolean isSending() {
+        return mService.isSending();
+    }
+
     public Listener getListener() {
         return mListener;
     }

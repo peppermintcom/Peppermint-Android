@@ -21,6 +21,8 @@ public class PepperMintPreferences {
     protected static final String HIDE_NONMAIN_CONTACTS_KEY = "hideNonMainContacts";
     protected static final boolean HIDE_NONMAIN_CONTACTS_DEFAULT = false;
 
+    protected static final String IS_FIRST_RUN_KEY = "isFirstRun";
+
     protected static final String MAIL_SUBJECT_KEY = "mailSubject";
     protected static final String MAIL_BODY_KEY = "mailBody";
     protected static final String DISPLAY_NAME_KEY = "displayName";
@@ -162,4 +164,13 @@ public class PepperMintPreferences {
         return name;
     }
 
+    public boolean isFirstRun() {
+        return mSettings.getBoolean(IS_FIRST_RUN_KEY, true);
+    }
+
+    public void setFirstRun(boolean val) {
+        edit();
+        mEditor.putBoolean(IS_FIRST_RUN_KEY, val);
+        commit();
+    }
 }

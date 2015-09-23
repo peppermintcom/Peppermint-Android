@@ -230,12 +230,13 @@ public class GmailSender extends Sender {
         Message message = createMessageWithEmail(email);
         mService.users().messages().send("me", message).execute();
 
+        /*
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
                 Toast.makeText(mContext, String.format(mContext.getString(R.string.msg_message_sent), toName), Toast.LENGTH_SHORT).show();
             }
-        });
+        });*/
     }
 
     /**

@@ -159,6 +159,18 @@ public class AnimatorBuilder {
     }
 
     /**
+     * Builds an animator that fades in and slides in the target view from the bottom (performed simultanously).
+     * See {@link #buildFadeInAnimator(View...)} and {@link #buildSlideInRightAnimator(View)} for more information.
+     * @param v the target view
+     * @return the animator
+     */
+    public Animator buildFadeSlideInBottomAnimator(View v) {
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(buildFadeInAnimator(v), buildSlideInBottomAnimator(v));
+        return set;
+    }
+
+    /**
      * Builds an animator that simultaneously fades in all the target views.
      * @param views the set of target views
      * @return the animator
@@ -210,10 +222,37 @@ public class AnimatorBuilder {
         scaleAnimator.setInterpolator(new LinearInterpolator());
 
         scaleAnimator.setValues(
-            PropertyValuesHolder.ofFloat("scaleX", 0f, 1f),
-            PropertyValuesHolder.ofFloat("scaleY", 0f, 1f));
+                PropertyValuesHolder.ofFloat("scaleX", 0f, 1f),
+                PropertyValuesHolder.ofFloat("scaleY", 0f, 1f));
 
         return scaleAnimator;
+    }
+
+    /**
+     * Builds an animator that that slides in the target view from the bottom.
+     * @param v the target view
+     * @return the animator
+     */
+    public Animator buildSlideInBottomAnimator(View v) {
+        ObjectAnimator slideAnimator = ObjectAnimator.ofFloat(v, "translationY", Utils.percentScreenHeightToPx(v.getContext(), 100), 0);
+        slideAnimator.setDuration(800);
+        slideAnimator.setInterpolator(new DecelerateInterpolator());
+        return slideAnimator;
+    }
+
+    /**
+     * Builds an animator that that slides out the target view to the bottom.
+     * @param delay the delay in ms to start sliding
+     * @param v the target view
+     * @param originY the original translation value (typically 0, but may be another value if the target view is already translated)
+     * @return the animator
+     */
+    public Animator buildSlideOutBottomAnimator(int delay, View v, float originY) {
+        ObjectAnimator slideAnimator = ObjectAnimator.ofFloat(v, "translationY", originY, Utils.percentScreenHeightToPx(v.getContext(), 100));
+        slideAnimator.setStartDelay(delay);
+        slideAnimator.setDuration(800);
+        slideAnimator.setInterpolator(new DecelerateInterpolator());
+        return slideAnimator;
     }
 
     /**

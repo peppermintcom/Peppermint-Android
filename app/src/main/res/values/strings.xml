@@ -82,5 +82,7 @@
     <string name="record_message">Record Message</string>
     <string name="msg_record_at_least">Please record at least 2 seconds before sending</string>
     <string name="_for">for</string>
+    <string name="menu_contacts">Contacts</string>
+    <string name="menu_tutorial">Tutorial</string>
 
 </resources>

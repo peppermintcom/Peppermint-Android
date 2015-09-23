@@ -130,6 +130,10 @@ public abstract class Sender {
         return mUuid;
     }
 
+    public boolean isSending() {
+        return mTaskMap.size() > 0;
+    }
+
     public Sender getFailureChainSender() {
         return mFailureChainSender;
     }

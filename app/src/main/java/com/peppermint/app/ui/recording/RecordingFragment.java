@@ -290,9 +290,9 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
         } else {
             mBtnPauseResume.setText(R.string.pause);
             if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-                mBtnPauseResume.setCompoundDrawablesWithIntrinsicBounds(null, Utils.getDrawable(getActivity(), R.drawable.ic_resume_states), null, null);
+                mBtnPauseResume.setCompoundDrawablesWithIntrinsicBounds(null, Utils.getDrawable(getActivity(), R.drawable.ic_pause_states), null, null);
             } else {
-                mBtnPauseResume.setCompoundDrawablesWithIntrinsicBounds(Utils.getDrawable(getActivity(), R.drawable.ic_resume_states), null, null, null);
+                mBtnPauseResume.setCompoundDrawablesWithIntrinsicBounds(Utils.getDrawable(getActivity(), R.drawable.ic_pause_states), null, null, null);
             }
         }
     }

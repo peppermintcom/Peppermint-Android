@@ -10,7 +10,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:paddingTop="2dp"
         android:background="@drawable/background_bottombar">
 
         <Button
@@ -83,7 +82,8 @@
             android:layout_marginTop="30dp"
             android:layout_marginBottom="30dp"
             android:layout_marginRight="50dp"
-            android:layout_marginLeft="50dp" />
+            android:layout_marginLeft="50dp"
+            custom:drawablePressed="@drawable/ic_recording_pressed" />
 
         <TextView
             android:id="@+id/tap"

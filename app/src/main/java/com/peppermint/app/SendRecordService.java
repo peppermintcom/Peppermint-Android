@@ -98,6 +98,10 @@ public class SendRecordService extends Service {
         void shutdown() {
             stopSelf();
         }
+
+        boolean isSending() {
+            return SendRecordService.this.isSending();
+        }
     }
 
     // setup a private thread pool to avoid hanging up other AsyncTasks
@@ -206,6 +210,15 @@ public class SendRecordService extends Service {
                 }
                 break;
         }
+    }
+
+    private boolean isSending() {
+        for(Map.Entry<String, Sender> entry : mSenderMap.entrySet()) {
+            if(entry.getValue().isSending()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private UUID send(Recipient recipient, String filePath) {

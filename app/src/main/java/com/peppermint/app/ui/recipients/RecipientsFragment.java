@@ -1,8 +1,10 @@
 package com.peppermint.app.ui.recipients;
 
+import android.animation.Animator;
 import android.app.Activity;
 import android.app.ListFragment;
 import android.content.Intent;
+import android.media.Image;
 import android.os.Bundle;
 import android.text.Html;
 import android.view.LayoutInflater;
@@ -12,20 +14,26 @@ import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
+import com.peppermint.app.SendRecordServiceManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientType;
+import com.peppermint.app.senders.Sender;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.recording.RecordingActivity;
 import com.peppermint.app.ui.recording.RecordingFragment;
 import com.peppermint.app.ui.views.PeppermintLoadingView;
 import com.peppermint.app.ui.views.SearchListBarAdapter;
 import com.peppermint.app.ui.views.SearchListBarView;
+import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.PepperMintPreferences;
+
+import org.w3c.dom.Text;
 
 import java.util.List;
 
@@ -51,6 +59,116 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private SearchListBarView mSearchListBarView;
     private SearchListBarAdapter<RecipientType> mRecipientTypeAdapter;
 
+    // Bottom bar
+    private AnimatorBuilder mAnimatorBuilder;
+    private SendRecordServiceManager mSendRecordManager;
+    private View lytStatus;
+    private TextView txtStatus;
+    private ImageView imgStatus;
+    private SendRecordServiceManager.Listener mSendRecordListener = new SendRecordServiceManager.Listener() {
+
+        private void hide(int delay) {
+            if(lytStatus.getVisibility() == View.VISIBLE) {
+                Animator anim = mAnimatorBuilder.buildSlideOutBottomAnimator(delay, lytStatus, 0);
+                anim.addListener(new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(Animator animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        lytStatus.setVisibility(View.GONE);
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animator animation) {
+
+                    }
+                });
+                anim.start();
+            }
+        }
+
+        private void show() {
+            if(lytStatus.getVisibility() == View.GONE) {
+                Animator anim = mAnimatorBuilder.buildFadeSlideInBottomAnimator(lytStatus);
+                anim.start();
+            }
+            lytStatus.setVisibility(View.VISIBLE);
+        }
+
+        private void showAndHide() {
+            if(lytStatus.getVisibility() != View.GONE) {
+                hide(2000);
+            } else {
+                Animator anim = mAnimatorBuilder.buildFadeSlideInBottomAnimator(lytStatus);
+                anim.addListener(new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(Animator animation) {
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        hide(2000);
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animator animation) {
+
+                    }
+                });
+                anim.start();
+                lytStatus.setVisibility(View.VISIBLE);
+            }
+        }
+
+        @Override
+        public void onBoundSendService() {
+            if(mSendRecordManager.isSending()) {
+                txtStatus.setText(getString(R.string.sending));
+                imgStatus.setVisibility(View.GONE);
+                show();
+            } else {
+                hide(500);
+            }
+        }
+
+        @Override
+        public void onSendStarted(Sender.SenderEvent event) {
+            onBoundSendService();
+        }
+
+        @Override
+        public void onSendCancelled(Sender.SenderEvent event) {
+            onBoundSendService();
+        }
+
+        @Override
+        public void onSendError(Sender.SenderEvent event) {
+            onBoundSendService();
+        }
+
+        @Override
+        public void onSendFinished(Sender.SenderEvent event) {
+            if(!mSendRecordManager.isSending()) {
+                showAndHide();
+                txtStatus.setText(getString(R.string.sent));
+                imgStatus.setVisibility(View.VISIBLE);
+            }
+        }
+    };
+
     public RecipientsFragment() {
     }
 
@@ -59,6 +177,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         super.onAttach(activity);
         mPreferences = new PepperMintPreferences(activity);
         mActivity = (CustomActionBarActivity) activity;
+        mSendRecordManager = new SendRecordServiceManager(activity);
+        mSendRecordManager.setListener(mSendRecordListener);
+        mAnimatorBuilder = new AnimatorBuilder();
     }
 
     @Override
@@ -111,6 +232,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         // init recipient list view
         mRecipientListContainer =  v.findViewById(R.id.listContainer);
 
+        // bottom status bar
+        lytStatus = v.findViewById(R.id.lytStatus);
+        txtStatus = (TextView) v.findViewById(R.id.txtStatus);
+        imgStatus = (ImageView) v.findViewById(R.id.imgStatus);
+
+        txtStatus.setTypeface(app.getFontSemibold());
+
         return v;
     }
 
@@ -132,11 +260,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         super.onStart();
         onSearch(mSearchListBarView.getSearchText());
         mSearchListBarView.setOnSearchListener(this);
+        mSendRecordManager.bind();
     }
 
     @Override
     public void onStop() {
         super.onStop();
+        mSendRecordManager.unbind();
         mSearchListBarView.setOnSearchListener(null);
         // just stop the loading view in case it is animated
         mRecipientLoadingView.stop();

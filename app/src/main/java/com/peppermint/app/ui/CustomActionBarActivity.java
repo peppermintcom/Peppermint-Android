@@ -28,6 +28,8 @@ import java.util.List;
 
 /**
  * Created by Nuno Luz on 22-09-2015.
+ *
+ * Base Activity for activities that use Peppermint's custom action bar.
  */
 public abstract class CustomActionBarActivity  extends FragmentActivity {
 
@@ -38,6 +40,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
     private ActionBarDrawerToggle mDrawerToggle;
     private DrawerLayout mLytDrawer;
     private ListView mLstDrawer;
+    protected PepperMintPreferences mPreferences;
 
     protected List<NavigationItem> getNavigationItems() {
         return null;
@@ -52,7 +55,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
         setContentView(getContentViewResourceId());
         getCustomActionBar().initViews();
 
-        PepperMintPreferences preferences = new PepperMintPreferences(this);
+        mPreferences = new PepperMintPreferences(this);
         PeppermintApp app = (PeppermintApp) getApplication();
 
         mNavigationItemList = getNavigationItems();
@@ -66,7 +69,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
         } else {
             imgUserAvatar.setImageResource(R.drawable.ic_anonymous_green_30dp);
         }
-        data[0] = preferences.getDisplayName();
+        data[0] = mPreferences.getDisplayName();
         if(data[0] != null) {
             txtUserName.setText(data[0]);
         } else {
@@ -134,7 +137,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
         }
 
         // show intro screen
-        Fragment introScreenFragment = null;
+        Fragment introScreenFragment;
         try {
             introScreenFragment = mNavigationItemList.get(0).getFragmentClass().newInstance();
         } catch (Exception e) {
@@ -146,23 +149,28 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
     private void selectItemFromDrawer(final int position) {
         NavigationItem navItem = mNavigationItemList.get(position);
 
-        Fragment currentFragment = getFragmentManager().findFragmentByTag(navItem.getTag());
-        if (currentFragment != null && currentFragment.isVisible()) {
-            mLytDrawer.closeDrawers();
-            return;
+        if(navItem.getFragmentClass() != null) {
+            Fragment currentFragment = getFragmentManager().findFragmentByTag(navItem.getTag());
+            if (currentFragment != null && currentFragment.isVisible()) {
+                mLytDrawer.closeDrawers();
+                return;
+            }
+
+            Fragment fragment;
+            try {
+                fragment = navItem.getFragmentClass().newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            FragmentManager fragmentManager = getFragmentManager();
+            fragmentManager.beginTransaction().replace(R.id.container, fragment, navItem.getTag()).commit();
+
+            mLstDrawer.setItemChecked(position, true);
+        } else {
+            navItem.getRunnable().run();
         }
 
-        Fragment fragment = null;
-        try {
-            fragment = navItem.getFragmentClass().newInstance();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        FragmentManager fragmentManager = getFragmentManager();
-        fragmentManager.beginTransaction().replace(R.id.container, fragment, navItem.getTag()).commit();
-
-        mLstDrawer.setItemChecked(position, true);
         mLytDrawer.closeDrawers();
     }
 
@@ -178,10 +186,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // Pass the event to ActionBarDrawerToggle
         // If it returns true, then it has handled the nav drawer indicator touch event
-        if (mDrawerToggle != null && mDrawerToggle.onOptionsItemSelected(item)) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+        return (mDrawerToggle != null && mDrawerToggle.onOptionsItemSelected(item)) || super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -199,6 +204,10 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
             return;
         }
         super.onBackPressed();
+    }
+
+    public boolean isDrawerOpen() {
+        return mLytDrawer.isDrawerOpen(GravityCompat.START);
     }
 
     public CustomActionBarView getCustomActionBar() {

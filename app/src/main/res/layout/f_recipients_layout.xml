@@ -6,9 +6,39 @@
     android:descendantFocusability="beforeDescendants"
     android:focusableInTouchMode="true">
 
+    <LinearLayout
+        android:id="@+id/lytStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:gravity="center"
+        android:padding="20dp"
+        android:background="@drawable/background_bottombar"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/imgStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_check_grey"
+            android:visibility="gone"/>
+
+        <TextView
+            android:id="@+id/txtStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/grey_text"
+            android:textSize="16dp"
+            android:layout_marginLeft="5dp"
+            android:text="@string/sending" />
+
+    </LinearLayout>
+
     <FrameLayout
         android:id="@+id/listContainer"
         android:layout_alignParentTop="true"
+        android:layout_above="@id/lytStatus"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 

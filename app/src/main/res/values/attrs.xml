@@ -23,6 +23,9 @@
         <!-- RoundImageView -->
         <attr name="borderWidth" format="dimension" />
         <attr name="borderColor" format="color" />
+
+        <!-- AnimatedGIFView -->
+        <attr name="drawablePressed" format="reference" />
     </declare-styleable>
 
     <declare-styleable name="SearchListBarView">

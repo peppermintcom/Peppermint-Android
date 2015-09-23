@@ -61,13 +61,13 @@ public class TutorialActivity extends Activity implements FragmentManager.OnBack
 
         getFragmentManager().addOnBackStackChangedListener(this);
 
+        View lytRoot = findViewById(R.id.lytRoot);
+        lytRoot.setOnTouchListener(this);
+
         if (savedInstanceState != null) {
             mCurrentFragment = (TutorialFragment) getFragmentManager().findFragmentById(R.id.container);
             return; // avoids duplicate fragments
         }
-
-        View lytRoot = findViewById(R.id.lytRoot);
-        lytRoot.setOnTouchListener(this);
 
         // show intro screen
         mCurrentFragment = getFragmentInstance(0);
@@ -79,9 +79,9 @@ public class TutorialActivity extends Activity implements FragmentManager.OnBack
         int newPosition = mFragmentClassList.indexOf(mCurrentFragment.getClass()) + 1;
 
         if(newPosition >= mFragmentClassList.size()) {
-            Intent intent = new Intent(this, MainActivity.class);
+           /* Intent intent = new Intent(this, MainActivity.class);
             startActivity(intent);
-            finish();
+            */finish();
             return;
         }
 
