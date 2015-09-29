@@ -1,2 +1,4 @@
 /build
+/native-libs/**/*
+/obj
 *.apk

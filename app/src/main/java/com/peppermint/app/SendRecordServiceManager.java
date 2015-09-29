@@ -67,6 +67,10 @@ public class SendRecordServiceManager {
      * @param event the event (see {@link RecordService.Event})
      */
     public void onEventMainThread(Sender.SenderEvent event) {
+        if(mListener == null) {
+            return;
+        }
+
         switch (event.getType()) {
             case Sender.SenderEvent.EVENT_STARTED:
                 mListener.onSendStarted(event);
@@ -91,7 +95,9 @@ public class SendRecordServiceManager {
             mService = (SendRecordService.SendRecordServiceBinder) binder;
             mService.register(SendRecordServiceManager.this);
 
-            mListener.onBoundSendService();
+            if(mListener != null) {
+                mListener.onBoundSendService();
+            }
             Log.d(TAG, "onServiceConnected");
         }
 
@@ -134,7 +140,9 @@ public class SendRecordServiceManager {
      */
     public void shouldStop() {
         mService.shutdown();
-        unbind();
+        if(mIsBound) {
+            unbind();
+        }
     }
 
     /**

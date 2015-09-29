@@ -15,7 +15,7 @@
         <item name="android:windowNoTitle">true</item>
     </style>
 
-    <style name="Peppermint.Theme" parent="@android:style/Theme.Holo.Light">
+    <style name="Peppermint.Theme" parent="Theme.AppCompat.Light">
         <item name="android:actionBarStyle">@style/Peppermint.ActionBar</item>
         <item name="android:editTextStyle">@style/Peppermint.EditText</item>
         <item name="android:spinnerStyle">@style/Peppermint.Spinner</item>
@@ -30,18 +30,18 @@
         <item name="android:windowContentOverlay">@null</item>
 
         <item name="relevantBoxStyle">@style/Peppermint.RelevantBox</item>
-        <item name="relevantBoxRadius">10dp</item>
-        <item name="relevantBoxShadowSize">3dp</item>
+        <item name="relevantBoxRadius">@dimen/relevant_box_radius</item>
+        <item name="relevantBoxShadowSize">@dimen/relevant_box_shadow_size</item>
 
         <item name="normalBoxStyle">@style/Peppermint.NormalBox</item>
-        <item name="normalBoxRadius">5dp</item>
-        <item name="normalBoxShadowSize">2dp</item>
+        <item name="normalBoxRadius">@dimen/normal_box_radius</item>
+        <item name="normalBoxShadowSize">@dimen/normal_box_shadow_size</item>
 
         <item name="recordProgressStyle">@style/Peppermint.RecordProgress</item>
         <item name="customActionBarStyle">@style/Peppermint.CustomActionBar</item>
     </style>
 
-    <style name="Peppermint"></style>
+    <style name="Peppermint" parent="Theme.AppCompat" />
 
     <!-- PeppermintRecordView -->
     <style name="Peppermint.RecordProgress.Tutorial" parent="Peppermint.RecordProgress">
@@ -57,8 +57,8 @@
         <item name="backgroundColor2">@color/background2</item>
         <item name="progressEmptyColor">@color/record_progress_empty</item>
         <item name="progressFillColor">@color/record_progress_fill</item>
-        <item name="cornerRadius">50dp</item>
-        <item name="progressThickness">10dp</item>
+        <item name="cornerRadius">@dimen/record_progress_corder_radius</item>
+        <item name="progressThickness">@dimen/record_progress_progress_thickness</item>
     </style>
 
     <!-- Disable ActionBar; Use Custom ActionBar -->
@@ -68,7 +68,7 @@
         <item name="android:layout_margin">8dp</item>
     </style>
 
-    <style name="Peppermint.CustomActionBar">
+    <style name="Peppermint.CustomActionBar" parent="Widget.AppCompat.ActionBar">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">55dp</item>
         <item name="android:background">@drawable/background_actionbar</item>
@@ -121,7 +121,7 @@
         <item name="android:textStyle">normal</item>
     </style>
 
-    <style name="Peppermint.ListPopupWindow">
+    <style name="Peppermint.ListPopupWindow" parent="Widget.AppCompat.ListPopupWindow">
         <item name="android:popupBackground">@drawable/background_box_popupwindow</item>
         <item name="android:layout_marginLeft">0dp</item>
         <item name="android:layout_marginRight">0dp</item>
@@ -139,4 +139,10 @@
         <item name="android:backgroundDimEnabled">false</item>
     </style>
 
+    <dimen name="normal_box_radius">5dp</dimen>
+    <dimen name="normal_box_shadow_size">2dp</dimen>
+    <dimen name="record_progress_corder_radius">50dp</dimen>
+    <dimen name="record_progress_progress_thickness">10dp</dimen>
+    <dimen name="relevant_box_radius">10dp</dimen>
+    <dimen name="relevant_box_shadow_size">3dp</dimen>
 </resources>

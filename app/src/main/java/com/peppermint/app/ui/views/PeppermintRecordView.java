@@ -10,14 +10,16 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
-import android.graphics.drawable.Drawable;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.View;
 
 import com.peppermint.app.R;
+import com.peppermint.app.ui.animations.CanvasBitmapAnimation;
 import com.peppermint.app.utils.Utils;
 
 /**
@@ -27,6 +29,8 @@ import com.peppermint.app.utils.Utils;
  */
 public class PeppermintRecordView extends View {
 
+    private static final int DEF_TOTAL_BLINK_FRAMES = 20;
+    private static final float DEF_CYCLE_SECONDS = 30f;
     private static final int DEF_DESIRED_SIZE_DP = 150;
 
     private static final int DEF_CORNER_RADIUS_DP = 50;
@@ -54,8 +58,14 @@ public class PeppermintRecordView extends View {
     private float mHalfEyeSize;
     private int mProgressEmptyColor, mProgressFillColor, mBackgroundColor1, mBackgroundColor2, mPressedBackgroundColor1, mPressedBackgroundColor2;
 
-    private Paint mProgressPaint, mEmptyProgressPaint, mPaintMask, mPaintBackground, mPaintBackgroundPressed;
+    private Paint mProgressPaint, mEmptyProgressPaint, mPaintMask, mPaintBackground, mPaintBackgroundPressed, mBitmapPaint;
     private boolean mFillBackground;
+
+    private CanvasBitmapAnimation mMouthAnimation, mMouthMoreAnimation;
+    private BitmapDrawable mEyeDrawable;
+    private int mBlinkFrames;
+    private boolean mEyesFollowProgress = true;
+    private float mEyesAngle = 180f;
 
     public PeppermintRecordView(Context context) {
         super(context);
@@ -125,6 +135,24 @@ public class PeppermintRecordView extends View {
             }
         }
 
+        mBitmapPaint = new Paint();
+        mBitmapPaint.setAntiAlias(true);
+        mBitmapPaint.setFilterBitmap(true);
+        mBitmapPaint.setDither(true);
+
+        mMouthAnimation = new CanvasBitmapAnimation(getContext(), 10, mBitmapPaint, R.drawable.img_opening_mouth_1,
+                R.drawable.img_opening_mouth_2, R.drawable.img_opening_mouth_3,
+                R.drawable.img_opening_mouth_4, R.drawable.img_opening_mouth_5,
+                R.drawable.img_opening_mouth_6, R.drawable.img_opening_mouth_7,
+                R.drawable.img_opening_mouth_8, R.drawable.img_opening_mouth_9);
+
+        mMouthMoreAnimation = new CanvasBitmapAnimation(getContext(), 10, mBitmapPaint, R.drawable.img_opening_mouth_more_1,
+                R.drawable.img_opening_mouth_more_2, R.drawable.img_opening_mouth_more_3,
+                R.drawable.img_opening_mouth_more_4, R.drawable.img_opening_mouth_more_5,
+                R.drawable.img_opening_mouth_more_6);
+
+        mEyeDrawable = (BitmapDrawable) Utils.getDrawable(getContext(), R.drawable.img_logo_eye);
+
         if (android.os.Build.VERSION.SDK_INT >= 11) {
             setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         }
@@ -148,14 +176,42 @@ public class PeppermintRecordView extends View {
         mCenterX = mWidth / 2f;
         mCenterY = mHeight / 2f;
 
-        mHalfEyeSize = mFullSideLength / 17f;
+        mHalfEyeSize = mFullSideLength / 18f;
 
         calculateProgress();
         mPaintBackground.setShader(new LinearGradient(0, 0, mWidth, mHeight, mBackgroundColor1, mBackgroundColor2, Shader.TileMode.MIRROR));
         mPaintBackgroundPressed.setShader(new LinearGradient(0, 0, mWidth, mHeight, mPressedBackgroundColor1, mPressedBackgroundColor2, Shader.TileMode.MIRROR));
 
+        Rect mouthRect = new Rect((int) (mCenterX - (mFullSideLength / 3.5f)), (int) (mCenterY - (mFullSideLength / 14f)), (int) (mCenterX + (mFullSideLength / 3.5f)), (int) (mCenterY + (mFullSideLength/3.5f)));
+        mMouthAnimation.setBounds(mouthRect);
+        mMouthMoreAnimation.setBounds(mouthRect);
+
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
+
+    private void drawEye(Canvas canvas, float xx, float yy, float angle) {
+        Rect rect = new Rect((int) (xx - mHalfEyeSize), (int) (yy - mHalfEyeSize), (int) (xx + mHalfEyeSize), (int) (yy + mHalfEyeSize));
+        canvas.save();
+
+        canvas.rotate(angle, xx, yy);
+        if(mBlinkFrames > 0) {
+            if(mBlinkFrames < (DEF_TOTAL_BLINK_FRAMES/2)) {
+                if(mEyesFollowProgress) {
+                    mEyesFollowProgress = false;
+                }
+                // open eye
+                canvas.scale(1.0f, 1.0f-((float)(mBlinkFrames)/(float)(DEF_TOTAL_BLINK_FRAMES/2)), xx, yy);
+            } else {
+                // close eye
+                canvas.scale(1.0f, 1.0f-((float)(DEF_TOTAL_BLINK_FRAMES-mBlinkFrames)/(float)(DEF_TOTAL_BLINK_FRAMES/2)), xx, yy);
+            }
+            mBlinkFrames--;
+        }
+        canvas.drawBitmap(mEyeDrawable.getBitmap(), null, rect, mBitmapPaint);
+
+        canvas.restore();
+    }
+
     @Override
     public void draw(Canvas canvas) {
         super.draw(canvas);
@@ -166,7 +222,7 @@ public class PeppermintRecordView extends View {
 
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
-        int min = (int) (mSeconds / 60f);
+        int min = (int) (mSeconds / DEF_CYCLE_SECONDS);
         if(min % 2 != 0) {
             canvas.drawPath(fullPath, mProgressPaint);
             canvas.drawPath(progressPath, mEmptyProgressPaint);
@@ -185,28 +241,36 @@ public class PeppermintRecordView extends View {
             }
         }
 
-        float angle = (mProgress / mTotalLength * 360f) + 45f;
+        float angle = (mEyesFollowProgress ? (mProgress / mTotalLength * 360f) : mEyesAngle) + 45f;
 
-        Drawable eye = Utils.getDrawable(getContext(), R.drawable.img_logo_eye);
-        Drawable mouth = Utils.getDrawable(getContext(), R.drawable.img_logo_mouth);
+        //Drawable mouth = Utils.getDrawable(getContext(), R.drawable.img_logo_mouth);
 
-        float xxRef =  (mCenterX - (mFullSideLength/6.5f));
+        float xxRef =  (mCenterX - (mFullSideLength/7f));
         float yyRef =  (mCenterY - (mFullSideLength/5.5f));
-        eye.setBounds((int) (xxRef - mHalfEyeSize), (int) (yyRef - mHalfEyeSize), (int) (xxRef + mHalfEyeSize), (int) (yyRef + mHalfEyeSize));
-        canvas.save();
-        canvas.rotate(angle, xxRef, yyRef);
-        eye.draw(canvas);
-        canvas.restore();
+        drawEye(canvas, xxRef, yyRef, angle);
 
-        xxRef = (mCenterX + (mFullSideLength/6.5f));
-        eye.setBounds((int) (xxRef - mHalfEyeSize), (int) (yyRef - mHalfEyeSize), (int) (xxRef + mHalfEyeSize), (int) (yyRef + mHalfEyeSize));
-        canvas.save();
-        canvas.rotate(angle, xxRef, yyRef);
-        eye.draw(canvas);
-        canvas.restore();
+        xxRef = (mCenterX + (mFullSideLength/7f));
+        drawEye(canvas, xxRef, yyRef, angle);
 
-        mouth.setBounds((int) (mCenterX - (mFullSideLength / 3.5f)), (int) (mCenterY - (mFullSideLength/15f)), (int) (mCenterX + (mFullSideLength / 3.5f)), (int) (mCenterY + (mFullSideLength/3.5f)));
-        mouth.draw(canvas);
+        //mouth.setBounds((int) (mCenterX - (mFullSideLength / 3.5f)), (int) (mCenterY - (mFullSideLength/15f)), (int) (mCenterX + (mFullSideLength / 3.5f)), (int) (mCenterY + (mFullSideLength/3.5f)));
+        float cicleSeconds = mSeconds % DEF_CYCLE_SECONDS;
+
+        if (cicleSeconds > (DEF_CYCLE_SECONDS*2f/3f) && cicleSeconds < DEF_CYCLE_SECONDS - 2) {
+            // play open more mouth
+            if (cicleSeconds < (DEF_CYCLE_SECONDS*2.5f/3f)) {
+                mMouthMoreAnimation.reverse(false);
+            } else {
+                mMouthMoreAnimation.reverse(true);
+            }
+            mMouthMoreAnimation.step(canvas);
+        } else {
+            if (cicleSeconds < 2) {
+                mMouthAnimation.reverse(false);
+            } else if (cicleSeconds >= DEF_CYCLE_SECONDS - 2) {
+                mMouthAnimation.reverse(true);
+            }
+            mMouthAnimation.step(canvas);
+        }
     }
 
     private static Path getPath(float centerX, float centerY, float cornerRadius, float cornerLength, float fullSideLength, float progress) {
@@ -353,7 +417,7 @@ public class PeppermintRecordView extends View {
     }
 
     private void calculateProgress() {
-        this.mProgress = (this.mSeconds % 60f) / 60f * mTotalLength;
+        this.mProgress = (this.mSeconds % DEF_CYCLE_SECONDS) / DEF_CYCLE_SECONDS * mTotalLength;
     }
 
     public float getSeconds() {
@@ -364,5 +428,37 @@ public class PeppermintRecordView extends View {
         this.mSeconds = mSeconds;
         calculateProgress();
         invalidate();
+
+       /* if(mSeconds >= 29 && mSeconds <= 31 && mBlinkFrames == 0) {
+            blink();
+        }*/
+    }
+
+    public void blink() {
+        mBlinkFrames = DEF_TOTAL_BLINK_FRAMES;
+    }
+
+    public float getEyesAngle() {
+        return mEyesAngle;
+    }
+
+    public void setEyesAngle(float mEyesAngle) {
+        this.mEyesAngle = mEyesAngle;
+    }
+
+    public boolean isEyesFollowProgress() {
+        return mEyesFollowProgress;
+    }
+
+    public void setEyesFollowProgress(boolean mEyesFollowProgress) {
+        this.mEyesFollowProgress = mEyesFollowProgress;
+    }
+
+    public CanvasBitmapAnimation getMouthOpeningMoreAnimation() {
+        return mMouthMoreAnimation;
+    }
+
+    public CanvasBitmapAnimation getMouthOpeningAnimation() {
+        return mMouthAnimation;
     }
 }

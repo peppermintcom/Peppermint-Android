@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.peppermint.app" >
 
+    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
     <uses-permission android:name="android.permission.READ_PROFILE" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -34,9 +35,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- android:hardwareAccelerated="false" -->
         <activity
+            android:launchMode="singleTop"
             android:name=".ui.recording.RecordingActivity"
-            android:hardwareAccelerated="false"
             android:label="@string/title_activity_record"
             android:theme="@style/Peppermint.Theme.NoActionBar"
             android:parentActivityName=".MainActivity">

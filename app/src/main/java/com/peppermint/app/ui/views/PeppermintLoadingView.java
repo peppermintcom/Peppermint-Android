@@ -12,7 +12,6 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -52,38 +51,7 @@ public class PeppermintLoadingView extends View {
     private Paint mBackground1Paint, mBackground2Paint, mTextPaint;
 
     private Typeface mFont;
-
-    private boolean isRunning = false;
-    private Handler mHandler;
-    private Runnable mAutoProgress = new Runnable() {
-        @Override
-        public void run() {
-            doAutoProgress();
-        }
-    };
-
-    private void doAutoProgress() {
-        if(isRunning) {
-            setProgress(getProgress() + 0.2f);
-            invalidate();
-            mHandler.postDelayed(mAutoProgress, 100);
-        }
-    }
-
-    public void start() {
-        isRunning = true;
-        doAutoProgress();
-    }
-
-    public void stop() {
-        isRunning = false;
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        stop();
-    }
+    private float mLastTime;
 
     public PeppermintLoadingView(Context context) {
         super(context);
@@ -107,8 +75,6 @@ public class PeppermintLoadingView extends View {
     }
 
     protected void init(AttributeSet attrs) {
-        mHandler = new Handler(getContext().getMainLooper());
-
         if(attrs != null) {
             TypedArray a = getContext().getTheme().obtainStyledAttributes(
                     attrs,
@@ -175,6 +141,12 @@ public class PeppermintLoadingView extends View {
     public void draw(Canvas canvas) {
         super.draw(canvas);
 
+        float now = (float) android.os.SystemClock.uptimeMillis() / 100f;
+        if(mLastTime <= 0) {
+            mLastTime = now;
+        }
+        setProgress(getProgress() + (0.2f * (now - mLastTime)));
+
         Path fullPath = getRoundRectPath(mCenterX, mCenterY, mCornerRadius, mCornerLength, mFullSideLength);
         Path progressPath = getSinWavePath(mCenterX, mCenterY, mCornerRadius, mCornerLength, mFullSideLength, mAmplitude, mProgress);
 
@@ -197,6 +169,12 @@ public class PeppermintLoadingView extends View {
         float offsetY = - (((mTextSize/2f)+(mTextSpacing/2f)) * (float) (split.length - 1));
         for(int i=0; i<split.length; i++) {
             canvas.drawText(split[i], mCenterX, offsetY + mCenterY + (mFullSideLength / 4f) + ((mTextSize + mTextSpacing) * (float) i), mTextPaint);
+        }
+
+        mLastTime = now;
+
+        if(getVisibility() == VISIBLE) {
+            invalidate();
         }
     }
 
@@ -237,7 +215,7 @@ public class PeppermintLoadingView extends View {
 
         // sin
         float divider = fullSideLength / 10f;
-        float unitX = (float) (fullSideLength/divider);
+        float unitX = fullSideLength / divider;
         float unitAngle = (float) ((2f*Math.PI) / divider);
         float angle = unitAngle;
         for(float i=0; i<divider; i++) {

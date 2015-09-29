@@ -193,7 +193,11 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         if(mDrawerToggle != null) {
-            mDrawerToggle.syncState();
+            try {
+                mDrawerToggle.syncState();
+            } catch(Throwable t) {
+                // just ignore; Android 4 launches an exception because there's no actionbar
+            }
         }
     }
 

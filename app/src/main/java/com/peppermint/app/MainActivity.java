@@ -35,9 +35,18 @@ public class MainActivity extends CustomActionBarActivity {
         super.onCreate(savedInstanceState);
 
         if(mPreferences.isFirstRun()) {
+            // shortcut intent
+            final Intent shortcutIntent = new Intent(this, MainActivity.class);
+            final Intent intent = new Intent();
+            intent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
+            intent.putExtra(Intent.EXTRA_SHORTCUT_NAME, getString(R.string.app_name));
+            intent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, Intent.ShortcutIconResource.fromContext(this, R.mipmap.ic_launcher));
+            intent.setAction("com.android.launcher.action.INSTALL_SHORTCUT");
+            sendBroadcast(intent);
+
             mPreferences.setFirstRun(false);
-            Intent intent = new Intent(this, TutorialActivity.class);
-            startActivity(intent);
+            Intent tutorialIntent = new Intent(this, TutorialActivity.class);
+            startActivity(tutorialIntent);
         }
     }
 

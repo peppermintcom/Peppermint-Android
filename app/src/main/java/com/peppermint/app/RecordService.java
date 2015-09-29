@@ -14,11 +14,9 @@ import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import com.peppermint.app.data.Recipient;
-import com.peppermint.app.ui.recording.RecordingFragment;
 import com.peppermint.app.ui.recording.RecordingActivity;
-import com.peppermint.app.utils.ExtendedMediaRecorder;
-
-import java.util.ArrayList;
+import com.peppermint.app.ui.recording.RecordingFragment;
+import com.peppermint.app.utils.ExtendedAudioRecorder;
 
 import de.greenrobot.event.EventBus;
 
@@ -121,16 +119,8 @@ public class RecordService extends Service {
         /**
          * Stop and finish the current recording.
          */
-        void stop() {
-            RecordService.this.stop();
-        }
-
-        /**
-         * Discard the current recording and all files associated with it.
-         * It also stops the current recording if it is ongoing.
-         */
-        void discard() {
-            RecordService.this.discard();
+        void stop(boolean discard) {
+            RecordService.this.stop(discard);
         }
 
         /**
@@ -147,9 +137,6 @@ public class RecordService extends Service {
     public static class Event {
         // intermediate process data
         private float mLoudness;
-        private long mCurrentDuration;
-        private String mCurrentFilePath;
-        private ArrayList<String> mIntermediateFilePaths;
 
         // final relevant data
         private long mFullDuration;
@@ -160,18 +147,15 @@ public class RecordService extends Service {
         private int mType;              // type of the event
         private Throwable mError;
 
-        public Event(ExtendedMediaRecorder recorder, Recipient recipient, int type) {
-            this.mLoudness = 0;
+        public Event(ExtendedAudioRecorder recorder, Recipient recipient, int type) {
+            this.mLoudness = recorder.getAmplitude();
             this.mFullDuration = recorder.getFullDuration();
-            this.mIntermediateFilePaths = recorder.getIntermediateFilePaths();
-            this.mCurrentDuration = System.currentTimeMillis() - recorder.getCurrentStartTime();
-            this.mCurrentFilePath = recorder.getCurrentFilePath();
             this.mFilePath = recorder.getFilePath();
             this.mType = type;
             this.mRecipient = recipient;
 
             if(type == EVENT_LOUDNESS) {
-                float amplitude = recorder.getMaxAmplitude();
+                float amplitude = recorder.getAmplitude();
                 float topAmplitude = 500f;
 
                 while((amplitude > topAmplitude)) {
@@ -182,7 +166,7 @@ public class RecordService extends Service {
             }
         }
 
-        public Event(ExtendedMediaRecorder recorder, Recipient recipient, Throwable error) {
+        public Event(ExtendedAudioRecorder recorder, Recipient recipient, Throwable error) {
             this(recorder, recipient, EVENT_ERROR);
             this.mError = error;
         }
@@ -193,18 +177,6 @@ public class RecordService extends Service {
 
         public long getFullDuration() {
             return mFullDuration;
-        }
-
-        public ArrayList<String> getIntermediateFilePaths() {
-            return mIntermediateFilePaths;
-        }
-
-        public long getCurrentDuration() {
-            return mCurrentDuration;
-        }
-
-        public String getCurrentFilePath() {
-            return mCurrentFilePath;
         }
 
         public int getType() {
@@ -224,6 +196,48 @@ public class RecordService extends Service {
         }
     }
 
+    private final ExtendedAudioRecorder.Listener mAudioRecorderListener = new ExtendedAudioRecorder.Listener() {
+        @Override
+        public void onStart(String filePath, long durationInMillis, int amplitude) {
+            updateLoudness();
+
+            startForeground(RecordService.class.hashCode(), getNotification());
+
+            Event e = new Event(mRecorder, mRecipient, EVENT_START);
+            mEventBus.post(e);
+        }
+
+        @Override
+        public void onPause(String filePath, long durationInMillis, int amplitude) {
+            updateNotification();
+
+            Event e = new Event(mRecorder, mRecipient, EVENT_PAUSE);
+            mEventBus.post(e);
+        }
+
+        @Override
+        public void onResume(String filePath, long durationInMillis, int amplitude) {
+            updateLoudness();
+            updateNotification();
+
+            Event e = new Event(mRecorder, mRecipient, EVENT_RESUME);
+            mEventBus.post(e);
+        }
+
+        @Override
+        public void onStop(String filePath, long durationInMillis, int amplitude) {
+            stopForeground(true);
+            Event e = new Event(mRecorder, mRecipient, EVENT_STOP);
+            mEventBus.post(e);
+        }
+
+        @Override
+        public void onError(String filePath, long durationInMillis, int amplitude, Throwable t) {
+            Event e = new Event(mRecorder, mRecipient, t);
+            mEventBus.post(e);
+        }
+    };
+
     /**
      * Async handler to send loudness update events.
      */
@@ -236,7 +250,7 @@ public class RecordService extends Service {
     };
 
     private transient EventBus mEventBus;                 // event bus to send events to registered listeners
-    private transient ExtendedMediaRecorder mRecorder;    // the recorder
+    private transient ExtendedAudioRecorder mRecorder;    // the recorder
     private Recipient mRecipient;                         // the recipient of the current recording
 
     public RecordService() {
@@ -278,13 +292,13 @@ public class RecordService extends Service {
     @Override
     public void onDestroy() {
         if(isRecording()) {
-            stop();
+            stop(true);
         }
         super.onDestroy();
     }
 
     boolean isRecording() {
-        return mRecorder != null && mRecorder.isOngoing();
+        return mRecorder != null && mRecorder.isRecording();
     }
 
     boolean isPaused() {
@@ -299,72 +313,42 @@ public class RecordService extends Service {
         mRecipient = recipient;
 
         if(filePrefix == null) {
-            mRecorder = new ExtendedMediaRecorder(RecordService.this);
+            mRecorder = new ExtendedAudioRecorder(RecordService.this);
         } else {
-            mRecorder = new ExtendedMediaRecorder(RecordService.this, filePrefix);
+            mRecorder = new ExtendedAudioRecorder(RecordService.this, filePrefix);
         }
 
+        mRecorder.setListener(mAudioRecorderListener);
         mRecorder.start();
-        updateLoudness();
-
-        startForeground(RecordService.class.hashCode(), getNotification());
-
-        Event e = new Event(mRecorder, mRecipient, EVENT_START);
-        mEventBus.post(e);
     }
 
     void pause() {
         if(!isRecording()) {
-            throw new RuntimeException("Cannot pause. Nothing is currently being recorded. Use start.");
+            throw new RuntimeException("Cannot pause. Nothing is currently being recorded. Use start or resume.");
         }
 
         mRecorder.pause();
-
-        updateNotification();
-
-        Event e = new Event(mRecorder, mRecipient, EVENT_PAUSE);
-        mEventBus.post(e);
     }
 
     void resume() {
-        if(!isRecording()) {
-            throw new RuntimeException("Cannot resume. Nothing is currently being recorded. Use start.");
+        if(!isPaused()) {
+            throw new RuntimeException("Cannot resume. Must be paused to resume!");
         }
 
         mRecorder.resume();
-
-        updateLoudness();
-        updateNotification();
-
-        Event e = new Event(mRecorder, mRecipient, EVENT_RESUME);
-        mEventBus.post(e);
     }
 
-    void stop() {
-        try {
-            mRecorder.stop();
-            Event e = new Event(mRecorder, mRecipient, EVENT_STOP);
-            mEventBus.post(e);
-        } catch (Exception ex) {
-            mRecorder.discard();
-            Event e = new Event(mRecorder, mRecipient, ex);
-            mEventBus.post(e);
-        } finally {
-            stopForeground(true);
-        }
-    }
-
-    void discard() {
-        mRecorder.discard();
+    void stop(boolean discard) {
+        mRecorder.stop(discard);
     }
 
     private void updateLoudness() {
-        if(isRecording() && !mRecorder.isPaused()) {
+        if(isRecording()) {
             if(mEventBus.hasSubscriberForEvent(Event.class)) {
                 Event e = new Event(mRecorder, mRecipient, EVENT_LOUDNESS);
                 mEventBus.post(e);
             }
-            mHandler.postDelayed(mLoudnessRunnable, 100);
+            mHandler.postDelayed(mLoudnessRunnable, 50);
         }
     }
 

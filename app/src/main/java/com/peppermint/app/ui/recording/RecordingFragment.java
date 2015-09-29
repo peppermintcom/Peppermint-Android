@@ -18,17 +18,18 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.RecordService;
 import com.peppermint.app.RecordServiceManager;
 import com.peppermint.app.SendRecordServiceManager;
 import com.peppermint.app.data.Recipient;
-import com.peppermint.app.ui.views.AnimatedGIFView;
+import com.peppermint.app.ui.views.PeppermintRecordView;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
 
-public class RecordingFragment extends Fragment implements RecordServiceManager.Listener {//, SendRecordServiceManager.Listener {
+public class RecordingFragment extends Fragment implements RecordServiceManager.Listener {
 
     private static final String TAG = RecordingFragment.class.getSimpleName();
 
@@ -42,8 +43,8 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     private PepperMintPreferences mPreferences;
     private RecordServiceManager mRecordManager;
 
-    //private PeppermintRecordView mRecordView;
-    private AnimatedGIFView mRecordView;
+    private PeppermintRecordView mRecordView;
+    //private AnimatedGIFView mRecordView;
 
     private TextView mTxtDuration;
     private TextView mTxtTap;
@@ -79,18 +80,15 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
         mTxtTap = (TextView) v.findViewById(R.id.tap);
         mBtnRestart = (Button) v.findViewById(R.id.btnRestart);
         mBtnPauseResume = (Button) v.findViewById(R.id.btnPauseResume);
-        //mRecordView = (PeppermintRecordView) v.findViewById(R.id.record_state);
-        mRecordView = (AnimatedGIFView) v.findViewById(R.id.record_state);
+        mRecordView = (PeppermintRecordView) v.findViewById(R.id.record_state);
+        //mRecordView = (AnimatedGIFView) v.findViewById(R.id.record_state);
 
         mBtnRestart.setTypeface(app.getFontSemibold());
         mBtnRestart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mPressedRestart = true;
-                mRecordManager.stopRecording();
-                mRecordManager.discard();
-                Recipient recipient = (Recipient) getActivity().getIntent().getExtras().get(INTENT_RECIPIENT_EXTRA);
-                mRecordManager.startRecording(mFilename, recipient);
+                mRecordManager.stopRecording(true);
             }
         });
 
@@ -99,7 +97,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
             @Override
             public void onClick(View v) {
 
-                if (!mRecordManager.isRecording()) {
+                if (!mRecordManager.isRecording() && !mRecordManager.isPaused()) {
                     Recipient recipient = (Recipient) getActivity().getIntent().getExtras().get(INTENT_RECIPIENT_EXTRA);
                     mRecordManager.startRecording(mFilename, recipient);
                     return;
@@ -135,11 +133,13 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
                     @Override
                     public void onClick(View v) {
                         mPressedSend = true;
-                        mRecordManager.stopRecording();
+                        mRecordManager.stopRecording(false);
                     }
                 });
             }
         }, 2000);
+
+        mRecordManager.start(false);
 
         if(savedInstanceState != null) {
             return v;
@@ -155,13 +155,15 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
         super.onResume();
         mSavedState = false;
         mPressedSend = false;
-        mRecordManager.start();
+        mRecordManager.setListener(this);
+        mRecordManager.bind();
     }
 
     @Override
     public void onPause() {
         super.onPause();
         mRecordManager.unbind();
+        mRecordManager.setListener(null);
     }
 
     @Override
@@ -173,39 +175,21 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     @Override
     public void onDestroy() {
         if(!mSavedState && !mPressedSend) {
-            mRecordManager.stopRecording();
-            mRecordManager.discard();
+            mRecordManager.stopRecording(true);
             mRecordManager.shouldStop();
         }
         super.onDestroy();
     }
 
-    /*
-    public void onBackPressed() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setMessage(R.string.your_recording_will_be_discarded_are_you_sure)
-            .setPositiveButton(R.string.discard, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    getActivity().finish();
-                }
-            })
-            .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                }
-            });
-        builder.create().show();
-    }
-    */
-
     @Override
     public void onStartRecording(RecordService.Event event) {
-        mRecordView.start();
+        //mRecordView.start();
         onBoundRecording();
     }
 
     @Override
     public void onStopRecording(RecordService.Event event) {
-        mRecordView.stop();
+        //mRecordView.stop();
         onBoundRecording();
         mLastLoudnessFactor = 1f;
 
@@ -219,25 +203,28 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
             resultIntent.putExtra(INTENT_RESULT_SENDING_EXTRA, true);
             getActivity().setResult(Activity.RESULT_OK, resultIntent);
             getActivity().finish();
+        } else if(mPressedRestart) {
+            Recipient recipient = (Recipient) getActivity().getIntent().getExtras().get(INTENT_RECIPIENT_EXTRA);
+            mRecordManager.startRecording(mFilename, recipient);
         }
     }
 
     @Override
     public void onResumeRecording(RecordService.Event event) {
         onBoundRecording();
-        mRecordView.start();
+        //mRecordView.start();
     }
 
     @Override
     public void onPauseRecording(RecordService.Event event) {
         onBoundRecording();
-        mRecordView.stop();
+        //mRecordView.stop();
     }
 
     @Override
     public void onLoudnessRecording(RecordService.Event event) {
-        float duration = ((float)(event.getFullDuration() + event.getCurrentDuration())) / 1000f;
-        //mRecordView.setSeconds(duration);
+        float duration = ((float)(event.getFullDuration())) / 1000f;
+        mRecordView.setSeconds(duration);
 
         long mins = (long) duration / 60;
         long secs = (long) duration % 60;
@@ -265,7 +252,9 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
 
     @Override
     public void onErrorRecording(RecordService.Event event) {
-        throw new RuntimeException(event.getError());
+        Crashlytics.logException(event.getError());
+        Toast.makeText(getActivity(), getString(R.string.msg_message_record_error), Toast.LENGTH_LONG).show();
+        getActivity().finish();
     }
 
     @Override

@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:top="?attr/normalBoxRadius">
+    <item android:top="@dimen/normal_box_radius">
         <shape>
             <solid android:color="@color/box_shadow" />
-            <corners android:radius="?attr/normalBoxRadius" />
+            <corners android:radius="@dimen/normal_box_radius" />
         </shape>
     </item>
-    <item android:bottom="?attr/normalBoxRadius">
+    <item android:bottom="@dimen/normal_box_radius">
         <shape>
             <solid android:color="@color/box_shadow" />
         </shape>
     </item>
-    <item android:top="1dp" android:bottom="?attr/normalBoxRadius">
+    <item android:top="1dp" android:bottom="@dimen/normal_box_radius">
         <shape>
             <solid android:color="@color/white" />
         </shape>
     </item>
-    <item android:bottom="?attr/normalBoxShadowSize" android:top="?attr/normalBoxRadius">
+    <item android:bottom="@dimen/normal_box_shadow_size" android:top="@dimen/normal_box_radius">
         <shape>
             <solid android:color="@color/white" />
-            <corners android:radius="?attr/normalBoxRadius" />
+            <corners android:radius="@dimen/normal_box_radius" />
         </shape>
     </item>
 </layer-list>

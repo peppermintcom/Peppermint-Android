@@ -84,5 +84,6 @@
     <string name="_for">for</string>
     <string name="menu_contacts">Contacts</string>
     <string name="menu_tutorial">Tutorial</string>
+    <string name="msg_message_record_error">An error has occurred while recording. Please try again later. If the error persists, please contact our support team.</string>
 
 </resources>

@@ -81,11 +81,13 @@ public class CustomActionBarView extends RelativeLayout {
         mMenuButton = (ImageButton) findViewById(R.id.btnMenu);
         setDisplayMenuAsUpEnabled(mMenuAsUpInit);
 
-        // bo: adjust status bar height
-        int statusBarHeight = Utils.getStatusBarHeight(getContext());
-        findViewById(R.id.customActionBarTopSpace).getLayoutParams().height = statusBarHeight;
-        View lytActionBar = findViewById(R.id.customActionBar);
-        lytActionBar.getLayoutParams().height = lytActionBar.getLayoutParams().height + statusBarHeight;
+        // bo: adjust status bar height (only do it for API 21 onwards since overlay is not working for older versions)
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            int statusBarHeight = Utils.getStatusBarHeight(getContext());
+            findViewById(R.id.customActionBarTopSpace).getLayoutParams().height = statusBarHeight;
+            View lytActionBar = findViewById(R.id.customActionBar);
+            lytActionBar.getLayoutParams().height = lytActionBar.getLayoutParams().height + statusBarHeight;
+        }
         // eo: adjust status bar height
     }
 

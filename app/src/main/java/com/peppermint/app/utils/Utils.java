@@ -230,6 +230,9 @@ public class Utils {
     }
 
     public static String normalizeAndCleanString(String str) {
+        if(str == null) {
+            return null;
+        }
         return Normalizer.normalize(str, Normalizer.Form.NFC).replace(' ', '-').replaceAll("[^a-zA-Z0-9\\.]", "");
     }
 
@@ -267,5 +270,17 @@ public class Utils {
         }
 
         return data;
+    }
+
+    public static byte[] short2Byte(short[] sData) {
+        int shortArrsize = sData.length;
+        byte[] bytes = new byte[shortArrsize * 2];
+
+        for (int i = 0; i < shortArrsize; i++) {
+            bytes[i * 2] = (byte) (sData[i] & 0x00FF);
+            bytes[(i * 2) + 1] = (byte) (sData[i] >> 8);
+            sData[i] = 0;
+        }
+        return bytes;
     }
 }

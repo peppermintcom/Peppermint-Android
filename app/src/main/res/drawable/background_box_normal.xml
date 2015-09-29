@@ -3,13 +3,13 @@
     <item>
         <shape>
             <solid android:color="@color/box_shadow" />
-            <corners android:radius="?attr/normalBoxRadius" />
+            <corners android:radius="@dimen/normal_box_radius" />
         </shape>
     </item>
-    <item android:bottom="?attr/normalBoxShadowSize">
+    <item android:bottom="@dimen/normal_box_shadow_size">
         <shape>
             <solid android:color="@color/box_fill" />
-            <corners android:radius="?attr/normalBoxRadius" />
+            <corners android:radius="@dimen/normal_box_radius" />
         </shape>
     </item>
 </layer-list>

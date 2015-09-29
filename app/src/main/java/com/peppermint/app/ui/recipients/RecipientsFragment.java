@@ -4,7 +4,6 @@ import android.animation.Animator;
 import android.app.Activity;
 import android.app.ListFragment;
 import android.content.Intent;
-import android.media.Image;
 import android.os.Bundle;
 import android.text.Html;
 import android.view.LayoutInflater;
@@ -32,8 +31,6 @@ import com.peppermint.app.ui.views.SearchListBarView;
 import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.PepperMintPreferences;
-
-import org.w3c.dom.Text;
 
 import java.util.List;
 
@@ -246,6 +243,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         getListView().setOnItemClickListener(this);
+        onSearch(mSearchListBarView.getSearchText());
     }
 
     @Override
@@ -258,9 +256,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public void onStart() {
         super.onStart();
-        onSearch(mSearchListBarView.getSearchText());
         mSearchListBarView.setOnSearchListener(this);
         mSendRecordManager.bind();
+        //mRecipientLoadingView.start();
     }
 
     @Override
@@ -269,7 +267,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mSendRecordManager.unbind();
         mSearchListBarView.setOnSearchListener(null);
         // just stop the loading view in case it is animated
-        mRecipientLoadingView.stop();
+        //mRecipientLoadingView.stop();
     }
 
     @Override
@@ -314,9 +312,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 mRecipientListContainer.startAnimation(AnimationUtils.loadAnimation(
                         getActivity(), android.R.anim.fade_in));
             }
-            mRecipientLoadingContainer.setVisibility(View.GONE);
+            mRecipientLoadingContainer.setVisibility(View.INVISIBLE);
             mRecipientListContainer.setVisibility(View.VISIBLE);
-            mRecipientLoadingView.start();
+            //mRecipientLoadingView.start();
         } else {
             if (animate && getActivity() != null) {
                 mRecipientLoadingContainer.startAnimation(AnimationUtils.loadAnimation(
@@ -326,7 +324,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             }
             mRecipientLoadingContainer.setVisibility(View.VISIBLE);
             mRecipientListContainer.setVisibility(View.INVISIBLE);
-            mRecipientLoadingView.stop();
+            //mRecipientLoadingView.stop();
         }
     }
     @Override

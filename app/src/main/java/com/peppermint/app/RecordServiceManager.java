@@ -77,6 +77,10 @@ public class RecordServiceManager {
      * @param event the event (see {@link com.peppermint.app.RecordService.Event})
      */
     public void onEventMainThread(RecordService.Event event) {
+        if(mListener == null) {
+            return;
+        }
+
         switch (event.getType()) {
             case RecordService.EVENT_START:
                 mListener.onStartRecording(event);
@@ -106,7 +110,9 @@ public class RecordServiceManager {
             mService = (RecordService.RecordServiceBinder) binder;
             mService.register(RecordServiceManager.this);
 
-            mListener.onBoundRecording();
+            if(mListener != null) {
+                mListener.onBoundRecording();
+            }
             Log.d(TAG, "onServiceConnected");
         }
 
@@ -125,10 +131,12 @@ public class RecordServiceManager {
      * Starts the service.
      * <b>Also binds this manager to the service.</b>
      */
-    public void start() {
+    public void start(boolean bind) {
         Intent intent = new Intent(mContext, RecordService.class);
         mContext.startService(intent);
-        bind();
+        if(bind) {
+            bind();
+        }
     }
 
     /**
@@ -138,7 +146,9 @@ public class RecordServiceManager {
      */
     public void shouldStop() {
         mService.shutdown();
-        unbind();
+        if(mIsBound) {
+            unbind();
+        }
     }
 
     /**
@@ -177,8 +187,8 @@ public class RecordServiceManager {
     /**
      * Stop and finish the current recording.
      */
-    public void stopRecording() {
-        mService.stop();
+    public void stopRecording(boolean discard) {
+        mService.stop(discard);
     }
 
     /**
@@ -212,19 +222,15 @@ public class RecordServiceManager {
         return mService.isPaused();
     }
 
-    /**
-     * Discard the current recording and all files associated with it.
-     * It also stops the current recording if it is ongoing.
-     */
-    public void discard() {
-        mService.discard();
-    }
-
     public Listener getListener() {
         return mListener;
     }
 
     public void setListener(Listener mListener) {
         this.mListener = mListener;
+    }
+
+    public boolean isBound() {
+        return mIsBound;
     }
 }

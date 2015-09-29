@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
+import com.peppermint.app.ui.views.PeppermintRecordView;
 
 public class T2RecordFragment extends TutorialActivity.TutorialFragment {
 
@@ -31,6 +32,9 @@ public class T2RecordFragment extends TutorialActivity.TutorialFragment {
 
         TextView txtRecordAndSendToEmail = (TextView) v.findViewById(R.id.txtRecordAndSendToEmail);
         txtRecordAndSendToEmail.setTypeface(app.getFontSemibold());
+
+        PeppermintRecordView recordView = (PeppermintRecordView) v.findViewById(R.id.pmProgress);
+        recordView.getMouthOpeningAnimation().setCurrentFrame(9);
 
         return v;
     }
