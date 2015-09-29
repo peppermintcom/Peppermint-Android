@@ -19,9 +19,8 @@ import android.view.Display;
 import android.view.WindowManager;
 import android.widget.ImageView;
 
-import org.apache.http.conn.util.InetAddressUtils;
-
 import java.io.UnsupportedEncodingException;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.text.Normalizer;
@@ -190,7 +189,7 @@ public class Utils {
                     if (!addr.isLoopbackAddress()) {
                         String sAddr = addr.getHostAddress().toUpperCase();
                         //noinspection deprecation
-                        boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
+                        boolean isIPv4 = (addr instanceof Inet4Address);
                         if (useIPv4) {
                             if (isIPv4)
                                 return sAddr;

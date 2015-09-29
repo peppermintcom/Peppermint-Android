@@ -318,6 +318,12 @@ public class FilteredCursor implements Cursor {
         return mCursor.getWantsAllOnMoveCalls();
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    public void setExtras(Bundle extras) {
+        mCursor.setExtras(extras);
+    }
+
     @Override
     public Bundle getExtras() {
         return mCursor.getExtras();

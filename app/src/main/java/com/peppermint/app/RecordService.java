@@ -129,6 +129,32 @@ public class RecordService extends Service {
         void shutdown() {
             stopSelf();
         }
+
+        long getCurrentFullDuration() {
+            return mRecorder == null ? 0 : mRecorder.getFullDuration();
+        }
+
+        float getCurrentLoudness() {
+            return mRecorder == null ? 0 : getLoudnessFromAmplitude(mRecorder.getAmplitude());
+        }
+
+        String getCurrentFilePath() {
+            return mRecorder == null ? null : mRecorder.getFilePath();
+        }
+
+        Recipient getCurrentRecipient() {
+            return mRecipient;
+        }
+    }
+
+    private static float getLoudnessFromAmplitude(float amplitude) {
+        float topAmplitude = 500f;
+
+        while((amplitude > topAmplitude)) {
+            topAmplitude += 500f;
+        }
+
+        return amplitude / topAmplitude;
     }
 
     /**
@@ -155,14 +181,7 @@ public class RecordService extends Service {
             this.mRecipient = recipient;
 
             if(type == EVENT_LOUDNESS) {
-                float amplitude = recorder.getAmplitude();
-                float topAmplitude = 500f;
-
-                while((amplitude > topAmplitude)) {
-                    topAmplitude += 500f;
-                }
-
-                this.mLoudness = amplitude / topAmplitude;
+                this.mLoudness = getLoudnessFromAmplitude(recorder.getAmplitude());
             }
         }
 

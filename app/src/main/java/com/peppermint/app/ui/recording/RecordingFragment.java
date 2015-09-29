@@ -183,14 +183,12 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
 
     @Override
     public void onStartRecording(RecordService.Event event) {
-        //mRecordView.start();
-        onBoundRecording();
+        onBoundRecording(event.getRecipient(), event.getFilePath(), event.getFullDuration(), event.getLoudness());
     }
 
     @Override
     public void onStopRecording(RecordService.Event event) {
-        //mRecordView.stop();
-        onBoundRecording();
+        onBoundRecording(event.getRecipient(), event.getFilePath(), event.getFullDuration(), event.getLoudness());
         mLastLoudnessFactor = 1f;
 
         if(mPressedSend) {
@@ -211,19 +209,18 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
 
     @Override
     public void onResumeRecording(RecordService.Event event) {
-        onBoundRecording();
+        onBoundRecording(event.getRecipient(), event.getFilePath(), event.getFullDuration(), event.getLoudness());
         //mRecordView.start();
     }
 
     @Override
     public void onPauseRecording(RecordService.Event event) {
-        onBoundRecording();
+        onBoundRecording(event.getRecipient(), event.getFilePath(), event.getFullDuration(), event.getLoudness());
         //mRecordView.stop();
     }
 
-    @Override
-    public void onLoudnessRecording(RecordService.Event event) {
-        float duration = ((float)(event.getFullDuration())) / 1000f;
+    private void setRecordDuration(float fullDuration) {
+        float duration = fullDuration / 1000f;
         mRecordView.setSeconds(duration);
 
         long mins = (long) duration / 60;
@@ -234,6 +231,11 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
         }
 
         mTxtDuration.setText((hours > 0 ? hours + ":" : "") + mins + ":" + (secs < 10 ? "0" : "") + secs);
+    }
+
+    @Override
+    public void onLoudnessRecording(RecordService.Event event) {
+        setRecordDuration(event.getFullDuration());
 
         ObjectAnimator scaleAnimator = new ObjectAnimator();
         scaleAnimator.setDuration(100);
@@ -258,7 +260,9 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     }
 
     @Override
-    public void onBoundRecording() {
+    public void onBoundRecording(Recipient currentRecipient, String currentFilePath, long currentFullDuration, float currentLoudness) {
+        setRecordDuration(currentFullDuration);
+
         if(!mRecordManager.isRecording() || mRecordManager.isPaused()) {
             mBtnPauseResume.setText(R.string.resume);
             if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -269,9 +273,9 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
 
             if(mFirstRun) {
                 mFirstRun = false;
-                if(mRecordManager.isRecording()) {
+                if(mRecordManager.isPaused()) {
                     mRecordManager.resumeRecording();
-                } else {
+                } else if(!mRecordManager.isRecording()){
                     Recipient recipient = (Recipient) getActivity().getIntent().getExtras().get(INTENT_RECIPIENT_EXTRA);
                     mRecordManager.startRecording(mFilename, recipient);
                 }

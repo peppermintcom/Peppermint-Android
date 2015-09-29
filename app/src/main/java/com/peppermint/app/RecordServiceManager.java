@@ -24,7 +24,7 @@ public class RecordServiceManager {
         /**
          * Invoked when a binding to the service is performed.
          */
-        void onBoundRecording();
+        void onBoundRecording(Recipient currentRecipient, String currentFilePath, long currentFullDuration, float currentLoudness);
 
         /**
          * Invoked when a new recording starts.
@@ -111,7 +111,7 @@ public class RecordServiceManager {
             mService.register(RecordServiceManager.this);
 
             if(mListener != null) {
-                mListener.onBoundRecording();
+                mListener.onBoundRecording(mService.getCurrentRecipient(), mService.getCurrentFilePath(), mService.getCurrentFullDuration(), mService.getCurrentLoudness());
             }
             Log.d(TAG, "onServiceConnected");
         }
