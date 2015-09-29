@@ -20,7 +20,7 @@ public class PeppermintApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        //Fabric.with(this, new Crashlytics());
+        Fabric.with(this, new Crashlytics());
 
         mFontSemibold = Typeface.createFromAsset(getAssets(), "fonts/OpenSans-Semibold.ttf");
         mFontBold = Typeface.createFromAsset(getAssets(), "fonts/OpenSans-Bold.ttf");
