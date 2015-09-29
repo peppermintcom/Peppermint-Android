@@ -21,7 +21,7 @@
                 android:textColor="@color/dark_green_text"
                 android:textSize="24dp"
                 android:layout_marginTop="?attr/tutorialMargin"
-                android:layout_marginBottom="40dp"
+                android:layout_marginBottom="30dp"
                 android:layout_gravity="center_horizontal"
                 android:text="@string/peppermint_com"/>
 
@@ -29,7 +29,7 @@
                 android:id="@+id/imgPaginator"
                 android:layout_centerInParent="true"
                 android:layout_alignParentBottom="true"
-                android:layout_marginTop="35dp"
+                android:layout_marginTop="30dp"
                 android:layout_marginBottom="?attr/tutorialMargin"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -40,7 +40,9 @@
                 android:layout_below="@id/txtPeppermint"
                 android:layout_above="@id/imgPaginator"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:layout_centerVertical="true"
+                android:gravity="center_vertical">
             </FrameLayout>
 
         </RelativeLayout>

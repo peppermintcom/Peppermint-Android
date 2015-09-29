@@ -67,7 +67,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
         if(data[1] != null) {
             imgUserAvatar.setImageURI(Uri.parse(data[1]));
         } else {
-            imgUserAvatar.setImageResource(R.drawable.ic_anonymous_green_30dp);
+            imgUserAvatar.setImageResource(R.drawable.ic_anonymous_green_48dp);
         }
         data[0] = mPreferences.getDisplayName();
         if(data[0] != null) {

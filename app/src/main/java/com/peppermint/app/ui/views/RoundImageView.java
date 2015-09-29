@@ -12,6 +12,7 @@ import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.widget.ImageView;
 
 import com.peppermint.app.R;
@@ -27,7 +28,7 @@ public class RoundImageView extends ImageView {
     private int mBorderWidth, mCornerRadius;
     private Bitmap mImage;
     private Paint mPaint, mBorderPaint;
-    private int mCanvasSize;
+    private int mWidth, mHeight;
 
     public RoundImageView(final Context context) {
         this(context, null);
@@ -70,9 +71,9 @@ public class RoundImageView extends ImageView {
 
         // init shader
         if (mImage != null) {
-            mCanvasSize = canvas.getWidth();
-            if(canvas.getHeight() < mCanvasSize) {
-                mCanvasSize = canvas.getHeight();
+            int mCanvasSize = mWidth;
+            if(mHeight < mCanvasSize) {
+                mCanvasSize = mHeight;
             }
 
             BitmapShader shader = new BitmapShader(Bitmap.createScaledBitmap(mImage, mCanvasSize, mCanvasSize, false), Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
@@ -85,47 +86,9 @@ public class RoundImageView extends ImageView {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int width = measureWidth(widthMeasureSpec);
-        int height = measureHeight(heightMeasureSpec);
-        setMeasuredDimension(width, height);
-    }
-
-    private int measureWidth(int measureSpec) {
-        int result;
-        int specMode = MeasureSpec.getMode(measureSpec);
-        int specSize = MeasureSpec.getSize(measureSpec);
-
-        if (specMode == MeasureSpec.EXACTLY) {
-            // the parent has determined an exact size for the child.
-            result = specSize;
-        } else if (specMode == MeasureSpec.AT_MOST) {
-            // the child can be as large as it wants up to the specified size.
-            result = specSize;
-        } else {
-            // the parent has not imposed any constraint on the child.
-            result = mCanvasSize;
-        }
-
-        return result;
-    }
-
-    private int measureHeight(int measureSpecHeight) {
-        int result;
-        int specMode = MeasureSpec.getMode(measureSpecHeight);
-        int specSize = MeasureSpec.getSize(measureSpecHeight);
-
-        if (specMode == MeasureSpec.EXACTLY) {
-            // we were told how big to be
-            result = specSize;
-        } else if (specMode == MeasureSpec.AT_MOST) {
-            // the child can be as large as it wants up to the specified size.
-            result = specSize;
-        } else {
-            // measure the text (beware: ascent is a negative number)
-            result = mCanvasSize;
-        }
-
-        return (result + 2);
+        mWidth = MeasureSpec.getSize(widthMeasureSpec);
+        mHeight = MeasureSpec.getSize(heightMeasureSpec);
+        setMeasuredDimension(mWidth, mHeight);
     }
 
     private Bitmap drawableToBitmap(Drawable drawable) {

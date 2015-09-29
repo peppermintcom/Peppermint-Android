@@ -5,12 +5,13 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
+import com.peppermint.app.ui.views.RoundImageView;
 import com.peppermint.app.utils.Utils;
 
 public class T1PickRecipientFragment extends TutorialActivity.TutorialFragment {
@@ -43,8 +44,8 @@ public class T1PickRecipientFragment extends TutorialActivity.TutorialFragment {
 
         for(int i=0; i<dummyNames.length; i++) {
             int avatarResId = getResources().getIdentifier(dummyAvatars[i], "drawable", getActivity().getPackageName());
-            LinearLayout contactView = getContactView(app, inflater, dummyNames[i], dummyContacts[i], avatarResId);
-            lytContacts.addView(contactView);
+            LinearLayout lytContact = getContactView(app, inflater, dummyNames[i], dummyContacts[i], avatarResId);
+            lytContacts.addView(lytContact);
         }
 
         return v;
@@ -64,7 +65,7 @@ public class T1PickRecipientFragment extends TutorialActivity.TutorialFragment {
         txtContact.setTypeface(app.getFontSemibold());
         txtContact.setText(contact);
 
-        ImageView imgAvatar = (ImageView) v.findViewById(R.id.imgAvatar);
+        RoundImageView imgAvatar = (RoundImageView) v.findViewById(R.id.imgAvatar);
         imgAvatar.setImageResource(avatarResId);
 
         int margin = Utils.dpToPx(getActivity(), 4);

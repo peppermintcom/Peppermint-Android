@@ -56,19 +56,16 @@
         <item>Bob Adams</item>
         <item>Bob Adams</item>
         <item>Bob Bigboy</item>
-        <item>Bob Bigboy</item>
     </string-array>
     <string-array name="dummy_contact_array">
         <item>bob@hotmail.com</item>
         <item>0493829889</item>
         <item>elephantbob@gmail.com</item>
-        <item>3889289399</item>
     </string-array>
     <string-array name="dummy_avatar_array">
-        <item>av_unknown_green_tutorial</item>
-        <item>av_unknown_blue_tutorial</item>
-        <item>av_unknown_green_tutorial</item>
-        <item>av_unknown_blue_tutorial</item>
+        <item>ic_anonymous_green_48dp</item>
+        <item>ic_anonymous_blue_48dp</item>
+        <item>ic_anonymous_green_48dp</item>
     </string-array>
     <string name="send_audio_messages_to_your_friends">Send audio messages to your\nfriends or work mates</string>
     <string name="sent">Sent</string>

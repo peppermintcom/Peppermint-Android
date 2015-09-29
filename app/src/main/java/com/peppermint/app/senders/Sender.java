@@ -256,7 +256,7 @@ public abstract class Sender {
                 mEventBus.post(new SenderEvent(this, SenderEvent.EVENT_FINISHED));
             } else {
                 if(!recoverAndTryAgain(this, mError)) {
-                    Crashlytics.logException(mError);
+                    //Crashlytics.logException(mError);
                     if(mFailureChainSender == null) {
                         mEventBus.post(new SenderEvent(this, mError));
                     } else {
@@ -270,7 +270,7 @@ public abstract class Sender {
 
         public void doNotRecover() {
             if(mError != null) {
-                Crashlytics.logException(mError);
+                //Crashlytics.logException(mError);
                 if(mFailureChainSender == null) {
                     mEventBus.post(new SenderEvent(this, mError));
                 } else {
