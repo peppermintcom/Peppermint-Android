@@ -1,6 +1,11 @@
 package com.peppermint.app.data;
 
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
 import java.io.Serializable;
+import java.sql.SQLException;
 
 /**
  * Created by Nuno Luz on 26/08/2015.
@@ -9,8 +14,75 @@ import java.io.Serializable;
  */
 public class Recipient implements Serializable {
 
+    private static Recipient getFromCursor(Cursor cursor) {
+        Recipient recipient = new Recipient();
+        recipient.setId(cursor.getLong(cursor.getColumnIndex("recipient_id")));
+        recipient.setMimeType(cursor.getString(cursor.getColumnIndex("mime_type")));
+        recipient.setPhotoUri(cursor.getString(cursor.getColumnIndex("photo_uri")));
+        recipient.setName(cursor.getString(cursor.getColumnIndex("name")));
+        recipient.setVia(cursor.getString(cursor.getColumnIndex("via")));
+        recipient.setType(cursor.getString(cursor.getColumnIndex("account_type")));
+        return recipient;
+    }
+
+    public static void insert(SQLiteDatabase db, Recipient recipient) throws SQLException {
+        ContentValues cv = new ContentValues();
+        cv.put("mime_type", recipient.getMimeType());
+        cv.put("photo_uri", recipient.getPhotoUri());
+        cv.put("name", recipient.getName());
+        cv.put("via", recipient.getVia());
+        cv.put("account_type", recipient.getType());
+
+        long id = db.insert("tbl_sending_request_recipient", null, cv);
+        if(id < 0) {
+            throw new SQLException("Unable to insert recipient!");
+        }
+
+        recipient.setId(id);
+    }
+
+    public static void update(SQLiteDatabase db, Recipient recipient) throws SQLException {
+        ContentValues cv = new ContentValues();
+        cv.put("mime_type", recipient.getMimeType());
+        cv.put("photo_uri", recipient.getPhotoUri());
+        cv.put("name", recipient.getName());
+        cv.put("via", recipient.getVia());
+        cv.put("account_type", recipient.getType());
+
+        long id = db.update("tbl_sending_request_recipient", cv, "recipient_id = " + recipient.getId(), null);
+        if(id < 0) {
+            throw new SQLException("Unable to update recipient!");
+        }
+    }
+
+    public static void insertOrUpdate(SQLiteDatabase db, Recipient recipient) throws  SQLException {
+        if(recipient.getId() <= 0) {
+            insert(db, recipient);
+            return;
+        }
+        update(db, recipient);
+    }
+
+    public static Recipient get(SQLiteDatabase db, long id) {
+        Recipient recipient = null;
+        Cursor cursor = db.rawQuery("SELECT * FROM tbl_sending_request_recipient WHERE recipient_id = " + id, null);
+        if(cursor != null && cursor.moveToFirst()) {
+            recipient = getFromCursor(cursor);
+        }
+        return recipient;
+    }
+
+    public static Recipient getByVia(SQLiteDatabase db, String via) {
+        Recipient recipient = null;
+        Cursor cursor = db.rawQuery("SELECT * FROM tbl_sending_request_recipient WHERE via = ?;", new String[]{ via });
+        if(cursor != null && cursor.moveToFirst()) {
+            recipient = getFromCursor(cursor);
+        }
+        return recipient;
+    }
+
+    private long mContactId;
     private long mId;
-    private long mRawId;
     private boolean mStarred;
     private String mMimeType;
     private String mPhotoUri;
@@ -18,9 +90,11 @@ public class Recipient implements Serializable {
     private String mType;
     private String mVia;
 
-    public Recipient(long id, long rawId, boolean starred, String mimeType, String name, String type, String photo, String via) {
-        this.mId = id;
-        this.mRawId = rawId;
+    public Recipient() {
+    }
+
+    public Recipient(long contactId, boolean starred, String mimeType, String name, String type, String photo, String via) {
+        this.mContactId = contactId;
         this.mStarred = starred;
         this.mMimeType = mimeType;
         this.mName = name;
@@ -29,12 +103,12 @@ public class Recipient implements Serializable {
         this.mVia = via;
     }
 
-    public long getId() {
-        return mId;
+    public long getContactId() {
+        return mContactId;
     }
 
-    public void setId(long mId) {
-        this.mId = mId;
+    public void setContactId(long mId) {
+        this.mContactId = mId;
     }
 
     public String getName() {
@@ -69,12 +143,12 @@ public class Recipient implements Serializable {
         this.mMimeType = mMimeType;
     }
 
-    public long getRawId() {
-        return mRawId;
+    public long getId() {
+        return mId;
     }
 
-    public void setRawId(long mRawId) {
-        this.mRawId = mRawId;
+    public void setId(long mId) {
+        this.mId = mId;
     }
 
     public boolean isStarred() {
@@ -92,4 +166,5 @@ public class Recipient implements Serializable {
     public void setVia(String mVia) {
         this.mVia = mVia;
     }
+
 }

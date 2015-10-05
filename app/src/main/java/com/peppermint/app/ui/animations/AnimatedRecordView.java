@@ -1,25 +1,18 @@
-package com.peppermint.app.ui.views;
+package com.peppermint.app.ui.animations;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.LinearGradient;
 import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.RectF;
-import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.View;
 
 import com.peppermint.app.R;
-import com.peppermint.app.ui.animations.old.CanvasBitmapAnimation;
 import com.peppermint.app.utils.Utils;
 
 /**
@@ -27,7 +20,7 @@ import com.peppermint.app.utils.Utils;
  *
  * Custom recording view for Peppermint to show the progress of the recording.
  */
-public class PeppermintRecordView extends View {
+public class AnimatedRecordView extends AnimatedSurfaceView {
 
     private static final int DEF_TOTAL_BLINK_FRAMES = 20;
     private static final float DEF_CYCLE_SECONDS = 30f;
@@ -44,53 +37,51 @@ public class PeppermintRecordView extends View {
     private static final String DEF_PRESSED_BACKGROUND_COLOR2 = "#000000";
 
     private float mHeight, mWidth;
-    private float mCornerRadius;
-    private float mCornerLength;
-
-    private float mFullSideLength;
-    private float mTotalLength;
-    private float mCenterX, mCenterY;
-
-    private float mThickness;
     private float mSeconds;
-    private float mProgress;
 
     private float mHalfEyeSize;
     private int mProgressEmptyColor, mProgressFillColor, mBackgroundColor1, mBackgroundColor2, mPressedBackgroundColor1, mPressedBackgroundColor2;
 
-    private Paint mProgressPaint, mEmptyProgressPaint, mPaintMask, mPaintBackground, mPaintBackgroundPressed, mBitmapPaint;
+    private Paint mProgressPaint, mEmptyProgressPaint, mBackgroundPaint, mBackgroundPressedPaint, mBitmapPaint;
     private boolean mFillBackground;
 
     private CanvasBitmapAnimation mMouthAnimation, mMouthMoreAnimation;
+    private CanvasRotationAnimation mLeftEyeRotationAnimation, mRightEyeRotationAnimation;
+    private CanvasBlinkAnimation mLeftEyeBlinkAnimation, mRightEyeBlinkAnimation;
     private BitmapDrawable mEyeDrawable;
     private int mBlinkFrames;
     private boolean mEyesFollowProgress = true;
     private float mEyesAngle = 180f;
 
-    public PeppermintRecordView(Context context) {
+    public AnimatedRecordView(Context context) {
         super(context);
         init(null);
     }
 
-    public PeppermintRecordView(Context context, AttributeSet attrs) {
+    public AnimatedRecordView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(attrs);
     }
 
-    public PeppermintRecordView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public AnimatedRecordView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(attrs);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public PeppermintRecordView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public AnimatedRecordView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         init(attrs);
     }
 
+    @Override
+    public void onAsyncDraw(Canvas canvas) {
+
+    }
+
     protected void init(AttributeSet attrs) {
         if(attrs != null) {
-            TypedArray a = getContext().getTheme().obtainStyledAttributes(
+            /*TypedArray a = getContext().getTheme().obtainStyledAttributes(
                     attrs,
                     R.styleable.PeppermintView,
                     0, 0);
@@ -132,7 +123,7 @@ public class PeppermintRecordView extends View {
                 mPaintBackgroundPressed.setStyle(Paint.Style.FILL);
             } finally {
                 a.recycle();
-            }
+            }*/
         }
 
         mBitmapPaint = new Paint();
@@ -153,7 +144,7 @@ public class PeppermintRecordView extends View {
 
         mEyeDrawable = (BitmapDrawable) Utils.getDrawable(getContext(), R.drawable.img_logo_eye);
 
-        if (android.os.Build.VERSION.SDK_INT >= 11) {
+        if (Build.VERSION.SDK_INT >= 11) {
             setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         }
     }
@@ -170,7 +161,7 @@ public class PeppermintRecordView extends View {
         }
         this.setMeasuredDimension((int) mWidth, (int) mHeight);
 
-        mFullSideLength = (mHeight < mWidth ? mHeight : mWidth);
+        /*mFullSideLength = (mHeight < mWidth ? mHeight : mWidth);
         mTotalLength = ((mFullSideLength - (2f * mCornerRadius)) * 4f) + (mCornerLength * 4f);
 
         mCenterX = mWidth / 2f;
@@ -184,7 +175,7 @@ public class PeppermintRecordView extends View {
 
         Rect mouthRect = new Rect((int) (mCenterX - (mFullSideLength / 3.5f)), (int) (mCenterY - (mFullSideLength / 14f)), (int) (mCenterX + (mFullSideLength / 3.5f)), (int) (mCenterY + (mFullSideLength/3.5f)));
         mMouthAnimation.setBounds(mouthRect);
-        mMouthMoreAnimation.setBounds(mouthRect);
+        mMouthMoreAnimation.setBounds(mouthRect);*/
 
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
@@ -193,22 +184,6 @@ public class PeppermintRecordView extends View {
         Rect rect = new Rect((int) (xx - mHalfEyeSize), (int) (yy - mHalfEyeSize), (int) (xx + mHalfEyeSize), (int) (yy + mHalfEyeSize));
         canvas.save();
 
-        canvas.rotate(angle, xx, yy);
-        if(mBlinkFrames > 0) {
-            if(mBlinkFrames < (DEF_TOTAL_BLINK_FRAMES/2)) {
-                if(mEyesFollowProgress) {
-                    mEyesFollowProgress = false;
-                }
-                // open eye
-                canvas.scale(1.0f, 1.0f-((float)(mBlinkFrames)/(float)(DEF_TOTAL_BLINK_FRAMES/2)), xx, yy);
-            } else {
-                // close eye
-                canvas.scale(1.0f, 1.0f-((float)(DEF_TOTAL_BLINK_FRAMES-mBlinkFrames)/(float)(DEF_TOTAL_BLINK_FRAMES/2)), xx, yy);
-            }
-            mBlinkFrames--;
-        }
-        canvas.drawBitmap(mEyeDrawable.getBitmap(), null, rect, mBitmapPaint);
-
         canvas.restore();
     }
 
@@ -216,32 +191,9 @@ public class PeppermintRecordView extends View {
     public void draw(Canvas canvas) {
         super.draw(canvas);
 
-        Path fullPath = getPath(mCenterX, mCenterY, mCornerRadius, mCornerLength, mFullSideLength, mTotalLength);
-        Path progressPath = getPath(mCenterX, mCenterY, mCornerRadius, mCornerLength, mFullSideLength, mProgress);
-        Path maskPath = getPath(mCenterX, mCenterY, mCornerRadius - mThickness, mCornerLength, mFullSideLength - (mThickness*2f), mTotalLength);
-
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
-        int min = (int) (mSeconds / DEF_CYCLE_SECONDS);
-        if(min % 2 != 0) {
-            canvas.drawPath(fullPath, mProgressPaint);
-            canvas.drawPath(progressPath, mEmptyProgressPaint);
-        } else {
-            canvas.drawPath(fullPath, mEmptyProgressPaint);
-            canvas.drawPath(progressPath, mProgressPaint);
-        }
-
-        if(isPressed()) {
-            canvas.drawPath(maskPath, mPaintBackgroundPressed);
-        } else {
-            if (mFillBackground) {
-                canvas.drawPath(maskPath, mPaintBackground);
-            } else {
-                canvas.drawPath(maskPath, mPaintMask);
-            }
-        }
-
-        float angle = (mEyesFollowProgress ? (mProgress / mTotalLength * 360f) : mEyesAngle) + 45f;
+        /*float angle = (mEyesFollowProgress ? (mProgress / mTotalLength * 360f) : mEyesAngle) + 45f;
 
         //Drawable mouth = Utils.getDrawable(getContext(), R.drawable.img_logo_mouth);
 
@@ -251,173 +203,29 @@ public class PeppermintRecordView extends View {
 
         xxRef = (mCenterX + (mFullSideLength/7f));
         drawEye(canvas, xxRef, yyRef, angle);
-
         //mouth.setBounds((int) (mCenterX - (mFullSideLength / 3.5f)), (int) (mCenterY - (mFullSideLength/15f)), (int) (mCenterX + (mFullSideLength / 3.5f)), (int) (mCenterY + (mFullSideLength/3.5f)));
         float cicleSeconds = mSeconds % DEF_CYCLE_SECONDS;
 
         if (cicleSeconds > (DEF_CYCLE_SECONDS*2f/3f) && cicleSeconds < DEF_CYCLE_SECONDS - 2) {
             // play open more mouth
             if (cicleSeconds < (DEF_CYCLE_SECONDS*2.5f/3f)) {
-                mMouthMoreAnimation.reverse(false);
+                mMouthMoreAnimation.setReversed(false);
             } else {
-                mMouthMoreAnimation.reverse(true);
+                mMouthMoreAnimation.setReversed(true);
             }
-            mMouthMoreAnimation.step(canvas);
+            mMouthMoreAnimation.draw(canvas);
         } else {
             if (cicleSeconds < 2) {
-                mMouthAnimation.reverse(false);
+                mMouthAnimation.setReversed(false);
             } else if (cicleSeconds >= DEF_CYCLE_SECONDS - 2) {
-                mMouthAnimation.reverse(true);
+                mMouthAnimation.setReversed(true);
             }
-            mMouthAnimation.step(canvas);
-        }
-    }
-
-    private static Path getPath(float centerX, float centerY, float cornerRadius, float cornerLength, float fullSideLength, float progress) {
-
-        float halfFullSideLength = fullSideLength / 2f;
-        float sideLength = fullSideLength - (cornerRadius * 2f);
-        float sideHalfLength = sideLength / 2f;
-
-        float xx, yy;
-        boolean done = false;
-
-        Path p = new Path();
-        p.moveTo(centerX, centerY);
-        yy = centerY - halfFullSideLength;
-        p.lineTo(centerX, yy);
-
-        // top right half of line
-        {
-            float tmpProgress = progress < sideHalfLength ? progress : sideHalfLength;
-            progress -= tmpProgress;
-            xx = centerX + tmpProgress;
-            p.lineTo(xx, yy);
-        }
-
-        // top right corner
-        if(progress > 0) {
-            float tmpAngle = progress < cornerLength ? getAngle(progress, cornerLength) : 90f;
-            progress -= cornerLength;
-            p.arcTo(new RectF(centerX + sideHalfLength - cornerRadius,      // left
-                    yy,                                                     // top
-                    centerX + sideHalfLength + cornerRadius,                // right
-                    yy + (cornerRadius * 2f)), -90, tmpAngle);              // bottom
-        } else {
-            p.lineTo(xx, yy + cornerRadius);
-            done = true;
-        }
-
-        // right line
-        if(!done) {
-            if (progress > 0) {
-                float tmpProgress = progress < sideLength ? progress : sideLength;
-                progress -= tmpProgress;
-                xx = centerX + halfFullSideLength;
-                yy += tmpProgress + cornerRadius;
-                p.lineTo(xx, yy);
-            } else {
-                p.lineTo(centerX + sideHalfLength, yy + cornerRadius);
-                done = true;
-            }
-        }
-
-        // bottom right corner
-        if(!done) {
-            if (progress > 0) {
-                float tmpAngle = progress < cornerLength ? getAngle(progress, cornerLength) : 90f;
-                progress -= cornerLength;
-                p.arcTo(new RectF(centerX + sideHalfLength - cornerRadius,  // left
-                        centerY - halfFullSideLength + sideLength,          // top
-                        centerX + halfFullSideLength,                       // right
-                        centerY + halfFullSideLength), 0, tmpAngle);        // bottom
-            } else {
-                p.lineTo(xx - cornerRadius, yy);
-                done = true;
-            }
-        }
-
-        // bottom line
-        if(!done) {
-            if (progress > 0) {
-                float tmpProgress = progress < sideLength ? progress : sideLength;
-                progress -= tmpProgress;
-                xx = centerX - sideHalfLength + (sideLength - tmpProgress);
-                yy = centerY + halfFullSideLength;
-                p.lineTo(xx, yy);
-            } else {
-                p.lineTo(centerX + sideHalfLength, centerY + sideHalfLength);
-                done = true;
-            }
-        }
-
-        // bottom left corner
-        if(!done) {
-            if (progress > 0) {
-                float tmpAngle = progress < cornerLength ? getAngle(progress, cornerLength) : 90f;
-                progress -= cornerLength;
-                p.arcTo(new RectF(centerX - halfFullSideLength,             // left
-                        centerY + sideHalfLength - cornerRadius,            // top
-                        centerX - sideHalfLength + cornerRadius,            // right
-                        centerY + halfFullSideLength), 90, tmpAngle);       // bottom
-            } else {
-                p.lineTo(xx, yy - cornerRadius);
-                done = true;
-            }
-        }
-
-        // left line
-        if(!done) {
-            if (progress > 0) {
-                float tmpProgress = progress < sideLength ? progress : sideLength;
-                progress -= tmpProgress;
-                xx = centerX - halfFullSideLength;
-                yy = centerY + sideHalfLength - tmpProgress;
-                p.lineTo(xx, yy);
-            } else {
-                p.lineTo(centerX - sideHalfLength, centerY + sideHalfLength);
-                done = true;
-            }
-        }
-
-        // top left corner
-        if(!done) {
-            if (progress > 0) {
-                float tmpAngle = progress < cornerLength ? getAngle(progress, cornerLength) : 90f;
-                progress -= cornerLength;
-                p.arcTo(new RectF(centerX - halfFullSideLength,                     //left
-                        centerY - halfFullSideLength,                               // top
-                        centerX - sideHalfLength + cornerRadius,                    // right
-                        centerY - sideHalfLength + cornerRadius), 180, tmpAngle);   // bottom
-            } else {
-                p.lineTo(xx + cornerRadius, yy);
-                done = true;
-            }
-        }
-
-        // top left half of line
-        if(!done) {
-            if (progress > 0) {
-                xx = centerX - sideHalfLength + progress;
-                yy = centerY - halfFullSideLength;
-                p.lineTo(xx, yy);
-                p.lineTo(xx, yy + cornerRadius);
-            } else {
-                p.lineTo(centerX - sideHalfLength, centerY - sideHalfLength);
-            }
-        }
-
-        p.close();
-
-        return p;
-    }
-
-    private static float getAngle(float progress, float cornerLength) {
-        return 90f * progress / cornerLength;
+            mMouthAnimation.draw(canvas);
+        }*/
     }
 
     private void calculateProgress() {
-        this.mProgress = (this.mSeconds % DEF_CYCLE_SECONDS) / DEF_CYCLE_SECONDS * mTotalLength;
+        //this.mProgress = (this.mSeconds % DEF_CYCLE_SECONDS) / DEF_CYCLE_SECONDS * mTotalLength;
     }
 
     public float getSeconds() {

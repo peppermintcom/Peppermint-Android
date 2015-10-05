@@ -23,8 +23,9 @@ import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.RecordService;
 import com.peppermint.app.RecordServiceManager;
-import com.peppermint.app.SendRecordServiceManager;
+import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.data.Recipient;
+import com.peppermint.app.data.Recording;
 import com.peppermint.app.ui.views.PeppermintRecordView;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
@@ -55,10 +56,12 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     private float mLastLoudnessFactor = 1.0f;
     private boolean mPressedSend = false, mPressedRestart = false;
     private String mFilename = DEFAULT_FILENAME;
+    private Recipient mRecipient;
 
     public RecordingFragment() {
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
@@ -98,8 +101,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
             public void onClick(View v) {
 
                 if (!mRecordManager.isRecording() && !mRecordManager.isPaused()) {
-                    Recipient recipient = (Recipient) getActivity().getIntent().getExtras().get(INTENT_RECIPIENT_EXTRA);
-                    mRecordManager.startRecording(mFilename, recipient);
+                    mRecordManager.startRecording(mFilename, mRecipient);
                     return;
                 }
 
@@ -140,6 +142,14 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
         }, 2000);
 
         mRecordManager.start(false);
+
+        Bundle args = getArguments();
+        if(args == null || (mRecipient = (Recipient) args.get(INTENT_RECIPIENT_EXTRA)) == null) {
+            Toast.makeText(getActivity(), R.string.msg_message_norecipient_error, Toast.LENGTH_LONG).show();
+            Crashlytics.log(Log.ERROR, TAG, "Recipient received by fragment is null or non-existent! Unexpected access to RecordingActivity/Fragment.");
+            getActivity().finish();
+            return v;
+        }
 
         if(savedInstanceState != null) {
             return v;
@@ -183,39 +193,38 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
 
     @Override
     public void onStartRecording(RecordService.Event event) {
-        onBoundRecording(event.getRecipient(), event.getFilePath(), event.getFullDuration(), event.getLoudness());
+        onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
     }
 
     @Override
     public void onStopRecording(RecordService.Event event) {
-        onBoundRecording(event.getRecipient(), event.getFilePath(), event.getFullDuration(), event.getLoudness());
+        onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
         mLastLoudnessFactor = 1f;
 
         if(mPressedSend) {
-            mPreferences.addRecentContactUri(event.getRecipient().getId());
+            mPreferences.addRecentContactUri(event.getRecipient().getContactId());
 
-            SendRecordServiceManager sendRecordServiceManager = new SendRecordServiceManager(getActivity());
-            sendRecordServiceManager.startAndSend(event.getRecipient(), event.getFilePath());
+            SenderServiceManager sendRecordServiceManager = new SenderServiceManager(getActivity());
+            sendRecordServiceManager.startAndSend(event.getRecipient(), event.getRecording());
 
             Intent resultIntent = new Intent();
             resultIntent.putExtra(INTENT_RESULT_SENDING_EXTRA, true);
             getActivity().setResult(Activity.RESULT_OK, resultIntent);
             getActivity().finish();
         } else if(mPressedRestart) {
-            Recipient recipient = (Recipient) getActivity().getIntent().getExtras().get(INTENT_RECIPIENT_EXTRA);
-            mRecordManager.startRecording(mFilename, recipient);
+            mRecordManager.startRecording(mFilename, mRecipient);
         }
     }
 
     @Override
     public void onResumeRecording(RecordService.Event event) {
-        onBoundRecording(event.getRecipient(), event.getFilePath(), event.getFullDuration(), event.getLoudness());
+        onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
         //mRecordView.start();
     }
 
     @Override
     public void onPauseRecording(RecordService.Event event) {
-        onBoundRecording(event.getRecipient(), event.getFilePath(), event.getFullDuration(), event.getLoudness());
+        onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
         //mRecordView.stop();
     }
 
@@ -235,7 +244,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
 
     @Override
     public void onLoudnessRecording(RecordService.Event event) {
-        setRecordDuration(event.getFullDuration());
+        setRecordDuration(event.getRecording().getDurationMillis());
 
         ObjectAnimator scaleAnimator = new ObjectAnimator();
         scaleAnimator.setDuration(100);
@@ -254,14 +263,13 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
 
     @Override
     public void onErrorRecording(RecordService.Event event) {
-        Crashlytics.logException(event.getError());
         Toast.makeText(getActivity(), getString(R.string.msg_message_record_error), Toast.LENGTH_LONG).show();
         getActivity().finish();
     }
 
     @Override
-    public void onBoundRecording(Recipient currentRecipient, String currentFilePath, long currentFullDuration, float currentLoudness) {
-        setRecordDuration(currentFullDuration);
+    public void onBoundRecording(Recording currentRecording, Recipient currentRecipient, float currentLoudness) {
+        setRecordDuration(currentRecording == null ? 0 : currentRecording.getDurationMillis());
 
         if(!mRecordManager.isRecording() || mRecordManager.isPaused()) {
             mBtnPauseResume.setText(R.string.resume);
@@ -276,8 +284,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
                 if(mRecordManager.isPaused()) {
                     mRecordManager.resumeRecording();
                 } else if(!mRecordManager.isRecording()){
-                    Recipient recipient = (Recipient) getActivity().getIntent().getExtras().get(INTENT_RECIPIENT_EXTRA);
-                    mRecordManager.startRecording(mFilename, recipient);
+                    mRecordManager.startRecording(mFilename, mRecipient);
                 }
             }
         } else {

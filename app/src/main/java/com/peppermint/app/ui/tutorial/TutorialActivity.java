@@ -26,6 +26,7 @@ public class TutorialActivity extends Activity implements FragmentManager.OnBack
             super();
         }
 
+        @SuppressWarnings("deprecation")
         @Override
         public void onAttach(Activity activity) {
             super.onAttach(activity);

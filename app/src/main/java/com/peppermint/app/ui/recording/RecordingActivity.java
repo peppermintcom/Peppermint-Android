@@ -34,7 +34,9 @@ public class RecordingActivity extends CustomActionBarActivity {
 
         ((TextView) v.findViewById(R.id.txtRecordMessage)).setTypeface(app.getFontSemibold());
         TextView txtRecipient = ((TextView) v.findViewById(R.id.txtRecipient));
-        txtRecipient.setText(getString(R.string._for) + " " + recipient.getName());
+        if(recipient != null) {
+            txtRecipient.setText(getString(R.string._for) + " " + recipient.getName());
+        }
         txtRecipient.setTypeface(app.getFontSemibold());
 
         getCustomActionBar().setContents(v, true);

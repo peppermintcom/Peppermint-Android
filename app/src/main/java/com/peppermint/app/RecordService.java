@@ -14,6 +14,7 @@ import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import com.peppermint.app.data.Recipient;
+import com.peppermint.app.data.Recording;
 import com.peppermint.app.ui.recording.RecordingActivity;
 import com.peppermint.app.ui.recording.RecordingFragment;
 import com.peppermint.app.utils.ExtendedAudioRecorder;
@@ -145,6 +146,13 @@ public class RecordService extends Service {
         Recipient getCurrentRecipient() {
             return mRecipient;
         }
+
+        Recording getCurrentRecording() {
+            if(mRecorder == null) {
+                return null;
+            }
+            return newRecording(mRecorder);
+        }
     }
 
     private static float getLoudnessFromAmplitude(float amplitude) {
@@ -157,6 +165,10 @@ public class RecordService extends Service {
         return amplitude / topAmplitude;
     }
 
+    private static Recording newRecording(ExtendedAudioRecorder recorder) {
+        return new Recording(recorder.getFilePath(), recorder.getFullDuration(), recorder.getFullSize(), false);
+    }
+
     /**
      * Event associated with the recording process of the {@link RecordService}.
      */
@@ -165,28 +177,22 @@ public class RecordService extends Service {
         private float mLoudness;
 
         // final relevant data
-        private long mFullDuration;
-        private String mFilePath;
+        private Recording mRecording;
         private Recipient mRecipient;
 
         // event data
         private int mType;              // type of the event
         private Throwable mError;
 
-        public Event(ExtendedAudioRecorder recorder, Recipient recipient, int type) {
-            this.mLoudness = recorder.getAmplitude();
-            this.mFullDuration = recorder.getFullDuration();
-            this.mFilePath = recorder.getFilePath();
+        public Event(Recording recording, Recipient recipient, float loudness, int type) {
+            this.mLoudness = loudness;
             this.mType = type;
             this.mRecipient = recipient;
-
-            if(type == EVENT_LOUDNESS) {
-                this.mLoudness = getLoudnessFromAmplitude(recorder.getAmplitude());
-            }
+            this.mRecording = recording;
         }
 
-        public Event(ExtendedAudioRecorder recorder, Recipient recipient, Throwable error) {
-            this(recorder, recipient, EVENT_ERROR);
+        public Event(Recording recording, Recipient recipient, Throwable error) {
+            this(recording, recipient, 0, EVENT_ERROR);
             this.mError = error;
         }
 
@@ -194,16 +200,12 @@ public class RecordService extends Service {
             return mLoudness;
         }
 
-        public long getFullDuration() {
-            return mFullDuration;
+        public Recording getRecording() {
+            return mRecording;
         }
 
         public int getType() {
             return mType;
-        }
-
-        public String getFilePath() {
-            return mFilePath;
         }
 
         public Recipient getRecipient() {
@@ -216,43 +218,44 @@ public class RecordService extends Service {
     }
 
     private final ExtendedAudioRecorder.Listener mAudioRecorderListener = new ExtendedAudioRecorder.Listener() {
+
         @Override
-        public void onStart(String filePath, long durationInMillis, int amplitude) {
+        public void onStart(String filePath, long durationInMillis, float sizeKbs, int amplitude) {
             updateLoudness();
 
             startForeground(RecordService.class.hashCode(), getNotification());
 
-            Event e = new Event(mRecorder, mRecipient, EVENT_START);
+            Event e = new Event(newRecording(mRecorder), mRecipient, amplitude, EVENT_START);
             mEventBus.post(e);
         }
 
         @Override
-        public void onPause(String filePath, long durationInMillis, int amplitude) {
+        public void onPause(String filePath, long durationInMillis, float sizeKbs, int amplitude) {
             updateNotification();
 
-            Event e = new Event(mRecorder, mRecipient, EVENT_PAUSE);
+            Event e = new Event(newRecording(mRecorder), mRecipient, amplitude, EVENT_PAUSE);
             mEventBus.post(e);
         }
 
         @Override
-        public void onResume(String filePath, long durationInMillis, int amplitude) {
+        public void onResume(String filePath, long durationInMillis, float sizeKbs, int amplitude) {
             updateLoudness();
             updateNotification();
 
-            Event e = new Event(mRecorder, mRecipient, EVENT_RESUME);
+            Event e = new Event(newRecording(mRecorder), mRecipient, amplitude, EVENT_RESUME);
             mEventBus.post(e);
         }
 
         @Override
-        public void onStop(String filePath, long durationInMillis, int amplitude) {
+        public void onStop(String filePath, long durationInMillis, float sizeKbs, int amplitude) {
             stopForeground(true);
-            Event e = new Event(mRecorder, mRecipient, EVENT_STOP);
+            Event e = new Event(newRecording(mRecorder), mRecipient, amplitude, EVENT_STOP);
             mEventBus.post(e);
         }
 
         @Override
-        public void onError(String filePath, long durationInMillis, int amplitude, Throwable t) {
-            Event e = new Event(mRecorder, mRecipient, t);
+        public void onError(String filePath, long durationInMillis, float sizeKbs, int amplitude, Throwable t) {
+            Event e = new Event(newRecording(mRecorder), mRecipient, t);
             mEventBus.post(e);
         }
     };
@@ -364,7 +367,7 @@ public class RecordService extends Service {
     private void updateLoudness() {
         if(isRecording()) {
             if(mEventBus.hasSubscriberForEvent(Event.class)) {
-                Event e = new Event(mRecorder, mRecipient, EVENT_LOUDNESS);
+                Event e = new Event(newRecording(mRecorder), mRecipient, getLoudnessFromAmplitude(mRecorder.getAmplitude()), EVENT_LOUDNESS);
                 mEventBus.post(e);
             }
             mHandler.postDelayed(mLoudnessRunnable, 50);

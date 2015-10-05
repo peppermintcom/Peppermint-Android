@@ -7,6 +7,7 @@ import android.media.MediaRecorder;
 import android.util.Log;
 
 import com.coremedia.iso.boxes.Container;
+import com.crashlytics.android.Crashlytics;
 import com.googlecode.mp4parser.FileDataSourceImpl;
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
@@ -30,20 +31,19 @@ import java.util.Calendar;
 public class ExtendedAudioRecorder {
 
     public interface Listener {
-        void onStart(String filePath, long durationInMillis, int amplitude);
-        void onPause(String filePath, long durationInMillis, int amplitude);
-        void onResume(String filePath, long durationInMillis, int amplitude);
-        void onStop(String filePath, long durationInMillis, int amplitude);
-        void onError(String filePath, long durationInMillis, int amplitude, Throwable t);
+        void onStart(String filePath, long durationInMillis, float sizeKbs, int amplitude);
+        void onPause(String filePath, long durationInMillis, float sizeKbs, int amplitude);
+        void onResume(String filePath, long durationInMillis, float sizeKbs, int amplitude);
+        void onStop(String filePath, long durationInMillis, float sizeKbs, int amplitude);
+        void onError(String filePath, long durationInMillis, float sizeKbs, int amplitude, Throwable t);
     }
 
     private static final String TAG = ExtendedAudioRecorder.class.getSimpleName();
     private static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd'_'HH-mm-ss");
 
-    private static final int RECORDER_SAMPLERATE = 8000;
     private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO;
     private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
-    private static final float MAX_GAIN = 1.3f;
+    private static final float MAX_GAIN = 10f;
 
     // current recording context variables
     private static final String DEFAULT_FILE_PREFIX = "Record";
@@ -52,6 +52,7 @@ public class ExtendedAudioRecorder {
     private String mFilePath;           // final AAC file with encoded audio
     private String mTempFilePath;       // temporary PCM file with raw audio
     private long mFullDuration = 0;
+    private float mFullSize = 0;
     private int mAmplitude = 0;
 
     // external event listener
@@ -85,74 +86,87 @@ public class ExtendedAudioRecorder {
 
             if(mListener != null) {
                 if (error != null) {
-                    mListener.onError(mFilePath, mFullDuration, mAmplitude, error);
+                    mListener.onError(mFilePath, mFullDuration, mFullSize, mAmplitude, error);
                 } else {
-                    mListener.onStop(mFilePath, mFullDuration, mAmplitude);
+                    mListener.onStop(mFilePath, mFullDuration, mFullSize, mAmplitude);
                 }
             }
         }
     };
+    public Object[] findAudioRecord() {
+        // 44100 increases the record size significantly
+        for (int rate : new int[] {/*44100, */22050, 16000, 11025, 8000}) {  // add the rates you wish to check against
+            try {
+                int bufferSize = AudioRecord.getMinBufferSize(rate, RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING);
+                if (bufferSize > 0) {
+                    // check if we can instantiate and have a success
+                    AudioRecord recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, rate, RECORDER_CHANNELS,
+                            RECORDER_AUDIO_ENCODING, bufferElements2Rec * bytesPerElement);
+
+                    if (recorder.getState() == AudioRecord.STATE_INITIALIZED)
+                        return new Object[]{recorder, rate};
+                }
+            } catch(Throwable t) {
+                //Crashlytics.logException(t);
+                Log.w(TAG, "Error obtaining AudioRecord instance!", t);
+            }
+        }
+
+        return null;
+    }
     private Runnable mRecorderRunnable = new Runnable() {
         public void run() {
-            AudioRecord recorder = null;
-            Throwable error = null;
+        AudioRecord recorder = null;
+        Throwable error = null;
 
-            try {
-                int sampleRate = getBestValidSampleRate();
-                // try to release the obtained audiorecord, just in case...
-                recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,
-                        sampleRate, RECORDER_CHANNELS,
-                        RECORDER_AUDIO_ENCODING, bufferElements2Rec * bytesPerElement);
+        try {
+            Object[] data = findAudioRecord();
+            recorder = (AudioRecord) data[0];
+            recorder.startRecording();
+
+            writeAudioDataToFile(recorder, (int) data[1]);
+        } catch (Throwable t) {
+            // keep the error to send it to the external listener
+            error = t;
+            Log.e(TAG, t.getMessage(), t);
+        } finally {
+            if(recorder != null) {
+                try {
+                    recorder.stop();
+                } catch(Throwable t) { Log.w(TAG, "Error stopping recorder after exception occurred!", t); }
                 recorder.release();
+            }
+        }
 
-                // start recording
-                recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,
-                        sampleRate, RECORDER_CHANNELS,
-                        RECORDER_AUDIO_ENCODING, bufferElements2Rec * bytesPerElement);
-                recorder.startRecording();
-
-                writeAudioDataToFile(recorder, sampleRate);
+        if(mDiscard || error != null) {
+            if(!discardAll()) {
+                Log.w(TAG, "Unable to discard all created audio files!");
+            }
+        } else if(!mPaused) {
+            // if the recording was stopped/finished, encode the PCM file to AAC
+            try {
+                encodeFile();
             } catch (Throwable t) {
-                // keep the error to send it to the external listener
                 error = t;
                 Log.e(TAG, t.getMessage(), t);
-            } finally {
-                if(recorder != null) {
-                    try {
-                        recorder.stop();
-                    } catch(Throwable t) { Log.w(TAG, "Error stopping recorder after exception occurred!", t); }
-                    recorder.release();
-                }
             }
+        }
 
-            if(mDiscard || error != null) {
-                if(!discardAll()) {
-                    Log.w(TAG, "Unable to discard all created audio files!");
-                }
-            } else if(!mPaused) {
-                // if the recording was stopped/finished, encode the PCM file to AAC
-                try {
-                    encodeFile();
-                } catch (Throwable t) {
-                    error = t;
-                    Log.e(TAG, t.getMessage(), t);
-                }
-            }
+        // thread is finishing...
+        mRecorderThread = null;
 
-            // thread is finishing...
-            mRecorderThread = null;
-
-            if(mListener != null) {
-                if (error != null) {
-                    mListener.onError(mFilePath, mFullDuration, mAmplitude, error);
+        if(mListener != null) {
+            if (error != null) {
+                Crashlytics.logException(error);
+                mListener.onError(mFilePath, mFullDuration, mFullSize, mAmplitude, error);
+            } else {
+                if(mPaused) {
+                    mListener.onPause(mFilePath, mFullDuration, mFullSize, mAmplitude);
                 } else {
-                    if(mPaused) {
-                        mListener.onPause(mFilePath, mFullDuration, mAmplitude);
-                    } else {
-                        mListener.onStop(mFilePath, mFullDuration, mAmplitude);
-                    }
+                    mListener.onStop(mFilePath, mFullDuration, mFullSize, mAmplitude);
                 }
             }
+        }
         }
     };
 
@@ -166,17 +180,6 @@ public class ExtendedAudioRecorder {
     public ExtendedAudioRecorder(Context context, String filePrefix) {
         this(context);
         this.mFilePrefix = filePrefix;
-    }
-
-    private int getBestValidSampleRate() {
-        // 44100 increases the record size significantly
-        for (int rate : new int[] {/*44100, */22050, 16000, 11025, 8000}) {  // add the rates you wish to check against
-            int bufferSize = AudioRecord.getMinBufferSize(rate, RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING);
-            if (bufferSize > 0) {
-                return rate;
-            }
-        }
-        return RECORDER_SAMPLERATE;
     }
 
     public boolean isPaused() {
@@ -194,11 +197,12 @@ public class ExtendedAudioRecorder {
 
         Calendar now = Calendar.getInstance();
         mFilePath = mContext.getExternalCacheDir().getAbsolutePath() + "/" + mFilePrefix + "_" +
-                DATETIME_FORMAT.format(now.getTime()) + ".mp3";
+                DATETIME_FORMAT.format(now.getTime()) + ".m4a";
         mTempFilePath = mContext.getExternalCacheDir().getAbsolutePath() + "/" + mFilePrefix + "_" +
                 DATETIME_FORMAT.format(now.getTime()) + ".pcm";
         mPaused = false;
         mFullDuration = 0;
+        mFullSize = 0;
         mAmplitude = 0;
         mDiscard = false;
 
@@ -267,7 +271,8 @@ public class ExtendedAudioRecorder {
         }
 
         // initialize native AAC encoder
-        float gainOld = 1.0f, bitrate = 16 * sampleRate;
+        //float gainOld = 1.0f;
+        float bitrate = 16 * sampleRate;
         //Log.d(TAG, "Sample Rate = " + sampleRate + " Bitrate = " + bitrate);
         mEncoder.init((int) bitrate, 1, sampleRate, 16, mTempFilePath);
 
@@ -275,9 +280,13 @@ public class ExtendedAudioRecorder {
         while (mRecording) {
             // gets the voice output from microphone to short format
             int numRead = recorder.read(sData, 0, bufferElements2Rec);
-            double sum = 0;
+            double sum = 0, maxAbs = Short.MIN_VALUE;
             for(int i=0; i<numRead; i++) {
                 sum += sData[i] * sData[i];
+                double abs = Math.abs(sData[i]);
+                if(abs > maxAbs) {
+                    maxAbs = abs;
+                }
             }
             if(numRead > 0) {
                 mAmplitude = (int) Math.sqrt(sum/(double)numRead);
@@ -286,18 +295,30 @@ public class ExtendedAudioRecorder {
             }
 
             // apply gain to read buffer data
-            float gainNew = MAX_GAIN - ((float) Math.abs(mAmplitude) / (float) Short.MAX_VALUE);
+            //float gainNew = MAX_GAIN - ((float) Math.abs(mAmplitude) / ((float) Short.MAX_VALUE / 2f));
+            float gainNew = ((float) Short.MAX_VALUE / 2) / (float) maxAbs;
+
+/*            if(gainNew > gainOld) {
+                gainNew = gainOld + 0.3f;
+            } else if(gainNew < gainOld) {
+                gainNew = gainOld - 0.3f;
+            }
+*/
             if(gainNew < 1) {
                 gainNew = 1;
             }
             if(gainNew > MAX_GAIN) {
                 gainNew = MAX_GAIN;
             }
+
+            //Log.d(TAG, "Amplitude = " + mAmplitude + "; Max = " + maxAbs + "; Gain = " + gainNew);
+
             for(int i=0; i<numRead; i++) {
-                float gain = gainOld + ((gainNew - gainOld) * 0.5f * (1f - (float) Math.cos(Math.PI * (float) i / (float) numRead)));
-                sData[i] = (short)Math.min((int)(sData[i] * gain), (int)Short.MAX_VALUE);
+                //float gain = gainOld + ((gainNew - gainOld) * 0.5f * (1f - (float) Math.cos(Math.PI * (float) i / (float) numRead)));
+                //float gain = gainNew;
+                sData[i] = (short)Math.min((int)(sData[i] * gainNew), (int)Short.MAX_VALUE);
             }
-            gainOld = gainNew;
+            //gainOld = gainNew;
 
             // encode in AAC using the native encoder
             byte bData[] = Utils.short2Byte(sData);
@@ -306,6 +327,7 @@ public class ExtendedAudioRecorder {
             // calculate duration
             long cicleNow = android.os.SystemClock.uptimeMillis();
             mFullDuration += cicleNow - now;
+            mFullSize = bitrate / 8f * (mFullDuration/1000f);
             now = cicleNow;
         }
 
@@ -324,9 +346,9 @@ public class ExtendedAudioRecorder {
 
         if(mListener != null) {
             if(isResume) {
-                mListener.onResume(mFilePath, mFullDuration, mAmplitude);
+                mListener.onResume(mFilePath, mFullDuration, mFullSize, mAmplitude);
             } else {
-                mListener.onStart(mFilePath, mFullDuration, mAmplitude);
+                mListener.onStart(mFilePath, mFullDuration, mFullSize, mAmplitude);
             }
         }
 
@@ -370,6 +392,10 @@ public class ExtendedAudioRecorder {
 
     public long getFullDuration() {
         return mFullDuration;
+    }
+
+    public float getFullSize() {
+        return mFullSize;
     }
 
     public String getFilePath() {

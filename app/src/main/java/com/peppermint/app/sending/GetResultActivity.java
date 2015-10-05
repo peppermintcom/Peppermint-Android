@@ -1,4 +1,4 @@
-package com.peppermint.app.senders;
+package com.peppermint.app.sending;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -17,6 +17,12 @@ import java.util.UUID;
  */
 public class GetResultActivity extends Activity {
 
+    public static final String INTENT_ID = "GetResultActivity_Id";
+    public static final String INTENT_BROADCAST_TYPE = "GetResultActivity_BroadcastType";
+    public static final String INTENT_REQUESTCODE = "GetResultActivity_RequestCode";
+    public static final String INTENT_RESULTCODE = "GetResultActivity_ResultCode";
+    public static final String INTENT_DATA = "GetResultActivity_Data";
+
     private UUID mUuid;
     private String mBroadcastType;
     private int mRequestCode;
@@ -27,11 +33,11 @@ public class GetResultActivity extends Activity {
         setContentView(R.layout.a_getresult_layout);
 
         // obtain the intent with the data to start the new activity for result
-        mUuid = (UUID) getIntent().getSerializableExtra(Sender.INTENT_ID);
-        mBroadcastType = getIntent().getStringExtra(Sender.INTENT_BROADCAST_TYPE);
-        mRequestCode = getIntent().getIntExtra(Sender.INTENT_REQUESTCODE, -1);
+        mUuid = (UUID) getIntent().getSerializableExtra(INTENT_ID);
+        mBroadcastType = getIntent().getStringExtra(INTENT_BROADCAST_TYPE);
+        mRequestCode = getIntent().getIntExtra(INTENT_REQUESTCODE, -1);
 
-        Intent i = getIntent().getParcelableExtra(Sender.INTENT_DATA);
+        Intent i = getIntent().getParcelableExtra(INTENT_DATA);
         startActivityForResult(i, mRequestCode);
     }
 
@@ -42,10 +48,10 @@ public class GetResultActivity extends Activity {
         // obtain the result from the started activity
         if(requestCode == mRequestCode || requestCode == -1) {
             Intent intent = new Intent(mBroadcastType);
-            intent.putExtra(Sender.INTENT_ID, mUuid);
-            intent.putExtra(Sender.INTENT_RESULTCODE, resultCode);
-            intent.putExtra(Sender.INTENT_REQUESTCODE, requestCode);
-            intent.putExtra(Sender.INTENT_DATA, data);
+            intent.putExtra(INTENT_ID, mUuid);
+            intent.putExtra(INTENT_RESULTCODE, resultCode);
+            intent.putExtra(INTENT_REQUESTCODE, requestCode);
+            intent.putExtra(INTENT_DATA, data);
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
             finish();
         }

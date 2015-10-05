@@ -15,15 +15,21 @@ import android.os.Build;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 import android.widget.ImageView;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.URL;
 import java.text.Normalizer;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,6 +40,8 @@ import java.util.List;
  * </p>
  */
 public class Utils {
+
+    private static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd' 'HH-mm-ss");
 
     /**
      * Obtains the screen size in pixels.
@@ -130,22 +138,24 @@ public class Utils {
      * @return true if the internet connection is available; false otherwise
      */
     public static boolean isInternetAvailable(Context context) {
-        ConnectivityManager conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        //should check null because in air plan mode it will be null
+        return (netInfo != null && netInfo.isConnected());
+    }
 
-        if(conMan != null) {
-            NetworkInfo conMobile = conMan.getNetworkInfo(0);
-            NetworkInfo conWifi = conMan.getNetworkInfo(1);
-
-            if(conMobile != null && conMan.getNetworkInfo(0).getState() == NetworkInfo.State.CONNECTED) {
-                return true;
-            }
-
-            if(conWifi != null && conMan.getNetworkInfo(1).getState() == NetworkInfo.State.CONNECTED) {
-                return true;
-            }
+    public static boolean isInternetActive(Context context) {
+        try {
+            HttpURLConnection urlc = (HttpURLConnection) (new URL("http://www.google.com").openConnection());
+            urlc.setRequestProperty("User-Agent", "Test");
+            urlc.setRequestProperty("Connection", "close");
+            urlc.setConnectTimeout(1500);
+            urlc.connect();
+            return (urlc.getResponseCode() == 200);
+        } catch (IOException e) {
+            Log.e(Utils.class.getSimpleName(), "Error checking internet connection", e);
+            return false;
         }
-
-        return false;
     }
 
     /**
@@ -244,6 +254,15 @@ public class Utils {
         }
     }
 
+    public static int getColor(Context context, int colorRes) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            return context.getResources().getColor(colorRes, context.getTheme());
+        } else {
+            //noinspection deprecation
+            return context.getResources().getColor(colorRes);
+        }
+    }
+
     public static int getStatusBarHeight(Context context) {
         int result = 0;
         int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
@@ -269,6 +288,10 @@ public class Utils {
         }
 
         return data;
+    }
+
+    public static String getCurrentTimestamp() {
+        return DATETIME_FORMAT.format(Calendar.getInstance().getTime());
     }
 
     public static byte[] short2Byte(short[] sData) {

@@ -70,7 +70,7 @@ public class AnimatedGIFView extends View {
     }
 
     private void init(AttributeSet attrs) {
-        mInputStream = getContext().getResources().openRawResource(R.raw.record_view);
+        //mInputStream = getContext().getResources().openRawResource(R.raw.record_view);
         mMovie = Movie.decodeStream(mInputStream);
         mMovie.setTime(0);
         mMovieWidth = mMovie.width();

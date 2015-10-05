@@ -8,7 +8,9 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.peppermint.app.data.Recipient;
-import com.peppermint.app.senders.Sender;
+import com.peppermint.app.data.Recording;
+import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.sending.SendingEvent;
 
 import java.util.UUID;
 
@@ -19,10 +21,10 @@ import java.util.UUID;
  * Allows sending multiple files concurrently.
  * It allows an easier interaction with the Android Service API.
  */
-public class SendRecordServiceManager {
+public class SenderServiceManager {
 
     /**
-     * Listener for file send events (see {@link com.peppermint.app.senders.Sender.SenderEvent}).
+     * Listener for file send events (see {@link SendingEvent}).
      */
     public interface Listener {
         /**
@@ -34,31 +36,43 @@ public class SendRecordServiceManager {
          * Invoked when a send file request starts.
          * @param event the event
          */
-        void onSendStarted(Sender.SenderEvent event);
+        void onSendStarted(SendingEvent event);
 
         /**
          * Invoked when a send file request is cancelled.
          * @param event the event
          */
-        void onSendCancelled(Sender.SenderEvent event);
+        void onSendCancelled(SendingEvent event);
 
         /**
          * Invoked when a send file request fails.
          * @param event the event
          */
-        void onSendError(Sender.SenderEvent event);
+        void onSendError(SendingEvent event);
 
         /**
          * Invoked when a send file request finishes.
          * @param event the event
          */
-        void onSendFinished(Sender.SenderEvent event);
+        void onSendFinished(SendingEvent event);
+
+        /**
+         * Invoked when a send file request progresses.
+         * @param event the event
+         */
+        void onSendProgress(SendingEvent event);
+
+        /**
+         * Invoked when a send file request has been queued due to a recoverable error.
+         * @param event the event
+         */
+        void onSendQueued(SendingEvent event);
     }
 
-    private static final String TAG = SendRecordServiceManager.class.getSimpleName();
+    private static final String TAG = SenderServiceManager.class.getSimpleName();
 
     private Context mContext;
-    private SendRecordService.SendRecordServiceBinder mService;
+    private SenderService.SendRecordServiceBinder mService;
     private Listener mListener;
     protected boolean mIsBound = false;                                         // if the manager is bound to the service
 
@@ -66,23 +80,29 @@ public class SendRecordServiceManager {
      * Event callback triggered by the {@link RecordService} through an {@link de.greenrobot.event.EventBus}.<br />
      * @param event the event (see {@link RecordService.Event})
      */
-    public void onEventMainThread(Sender.SenderEvent event) {
+    public void onEventMainThread(SendingEvent event) {
         if(mListener == null) {
             return;
         }
 
         switch (event.getType()) {
-            case Sender.SenderEvent.EVENT_STARTED:
+            case SendingEvent.EVENT_STARTED:
                 mListener.onSendStarted(event);
                 break;
-            case Sender.SenderEvent.EVENT_ERROR:
+            case SendingEvent.EVENT_ERROR:
                 mListener.onSendError(event);
                 break;
-            case Sender.SenderEvent.EVENT_CANCELLED:
+            case SendingEvent.EVENT_CANCELLED:
                 mListener.onSendCancelled(event);
                 break;
-            case Sender.SenderEvent.EVENT_FINISHED:
+            case SendingEvent.EVENT_FINISHED:
                 mListener.onSendFinished(event);
+                break;
+            case SendingEvent.EVENT_PROGRESS:
+                mListener.onSendProgress(event);
+                break;
+            case SendingEvent.EVENT_QUEUED:
+                mListener.onSendQueued(event);
                 break;
         }
     }
@@ -92,8 +112,8 @@ public class SendRecordServiceManager {
      */
     protected ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder binder) {
-            mService = (SendRecordService.SendRecordServiceBinder) binder;
-            mService.register(SendRecordServiceManager.this);
+            mService = (SenderService.SendRecordServiceBinder) binder;
+            mService.register(SenderServiceManager.this);
 
             if(mListener != null) {
                 mListener.onBoundSendService();
@@ -108,19 +128,19 @@ public class SendRecordServiceManager {
         }
     };
 
-    public SendRecordServiceManager(Context context) {
+    public SenderServiceManager(Context context) {
         this.mContext = context;
     }
 
     /**
      * Starts the service and sends an intent to start sending the supplied file to the supplied recipient.
      * @param recipient the recipient of the file
-     * @param filePath the location of the file to send
+     * @param recording the recording with the file to send
      */
-    public void startAndSend(Recipient recipient, String filePath) {
-        Intent intent = new Intent(mContext, SendRecordService.class);
-        intent.putExtra(SendRecordService.INTENT_DATA_FILEPATH, filePath);
-        intent.putExtra(SendRecordService.INTENT_DATA_RECIPIENT, recipient);
+    public void startAndSend(Recipient recipient, Recording recording) {
+        Intent intent = new Intent(mContext, SenderService.class);
+        intent.putExtra(SenderService.INTENT_DATA_RECORDING, recording);
+        intent.putExtra(SenderService.INTENT_DATA_RECIPIENT, recipient);
         mContext.startService(intent);
     }
 
@@ -129,7 +149,7 @@ public class SendRecordServiceManager {
      * <b>Also binds this manager to the service.</b>
      */
     public void start() {
-        Intent intent = new Intent(mContext, SendRecordService.class);
+        Intent intent = new Intent(mContext, SenderService.class);
         mContext.startService(intent);
         bind();
     }
@@ -149,7 +169,7 @@ public class SendRecordServiceManager {
      * Binds this manager to the service.
      */
     public void bind() {
-        mContext.bindService(new Intent(mContext, SendRecordService.class), mConnection, Context.BIND_AUTO_CREATE);
+        mContext.bindService(new Intent(mContext, SenderService.class), mConnection, Context.BIND_AUTO_CREATE);
         mIsBound = true;
     }
 
@@ -160,7 +180,7 @@ public class SendRecordServiceManager {
         if (mIsBound) {
             // if we have received the service, and hence registered with it, then now is the time to unregister.
             if (mService != null) {
-                mService.unregister(SendRecordServiceManager.this);
+                mService.unregister(SenderServiceManager.this);
             }
             // detach our existing connection.
             mContext.unbindService(mConnection);
@@ -172,11 +192,11 @@ public class SendRecordServiceManager {
      * Sends the supplied file to the supplied recipient.
      * Can only be used if the manager is bound to the service.
      * @param recipient the recipient of the file
-     * @param filePath the file location
-     * @return the {@link UUID} of the send file request/task
+     * @param recording the recording and file location
+     * @return the {@link SendingRequest} of the send file request/task
      */
-    public UUID send(Recipient recipient, String filePath) {
-        return mService.send(recipient, filePath);
+    public SendingRequest send(Recipient recipient, Recording recording) {
+        return mService.send(recipient, recording);
     }
 
     /**
@@ -185,6 +205,14 @@ public class SendRecordServiceManager {
      */
     public void cancel(UUID uuid) {
         mService.cancel(uuid);
+    }
+
+    public void cancel() {
+        mService.cancel();
+    }
+
+    public boolean isSending(UUID uuid) {
+        return mService.isSending(uuid);
     }
 
     public boolean isSending() {

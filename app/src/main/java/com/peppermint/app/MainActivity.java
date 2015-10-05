@@ -7,6 +7,7 @@ import android.widget.Toast;
 
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.recipients.RecipientsFragment;
+import com.peppermint.app.ui.tutorial.SplashActivity;
 import com.peppermint.app.ui.tutorial.TutorialActivity;
 import com.peppermint.app.ui.views.NavigationItem;
 

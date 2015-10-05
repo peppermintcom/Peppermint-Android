@@ -18,10 +18,10 @@ import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
-import com.peppermint.app.SendRecordServiceManager;
+import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientType;
-import com.peppermint.app.senders.Sender;
+import com.peppermint.app.sending.SendingEvent;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.recording.RecordingActivity;
 import com.peppermint.app.ui.recording.RecordingFragment;
@@ -31,6 +31,7 @@ import com.peppermint.app.ui.views.SearchListBarView;
 import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.PepperMintPreferences;
+import com.peppermint.app.utils.Utils;
 
 import java.util.List;
 
@@ -58,11 +59,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     // Bottom bar
     private AnimatorBuilder mAnimatorBuilder;
-    private SendRecordServiceManager mSendRecordManager;
+    private SenderServiceManager mSendRecordManager;
     private View lytStatus;
     private TextView txtStatus;
     private ImageView imgStatus;
-    private SendRecordServiceManager.Listener mSendRecordListener = new SendRecordServiceManager.Listener() {
+    private SenderServiceManager.Listener mSendRecordListener = new SenderServiceManager.Listener() {
 
         private void hide(int delay) {
             if(lytStatus.getVisibility() == View.VISIBLE) {
@@ -102,7 +103,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         private void showAndHide() {
             if(lytStatus.getVisibility() != View.GONE) {
-                hide(2000);
+                hide(5000);
             } else {
                 Animator anim = mAnimatorBuilder.buildFadeSlideInBottomAnimator(lytStatus);
                 anim.addListener(new Animator.AnimatorListener() {
@@ -112,7 +113,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
                     @Override
                     public void onAnimationEnd(Animator animation) {
-                        hide(2000);
+                        hide(5000);
                     }
 
                     @Override
@@ -142,39 +143,50 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         }
 
         @Override
-        public void onSendStarted(Sender.SenderEvent event) {
+        public void onSendStarted(SendingEvent event) {
             onBoundSendService();
         }
 
         @Override
-        public void onSendCancelled(Sender.SenderEvent event) {
+        public void onSendCancelled(SendingEvent event) {
             onBoundSendService();
         }
 
         @Override
-        public void onSendError(Sender.SenderEvent event) {
+        public void onSendError(SendingEvent event) {
             onBoundSendService();
         }
 
         @Override
-        public void onSendFinished(Sender.SenderEvent event) {
+        public void onSendFinished(SendingEvent event) {
             if(!mSendRecordManager.isSending()) {
                 showAndHide();
                 txtStatus.setText(getString(R.string.sent));
                 imgStatus.setVisibility(View.VISIBLE);
             }
         }
+
+        @Override
+        public void onSendProgress(SendingEvent event) {
+        }
+
+        @Override
+        public void onSendQueued(SendingEvent event) {
+            onBoundSendService();
+        }
     };
 
     public RecipientsFragment() {
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mPreferences = new PepperMintPreferences(activity);
+
         mActivity = (CustomActionBarActivity) activity;
-        mSendRecordManager = new SendRecordServiceManager(activity);
+        mPreferences = new PepperMintPreferences(activity);
+        mSendRecordManager = new SenderServiceManager(activity);
         mSendRecordManager.setListener(mSendRecordListener);
         mAnimatorBuilder = new AnimatorBuilder();
     }
@@ -196,7 +208,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         // inflate and init custom action bar view
         mSearchListBarView = (SearchListBarView) inflater.inflate(R.layout.f_recipients_actionbar, null, false);
-        mRecipientTypeAdapter = new SearchListBarAdapter(app.getFontSemibold(), mActivity, RecipientType.getAll(mActivity));
+        mRecipientTypeAdapter = new SearchListBarAdapter<>(app.getFontSemibold(), mActivity, RecipientType.getAll(mActivity));
         mSearchListBarView.setListAdapter(mRecipientTypeAdapter);
         mSearchListBarView.setTypeface(app.getFontRegular());
 
@@ -218,7 +230,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         TextView txtEmpty2 = (TextView) v.findViewById(R.id.txtEmpty2);
         txtEmpty1.setTypeface(app.getFontSemibold());
         txtEmpty2.setTypeface(app.getFontSemibold());
-        int peppermintColor = getResources().getColor(R.color.green_text);
+        int peppermintColor = Utils.getColor(getActivity(), R.color.green_text);
         txtEmpty2.setText(Html.fromHtml(String.format(getString(R.string.msg_add_some_friends), String.format("#%06X", (0xFFFFFF & peppermintColor)))));
 
         // init loading recipients view
@@ -243,7 +255,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         getListView().setOnItemClickListener(this);
-        onSearch(mSearchListBarView.getSearchText());
     }
 
     @Override
@@ -256,6 +267,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public void onStart() {
         super.onStart();
+        onSearch(mSearchListBarView.getSearchText());
         mSearchListBarView.setOnSearchListener(this);
         mSendRecordManager.bind();
         //mRecipientLoadingView.start();

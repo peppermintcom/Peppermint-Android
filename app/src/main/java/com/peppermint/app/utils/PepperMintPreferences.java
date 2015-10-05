@@ -158,7 +158,11 @@ public class PepperMintPreferences {
         if(name == null) {
             String[] data = Utils.getUserData(mContext);
             if(data[0] != null) {
+                name = data[0];
                 setDisplayName(data[0]);
+            } else {
+                name = mContext.getString(R.string.peppermint_user);
+                setDisplayName(name);
             }
         }
         return name;

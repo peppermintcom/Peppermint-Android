@@ -70,11 +70,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
             imgUserAvatar.setImageResource(R.drawable.ic_anonymous_green_48dp);
         }
         data[0] = mPreferences.getDisplayName();
-        if(data[0] != null) {
-            txtUserName.setText(data[0]);
-        } else {
-            txtUserName.setText(R.string.app_name);
-        }
+        txtUserName.setText(data[0]);
 
         mLytDrawer = (DrawerLayout) findViewById(R.id.drawer);
         if(mNavigationItemList == null || mNavigationItemList.size() <= 1) {
@@ -140,6 +136,9 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
         Fragment introScreenFragment;
         try {
             introScreenFragment = mNavigationItemList.get(0).getFragmentClass().newInstance();
+            if(getIntent() != null) {
+                introScreenFragment.setArguments(getIntent().getExtras());
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -159,6 +158,9 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
             Fragment fragment;
             try {
                 fragment = navItem.getFragmentClass().newInstance();
+                if(getIntent() != null) {
+                    fragment.setArguments(getIntent().getExtras());
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

@@ -26,7 +26,7 @@ public class RecipientArrayAdapter extends ArrayAdapter<Recipient> {
         Cursor cursor = RecipientAdapterUtils.getRecipientsCursor(context, allowedIds, null, null, null);
         while(cursor.moveToNext()) {
             Recipient recipient = RecipientAdapterUtils.getRecipient(cursor);
-            recipientMap.put(recipient.getId(), recipient);
+            recipientMap.put(recipient.getContactId(), recipient);
         }
         cursor.close();
 

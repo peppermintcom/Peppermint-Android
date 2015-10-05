@@ -1,0 +1,3 @@
+DROP TABLE tbl_sending_request;
+DROP TABLE tbl_sending_request_recording;
+DROP TABLE tbl_sending_request_recipient;
