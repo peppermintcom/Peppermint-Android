@@ -28,9 +28,11 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.URL;
 import java.text.Normalizer;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -254,15 +256,6 @@ public class Utils {
         }
     }
 
-    public static int getColor(Context context, int colorRes) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            return context.getResources().getColor(colorRes, context.getTheme());
-        } else {
-            //noinspection deprecation
-            return context.getResources().getColor(colorRes);
-        }
-    }
-
     public static int getStatusBarHeight(Context context) {
         int result = 0;
         int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
@@ -292,6 +285,10 @@ public class Utils {
 
     public static String getCurrentTimestamp() {
         return DATETIME_FORMAT.format(Calendar.getInstance().getTime());
+    }
+
+    public static Date parseTimestamp(String ts) throws ParseException {
+        return DATETIME_FORMAT.parse(ts);
     }
 
     public static byte[] short2Byte(short[] sData) {

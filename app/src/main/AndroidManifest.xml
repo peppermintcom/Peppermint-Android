@@ -18,6 +18,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/Peppermint.Theme" >
+
         <activity
             android:name=".ui.tutorial.TutorialActivity"
             android:label="@string/app_name"
@@ -27,6 +28,7 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
+            android:launchMode="singleTop"
             android:theme="@style/Peppermint.Theme.NoActionBar"
             android:windowSoftInputMode="stateHidden" >
             <intent-filter>
@@ -45,6 +47,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />
         </activity>
+
         <activity
             android:name=".sending.GetResultActivity"
             android:theme="@style/Theme.Transparent" >
@@ -55,6 +58,7 @@
             android:enabled="true"
             android:exported="false" >
         </service>
+
         <service
             android:name=".SenderService"
             android:enabled="true"
@@ -69,8 +73,10 @@
             android:value="e8809814fc7d62266d6e3bb86faecc9e86696f83" />
 
         <activity
-            android:name=".ui.tutorial.SplashActivity"
-            android:label="@string/title_activity_splash" >
+            android:name=".SplashActivity"
+            android:label="@string/app_name"
+            android:theme="@style/Peppermint.Theme.Fullscreen" >
+
         </activity>
     </application>
 

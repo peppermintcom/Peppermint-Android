@@ -7,8 +7,6 @@ import android.app.Fragment;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -123,23 +121,14 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
         mRecordView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(RecordingFragment.this.getActivity(), R.string.msg_record_at_least, Toast.LENGTH_SHORT).show();
+                if (mRecordView.getSeconds() < 2) {
+                    Toast.makeText(RecordingFragment.this.getActivity(), R.string.msg_record_at_least, Toast.LENGTH_SHORT).show();
+                } else {
+                    mPressedSend = true;
+                    mRecordManager.stopRecording(false);
+                }
             }
         });
-
-        Handler handler = new Handler(Looper.getMainLooper());
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                mRecordView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        mPressedSend = true;
-                        mRecordManager.stopRecording(false);
-                    }
-                });
-            }
-        }, 2000);
 
         mRecordManager.start(false);
 

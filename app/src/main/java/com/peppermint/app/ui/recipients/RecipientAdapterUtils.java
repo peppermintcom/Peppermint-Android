@@ -9,12 +9,12 @@ import android.provider.ContactsContract;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.data.Recipient;
+import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.utils.FilteredCursor;
 
 import java.util.ArrayList;
@@ -151,7 +151,7 @@ public class RecipientAdapterUtils {
             v = LayoutInflater.from(context).inflate(R.layout.i_recipient_layout, parent, false);
         }
 
-        ImageView imgPhoto = (ImageView) v.findViewById(R.id.imgPhoto);
+        AnimatedAvatarView imgPhoto = (AnimatedAvatarView) v.findViewById(R.id.imgPhoto);
         TextView txtName = (TextView) v.findViewById(R.id.txtName);
         TextView txtVia = (TextView) v.findViewById(R.id.txtVia);
         TextView txtContact = (TextView) v.findViewById(R.id.txtContact);
@@ -161,12 +161,14 @@ public class RecipientAdapterUtils {
         txtContact.setTypeface(app.getFontSemibold());
 
         if(recipient.getPhotoUri() != null) {
-            imgPhoto.setImageURI(Uri.parse(recipient.getPhotoUri()));
+            imgPhoto.setStaticDrawable(Uri.parse(recipient.getPhotoUri()));
+            imgPhoto.setShowStaticAvatar(true);
         } else {
             if(recipient.getMimeType().equals(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)) {
-                imgPhoto.setImageResource(R.drawable.ic_anonymous_green_48dp);
+                imgPhoto.setShowStaticAvatar(false);
             } else {
-                imgPhoto.setImageResource(R.drawable.ic_anonymous_blue_48dp);
+                imgPhoto.setStaticDrawable(R.drawable.ic_anonymous_blue_48dp);
+                imgPhoto.setShowStaticAvatar(true);
             }
         }
 

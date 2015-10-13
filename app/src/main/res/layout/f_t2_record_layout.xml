@@ -8,7 +8,7 @@
     android:paddingLeft="?attr/tutorialMargin"
     android:paddingRight="?attr/tutorialMargin">
 
-    <com.peppermint.app.ui.views.PeppermintRecordView
+    <com.peppermint.app.ui.canvas.progress.RecordProgressView
         android:id="@+id/pmProgress"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
@@ -29,10 +29,12 @@
         android:gravity="center">
 
         <ImageView
+            android:id="@+id/imgSentCheck"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"
-            android:src="@drawable/ic_check_tutorial_20dp"/>
+            android:src="@drawable/ic_check_tutorial_20dp"
+            android:visibility="invisible" />
 
         <TextView
             android:id="@+id/txtSent"
@@ -40,7 +42,8 @@
             android:layout_height="wrap_content"
             android:textSize="24dp"
             android:textColor="@color/white"
-            android:text="@string/sent"/>
+            android:text="@string/sent"
+            android:visibility="invisible" />
 
     </LinearLayout>
 

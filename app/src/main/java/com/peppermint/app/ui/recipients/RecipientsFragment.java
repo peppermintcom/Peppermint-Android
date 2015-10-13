@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.app.ListFragment;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -23,17 +25,19 @@ import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientType;
 import com.peppermint.app.sending.SendingEvent;
 import com.peppermint.app.ui.CustomActionBarActivity;
+import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
+import com.peppermint.app.ui.canvas.progress.LoadingView;
 import com.peppermint.app.ui.recording.RecordingActivity;
 import com.peppermint.app.ui.recording.RecordingFragment;
-import com.peppermint.app.ui.views.PeppermintLoadingView;
 import com.peppermint.app.ui.views.SearchListBarAdapter;
 import com.peppermint.app.ui.views.SearchListBarView;
 import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.PepperMintPreferences;
-import com.peppermint.app.utils.Utils;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class RecipientsFragment extends ListFragment implements AdapterView.OnItemClickListener, SearchListBarView.OnSearchListener {
 
@@ -43,13 +47,16 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private static final String RECIPIENT_TYPE_POS_KEY = "RecipientsFragment_RecipientTypePosition";
     private static final String RECIPIENT_TYPE_SEARCH_KEY = "RecipientsFragment_RecipientTypeSearch";
 
+    private static final int FIXED_AVATAR_ANIMATION_INTERVAL_MS = 30000;
+    private static final int VARIABLE_AVATAR_ANIMATION_INTERVAL_MS = 30000;
+
     private PepperMintPreferences mPreferences;
     private CustomActionBarActivity mActivity;
 
     // The Recipient List
     private View mRecipientListContainer;
     private View mRecipientLoadingContainer;
-    private PeppermintLoadingView mRecipientLoadingView;
+    private LoadingView mRecipientLoadingView;
     private boolean mRecipientListShown;
     private BaseAdapter mRecipientAdapter;
 
@@ -176,6 +183,37 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         }
     };
 
+    private final Random mRandom = new Random();
+    private final Handler mHandler = new Handler();
+    private final Runnable mAnimationRunnable = new Runnable() {
+        @Override
+        public void run() {
+            List<AnimatedAvatarView> possibleAnimationsList = new ArrayList<>();
+
+            for(int i=0; i<getListView().getChildCount(); i++) {
+                AnimatedAvatarView v = (AnimatedAvatarView) getListView().getChildAt(i).findViewById(R.id.imgPhoto);
+                if(v != null) {
+                    possibleAnimationsList.add(v);
+                }
+            }
+
+            int index = mRandom.nextInt(possibleAnimationsList.size());
+
+            for(int i=0; i<possibleAnimationsList.size(); i++) {
+                AnimatedAvatarView v = possibleAnimationsList.get(i);
+                if(i == index) {
+                    v.startDrawingThread();
+                    v.resetAnimations();
+                    v.startAnimations();
+                } else {
+                    v.stopDrawingThread();
+                }
+            }
+
+            mHandler.postDelayed(mAnimationRunnable, FIXED_AVATAR_ANIMATION_INTERVAL_MS + mRandom.nextInt(VARIABLE_AVATAR_ANIMATION_INTERVAL_MS));
+        }
+    };
+
     public RecipientsFragment() {
     }
 
@@ -230,13 +268,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         TextView txtEmpty2 = (TextView) v.findViewById(R.id.txtEmpty2);
         txtEmpty1.setTypeface(app.getFontSemibold());
         txtEmpty2.setTypeface(app.getFontSemibold());
-        int peppermintColor = Utils.getColor(getActivity(), R.color.green_text);
+        int peppermintColor = ContextCompat.getColor(getActivity(), R.color.green_text);
         txtEmpty2.setText(Html.fromHtml(String.format(getString(R.string.msg_add_some_friends), String.format("#%06X", (0xFFFFFF & peppermintColor)))));
 
         // init loading recipients view
         mRecipientListShown = true;
         mRecipientLoadingContainer = v.findViewById(R.id.progressContainer);
-        mRecipientLoadingView = (PeppermintLoadingView) v.findViewById(R.id.loading);
+        mRecipientLoadingView = (LoadingView) v.findViewById(R.id.loading);
 
         // init recipient list view
         mRecipientListContainer =  v.findViewById(R.id.listContainer);
@@ -271,11 +309,15 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mSearchListBarView.setOnSearchListener(this);
         mSendRecordManager.bind();
         //mRecipientLoadingView.start();
+
+        mHandler.postDelayed(mAnimationRunnable, FIXED_AVATAR_ANIMATION_INTERVAL_MS + mRandom.nextInt(VARIABLE_AVATAR_ANIMATION_INTERVAL_MS));
     }
 
     @Override
     public void onStop() {
         super.onStop();
+        mHandler.removeCallbacks(mAnimationRunnable);
+
         mSendRecordManager.unbind();
         mSearchListBarView.setOnSearchListener(null);
         // just stop the loading view in case it is animated
@@ -327,6 +369,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             mRecipientLoadingContainer.setVisibility(View.INVISIBLE);
             mRecipientListContainer.setVisibility(View.VISIBLE);
             //mRecipientLoadingView.start();
+            mRecipientLoadingView.stopAnimations();
+            mRecipientLoadingView.stopDrawingThread();
         } else {
             if (animate && getActivity() != null) {
                 mRecipientLoadingContainer.startAnimation(AnimationUtils.loadAnimation(
@@ -337,6 +381,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             mRecipientLoadingContainer.setVisibility(View.VISIBLE);
             mRecipientListContainer.setVisibility(View.INVISIBLE);
             //mRecipientLoadingView.stop();
+            mRecipientLoadingView.startAnimations();
+            mRecipientLoadingView.startDrawingThread();
         }
     }
     @Override

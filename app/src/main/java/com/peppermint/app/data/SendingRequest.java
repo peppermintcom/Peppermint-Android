@@ -90,7 +90,7 @@ public class SendingRequest {
     }
 
     public static Cursor getQueuedCursor(SQLiteDatabase db) {
-        return db.rawQuery("SELECT * FROM tbl_sending_request WHERE sent <= 0 ORDER BY registration_ts DESC", null);
+        return db.rawQuery("SELECT * FROM tbl_sending_request WHERE sent <= 0 ORDER BY registration_ts ASC", null);
     }
     public static List<SendingRequest> getQueued(SQLiteDatabase db) {
         List<SendingRequest> list = new ArrayList<>();

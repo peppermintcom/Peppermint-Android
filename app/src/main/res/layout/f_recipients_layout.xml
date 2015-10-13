@@ -100,7 +100,7 @@
         android:visibility="gone"
         android:gravity="center">
 
-        <com.peppermint.app.ui.views.PeppermintLoadingView
+        <com.peppermint.app.ui.canvas.progress.LoadingView
             android:id="@+id/loading"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

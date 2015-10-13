@@ -9,7 +9,7 @@
     android:paddingBottom="10dp"
     android:gravity="center_vertical">
 
-    <com.peppermint.app.ui.views.RoundImageView
+    <com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView
         android:id="@+id/imgPhoto"
         android:layout_width="48dp"
         android:layout_height="48dp"

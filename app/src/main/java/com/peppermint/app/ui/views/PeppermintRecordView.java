@@ -19,7 +19,7 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import com.peppermint.app.R;
-import com.peppermint.app.ui.animations.old.CanvasBitmapAnimation;
+import com.peppermint.app.ui.canvas.old.CanvasBitmapAnimation;
 import com.peppermint.app.utils.Utils;
 
 /**
@@ -153,7 +153,7 @@ public class PeppermintRecordView extends View {
 
         mEyeDrawable = (BitmapDrawable) Utils.getDrawable(getContext(), R.drawable.img_logo_eye);
 
-        if (android.os.Build.VERSION.SDK_INT >= 11) {
+        if (Build.VERSION.SDK_INT >= 11) {
             setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         }
     }

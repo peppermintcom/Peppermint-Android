@@ -43,7 +43,7 @@ public class ExtendedAudioRecorder {
 
     private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO;
     private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
-    private static final float MAX_GAIN = 10f;
+    private static final float MAX_GAIN = 5f;
 
     // current recording context variables
     private static final String DEFAULT_FILE_PREFIX = "Record";
@@ -107,7 +107,7 @@ public class ExtendedAudioRecorder {
                         return new Object[]{recorder, rate};
                 }
             } catch(Throwable t) {
-                //Crashlytics.logException(t);
+                Crashlytics.logException(t);
                 Log.w(TAG, "Error obtaining AudioRecord instance!", t);
             }
         }
@@ -116,61 +116,65 @@ public class ExtendedAudioRecorder {
     }
     private Runnable mRecorderRunnable = new Runnable() {
         public void run() {
-        AudioRecord recorder = null;
-        Throwable error = null;
+            AudioRecord recorder = null;
+            Throwable error = null;
 
-        try {
-            Object[] data = findAudioRecord();
-            recorder = (AudioRecord) data[0];
-            recorder.startRecording();
-
-            writeAudioDataToFile(recorder, (int) data[1]);
-        } catch (Throwable t) {
-            // keep the error to send it to the external listener
-            error = t;
-            Log.e(TAG, t.getMessage(), t);
-        } finally {
-            if(recorder != null) {
+            synchronized (ExtendedAudioRecorder.this) {
                 try {
-                    recorder.stop();
-                } catch(Throwable t) { Log.w(TAG, "Error stopping recorder after exception occurred!", t); }
-                recorder.release();
-            }
-        }
+                    Object[] data = findAudioRecord();
+                    recorder = (AudioRecord) data[0];
+                    recorder.startRecording();
 
-        if(mDiscard || error != null) {
-            if(!discardAll()) {
-                Log.w(TAG, "Unable to discard all created audio files!");
-            }
-        } else if(!mPaused) {
-            // if the recording was stopped/finished, encode the PCM file to AAC
-            try {
-                encodeFile();
-            } catch (Throwable t) {
-                error = t;
-                Log.e(TAG, t.getMessage(), t);
-            }
-        }
+                    writeAudioDataToFile(recorder, (int) data[1]);
+                } catch (Throwable t) {
+                    // keep the error to send it to the external listener
+                    error = t;
+                    Log.e(TAG, t.getMessage(), t);
+                } finally {
+                    if (recorder != null) {
+                        try {
+                            recorder.stop();
+                        } catch (Throwable t) {
+                            Log.w(TAG, "Error stopping recorder after exception occurred!", t);
+                        }
+                        recorder.release();
+                    }
+                }
 
-        // thread is finishing...
-        mRecorderThread = null;
+                if (mDiscard || error != null) {
+                    if (!discardAll()) {
+                        Log.w(TAG, "Unable to discard all created audio files!");
+                    }
+                } else if (!mPaused) {
+                    // if the recording was stopped/finished, encode the PCM file to AAC
+                    try {
+                        encodeFile();
+                    } catch (Throwable t) {
+                        error = t;
+                        Log.e(TAG, t.getMessage(), t);
+                    }
+                }
 
-        if(mListener != null) {
-            if (error != null) {
-                Crashlytics.logException(error);
-                mListener.onError(mFilePath, mFullDuration, mFullSize, mAmplitude, error);
-            } else {
-                if(mPaused) {
-                    mListener.onPause(mFilePath, mFullDuration, mFullSize, mAmplitude);
-                } else {
-                    mListener.onStop(mFilePath, mFullDuration, mFullSize, mAmplitude);
+                // thread is finishing...
+                mRecorderThread = null;
+
+                if (mListener != null) {
+                    if (error != null) {
+                        Crashlytics.logException(error);
+                        mListener.onError(mFilePath, mFullDuration, mFullSize, mAmplitude, error);
+                    } else {
+                        if (mPaused) {
+                            mListener.onPause(mFilePath, mFullDuration, mFullSize, mAmplitude);
+                        } else {
+                            mListener.onStop(mFilePath, mFullDuration, mFullSize, mAmplitude);
+                        }
+                    }
                 }
             }
         }
-        }
     };
 
-    private final int bufferElements2Rec = 1024; // want to play 2048 (2K) since 2 bytes we use only 1024
+    private final int bufferElements2Rec = 1024;
     private final int bytesPerElement = 2; // 2 bytes in 16bit format
 
     public ExtendedAudioRecorder(Context context) {
@@ -195,18 +199,20 @@ public class ExtendedAudioRecorder {
             throw new NullPointerException("No access to external cache directory!");
         }
 
-        Calendar now = Calendar.getInstance();
-        mFilePath = mContext.getExternalCacheDir().getAbsolutePath() + "/" + mFilePrefix + "_" +
-                DATETIME_FORMAT.format(now.getTime()) + ".m4a";
-        mTempFilePath = mContext.getExternalCacheDir().getAbsolutePath() + "/" + mFilePrefix + "_" +
-                DATETIME_FORMAT.format(now.getTime()) + ".pcm";
-        mPaused = false;
-        mFullDuration = 0;
-        mFullSize = 0;
-        mAmplitude = 0;
-        mDiscard = false;
+        synchronized (this) {
+            Calendar now = Calendar.getInstance();
+            mFilePath = mContext.getExternalCacheDir().getAbsolutePath() + "/" + mFilePrefix + "_" +
+                    DATETIME_FORMAT.format(now.getTime()) + ".m4a";
+            mTempFilePath = mContext.getExternalCacheDir().getAbsolutePath() + "/" + mFilePrefix + "_" +
+                    DATETIME_FORMAT.format(now.getTime()) + ".aac";
+            mPaused = false;
+            mFullDuration = 0;
+            mFullSize = 0;
+            mAmplitude = 0;
+            mDiscard = false;
 
-        startRecording(false);
+            startRecording(false);
+        }
     }
 
     public void pause() {
@@ -261,9 +267,36 @@ public class ExtendedAudioRecorder {
         return tmp;
     }
 
-    private void writeAudioDataToFile(AudioRecord recorder, int sampleRate) throws IOException {
-        short sData[] = new short[bufferElements2Rec];
+    private double[] getBufferData(short[] data, int indexFrom, int length) {
+        double[] result = new double[3];    // 0 mean amplitude; 1 max amplitude abs
+        if(length <= 0) {
+            return result;
+        }
 
+        double sum = 0, maxAbs = 0;
+        for(int i=indexFrom; i<indexFrom + length; i++) {
+            sum += data[i] * data[i];
+            double abs = Math.abs(data[i]);
+            if(abs > maxAbs) {
+                maxAbs = abs;
+            }
+        }
+
+        result[0] = (int) Math.sqrt(sum/(double)length);
+        result[1] = maxAbs;
+        result[2] = ((float) Short.MAX_VALUE / 2f) / (float) maxAbs;
+
+        if (result[2] < 1) {
+            result[2] = 1;
+        }
+        if (result[2] > MAX_GAIN) {
+            result[2] = MAX_GAIN;
+        }
+
+        return result;
+    }
+
+    private void writeAudioDataToFile(AudioRecord recorder, int sampleRate) throws IOException {
         // check if the output file exists
         File file = new File(mTempFilePath);
         if(!file.exists()) {
@@ -271,54 +304,33 @@ public class ExtendedAudioRecorder {
         }
 
         // initialize native AAC encoder
-        //float gainOld = 1.0f;
         float bitrate = 16 * sampleRate;
-        //Log.d(TAG, "Sample Rate = " + sampleRate + " Bitrate = " + bitrate);
+        short dataOld = 0;
         mEncoder.init((int) bitrate, 1, sampleRate, 16, mTempFilePath);
 
+        short sData[] = new short[bufferElements2Rec];
         long now = android.os.SystemClock.uptimeMillis();
+
         while (mRecording) {
             // gets the voice output from microphone to short format
             int numRead = recorder.read(sData, 0, bufferElements2Rec);
-            double sum = 0, maxAbs = Short.MIN_VALUE;
-            for(int i=0; i<numRead; i++) {
-                sum += sData[i] * sData[i];
-                double abs = Math.abs(sData[i]);
-                if(abs > maxAbs) {
-                    maxAbs = abs;
-                }
-            }
-            if(numRead > 0) {
-                mAmplitude = (int) Math.sqrt(sum/(double)numRead);
-            } else {
-                mAmplitude = 0;
-            }
+            double[] bufferData = getBufferData(sData, 0, bufferElements2Rec);
 
-            // apply gain to read buffer data
-            //float gainNew = MAX_GAIN - ((float) Math.abs(mAmplitude) / ((float) Short.MAX_VALUE / 2f));
-            float gainNew = ((float) Short.MAX_VALUE / 2) / (float) maxAbs;
+            mAmplitude = (int) bufferData[0];
+            float gain = (float) bufferData[2];
 
-/*            if(gainNew > gainOld) {
-                gainNew = gainOld + 0.3f;
-            } else if(gainNew < gainOld) {
-                gainNew = gainOld - 0.3f;
-            }
-*/
-            if(gainNew < 1) {
-                gainNew = 1;
-            }
-            if(gainNew > MAX_GAIN) {
-                gainNew = MAX_GAIN;
-            }
+            //Log.d(TAG, "Amplitude = " + mAmplitude + "; Max = " + maxAbs + "; Gain = " + gainNew + "; NumRead = " + numRead);
+            for (int i = 0; i < numRead; i++) {
+                //float gain = gainOld + ((gainNew - gainOld) * (1f - (float) Math.cos(Math.PI / 2f * ((float) i / (float) numRead))));
+                sData[i] = (short) Math.min((int) (sData[i] * gain), (int) Short.MAX_VALUE);
 
-            //Log.d(TAG, "Amplitude = " + mAmplitude + "; Max = " + maxAbs + "; Gain = " + gainNew);
-
-            for(int i=0; i<numRead; i++) {
-                //float gain = gainOld + ((gainNew - gainOld) * 0.5f * (1f - (float) Math.cos(Math.PI * (float) i / (float) numRead)));
-                //float gain = gainNew;
-                sData[i] = (short)Math.min((int)(sData[i] * gainNew), (int)Short.MAX_VALUE);
+                // filter discontinuity if new gain is lower than the old one
+                float prevData = i > 0 ? sData[i - 1] : (dataOld != 1 ? dataOld : sData[i]);
+                sData[i] = (short) (prevData + (.25f * (sData[i] - prevData)));
             }
-            //gainOld = gainNew;
+            //gainOld = gain;
+            dataOld = sData[numRead-1];
+            //decOld = (short) (dataOld - sData[numRead-2]);
 
             // encode in AAC using the native encoder
             byte bData[] = Utils.short2Byte(sData);
@@ -327,7 +339,7 @@ public class ExtendedAudioRecorder {
             // calculate duration
             long cicleNow = android.os.SystemClock.uptimeMillis();
             mFullDuration += cicleNow - now;
-            mFullSize = bitrate / 8f * (mFullDuration/1000f);
+            mFullSize = bitrate / 8f * (mFullDuration / 1000f);
             now = cicleNow;
         }
 

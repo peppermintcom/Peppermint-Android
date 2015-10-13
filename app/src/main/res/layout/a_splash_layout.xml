@@ -9,18 +9,14 @@
     android:paddingRight="10dp"
     android:paddingTop="30dp"
     android:paddingBottom="30dp"
-    tools:context="com.peppermint.app.ui.tutorial.SplashActivity">
+    tools:context="com.peppermint.app.SplashActivity">
 
-    <com.peppermint.app.ui.views.PeppermintRecordView
+    <com.peppermint.app.ui.canvas.progress.SplashView
         android:id="@+id/imgLogo"
         android:layout_width="175dp"
         android:layout_height="175dp"
         android:layout_marginBottom="30dp"
-        custom:progressEmptyColor="@android:color/transparent"
-        custom:progressFillColor="@android:color/transparent"
-        custom:progressThickness="1dp"
         custom:cornerRadius="40dp"
-        custom:seconds="25"
         style="?attr/recordProgressStyle" />
 
     <TextView
@@ -29,6 +25,7 @@
         android:layout_height="wrap_content"
         android:textColor="@color/green_text"
         android:textSize="32dp"
-        android:text="@string/peppermint_com"/>
+        android:text="@string/peppermint_com"
+        android:visibility="invisible" />
 
 </LinearLayout>

@@ -1,5 +1,6 @@
 package com.peppermint.app.sending.gmail;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.api.client.util.Base64;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Message;
@@ -14,6 +15,7 @@ import com.peppermint.app.utils.Utils;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
 
@@ -70,10 +72,12 @@ public class GmailSendingTask extends SendingTask {
                     preferredAccountName, (String) getParameter(GmailSender.PARAM_DISPLAY_NAME),
                     getSendingRequest().getSubject(), getSendingRequest().getBody(),
                     file.getParent(), file.getName(),
-                    (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO));
+                    (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO),
+                    Utils.parseTimestamp(getSendingRequest().getRegistrationTimestamp()));
             Message message = createMessageWithEmail(email);
             ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().messages().send("me", message).execute();
         } catch(IOException e) {
+            Crashlytics.logException(e);
             throw new NoInternetConnectionException(e);
         }
     }
@@ -91,7 +95,7 @@ public class GmailSendingTask extends SendingTask {
      * @throws MessagingException
      */
     private static MimeMessage createEmailWithAttachment(String to, String from, String fromName, String subject,
-                                                        String bodyText, String fileDir, String filename, String contentType) throws IOException, MessagingException {
+                                                        String bodyText, String fileDir, String filename, String contentType, Date dateSent) throws IOException, MessagingException {
         Properties props = new Properties();
         Session session = Session.getDefaultInstance(props, null);
 
@@ -102,6 +106,7 @@ public class GmailSendingTask extends SendingTask {
         email.setFrom(fAddress);
         email.addRecipient(javax.mail.Message.RecipientType.TO, tAddress);
         email.setSubject(subject);
+        email.setSentDate(dateSent);
 
         MimeBodyPart mimeBodyPart = new MimeBodyPart();
         mimeBodyPart.setContent(bodyText, "text/html");

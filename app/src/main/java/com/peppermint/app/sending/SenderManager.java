@@ -25,9 +25,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -44,7 +44,7 @@ public class SenderManager implements SenderListener {
     private static final String TAG = SenderManager.class.getSimpleName();
 
     // setup a private thread pool to avoid hanging up other AsyncTasks
-    private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
+    // private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
 
     private Context mContext;
     private EventBus mEventBus;
@@ -114,12 +114,12 @@ public class SenderManager implements SenderListener {
         this.mSenderMap = new HashMap<>();
 
         // private thread pool to avoid hanging up other AsyncTasks
-        this.mExecutor = new ThreadPoolExecutor(CPU_COUNT + 1, CPU_COUNT * 2 + 2,   // reserve one thread for connectivity checks
+        this.mExecutor = new ThreadPoolExecutor(/*CPU_COUNT + 1, CPU_COUNT * 2 + 2*/1, 1,
                 60, TimeUnit.SECONDS,
-                new SynchronousQueue<Runnable>());
+                new LinkedBlockingQueue<Runnable>());
 
         this.mScheduledExecutor = new ScheduledThreadPoolExecutor(1);
-        this.mScheduledExecutor.setMaximumPoolSize(1);
+        //this.mScheduledExecutor.setMaximumPoolSize(1);
 
         // INIT
         // init all available senders
