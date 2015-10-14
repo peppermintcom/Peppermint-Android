@@ -88,7 +88,7 @@ public class AnimatedAvatarView extends AnimatedView {
         mBitmapPaint.setFilterBitmap(true);
         mBitmapPaint.setDither(true);
 
-        mAvatar = new AvatarAnimatedLayer(getContext(), 5000, mBitmapPaint);
+        mAvatar = new AvatarAnimatedLayer(getContext(), 2500, mBitmapPaint);
         mAvatar.setBorderWidth(mBorderWidth);
         mAvatar.setBorderPaint(mBorderPaint);
         mAvatar.setCornerRadius(mCornerRadius);

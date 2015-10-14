@@ -197,7 +197,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 }
             }
 
-            int index = mRandom.nextInt(possibleAnimationsList.size());
+            int index = possibleAnimationsList.size() > 0 ? mRandom.nextInt(possibleAnimationsList.size()) : 0;
 
             for(int i=0; i<possibleAnimationsList.size(); i++) {
                 AnimatedAvatarView v = possibleAnimationsList.get(i);
