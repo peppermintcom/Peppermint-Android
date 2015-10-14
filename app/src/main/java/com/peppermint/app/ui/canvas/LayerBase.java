@@ -6,7 +6,7 @@ import android.graphics.Rect;
 /**
  * Created by Nuno Luz on 30-09-2015.
  *
- * Base abstract class for CanvasAnimations.
+ * Abstract static layer implementation.
  */
 public abstract class LayerBase implements Layer {
 
@@ -23,6 +23,10 @@ public abstract class LayerBase implements Layer {
         return mBounds;
     }
 
+    /**
+     * Set the bounds of this layer. Triggers {@link #onMeasure(Rect)}.
+     * @param bounds the new bounds
+     */
     @Override
     public void setBounds(Rect bounds) {
         this.mBounds = bounds;

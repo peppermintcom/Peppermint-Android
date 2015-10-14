@@ -15,6 +15,13 @@ import java.sql.SQLException;
  */
 public class Recording implements Serializable {
 
+    /**
+     * Gets the recording data inside the Cursor's current position and puts it in an instance
+     * of the Recording structure.
+     *
+     * @param cursor the cursor
+     * @return the Recording instance
+     */
     private static Recording getFromCursor(Cursor cursor) {
         Recording recording = new Recording();
         recording.setId(cursor.getLong(cursor.getColumnIndex("recording_id")));
@@ -26,6 +33,13 @@ public class Recording implements Serializable {
         return recording;
     }
 
+    /**
+     * Inserts the supplied recording into the supplied local database.
+     *
+     * @param db the local database connection
+     * @param recording the recording
+     * @throws SQLException
+     */
     public static void insert(SQLiteDatabase db, Recording recording) throws SQLException {
         ContentValues cv = new ContentValues();
         cv.put("file_path", recording.getFilePath());
@@ -42,6 +56,14 @@ public class Recording implements Serializable {
         recording.setId(id);
     }
 
+    /**
+     * Updates the supplied recording data (ID must be supplied).
+     * An SQLException is thrown if the recording ID does not exist in the database.
+     *
+     * @param db the local database connection
+     * @param recording the recording
+     * @throws SQLException
+     */
     public static void update(SQLiteDatabase db, Recording recording) throws SQLException {
         ContentValues cv = new ContentValues();
         cv.put("file_path", recording.getFilePath());
@@ -56,6 +78,13 @@ public class Recording implements Serializable {
         }
     }
 
+    /**
+     * If a recording ID is supplied it performs an update, otherwise, it inserts the recording.
+     *
+     * @param db the local database connection
+     * @param recording the recording
+     * @throws SQLException
+     */
     public static void insertOrUpdate(SQLiteDatabase db, Recording recording) throws  SQLException {
         if(recording.getId() <= 0) {
             insert(db, recording);
@@ -64,6 +93,13 @@ public class Recording implements Serializable {
         update(db, recording);
     }
 
+    /**
+     * Obtains the recording with the supplied ID from the database.
+     *
+     * @param db the local database connection
+     * @param id the recording ID
+     * @return the recording instance with all data
+     */
     public static Recording get(SQLiteDatabase db, long id) {
         Recording recording = null;
         Cursor cursor = db.rawQuery("SELECT * FROM tbl_sending_request_recording WHERE recording_id = " + id, null);

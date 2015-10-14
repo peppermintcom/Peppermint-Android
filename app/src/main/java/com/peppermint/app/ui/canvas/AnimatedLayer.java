@@ -1,13 +1,11 @@
 package com.peppermint.app.ui.canvas;
 
-import android.graphics.Canvas;
-import android.view.View;
 import android.view.animation.Interpolator;
 
 /**
  * Created by Nuno Luz on 24-09-2015.
  *
- * An animation that can be applied to a Canvas.
+ * An animated {@link Layer}.
  */
 public interface AnimatedLayer extends Layer {
 
@@ -30,8 +28,19 @@ public interface AnimatedLayer extends Layer {
     boolean isReversed();
     void setReversed(boolean reversed);
 
+    /**
+     * Starts the animation (starts elapsing time).
+     */
     void start();
+
+    /**
+     * Stops the animation (stops elapsing time).
+     */
     void stop();
+
+    /**
+     * Resets the animation (resets elapsed time to its original value).
+     */
     void reset();
 
     boolean isRunning();

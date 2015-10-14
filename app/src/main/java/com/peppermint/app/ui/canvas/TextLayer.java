@@ -46,10 +46,18 @@ public class TextLayer extends LayerBase implements Layer {
         this.mTextSize = mTextSize;
     }
 
+    /**
+     * Get the vertical spacing between text lines.
+     * @return the spacing in pixels
+     */
     public float getTextSpacing() {
         return mTextSpacing;
     }
 
+    /**
+     * Set the vertical spacing between text lines.
+     * @param mTextSpacing the new spacing in pixels
+     */
     public void setTextSpacing(float mTextSpacing) {
         this.mTextSpacing = mTextSpacing;
     }

@@ -27,6 +27,8 @@ import java.util.UUID;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
+ *
+ * Error handler for the {@link GmailSender}.
  */
 public class GmailSendingErrorHandler extends SendingErrorHandler {
 
@@ -37,7 +39,8 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
 
     private static final int MAX_RETRIES = 3;
 
-    // Retry Map, which allows trying to send the Email up to MAX_RETRIES times if it fails.
+    // retry map, which allows trying to send the email up to MAX_RETRIES times if it fails
+    // this allows us to ask for new access tokens upon failure and retry
     protected Map<UUID, Integer> mRetryMap;
 
     public GmailSendingErrorHandler(Context context, SenderListener senderListener, Map<String, Object> parameters, SenderPreferences preferences) {
@@ -50,6 +53,7 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
         GoogleAccountCredential credential = (GoogleAccountCredential) getParameter(GmailSender.PARAM_GMAIL_CREDENTIAL);
         GmailSenderPreferences preferences = (GmailSenderPreferences) getSenderPreferences();
 
+        // the user has picked one of the multiple available google accounts to use...
         if(requestCode == REQUEST_ACCOUNT_PICKER) {
             if (resultCode == Activity.RESULT_OK && data != null && data.getExtras() != null) {
                 String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
@@ -67,6 +71,7 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
             return;
         }
 
+        // the user has given (or not) permission to use the Gmail API with his/her account
         if(requestCode == REQUEST_AUTHORIZATION){
             if(resultCode == Activity.RESULT_OK) {
                 doRecover(recoveredTask);
@@ -89,6 +94,7 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
         GmailSenderPreferences preferences = (GmailSenderPreferences) getSenderPreferences();
         SendingRequest request = failedSendingTask.getSendingRequest();
 
+        // in this case just ask for permissions
         if(e instanceof UserRecoverableAuthIOException) {
             if(preferences.getSkipIfPermissionRequired()) {
                 doNotRecover(failedSendingTask);
@@ -99,24 +105,29 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
             return;
         }
 
+        // in this case pick an account from those registered in the Android device
         if(e instanceof GmailPreferredAccountNotSetException) {
             Account[] accounts = AccountManager.get(getContext()).getAccountsByType("com.google");
             if(accounts.length <= 0) {
+                // no accounts in the device, so just fail
                 doNotRecover(failedSendingTask);
                 return;
             }
 
             if(accounts.length <= 1) {
+                // one account in the device, so automatically pick it
                 credential.setSelectedAccountName(accounts[0].name);
                 preferences.setPreferredAccountName(accounts[0].name);
                 doRecover(failedSendingTask);
                 return;
             }
 
+            // multiple accounts in the device - ask the user to pick one
             startActivityForResult(request.getId(), REQUEST_ACCOUNT_PICKER, credential.newChooseAccountIntent());
             return;
         }
 
+        // in this case, try to ask for another access token
         if(e instanceof GoogleJsonResponseException) {
             try {
                 GoogleAuthUtil.invalidateToken(getContext(), credential.getToken());
@@ -129,6 +140,7 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
             return;
         }
 
+        // fail right away, since the manager will queue these for re-execution later
         if(e instanceof NoInternetConnectionException) {
             doNotRecover(failedSendingTask);
             return;
@@ -140,6 +152,7 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
             mRetryMap.put(request.getId(), mRetryMap.get(request.getId()) + 1);
         }
 
+        // if it has failed MAX_RETRIES times, do not try it anymore
         if(mRetryMap.get(request.getId()) > MAX_RETRIES) {
             mRetryMap.remove(request.getId());
             doNotRecover(failedSendingTask);

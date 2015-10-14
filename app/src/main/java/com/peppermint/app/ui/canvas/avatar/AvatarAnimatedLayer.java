@@ -9,7 +9,7 @@ import com.peppermint.app.ui.canvas.BitmapSequenceAnimatedLayer;
 /**
  * Created by Nuno Luz on 06-10-2015.
  *
- * An animated layer that represents a contact avatar.
+ * An animated layer that represents an anonymous {@link com.peppermint.app.data.Recipient}'s avatar.
  */
 public class AvatarAnimatedLayer extends BitmapSequenceAnimatedLayer {
     public AvatarAnimatedLayer(Context context, long duration, Paint paint) {

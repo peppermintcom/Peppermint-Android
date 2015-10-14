@@ -15,7 +15,9 @@ import java.util.Map;
 /**
  * Created by Nuno Luz on 27/08/2015.
  *
- * ArrayAdapter to show recipients in a ListView.
+ * ArrayAdapter to show recipients in a ListView.<br />
+ * Uses the {@link RecipientAdapterUtils#getView(PeppermintApp, Context, Recipient, View, ViewGroup)}
+ * to fill the view of each item.
  */
 public class RecipientArrayAdapter extends ArrayAdapter<Recipient> {
 

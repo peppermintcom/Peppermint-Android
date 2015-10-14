@@ -18,6 +18,13 @@ import java.util.UUID;
  */
 public class SendingRequest {
 
+    /**
+     * Gets the sending request data inside the Cursor's current position and puts it in an instance
+     * of the SendingRequest structure.
+     *
+     * @param cursor the cursor
+     * @return the SendingRequest instance
+     */
     public static SendingRequest getFromCursor(SQLiteDatabase db, Cursor cursor) {
         SendingRequest sendingRequest = new SendingRequest();
         sendingRequest.setId(UUID.fromString(cursor.getString(cursor.getColumnIndex("sending_request_uuid"))));
@@ -32,6 +39,13 @@ public class SendingRequest {
         return sendingRequest;
     }
 
+    /**
+     * Inserts the supplied sending request into the supplied local database.
+     *
+     * @param db the local database connection
+     * @param sendingRequest the sending request
+     * @throws SQLException
+     */
     public static void insert(SQLiteDatabase db, SendingRequest sendingRequest) throws SQLException {
         Recipient.insert(db, sendingRequest.getRecipient());
         Recording.insert(db, sendingRequest.getRecording());
@@ -51,6 +65,14 @@ public class SendingRequest {
         }
     }
 
+    /**
+     * Updates the supplied sending request data (UUID must be supplied).
+     * An SQLException is thrown if the sending request UUID does not exist in the database.
+     *
+     * @param db the local database connection
+     * @param sendingRequest the sending request
+     * @throws SQLException
+     */
     public static void update(SQLiteDatabase db, SendingRequest sendingRequest) throws SQLException {
         Recipient.update(db, sendingRequest.getRecipient());
         Recording.update(db, sendingRequest.getRecording());
@@ -69,6 +91,13 @@ public class SendingRequest {
         }
     }
 
+    /**
+     * If a sending request UUID is supplied it performs an update, otherwise, it inserts the sending request.
+     *
+     * @param db the local database connection
+     * @param sendingRequest the sending request
+     * @throws SQLException
+     */
     public static void insertOrUpdate(SQLiteDatabase db, SendingRequest sendingRequest) throws  SQLException {
         if(get(db, sendingRequest.getId()) == null) {
             insert(db, sendingRequest);
@@ -77,9 +106,24 @@ public class SendingRequest {
         update(db, sendingRequest);
     }
 
+    /**
+     * Obtains the sending request cursor with the supplied UUID from the database.
+     *
+     * @param db the local database connection
+     * @param uuid the sending request UUID
+     * @return the cursor instance with all data
+     */
     public static Cursor getCursor(SQLiteDatabase db, UUID uuid) {
         return db.rawQuery("SELECT * FROM tbl_sending_request WHERE sending_request_uuid = ?;", new String[]{uuid.toString()});
     }
+
+    /**
+     * Obtains the sending request with the supplied UUID from the database.
+     *
+     * @param db the local database connection
+     * @param uuid the sending request UUID
+     * @return the sending request instance with all data
+     */
     public static SendingRequest get(SQLiteDatabase db, UUID uuid) {
         SendingRequest sendingRequest = null;
         Cursor cursor = getCursor(db, uuid);
@@ -89,9 +133,22 @@ public class SendingRequest {
         return sendingRequest;
     }
 
+    /**
+     * Obtains the cursor with all queued sending requests stored in the local database.
+     *
+     * @param db the local database connection
+     * @return the cursor with all queued sending requests
+     */
     public static Cursor getQueuedCursor(SQLiteDatabase db) {
         return db.rawQuery("SELECT * FROM tbl_sending_request WHERE sent <= 0 ORDER BY registration_ts ASC", null);
     }
+
+    /**
+     * Obtains a list with all queued sending requests stored in the local database.
+     *
+     * @param db the local database connection
+     * @return the list of all queued sending requests
+     */
     public static List<SendingRequest> getQueued(SQLiteDatabase db) {
         List<SendingRequest> list = new ArrayList<>();
         Cursor cursor = getQueuedCursor(db);

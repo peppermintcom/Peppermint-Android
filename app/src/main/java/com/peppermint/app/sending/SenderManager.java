@@ -36,8 +36,21 @@ import de.greenrobot.event.EventBus;
 /**
  * Created by Nuno Luz on 08-09-2015.
  *
- * Base class for Senders. A SenderManager represents a method of sending an audio/video recording.
- * For instance, there's a sender for emails and a sender for SMS/text messages.
+ * <p>
+ *     Main class of the Sender API, which allows sending an audio/video recording through
+ *     different protocols in different ways.<br />
+ *     Each {@link Sender} is associated with one or more contact mime types
+ *     (e.g. "vnd.android.cursor.dir/phone_v2" or "vnd.android.cursor.item/email_v2").<br />
+ *     When sending, the manager searches for a {@link Sender} that handles the mime type of
+ *     the recipient, and uses it to execute a sending request.
+ *</p>
+ *
+ * For instance, there's a sender for:
+ * <ul>
+ *     <li>Emails through the Gmail API</li>
+ *     <li>Emails through the native Android email app</li>
+ *     <li>SMS/text messages through the native Android API</li>
+ * </ul>
  */
 public class SenderManager implements SenderListener {
 
@@ -47,15 +60,16 @@ public class SenderManager implements SenderListener {
     // private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
 
     private Context mContext;
-    private EventBus mEventBus;
-    private ThreadPoolExecutor mExecutor;
-    private ScheduledThreadPoolExecutor mScheduledExecutor;
+    private EventBus mEventBus;                                 // event bus (listener)
+    private ThreadPoolExecutor mExecutor;                       // a thread pool for sending tasks
+    private ScheduledThreadPoolExecutor mScheduledExecutor;     // a thread pool that sends queued requests
 
-    private Map<String, Sender> mSenderMap;             // <mime type, sending task factory>
+    private Map<String, Sender> mSenderMap;                     // map of senders <mime type, sender>
 
-    private Map<UUID, SendingTask> mTaskMap;
-    private DatabaseHelper mDatabaseHelper;
+    private Map<UUID, SendingTask> mTaskMap;                    // map of sending tasks under execution
+    private DatabaseHelper mDatabaseHelper;                     // database helper
 
+    // broadcast receiver that handles connectivity status changes
     private BroadcastReceiver mConnectivityChangeReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -67,6 +81,9 @@ public class SenderManager implements SenderListener {
     private final Runnable mMaintenanceRunnable = new Runnable() {
         @Override
         public void run() {
+            // this task is scheduled for execution once the connectivity status changes
+            // it basically tries to re-execute pending sending requests that failed due to
+            // the lack of internet connectivity
             synchronized (SenderManager.this) {
                 try {
                     if (Utils.isInternetAvailable(mContext)) {
@@ -93,17 +110,12 @@ public class SenderManager implements SenderListener {
     private ScheduledFuture<?> mMaintenanceFuture;
 
     private void rescheduleMaintenance() {
-        // if it's already running do nothing
-       /* if(mRunningMaintenance) {
-            return;
-        }
-*/
         // if it is scheduled, cancel and reschedule
         if(mMaintenanceFuture != null) {
             mMaintenanceFuture.cancel(true);
         }
 
-        // run one time immediately
+        // run one time (almost) immediately
         mMaintenanceFuture = mScheduledExecutor.scheduleAtFixedRate(mMaintenanceRunnable, 5, 3600, TimeUnit.SECONDS);
     }
 
@@ -113,17 +125,17 @@ public class SenderManager implements SenderListener {
         this.mTaskMap = new HashMap<>();
         this.mSenderMap = new HashMap<>();
 
+        this.mDatabaseHelper = new DatabaseHelper(mContext);
+
         // private thread pool to avoid hanging up other AsyncTasks
         this.mExecutor = new ThreadPoolExecutor(/*CPU_COUNT + 1, CPU_COUNT * 2 + 2*/1, 1,
                 60, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>());
 
         this.mScheduledExecutor = new ScheduledThreadPoolExecutor(1);
-        //this.mScheduledExecutor.setMaximumPoolSize(1);
 
-        // INIT
-        // init all available senders
-        // gmail api + email intent sender chain
+        // here we add all available sender instances to the sender map
+        // add gmail api + email intent sender chain
         GmailSender gmailSender = new GmailSender(mContext, this);
         gmailSender.getParameters().putAll(defaultSenderParameters);
 
@@ -134,9 +146,18 @@ public class SenderManager implements SenderListener {
 
         mSenderMap.put(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, gmailSender);
 
-        mDatabaseHelper = new DatabaseHelper(mContext);
+        // TODO add sms/text message sender
     }
 
+    /**
+     * Initializes the manager:
+     * <ol>
+     *     <li>Initializes all {@link Sender}s</li>
+     *     <li>Register the manager to listen to internet connectivity status changes</li>
+     *     <li>Schedules the queued sending request maintenance task</li>
+     * </ol>
+     * <p><strong>{@link #deinit()} must always be invoked when the manager is no longer needed.</strong></p>
+     */
     public void init() {
         for(Sender sender : mSenderMap.values()) {
             while(sender != null) {
@@ -148,6 +169,15 @@ public class SenderManager implements SenderListener {
         rescheduleMaintenance();
     }
 
+    /**
+     * De-initializes the manager:
+     * <ol>
+     *     <li>Cancels the queued sending request maintenance task</li>
+     *     <li>Unregisters the manager to stop listening for internet connectivity status changes</li>
+     *     <li>Cancels all running sending tasks</li>
+     *     <li>De-initializes all {@link Sender}s</li>
+     * </ol>
+     */
     public void deinit() {
         if(mMaintenanceFuture != null) {
             mMaintenanceFuture.cancel(true);
@@ -162,6 +192,11 @@ public class SenderManager implements SenderListener {
         }
     }
 
+    /**
+     * Tries to execute the specified sending request using one of the available {@link Sender}s.
+     * @param sendingRequest the sending request
+     * @return the UUID of the sending request
+     */
     public UUID send(SendingRequest sendingRequest) {
         String mimeType = sendingRequest.getRecipient().getMimeType();
 
@@ -180,6 +215,12 @@ public class SenderManager implements SenderListener {
         return send(sendingRequest, sender);
     }
 
+    /**
+     * Tries to execute the specified sending request using the specified {@link Sender}.
+     * @param sendingRequest the sending request
+     * @param sender the sender
+     * @return the UUID of the sending request
+     */
     private UUID send(SendingRequest sendingRequest, Sender sender) {
         SendingTask task = sender.newTask(sendingRequest);
         task.executeOnExecutor(mExecutor);
@@ -187,6 +228,11 @@ public class SenderManager implements SenderListener {
         return sendingRequest.getId();
     }
 
+    /**
+     * Cancels the sending task executing the sending request with the specified UUID.
+     * @param uuid the UUID
+     * @return true if a sending task was cancelled; false otherwise
+     */
     public boolean cancel(UUID uuid) {
         if(mTaskMap.containsKey(uuid)) {
             mTaskMap.get(uuid).cancel(true);
@@ -195,16 +241,28 @@ public class SenderManager implements SenderListener {
         return false;
     }
 
+    /**
+     * Cancels all sending tasks under execution.
+     */
     public void cancel() {
         for(UUID uuid : mTaskMap.keySet()) {
             mTaskMap.get(uuid).cancel(true);
         }
     }
 
+    /**
+     * Checks if there's a sending task executing a sending request with the specified UUID.
+     * @param uuid the UUID
+     * @return true if sending/executing; false otherwise
+     */
     public boolean isSending(UUID uuid) {
         return mTaskMap.containsKey(uuid);
     }
 
+    /**
+     * Checks if there's at least one sending task under execution.
+     * @return true if there is; false otherwise
+     */
     public boolean isSending() {
         return mTaskMap.size() > 0;
     }

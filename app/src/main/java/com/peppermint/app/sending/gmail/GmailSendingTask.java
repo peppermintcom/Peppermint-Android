@@ -33,7 +33,7 @@ import javax.mail.internet.MimeMultipart;
 /**
  * Created by Nuno Luz on 08-09-2015.
  *
- * SenderManager for Emails using the GMail API.
+ * SendingTask for emails using the Gmail API.
  */
 public class GmailSendingTask extends SendingTask {
 
@@ -85,13 +85,13 @@ public class GmailSendingTask extends SendingTask {
     /**
      * Create a MimeMessage using the parameters provided.
      *
-     * @param to Email address of the receiver.
-     * @param from Email address of the sender, the mailbox account.
-     * @param subject Subject of the email.
-     * @param bodyText Body text of the email.
-     * @param fileDir Path to the directory containing attachment.
-     * @param filename Name of file to be attached.
-     * @return MimeMessage to be used to send email.
+     * @param to the email address of the receiver.
+     * @param from the email address of the sender, the mailbox account.
+     * @param subject the subject of the email.
+     * @param bodyText the body text of the email.
+     * @param fileDir the path to the directory containing attachment.
+     * @param filename the name of file to be attached.
+     * @return the MimeMessage to be used to send email.
      * @throws MessagingException
      */
     private static MimeMessage createEmailWithAttachment(String to, String from, String fromName, String subject,
@@ -129,10 +129,10 @@ public class GmailSendingTask extends SendingTask {
     }
 
     /**
-     * Create a Message from an email
+     * Create a Message from an email.
      *
-     * @param email Email to be set to raw of message
-     * @return Message containing base64url encoded email.
+     * @param email the email to be set to raw of message
+     * @return the Message containing base64url encoded email.
      * @throws IOException
      * @throws MessagingException
      */

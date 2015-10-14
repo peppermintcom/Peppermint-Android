@@ -10,6 +10,7 @@ import android.view.View;
 
 /**
  * Created by Nuno Luz (nluz@mobaton.com) on 21-08-2015.
+ *
  * From http://stackoverflow.com/questions/16754305/full-width-navigation-drawer + Android source code
  */
 public class FullDrawerLayout extends DrawerLayout {

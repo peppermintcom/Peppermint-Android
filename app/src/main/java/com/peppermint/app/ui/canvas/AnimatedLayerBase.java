@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Created by Nuno Luz on 30-09-2015.
  *
- * Base abstract class for CanvasAnimations.
+ * Abstract implementation of an {@link AnimatedLayer}.
  */
 public abstract class AnimatedLayerBase extends LayerBase implements AnimatedLayer {
 
@@ -73,7 +73,7 @@ public abstract class AnimatedLayerBase extends LayerBase implements AnimatedLay
     }
 
     protected void onDraw(View view, Canvas canvas, double interpolatedElapsedTime) {
-        // nothing to do here
+        // nothing to do here; this must be overriden
     }
 
     public boolean isRunning() {

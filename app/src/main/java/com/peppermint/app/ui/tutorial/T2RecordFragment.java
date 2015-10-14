@@ -100,7 +100,7 @@ public class T2RecordFragment extends TutorialActivity.TutorialFragment implemen
 
     @Override
     public void onAnimationStarted(AnimatedLayer animatedLayer) {
-
+        // nothing to do here
     }
 
     @Override

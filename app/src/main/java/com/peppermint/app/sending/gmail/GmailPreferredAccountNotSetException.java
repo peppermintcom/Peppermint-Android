@@ -3,7 +3,7 @@ package com.peppermint.app.sending.gmail;
 /**
  * Created by Nuno Luz on 02-10-2015.
  *
- * Exception thrown by the GmailSender if there are no Google accounts configured on the device.
+ * Exception thrown by the {@link GmailSender} if there are no Google accounts configured on the device.
  */
 public class GmailPreferredAccountNotSetException extends Exception {
     public GmailPreferredAccountNotSetException() {

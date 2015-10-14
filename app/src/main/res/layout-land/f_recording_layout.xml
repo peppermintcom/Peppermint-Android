@@ -80,7 +80,7 @@
 
         </LinearLayout>
 
-        <com.peppermint.app.ui.views.PeppermintRecordView
+        <com.peppermint.app.ui.canvas.old.PeppermintRecordView
             android:id="@+id/record_state"
             android:layout_width="0dp"
             android:layout_height="match_parent"

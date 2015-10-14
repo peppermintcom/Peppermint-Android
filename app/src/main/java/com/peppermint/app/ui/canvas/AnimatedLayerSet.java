@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Created by Nuno Luz on 30-09-2015.
  *
- * Represents a set (played sequentially or together) of AnimatedLayer.
+ * Represents a set (played sequentially or together) of {@link AnimatedLayer}s.
  */
 public class AnimatedLayerSet extends AnimatedLayerBase implements AnimatedLayer, AnimatedLayerListener {
 

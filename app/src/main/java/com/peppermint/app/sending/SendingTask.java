@@ -10,24 +10,34 @@ import java.util.Map;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
- *
- * The AsyncTask that performs the sending for a particular Sender.
+ * <p>
+ *     The abstract AsyncTask implementation that executes a {@link SendingRequest}.<br />
+ *     Each {@link Sender} must have its {@link SendingTask} concrete implementation.
+ * </p>
+ * <p>
+ *     As with {@link Sender}s, sending tasks are configured through Parameters and Preferences.
+ *     Preferences use the native Android Shared Preferences mechanism, so that data is saved
+ *     across different executions of the app. Parameters are part of a key-value map passed to
+ *     the sending task instance (each implementation may have its own parameters).
+ * </p>
  */
 public abstract class SendingTask extends AsyncTask<Void, Float, Void> implements Cloneable {
 
     private static final String TAG = SendingTask.class.getSimpleName();
 
-    protected static final float PROGRESS_INDETERMINATE = -1f;
-    protected static final float PROGRESS_MAX = 100f;
-    protected static final float PROGRESS_MIN = 0f;
+    public static final float PROGRESS_INDETERMINATE = -1f;
+    public static final float PROGRESS_MAX = 100f;
+    public static final float PROGRESS_MIN = 0f;
 
     private Sender mSender;
-    private Throwable mError;
     private SendingRequest mSendingRequest;
-    private SenderListener mListener;
+    private Throwable mError;
+    private float mProgress = PROGRESS_INDETERMINATE;
+
     private Map<String, Object> mParameters;
     private SenderPreferences mPreferences;
-    private float mProgress = PROGRESS_INDETERMINATE;
+
+    private SenderListener mListener;
 
     public SendingTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
         this.mSender = sender;
@@ -58,6 +68,10 @@ public abstract class SendingTask extends AsyncTask<Void, Float, Void> implement
         }
     }
 
+    /**
+     * Actually sends the audio/video file to a {@link com.peppermint.app.data.Recipient}
+     * @throws Throwable
+     */
     protected abstract void send() throws Throwable;
 
     @Override

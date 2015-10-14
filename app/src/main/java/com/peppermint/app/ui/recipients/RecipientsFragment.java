@@ -43,7 +43,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     public static final int REQUEST_RECORD = 1;
 
-    // Keys to save the Instance State
+    // keys to save the instance state
     private static final String RECIPIENT_TYPE_POS_KEY = "RecipientsFragment_RecipientTypePosition";
     private static final String RECIPIENT_TYPE_SEARCH_KEY = "RecipientsFragment_RecipientTypeSearch";
 
@@ -53,25 +53,24 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private PepperMintPreferences mPreferences;
     private CustomActionBarActivity mActivity;
 
-    // The Recipient List
+    // the recipient list
     private View mRecipientListContainer;
     private View mRecipientLoadingContainer;
     private LoadingView mRecipientLoadingView;
     private boolean mRecipientListShown;
     private BaseAdapter mRecipientAdapter;
 
-    // The Custom Action Bar (with Recipient Type Filter and Recipient Search)
+    // the custom action bar (with recipient type filter and recipient search)
     private SearchListBarView mSearchListBarView;
     private SearchListBarAdapter<RecipientType> mRecipientTypeAdapter;
 
-    // Bottom bar
+    // bottom bar
     private AnimatorBuilder mAnimatorBuilder;
     private SenderServiceManager mSendRecordManager;
     private View lytStatus;
     private TextView txtStatus;
     private ImageView imgStatus;
     private SenderServiceManager.Listener mSendRecordListener = new SenderServiceManager.Listener() {
-
         private void hide(int delay) {
             if(lytStatus.getVisibility() == View.VISIBLE) {
                 Animator anim = mAnimatorBuilder.buildSlideOutBottomAnimator(delay, lytStatus, 0);
@@ -308,7 +307,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         onSearch(mSearchListBarView.getSearchText());
         mSearchListBarView.setOnSearchListener(this);
         mSendRecordManager.bind();
-        //mRecipientLoadingView.start();
 
         mHandler.postDelayed(mAnimationRunnable, FIXED_AVATAR_ANIMATION_INTERVAL_MS + mRandom.nextInt(VARIABLE_AVATAR_ANIMATION_INTERVAL_MS));
     }
@@ -320,8 +318,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         mSendRecordManager.unbind();
         mSearchListBarView.setOnSearchListener(null);
-        // just stop the loading view in case it is animated
-        //mRecipientLoadingView.stop();
     }
 
     @Override
@@ -368,7 +364,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             }
             mRecipientLoadingContainer.setVisibility(View.INVISIBLE);
             mRecipientListContainer.setVisibility(View.VISIBLE);
-            //mRecipientLoadingView.start();
+
             mRecipientLoadingView.stopAnimations();
             mRecipientLoadingView.stopDrawingThread();
         } else {
@@ -380,7 +376,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             }
             mRecipientLoadingContainer.setVisibility(View.VISIBLE);
             mRecipientListContainer.setVisibility(View.INVISIBLE);
-            //mRecipientLoadingView.stop();
+
             mRecipientLoadingView.startAnimations();
             mRecipientLoadingView.startDrawingThread();
         }
@@ -438,5 +434,4 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             }
         });
     }
-
 }

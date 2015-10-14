@@ -12,19 +12,33 @@ import java.util.UUID;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
- *
- * Handles all errors thrown by a SenderTask.
- * The sender might be able to recover from some of these errors. Here lies the code responsible for handling these.
+ * <p>
+ *     Handles all errors thrown by a {@link SendingTask}. <br />
+ *     A {@link Sender} might be able to recover from some of these errors using a
+ *     {@link SendingErrorHandler}.
+ * </p>
+ * <p>
+ *     As with {@link Sender}s, error handlers can be configured through Parameters and Preferences.
+ *     Preferences use the native Android Shared Preferences mechanism, so that data is saved
+ *     across different executions of the app. Parameters are part of a key-value map passed to
+ *     the error handler instance (each implementation may have its own parameters).
+ * </p>
  */
 public abstract class SendingErrorHandler {
 
-    private UUID mUuid = UUID.randomUUID();
     private Context mContext;
-    private Map<UUID, SendingTask> mRecoveringTaskMap;
-    private Map<String, Object> mParameters;
+
+    private UUID mUuid = UUID.randomUUID();
+    private Map<UUID, SendingTask> mRecoveringTaskMap;          // holds failed sending tasks that are recovering
+
     private SenderListener mSenderListener;
+
+    private Map<String, Object> mParameters;
     private SenderPreferences mSenderPreferences;
 
+    /** this broadcast receiver gets results from {@link GetResultActivity} **/
+    // it allows any SendingErrorHandler to recover from an error by triggering activities
+    // this is useful for using APIs that request permissions, such as the Gmail API
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -65,10 +79,17 @@ public abstract class SendingErrorHandler {
         }
     }
 
+    /**
+     * Initializes the error handler.<br />
+     * <strong>{@link #deinit()} must always be invoked after the error handler is no longer needed.</strong>
+     */
     public void init() {
         LocalBroadcastManager.getInstance(mContext).registerReceiver(mReceiver, mFilter);
     }
 
+    /**
+     * De-initializes the error handler.
+     */
     public void deinit() {
         LocalBroadcastManager.getInstance(mContext).unregisterReceiver(mReceiver);
     }
@@ -87,10 +108,24 @@ public abstract class SendingErrorHandler {
         mContext.startActivity(i);
     }
 
+    // this method must be overriden by subclasses to include the recovering code
+    // super.tryToRecover(...) must always be invoked
+    /**
+     * Tries to recover from the error throw by the failed sending task.
+     * @param failedSendingTask the failed sending task
+     */
     public void tryToRecover(SendingTask failedSendingTask) {
         mRecoveringTaskMap.put(failedSendingTask.getSendingRequest().getId(), failedSendingTask);
     }
 
+    /**
+     * Tells the {@link Sender} that the error thrown by the failed sending task is not recoverable.
+     *
+     * Either {@link #doNotRecover(SendingTask)} or {@link #doRecover(SendingTask)} must be invoked
+     * for each {@link SendingTask} sent to {@link #tryToRecover(SendingTask)}. <br/>
+     *
+     * @param recoveringTask the failed/recovering task
+     */
     protected void doNotRecover(SendingTask recoveringTask) {
         mRecoveringTaskMap.remove(recoveringTask.getSendingRequest().getId());
         if(mSenderListener != null) {
@@ -98,6 +133,15 @@ public abstract class SendingErrorHandler {
         }
     }
 
+    /**
+     * Tells the {@link Sender} that the error thrown by the failed sending task has been
+     * handled (recovered).
+     *
+     * Either {@link #doNotRecover(SendingTask)} or {@link #doRecover(SendingTask)} must be invoked
+     * for each {@link SendingTask} sent to {@link #tryToRecover(SendingTask)}. <br/>
+     *
+     * @param recoveringTask the failed/recovering task
+     */
     protected void doRecover(SendingTask recoveringTask) {
         mRecoveringTaskMap.remove(recoveringTask.getSendingRequest().getId());
         if(mSenderListener != null) {

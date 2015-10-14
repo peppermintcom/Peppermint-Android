@@ -7,7 +7,7 @@ import android.preference.PreferenceManager;
 /**
  * Created by Nuno Luz on 02-10-2015.
  *
- * SharedPreferences available to a Sender.
+ * Android SharedPreferences available to a Sender.
  */
 public class SenderPreferences {
 

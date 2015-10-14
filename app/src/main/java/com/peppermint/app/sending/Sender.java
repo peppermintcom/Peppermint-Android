@@ -9,8 +9,20 @@ import java.util.Map;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
- *
- * A Sender implementation that sends Recording to Recipients through a particular medium/protocol.
+ * <p>
+ *     A Sender abstract implementation that sends {@link com.peppermint.app.data.Recording} to
+ *     {@link com.peppermint.app.data.Recipient} through a particular medium/protocol.
+ *</p>
+ * <p>
+ *     Senders can be configured through Parameters and Preferences. Preferences use the native
+ *     Android Shared Preferences mechanism, so that data is saved across different executions
+ *     of the app. Parameters are part of a key-value map passed to the sender instance (each
+ *     implementation may have its own parameters).
+ *</p>
+ * <p>
+ *     If a sender fails to execute a request, its failure chain sender can be used to try and
+ *     do it afterwards. Several senders can be setup to form a failure chain. *
+ * </p>
  */
 public abstract class Sender {
 
@@ -31,6 +43,9 @@ public abstract class Sender {
         this.mParameters = parameters;
     }
 
+    /**
+     * Initializes the sender and its error handler.
+     */
     public void init() {
         SendingErrorHandler errorHandler = getErrorHandler();
         if(errorHandler != null) {
@@ -38,10 +53,32 @@ public abstract class Sender {
         }
     }
 
+    /**
+     * Creates a new {@link SendingTask} instance for the specified sending request.
+     * @param sendingRequest the sending request
+     * @return the asynchronous task that will try to execute the sending request
+     */
     public abstract SendingTask newTask(SendingRequest sendingRequest);
+
+    /**
+     * Gets the sender's error handler. Useful to check if the sender can recover from
+     * an error triggered during the sending task execution. If it recovers, a new sending task
+     * for the same request can be launched to see if it everything runs smoothly the second time.
+     *
+     * @return the error handler
+     */
     public abstract SendingErrorHandler getErrorHandler();
+
+    /**
+     * Android shared preferences used by this sender.
+     *
+     * @return the sender preferences instance
+     */
     public abstract SenderPreferences getSenderPreferences();
 
+    /**
+     * De-initializes the sender and its error handler.
+     */
     public void deinit() {
         SendingErrorHandler errorHandler = getErrorHandler();
         if(errorHandler != null) {

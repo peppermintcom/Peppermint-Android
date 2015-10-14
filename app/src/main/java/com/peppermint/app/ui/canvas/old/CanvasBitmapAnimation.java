@@ -13,7 +13,7 @@ import com.peppermint.app.utils.Utils;
  * 
  * Given the specified FPS value, animates a sequence of bitmaps on a Canvas.
  */
-public class CanvasBitmapAnimation implements CanvasAnimation {
+public class CanvasBitmapAnimation {
 
     private Context mContext;
     private int[] mBitmapSequenceRes;

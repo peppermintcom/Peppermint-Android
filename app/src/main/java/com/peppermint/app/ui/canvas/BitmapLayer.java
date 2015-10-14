@@ -16,7 +16,8 @@ import com.peppermint.app.utils.Utils;
 /**
  * Created by Nuno Luz on 24-09-2015.
  *
- * Given the specified FPS value, draws a sequence of bitmaps on a Canvas.
+ * A {@link Layer} filled with a static bitmap image.<br />
+ * It supports borders and round corners.
  */
 public class BitmapLayer extends LayerBase implements Layer {
 

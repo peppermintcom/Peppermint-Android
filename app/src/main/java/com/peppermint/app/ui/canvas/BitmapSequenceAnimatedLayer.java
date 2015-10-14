@@ -19,7 +19,8 @@ import java.util.List;
 /**
  * Created by Nuno Luz on 24-09-2015.
  *
- * Given the specified FPS value, draws a sequence of bitmaps on a Canvas.
+ * An {@link AnimatedLayer} filled with an animated sequence of bitmap images.<br />
+ * It supports borders and round corners.
  */
 public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements AnimatedLayer {
 

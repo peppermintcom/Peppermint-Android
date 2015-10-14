@@ -10,6 +10,8 @@ import java.util.Map;
 
 /**
  * Created by Nuno Luz on 02-10-2015.
+ *
+ * SendingTask for SMS/text messages using the native Android API.
  */
 public class SMSSendingTask extends SendingTask {
 
@@ -27,6 +29,6 @@ public class SMSSendingTask extends SendingTask {
 
     @Override
     protected void send() throws Throwable {
-        // TODO implement SMS send
+        // TODO implement SMS send using the REST api
     }
 }

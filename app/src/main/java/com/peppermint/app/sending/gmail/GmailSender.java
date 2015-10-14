@@ -24,15 +24,17 @@ import java.util.Arrays;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
+ *
+ * Sender that uses the GMail API to send audio messages through email.
  */
 public class GmailSender extends Sender {
 
-    // GmailSendingTask Parameter Keys
+    // GmailSendingTask parameter keys
     public static final String PARAM_DISPLAY_NAME = "GmailSendingTask_paramDisplayName";
     public static final String PARAM_GMAIL_SERVICE = "GmailSendingTask_paramGmailService";
     public static final String PARAM_GMAIL_CREDENTIAL = "GmailSendingTask_paramGmailCredentials";
 
-    // Gmail API Permissions
+    // Gmail API required permissions
     private static final String[] SCOPES = { GmailScopes.GMAIL_COMPOSE };
 
     protected Gmail mService;
@@ -64,6 +66,8 @@ public class GmailSender extends Sender {
             }
         }
 
+        // initialize the Gmail API objects and pass them as parameters to the error handler
+        // and to all associated sending tasks
         this.mCredential = GoogleAccountCredential.usingOAuth2(
                 getContext(), Arrays.asList(SCOPES))
                 .setBackOff(new ExponentialBackOff())

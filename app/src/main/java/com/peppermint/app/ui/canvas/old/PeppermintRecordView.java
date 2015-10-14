@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.views;
+package com.peppermint.app.ui.canvas.old;
 
 import android.annotation.TargetApi;
 import android.content.Context;

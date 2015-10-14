@@ -14,6 +14,13 @@ import java.sql.SQLException;
  */
 public class Recipient implements Serializable {
 
+    /**
+     * Gets the data inside the Cursor's current position and puts it in an instance of the
+     * Recipient structure.
+     *
+     * @param cursor the cursor
+     * @return the Recipient instance
+     */
     private static Recipient getFromCursor(Cursor cursor) {
         Recipient recipient = new Recipient();
         recipient.setId(cursor.getLong(cursor.getColumnIndex("recipient_id")));
@@ -25,6 +32,13 @@ public class Recipient implements Serializable {
         return recipient;
     }
 
+    /**
+     * Inserts the supplied recipient into the supplied local database.
+     *
+     * @param db the local database connection
+     * @param recipient the recipient
+     * @throws SQLException
+     */
     public static void insert(SQLiteDatabase db, Recipient recipient) throws SQLException {
         ContentValues cv = new ContentValues();
         cv.put("mime_type", recipient.getMimeType());
@@ -41,6 +55,14 @@ public class Recipient implements Serializable {
         recipient.setId(id);
     }
 
+    /**
+     * Updates the supplied recipient data (ID must be supplied).
+     * An SQLException is thrown if the recipient ID does not exist in the database.
+     *
+     * @param db the local database connection
+     * @param recipient the recipient
+     * @throws SQLException
+     */
     public static void update(SQLiteDatabase db, Recipient recipient) throws SQLException {
         ContentValues cv = new ContentValues();
         cv.put("mime_type", recipient.getMimeType());
@@ -55,6 +77,13 @@ public class Recipient implements Serializable {
         }
     }
 
+    /**
+     * If a recipient ID is supplied it performs an update, otherwise, it inserts the recipient.
+     *
+     * @param db the local database connection
+     * @param recipient the recipient
+     * @throws SQLException
+     */
     public static void insertOrUpdate(SQLiteDatabase db, Recipient recipient) throws  SQLException {
         if(recipient.getId() <= 0) {
             insert(db, recipient);
@@ -63,6 +92,13 @@ public class Recipient implements Serializable {
         update(db, recipient);
     }
 
+    /**
+     * Obtains the recipient with the supplied ID from the database.
+     *
+     * @param db the local database connection
+     * @param id the recipient ID
+     * @return the recipient instance with all data
+     */
     public static Recipient get(SQLiteDatabase db, long id) {
         Recipient recipient = null;
         Cursor cursor = db.rawQuery("SELECT * FROM tbl_sending_request_recipient WHERE recipient_id = " + id, null);
@@ -72,6 +108,12 @@ public class Recipient implements Serializable {
         return recipient;
     }
 
+    /**
+     * Get the recipient with the supplied "via" value from the local database.
+     * @param db the local database connection
+     * @param via the via value
+     * @return the recipient instance with all data
+     */
     public static Recipient getByVia(SQLiteDatabase db, String via) {
         Recipient recipient = null;
         Cursor cursor = db.rawQuery("SELECT * FROM tbl_sending_request_recipient WHERE via = ?;", new String[]{ via });

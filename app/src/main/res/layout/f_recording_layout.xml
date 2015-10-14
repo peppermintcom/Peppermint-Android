@@ -64,7 +64,7 @@
             android:text="0:00" />
 
 
-        <com.peppermint.app.ui.views.PeppermintRecordView
+        <com.peppermint.app.ui.canvas.old.PeppermintRecordView
             android:id="@+id/record_state"
             android:layout_width="match_parent"
             android:layout_height="0dp"

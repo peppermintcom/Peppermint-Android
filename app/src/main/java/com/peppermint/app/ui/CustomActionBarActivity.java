@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * Created by Nuno Luz on 22-09-2015.
  *
- * Base Activity for activities that use Peppermint's custom action bar.
+ * Abstract activity implementation that uses Peppermint's custom action bar.
  */
 public abstract class CustomActionBarActivity  extends FragmentActivity {
 
@@ -186,8 +186,8 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Pass the event to ActionBarDrawerToggle
-        // If it returns true, then it has handled the nav drawer indicator touch event
+        // pass the event to ActionBarDrawerToggle
+        // if it returns true, then it has handled the nav drawer indicator touch event
         return (mDrawerToggle != null && mDrawerToggle.onOptionsItemSelected(item)) || super.onOptionsItemSelected(item);
     }
 

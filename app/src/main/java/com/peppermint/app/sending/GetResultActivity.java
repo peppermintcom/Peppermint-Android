@@ -12,8 +12,13 @@ import java.util.UUID;
 /**
  * Created by Nuno Luz on 09-09-2015.
  *
- * Invisible activity that allows services to start other activities through "startActivityForResult",
- * and obtain the result on "onActivityResult". To accomplish this, it uses the LocalBroadcastManager.
+ * Invisible "middleware" activity that allows services to:
+ * <ol>
+ *     <li>Start any activity through "startActivityForResult"</li>
+ *     <li>Obtain the result through "onActivityResult"</li>
+ * </ol>
+ *
+ * This activity sends all data back to the service through the {@link LocalBroadcastManager}.
  */
 public class GetResultActivity extends Activity {
 

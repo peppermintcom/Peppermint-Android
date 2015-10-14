@@ -16,13 +16,12 @@ import java.util.List;
  */
 public class RecipientType implements SearchListBarView.ListItem {
 
-    private long mId;
-    private String mName;
-    private int mIconResId;
-    private String[] mMimeTypes;
-    private Boolean mStarred;
-    private boolean mSearchable = true;
-
+    /**
+     * Get a list with all possible RecipientType instances.
+     *
+     * @param context the execution context
+     * @return the list with all recipient types
+     */
     public static List<RecipientType> getAll(Context context) {
         List<RecipientType> list = new ArrayList<>();
         final String[] mimeTypesAll = {
@@ -39,6 +38,13 @@ public class RecipientType implements SearchListBarView.ListItem {
 
         return list;
     }
+
+    private long mId;
+    private String mName;
+    private int mIconResId;
+    private String[] mMimeTypes;
+    private Boolean mStarred;
+    private boolean mSearchable = true;
 
     public RecipientType(long id, String name, int iconResId, String[] mimeTypes, Boolean starred, boolean isSearchable) {
         this.mId = id;

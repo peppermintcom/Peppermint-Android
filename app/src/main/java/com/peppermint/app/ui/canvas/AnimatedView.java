@@ -20,8 +20,11 @@ import java.util.List;
 /**
  * Created by Nuno Luz on 30-09-2015.
  *
- * A SurfaceView that allows CanvasAnimations on top of objects.
- * Drawing operations are performed on a background thread through double buffering to improve performance.
+ * A {@link TextureView} that allows animations to be executed through {@link AnimatedLayer}s
+ * at the specified frame rate. It can also contain static {@link Layer}s.<br />
+ * Drawing operations are performed on a background thread through double buffering
+ * to improve performance.<br />
+ * The contents of view can be scaled.
  */
 public class AnimatedView extends TextureView {
 
@@ -164,6 +167,9 @@ public class AnimatedView extends TextureView {
         }
     }
 
+    /**
+     * Reset all animated layers.
+     */
     public void resetAnimations() {
         for(Layer layer : mAnimatedLayerList) {
             if(layer instanceof AnimatedLayer) {
@@ -172,6 +178,11 @@ public class AnimatedView extends TextureView {
         }
     }
 
+    /**
+     * Start animations for all animated layers. <br />
+     * <strong>This doesn't start the drawing thread, which must be launched through
+     * {@link #startDrawingThread()}</strong>
+     */
     public void startAnimations() {
         for(Layer layer : mAnimatedLayerList) {
             if(layer instanceof AnimatedLayer) {
@@ -180,6 +191,9 @@ public class AnimatedView extends TextureView {
         }
     }
 
+    /**
+     * Stop animations for all animated layers.
+     */
     public void stopAnimations() {
         for(Layer layer : mAnimatedLayerList) {
             if(layer instanceof AnimatedLayer) {
@@ -188,6 +202,9 @@ public class AnimatedView extends TextureView {
         }
     }
 
+    /**
+     * Start the thread that draws all layers at the specified frame rate.
+     */
     public void startDrawingThread() {
         if(mAnimationThread != null && mAnimationThread.isRunning()) {
             return;
@@ -197,6 +214,9 @@ public class AnimatedView extends TextureView {
         mAnimationThread.start();
     }
 
+    /**
+     * Stop the thread that draws all layers.
+     */
     public void stopDrawingThread() {
         if(mAnimationThread != null) {
             mAnimationThread.setRunning(false);

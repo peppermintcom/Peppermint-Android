@@ -12,7 +12,7 @@ import com.peppermint.app.sending.SendingTask;
 /**
  * Created by Nuno Luz on 08-09-2015.
  *
- * SenderManager for Emails using the GMail API.
+ * Sender for SMS/text messages using the native Android API.
  */
 public class SMSSender extends Sender {
 

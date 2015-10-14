@@ -12,13 +12,15 @@ import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.widget.ImageView;
 
 import com.peppermint.app.R;
 import com.peppermint.app.utils.Utils;
 
 // Inspired on https://github.com/lopspower/CircularImageView/blob/master/CircularImageView/src/com/mikhaellopez/circularimageview/CircularImageView.java
+/**
+ * {@link ImageView} that supports round corners.
+ */
 public class RoundImageView extends ImageView {
 
     private static final String DEF_BORDER_COLOR = "#ffffff";

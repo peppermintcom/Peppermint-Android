@@ -15,6 +15,8 @@ import java.util.List;
 
 /**
  * Created by Nuno Luz (nluz@mobaton.com) on 21-08-2015.
+ *
+ * List adapter for the drawer menu.
  */
 public class DrawerListAdapter extends BaseAdapter {
 

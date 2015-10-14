@@ -24,7 +24,9 @@ import java.io.InputStream;
 /**
  * Created by Nuno Luz on 15-09-2015.
  *
- * Custom recording view for Peppermint to show the progress of the recording.
+ * Avatar view for {@link com.peppermint.app.data.Recipient}s.<br />
+ * It can either show a static picture as the avatar, or an animated sequence of pictures.<br />
+ * The animation can be triggered through {@link #startAnimations()} and {@link #startDrawingThread()}.
  */
 public class AnimatedAvatarView extends AnimatedView {
 

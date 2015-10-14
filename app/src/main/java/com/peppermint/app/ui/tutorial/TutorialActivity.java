@@ -4,14 +4,12 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.peppermint.app.MainActivity;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 
@@ -34,8 +32,9 @@ public class TutorialActivity extends Activity implements FragmentManager.OnBack
         }
     }
 
+    // swipe-related
     private float x1, x2;
-    private static final int MIN_DISTANCE = 150;
+    private static final int MIN_DISTANCE = 150;        // min swipe distance
 
     private List<Class<?>> mFragmentClassList = new ArrayList<>();
     private int[] mPaginatorRes;
@@ -80,9 +79,7 @@ public class TutorialActivity extends Activity implements FragmentManager.OnBack
         int newPosition = mFragmentClassList.indexOf(mCurrentFragment.getClass()) + 1;
 
         if(newPosition >= mFragmentClassList.size()) {
-           /* Intent intent = new Intent(this, MainActivity.class);
-            startActivity(intent);
-            */finish();
+            finish();
             return;
         }
 

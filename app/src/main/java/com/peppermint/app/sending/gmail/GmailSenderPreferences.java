@@ -8,11 +8,11 @@ import com.peppermint.app.sending.SenderPreferences;
 /**
  * Created by Nuno Luz on 02-10-2015.
  *
- * GmailSender SharedPreferences.
+ * Preferences for the {@link GmailSender}.
  */
 public class GmailSenderPreferences extends SenderPreferences {
 
-    // GmailSendingTask Shared Preference Keys
+    // GmailSendingTask shared preference keys
     public static final String PREF_ACCOUNT_NAME_KEY = "prefAccountName";
     public static final String PREF_SKIP_IF_PERMISSION_REQ_KEY = "prefSkipIfPermissionRequired";
 

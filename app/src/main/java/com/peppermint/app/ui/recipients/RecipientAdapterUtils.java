@@ -24,7 +24,8 @@ import java.util.Set;
 
 /**
  * Created by Nuno Luz on 18-09-2015.
- * Utility static methods for handling Recipients.
+ *
+ * Utility static methods for handling {@link Recipient}s.
  */
 public class RecipientAdapterUtils {
 
@@ -45,9 +46,11 @@ public class RecipientAdapterUtils {
     };
 
     /**
-     * Loads the recipient data from the cursor's current positions and places it in a new Recipient object.
+     * Loads the recipient data from the cursor's current positions and places it in a
+     * new {@link Recipient} object.
+     *
      * @param cursor the cursor
-     * @return the new Recipient object
+     * @return the new recipient object
      */
     public static Recipient getRecipient(Cursor cursor) {
         long id = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data._ID));
@@ -63,7 +66,8 @@ public class RecipientAdapterUtils {
     }
 
     /**
-     * Obtains a list of all recipients found in the Android contacts database according to the given restrictions.
+     * Obtains a list of all recipients found in the Android contacts database according to
+     * the given restrictions.
      *
      * @param context the context
      * @param allowedIds the allowed ids filter

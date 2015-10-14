@@ -16,7 +16,7 @@ import java.util.Map;
 /**
  * Created by Nuno Luz on 02-10-2015.
  *
- * Task that launches a native app to send the recording through email.
+ * SendingTask that launches a native app to send the audio/video recording through email.
  */
 public class IntentMailSendingTask extends SendingTask {
 

@@ -24,7 +24,7 @@ import com.peppermint.app.RecordServiceManager;
 import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
-import com.peppermint.app.ui.views.PeppermintRecordView;
+import com.peppermint.app.ui.canvas.old.PeppermintRecordView;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
 
@@ -34,16 +34,17 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
 
     private static final String DEFAULT_FILENAME = "Peppermint";
 
-    // Intent key containing the Recipient received by the Activity
+    // intent key containing the Recipient received by the Activity
     public static final String INTENT_RECIPIENT_EXTRA = "PepperMint_RecipientExtra";
-    // Intent key containing a flag indicating if the sending of the recorded file was requested or not
+    // intent key containing a flag indicating if the sending of the recorded file was requested or not
     public static final String INTENT_RESULT_SENDING_EXTRA = "PepperMint_ResultSendingExtra";
 
     private PepperMintPreferences mPreferences;
-    private RecordServiceManager mRecordManager;
 
+    private RecordServiceManager mRecordManager;
     private PeppermintRecordView mRecordView;
-    //private AnimatedGIFView mRecordView;
+    private String mFilename = DEFAULT_FILENAME;
+    private Recipient mRecipient;
 
     private TextView mTxtDuration;
     private TextView mTxtTap;
@@ -53,8 +54,6 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     private boolean mSavedState = false;
     private float mLastLoudnessFactor = 1.0f;
     private boolean mPressedSend = false, mPressedRestart = false;
-    private String mFilename = DEFAULT_FILENAME;
-    private Recipient mRecipient;
 
     public RecordingFragment() {
     }
@@ -82,7 +81,6 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
         mBtnRestart = (Button) v.findViewById(R.id.btnRestart);
         mBtnPauseResume = (Button) v.findViewById(R.id.btnPauseResume);
         mRecordView = (PeppermintRecordView) v.findViewById(R.id.record_state);
-        //mRecordView = (AnimatedGIFView) v.findViewById(R.id.record_state);
 
         mBtnRestart.setTypeface(app.getFontSemibold());
         mBtnRestart.setOnClickListener(new View.OnClickListener() {
@@ -99,17 +97,21 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
             public void onClick(View v) {
 
                 if (!mRecordManager.isRecording() && !mRecordManager.isPaused()) {
+                    mBtnPauseResume.setEnabled(false);
                     mRecordManager.startRecording(mFilename, mRecipient);
                     return;
                 }
 
                 try {
+                    mBtnPauseResume.setEnabled(false);
                     if (mRecordManager.isPaused()) {
                         mRecordManager.resumeRecording();
                     } else {
                         mRecordManager.pauseRecording();
                     }
                 } catch (RuntimeException e) {
+                    mBtnPauseResume.setEnabled(true);
+                    Crashlytics.logException(e);
                     Log.e(TAG, e.getMessage(), e);
                 }
             }
@@ -208,13 +210,11 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     @Override
     public void onResumeRecording(RecordService.Event event) {
         onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
-        //mRecordView.start();
     }
 
     @Override
     public void onPauseRecording(RecordService.Event event) {
         onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
-        //mRecordView.stop();
     }
 
     private void setRecordDuration(float fullDuration) {
@@ -284,5 +284,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
                 mBtnPauseResume.setCompoundDrawablesWithIntrinsicBounds(Utils.getDrawable(getActivity(), R.drawable.ic_pause_states), null, null, null);
             }
         }
+
+        mBtnPauseResume.setEnabled(true);
     }
 }
