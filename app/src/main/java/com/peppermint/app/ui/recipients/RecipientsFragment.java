@@ -245,7 +245,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         // inflate and init custom action bar view
         mSearchListBarView = (SearchListBarView) inflater.inflate(R.layout.f_recipients_actionbar, null, false);
-        mRecipientTypeAdapter = new SearchListBarAdapter<>(app.getFontSemibold(), mActivity, RecipientType.getAll(mActivity));
+        mRecipientTypeAdapter = new SearchListBarAdapter<>(app.getFontRegular(), mActivity, RecipientType.getAll(mActivity));
         mSearchListBarView.setListAdapter(mRecipientTypeAdapter);
         mSearchListBarView.setTypeface(app.getFontRegular());
 

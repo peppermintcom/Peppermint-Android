@@ -118,7 +118,7 @@ public class CustomActionBarView extends RelativeLayout {
         if(val) {
             mMenuButton.setImageResource(R.drawable.ic_back_36dp);
         } else {
-            mMenuButton.setImageResource(R.drawable.ic_menu_36dp);
+            mMenuButton.setImageResource(R.drawable.ic_menu_14dp);
         }
     }
 }

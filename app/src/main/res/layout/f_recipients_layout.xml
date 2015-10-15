@@ -46,7 +46,7 @@
         <ListView android:id="@id/android:list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:listSelector="@drawable/background_transparent_to_solid_pressed"
+            android:listSelector="@drawable/background_white_to_solid_pressed"
             android:drawSelectorOnTop="false"/>
 
         <LinearLayout android:id="@id/android:empty"

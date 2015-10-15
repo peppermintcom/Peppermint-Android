@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <color name="divider_grey">#dce5e4</color>
     <color name="box_fill">#ffffff</color>
     <color name="box_shadow">#53af95</color>
     <color name="background0">#edf3f1</color>

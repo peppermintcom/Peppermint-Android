@@ -49,11 +49,18 @@ public class SearchListBarAdapter<T extends SearchListBarView.ListItem> extends 
         if(mTypeface != null) {
             nameView.setTypeface(mTypeface);
         }
+        ImageView dividerView = (ImageView) v.findViewById(R.id.imgDivider);
 
         SearchListBarView.ListItem item = getItem(position);
 
         iconView.setImageResource(item.getDrawableResource());
         nameView.setText(item.getText());
+
+        if(position < (getCount() - 1)) {
+            dividerView.setVisibility(View.VISIBLE);
+        } else {
+            dividerView.setVisibility(View.INVISIBLE);
+        }
 
         return v;
     }

@@ -20,6 +20,7 @@
         <item name="android:editTextStyle">@style/Peppermint.EditText</item>
         <item name="android:spinnerStyle">@style/Peppermint.Spinner</item>
         <item name="android:listPopupWindowStyle">@style/Peppermint.ListPopupWindow</item>
+        <item name="android:popupMenuStyle">@style/Peppermint.ListPopupWindow</item>
 
         <item name="android:windowActionBarOverlay">true</item>
         <item name="android:windowBackground">@color/background0</item>
@@ -70,12 +71,12 @@
 
     <style name="Peppermint.CustomActionBar" parent="Widget.AppCompat.ActionBar">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">55dp</item>
+        <item name="android:layout_height">50dp</item>
         <item name="android:background">@drawable/background_actionbar</item>
-        <item name="android:paddingLeft">7dp</item>
-        <item name="android:paddingRight">7dp</item>
-        <item name="android:paddingTop">5dp</item>
-        <item name="android:paddingBottom">6dp</item>   <!-- for shade -->
+        <item name="android:paddingLeft">6dp</item>
+        <item name="android:paddingRight">6dp</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">5dp</item>   <!-- +1 for shade -->
     </style>
 
     <!-- Box Styles -->
@@ -83,8 +84,8 @@
         <item name="android:background">@drawable/background_box_normal</item>
         <item name="android:layout_marginTop">3dp</item>
         <item name="android:paddingTop">5dp</item>
-        <item name="android:paddingLeft">5dp</item>
-        <item name="android:paddingRight">5dp</item>
+        <item name="android:paddingLeft">8dp</item>
+        <item name="android:paddingRight">8dp</item>
         <item name="android:paddingBottom">7dp</item>
         <item name="android:gravity">center_vertical</item>
     </style>
