@@ -83,4 +83,14 @@
         android:layout_height="match_parent">
     </FrameLayout>
 
+    <FrameLayout
+        android:id="@+id/lytOverlay"
+        android:layout_alignParentTop="true"
+        android:visibility="gone"
+        android:focusable="true"
+        android:clickable="true"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </FrameLayout>
+
 </RelativeLayout>

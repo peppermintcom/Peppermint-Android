@@ -21,6 +21,7 @@
         <item name="android:spinnerStyle">@style/Peppermint.Spinner</item>
         <item name="android:listPopupWindowStyle">@style/Peppermint.ListPopupWindow</item>
         <item name="android:popupMenuStyle">@style/Peppermint.ListPopupWindow</item>
+        <item name="android:popupAnimationStyle">@style/Peppermint.PopupAnimation</item>
 
         <item name="android:windowActionBarOverlay">true</item>
         <item name="android:windowBackground">@color/background0</item>
@@ -128,6 +129,11 @@
         <item name="android:layout_marginRight">0dp</item>
         <item name="android:layout_marginTop">0dp</item>
         <item name="android:layout_marginBottom">0dp</item>
+    </style>
+
+    <style name="Peppermint.PopupAnimation">
+        <item name="android:windowEnterAnimation">@anim/abc_fade_in</item>
+        <item name="android:windowExitAnimation">@anim/abc_fade_out</item>
     </style>
 
     <!-- Utility Transparent Theme -->

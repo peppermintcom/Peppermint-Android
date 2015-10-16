@@ -223,8 +223,8 @@ public class SenderManager implements SenderListener {
      */
     private UUID send(SendingRequest sendingRequest, Sender sender) {
         SendingTask task = sender.newTask(sendingRequest);
-        task.executeOnExecutor(mExecutor);
         mTaskMap.put(sendingRequest.getId(), task);
+        task.executeOnExecutor(mExecutor);
         return sendingRequest.getId();
     }
 

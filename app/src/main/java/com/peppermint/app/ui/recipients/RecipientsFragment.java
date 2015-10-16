@@ -3,11 +3,12 @@ package com.peppermint.app.ui.recipients;
 import android.animation.Animator;
 import android.app.Activity;
 import android.app.ListFragment;
-import android.content.Intent;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -16,42 +17,62 @@ import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.PopupWindow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
+import com.peppermint.app.RecordService;
+import com.peppermint.app.RecordServiceManager;
 import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientType;
+import com.peppermint.app.data.Recording;
 import com.peppermint.app.sending.SendingEvent;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.canvas.progress.LoadingView;
-import com.peppermint.app.ui.recording.RecordingActivity;
-import com.peppermint.app.ui.recording.RecordingFragment;
+import com.peppermint.app.ui.views.RecordingView;
 import com.peppermint.app.ui.views.SearchListBarAdapter;
 import com.peppermint.app.ui.views.SearchListBarView;
 import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.PepperMintPreferences;
+import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class RecipientsFragment extends ListFragment implements AdapterView.OnItemClickListener, SearchListBarView.OnSearchListener {
+public class RecipientsFragment extends ListFragment implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener, View.OnTouchListener,
+        SearchListBarView.OnSearchListener, RecordServiceManager.Listener {
 
     public static final int REQUEST_RECORD = 1;
+
+    // recording overlay
+    private static final String RECORDING_OVERLAY_TAG = "RECORDING";
+    private static final int RECORDING_OVERLAY_HIDE_DELAY = 1000;
+    private static final String DEFAULT_FILENAME = "Peppermint";
 
     // keys to save the instance state
     private static final String RECIPIENT_TYPE_POS_KEY = "RecipientsFragment_RecipientTypePosition";
     private static final String RECIPIENT_TYPE_SEARCH_KEY = "RecipientsFragment_RecipientTypeSearch";
 
+    // avatar animation frequency
     private static final int FIXED_AVATAR_ANIMATION_INTERVAL_MS = 30000;
     private static final int VARIABLE_AVATAR_ANIMATION_INTERVAL_MS = 30000;
 
     private PepperMintPreferences mPreferences;
     private CustomActionBarActivity mActivity;
+    private RecordingView mRecordingViewOverlay;
+    private boolean mSendRecording = false;
+
+    // swipe-related
+    private float x1, x2, y1, y2;
+    private long t1, t2;
+    private static final int MIN_SWIPE_DISTANCE = 150;        // min swipe distance
+    private static final int MAX_SWIPE_DURATION = 300;        // max swipe duration
 
     // the recipient list
     private View mRecipientListContainer;
@@ -60,9 +81,21 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private boolean mRecipientListShown;
     private BaseAdapter mRecipientAdapter;
 
+    private PopupWindow mHoldPopup;
+    private Point mLastTouchPoint = new Point();
+    private Runnable mDismissPopupRunnable = new Runnable() {
+        @Override
+        public void run() {
+            dismissPopup();
+        }
+    };
+
     // the custom action bar (with recipient type filter and recipient search)
     private SearchListBarView mSearchListBarView;
     private SearchListBarAdapter<RecipientType> mRecipientTypeAdapter;
+
+    // recording service
+    private RecordServiceManager mRecordManager;
 
     // bottom bar
     private AnimatorBuilder mAnimatorBuilder;
@@ -226,11 +259,22 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mSendRecordManager = new SenderServiceManager(activity);
         mSendRecordManager.setListener(mSendRecordListener);
         mAnimatorBuilder = new AnimatorBuilder();
+
+        mRecordManager = new RecordServiceManager(activity);
+        mRecordManager.setListener(this);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) getActivity().getApplication();
+
+        mRecordingViewOverlay = (RecordingView) mActivity.createOverlay(R.layout.v_recording_overlay_layout, RECORDING_OVERLAY_TAG, false);
+
+        // hold popup
+        mHoldPopup = new PopupWindow(mActivity);
+        mHoldPopup.setContentView(inflater.inflate(R.layout.v_recipients_popup, null));
+        mHoldPopup.setBackgroundDrawable(Utils.getDrawable(mActivity, R.drawable.img_popup));
+        mHoldPopup.setAnimationStyle(R.style.Peppermint_PopupAnimation);
 
         // global touch interceptor to hide keyboard
         mActivity.getTouchInterceptor().setOnTouchListener(new View.OnTouchListener() {
@@ -239,6 +283,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
                     mSearchListBarView.removeSearchTextFocus(event);
                 }
+                dismissPopup();
+                mLastTouchPoint.set((int) event.getX(), (int) event.getY());
                 return false;
             }
         });
@@ -285,6 +331,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         txtStatus.setTypeface(app.getFontSemibold());
 
+        mRecordManager.start(false);
+
         return v;
     }
 
@@ -292,6 +340,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         getListView().setOnItemClickListener(this);
+        getListView().setLongClickable(true);
+        getListView().setOnItemLongClickListener(this);
+        getListView().setOnTouchListener(this);
     }
 
     @Override
@@ -307,6 +358,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         onSearch(mSearchListBarView.getSearchText());
         mSearchListBarView.setOnSearchListener(this);
         mSendRecordManager.bind();
+        mRecordManager.bind();
 
         mHandler.postDelayed(mAnimationRunnable, FIXED_AVATAR_ANIMATION_INTERVAL_MS + mRandom.nextInt(VARIABLE_AVATAR_ANIMATION_INTERVAL_MS));
     }
@@ -316,6 +368,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         super.onStop();
         mHandler.removeCallbacks(mAnimationRunnable);
 
+        mRecordManager.unbind();
         mSendRecordManager.unbind();
         mSearchListBarView.setOnSearchListener(null);
     }
@@ -330,16 +383,12 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         super.onDestroy();
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == REQUEST_RECORD) {
-            if(resultCode == Activity.RESULT_OK) {
-                // if the user has gone through the sending process without
-                // discarding the recording, then clear the search filter
-                mSearchListBarView.clearSearch(0);
-            }
-        }
+    public boolean showRecordingOverlay(Runnable onRecordingCancel) {
+        return mActivity.showOverlay(RECORDING_OVERLAY_TAG, false, onRecordingCancel);
+    }
+
+    public boolean hideRecordingOverlay() {
+        return mActivity.hideOverlay(RECORDING_OVERLAY_TAG, RECORDING_OVERLAY_HIDE_DELAY, false);   // FIXME animated hide is buggy
     }
 
     public int clearFilters() {
@@ -392,14 +441,69 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Intent recordIntent = new Intent(getActivity(), RecordingActivity.class);
+        showPopup(mActivity, view);
+    }
 
-        Recipient recipient = mRecipientAdapter instanceof RecipientCursorAdapter ?
-                ((RecipientCursorAdapter) mRecipientAdapter).getRecipient(position) :
-                ((RecipientArrayAdapter) mRecipientAdapter).getItem(position);
+    @Override
+    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        // start recording
+        if(showRecordingOverlay(null)) {
+            Recipient recipient = mRecipientAdapter instanceof RecipientCursorAdapter ?
+                    ((RecipientCursorAdapter) mRecipientAdapter).getRecipient(position) :
+                    ((RecipientArrayAdapter) mRecipientAdapter).getItem(position);
 
-        recordIntent.putExtra(RecordingFragment.INTENT_RECIPIENT_EXTRA, recipient);
-        startActivityForResult(recordIntent, REQUEST_RECORD);
+            mRecordingViewOverlay.setName(recipient.getName());
+            mRecordingViewOverlay.setVia(recipient.getVia());
+            String filename = getString(R.string.filename_message_from) + Utils.normalizeAndCleanString(mPreferences.getDisplayName());
+            mRecordManager.startRecording(filename, recipient);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        switch(event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                x1 = event.getX();
+                y1 = event.getY();
+                t1 = android.os.SystemClock.uptimeMillis();
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                x2 = event.getX();
+                y2 = event.getY();
+                t2 = android.os.SystemClock.uptimeMillis();
+                float deltaX = x2 - x1;
+                float deltaY = y2 - y1;
+
+                if(hideRecordingOverlay()) {
+                    mSendRecording = false;
+
+                    if ((Math.abs(deltaX) > MIN_SWIPE_DISTANCE || Math.abs(deltaY) > MIN_SWIPE_DISTANCE) && (t2 - t1) < MAX_SWIPE_DURATION) {
+                        // swipe: cancel
+                        mRecordManager.stopRecording(true);
+                    } else {
+                        // release: send
+                        if (mRecordingViewOverlay.getSeconds() < 2) {
+                            Toast.makeText(mActivity, R.string.msg_record_at_least, Toast.LENGTH_SHORT).show();
+                            mRecordManager.stopRecording(true);
+                        } else {
+                            mSendRecording = true;
+                            mRecordManager.stopRecording(false);
+                        }
+                    }
+                }
+                break;
+            default:
+                long now = android.os.SystemClock.uptimeMillis();
+                if((now - t1) > MAX_SWIPE_DURATION) {
+                    t1 = now;
+                    x1 = event.getX();
+                    y1 = event.getY();
+                }
+        }
+
+        return false;
     }
 
     @Override
@@ -434,4 +538,64 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             }
         });
     }
+
+    private void dismissPopup() {
+        if(mHoldPopup.isShowing() && !isDetached()) {
+            mHoldPopup.dismiss();
+            mHandler.removeCallbacks(mDismissPopupRunnable);
+        }
+    }
+
+    // The method that displays the img_popup.
+    private void showPopup(final Activity context, View parent) {
+        dismissPopup();
+        mHoldPopup.showAtLocation(parent, Gravity.NO_GRAVITY, mLastTouchPoint.x - Utils.dpToPx(mActivity, 80), mLastTouchPoint.y);
+        mHandler.postDelayed(mDismissPopupRunnable, 2000);
+    }
+
+    @Override
+    public void onStartRecording(RecordService.Event event) {
+        onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
+    }
+
+    @Override
+    public void onStopRecording(RecordService.Event event) {
+        onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
+        if(mSendRecording) {
+            mPreferences.addRecentContactUri(event.getRecipient().getContactId());
+            mSendRecordManager.startAndSend(event.getRecipient(), event.getRecording());
+            mSendRecording = false;
+        }
+    }
+
+    @Override
+    public void onResumeRecording(RecordService.Event event) {
+        onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
+    }
+
+    @Override
+    public void onPauseRecording(RecordService.Event event) {
+        onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
+    }
+
+    private void setRecordDuration(float fullDuration) {
+        mRecordingViewOverlay.setMillis(fullDuration);
+    }
+
+    @Override
+    public void onLoudnessRecording(RecordService.Event event) {
+        setRecordDuration(event.getRecording().getDurationMillis());
+    }
+
+    @Override
+    public void onErrorRecording(RecordService.Event event) {
+        Toast.makeText(getActivity(), getString(R.string.msg_message_record_error), Toast.LENGTH_LONG).show();
+        hideRecordingOverlay();
+    }
+
+    @Override
+    public void onBoundRecording(Recording currentRecording, Recipient currentRecipient, float currentLoudness) {
+        setRecordDuration(currentRecording == null ? 0 : currentRecording.getDurationMillis());
+    }
+
 }

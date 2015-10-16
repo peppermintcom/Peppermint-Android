@@ -35,7 +35,6 @@ public class LoadingView extends AnimatedView {
     private static final String DEF_PROGRESS_TEXT = "Loading\nContacts...";
 
     private float mCornerRadius;
-    private float mCornerLength;
 
     private float mProgress = 0;
     private float mAmplitude;
@@ -47,7 +46,6 @@ public class LoadingView extends AnimatedView {
     private Paint mBackground1Paint, mBackground2Paint, mTextPaint, mBitmapPaint;
 
     private Typeface mFont;
-    private float mLastTime;
 
     private TextLayer mTextLayer;
     private BitmapLayer mLeftEye, mRightEye;

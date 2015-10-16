@@ -9,6 +9,7 @@ import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.recipients.RecipientsFragment;
 import com.peppermint.app.ui.tutorial.TutorialActivity;
 import com.peppermint.app.ui.views.NavigationItem;
+import com.peppermint.app.ui.views.RecordingView;
 
 import java.util.ArrayList;
 import java.util.List;
