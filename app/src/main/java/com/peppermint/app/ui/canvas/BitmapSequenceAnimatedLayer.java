@@ -29,6 +29,7 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
 
     private Paint mPaint, mBorderPaint;
     private int mBorderWidth, mCornerRadius;
+    private int mLastFrame = -1;
 
     public BitmapSequenceAnimatedLayer(Context context, long duration, Paint paint) {
         super(context);
@@ -40,14 +41,14 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
         super(context);
         this.mPaint = new Paint(paint);
         setDuration(duration);
-        setBitmapSequenceResourceIds(bitmapSequenceRes);
+        setBitmapSequenceResourceIds(false, bitmapSequenceRes);
     }
 
     public BitmapSequenceAnimatedLayer(Context context, long duration, Paint paint, int[]... bitmapSequenceRes) {
         super(context);
         this.mPaint = new Paint(paint);
         setDuration(duration);
-        setBitmapSequenceResourceIds(bitmapSequenceRes);
+        setBitmapSequenceResourceIds(false, bitmapSequenceRes);
     }
 
     @Override
@@ -77,28 +78,46 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
             return;
         }
 
+        if(frame == mLastFrame) {
+            return;
+        }
+
+        Bitmap bitmap = null;
         if(mBitmapSequence != null && mBitmapSequence.length > frame) {
-            BitmapShader shader = new BitmapShader(Bitmap.createScaledBitmap(mBitmapSequence[frame].getBitmap(), getBounds().width(), getBounds().height(), false), Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+            bitmap = mBitmapSequence[frame].getBitmap();
+        } else if(mBitmapSequenceRes.length > frame) {
+            BitmapDrawable drawable = (BitmapDrawable) Utils.getDrawable(getContext(), mBitmapSequenceRes[frame]);
+            if(drawable != null) {
+                bitmap = drawable.getBitmap();
+            }
+        }
+
+        if(bitmap != null) {
+            BitmapShader shader = new BitmapShader(Bitmap.createScaledBitmap(bitmap, getBounds().width(), getBounds().height(), false), Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
             mPaint.setShader(shader);
         } else {
             mPaint.setShader(null);
         }
+
+        mLastFrame = frame;
     }
 
     public int[] getBitmapSequenceResourceIds() {
         return mBitmapSequenceRes;
     }
 
-    public void setBitmapSequenceResourceIds(int... mBitmapSequenceRes) {
-        mBitmapSequence = new BitmapDrawable[mBitmapSequenceRes.length];
-        for(int i=0; i<mBitmapSequenceRes.length; i++) {
-            mBitmapSequence[i] = (BitmapDrawable) Utils.getDrawable(getContext(), mBitmapSequenceRes[i]);
+    public void setBitmapSequenceResourceIds(boolean decodeAsYouGo, int... mBitmapSequenceRes) {
+        if(!decodeAsYouGo) {
+            mBitmapSequence = new BitmapDrawable[mBitmapSequenceRes.length];
+            for (int i = 0; i < mBitmapSequenceRes.length; i++) {
+                mBitmapSequence[i] = (BitmapDrawable) Utils.getDrawable(getContext(), mBitmapSequenceRes[i]);
+            }
         }
 
         this.mBitmapSequenceRes = mBitmapSequenceRes;
     }
 
-    public void setBitmapSequenceResourceIds(int[]... mBitmapSequenceRes) {
+    public void setBitmapSequenceResourceIds(boolean decodeAsYouGo, int[]... mBitmapSequenceRes) {
 
         List<Integer> sequenceList = new ArrayList<>();
         for(int[] bitmapData : mBitmapSequenceRes) {
@@ -112,7 +131,7 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
             bitmapSequenceRes[i] = sequenceList.get(i);
         }
 
-        setBitmapSequenceResourceIds(bitmapSequenceRes);
+        setBitmapSequenceResourceIds(decodeAsYouGo, bitmapSequenceRes);
     }
 
     public Paint getPaint() {

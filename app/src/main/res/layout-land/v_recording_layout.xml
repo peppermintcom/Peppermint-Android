@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="30dp"
+    android:background="@drawable/background_darkgreen_transparent">
+
+    <TextView
+        android:id="@+id/txtSwipe"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="30dp"
+        android:textColor="@color/light_grey_text"
+        android:text="@string/swipe_to_cancel" />
+
+    <LinearLayout
+        android:layout_above="@id/txtSwipe"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="20dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_marginRight="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txtRecordingFor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="24dp"
+                android:textColor="@color/white"
+                android:text="Recording for Bob Adams"/>
+
+            <TextView
+                android:id="@+id/txtVia"
+                android:layout_below="@id/txtRecordingFor"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="22dp"
+                android:textColor="@color/white"
+                android:text="012345678"/>
+
+            <TextView
+                android:id="@+id/txtDuration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:textSize="50dp"
+                android:textColor="@color/white"
+                android:text="0:00" />
+
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/tapLayout"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginLeft="10dp">
+
+            <com.peppermint.app.ui.canvas.progress.RecordProgressBarsView
+                android:id="@+id/cvRecord"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="?attr/recordProgressStyle" />
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+
+
+
+
+
+
+</RelativeLayout>

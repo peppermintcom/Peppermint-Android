@@ -1,14 +1,18 @@
 package com.peppermint.app.sending.gmail;
 
 import com.crashlytics.android.Crashlytics;
+import com.google.android.gms.auth.GooglePlayServicesAvailabilityException;
+import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
 import com.google.api.client.util.Base64;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Message;
+import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.sending.SendingTask;
+import com.peppermint.app.sending.exceptions.ElectableForQueueingException;
 import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
 import com.peppermint.app.utils.Utils;
 
@@ -59,7 +63,7 @@ public class GmailSendingTask extends SendingTask {
         File file = getSendingRequest().getRecording().getValidatedFile();
 
         if(!Utils.isInternetAvailable(getSender().getContext())) {
-            throw new NoInternetConnectionException();
+            throw new NoInternetConnectionException(getSender().getContext().getString(R.string.msg_no_internet));
         }
 
         String preferredAccountName = ((GmailSenderPreferences) getSenderPreferences()).getPreferredAccountName();
@@ -76,9 +80,11 @@ public class GmailSendingTask extends SendingTask {
                     Utils.parseTimestamp(getSendingRequest().getRegistrationTimestamp()));
             Message message = createMessageWithEmail(email);
             ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().messages().send("me", message).execute();
+        } catch(GooglePlayServicesAvailabilityIOException e) {
+            throw new ElectableForQueueingException(getSender().getContext().getString(R.string.msg_no_gplay), e);
         } catch(IOException e) {
             Crashlytics.logException(e);
-            throw new NoInternetConnectionException(e);
+            throw new NoInternetConnectionException(getSender().getContext().getString(R.string.msg_no_internet), e);
         }
     }
 

@@ -11,6 +11,7 @@
         android:layout_centerHorizontal="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:textSize="24dp"
         android:textColor="@color/white"
         android:text="Recording for Bob Adams"/>
@@ -58,7 +59,7 @@
             android:textColor="@color/white"
             android:text="0:00" />
 
-        <com.peppermint.app.ui.canvas.old.PeppermintRecordView
+        <com.peppermint.app.ui.canvas.progress.RecordProgressBarsView
             android:id="@+id/cvRecord"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

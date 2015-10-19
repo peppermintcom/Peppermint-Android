@@ -3,7 +3,7 @@
     <item>
         <shape android:shape="rectangle">
             <solid
-                android:color="@color/dark_green_60percent" />
+                android:color="@color/dark_green_80percent" />
         </shape>
     </item>
 </layer-list>

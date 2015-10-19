@@ -43,6 +43,7 @@ import java.util.List;
  */
 public class Utils {
 
+    private static final String TAG = Utils.class.getSimpleName();
     private static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd' 'HH-mm-ss");
 
     /**
@@ -267,17 +268,21 @@ public class Utils {
 
     public static String[] getUserData(Context context) {
         String[] data = new String[2];
-        Cursor cursor = context.getContentResolver().query(ContactsContract.Profile.CONTENT_URI, null, null, null, null);
-        if(cursor != null) {
-            if (cursor.getCount() == 1 && cursor.moveToFirst()) {
-                data[0] = cursor.getString(cursor.getColumnIndex(ContactsContract.Profile.DISPLAY_NAME));
-                long photoId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Profile.PHOTO_URI));
-                if(photoId > 0) {
-                    data[1] = ContentUris.withAppendedId(ContactsContract.Data.CONTENT_URI,
-                            photoId).toString();
+        try {
+            Cursor cursor = context.getContentResolver().query(ContactsContract.Profile.CONTENT_URI, null, null, null, null);
+            if (cursor != null) {
+                if (cursor.getCount() == 1 && cursor.moveToFirst()) {
+                    data[0] = cursor.getString(cursor.getColumnIndex(ContactsContract.Profile.DISPLAY_NAME));
+                    long photoId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Profile.PHOTO_URI));
+                    if (photoId > 0) {
+                        data[1] = ContentUris.withAppendedId(ContactsContract.Data.CONTENT_URI,
+                                photoId).toString();
+                    }
                 }
+                cursor.close();
             }
-            cursor.close();
+        } catch(SecurityException e) {
+            Log.e(TAG, "Permission READ_CONTACTS/WRITE_CONTACTS not granted!", e);
         }
 
         return data;

@@ -1,11 +1,14 @@
 package com.peppermint.app.ui.recipients;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.app.Activity;
 import android.app.ListFragment;
+import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.view.Gravity;
@@ -33,7 +36,7 @@ import com.peppermint.app.sending.SendingEvent;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.canvas.progress.LoadingView;
-import com.peppermint.app.ui.views.RecordingView;
+import com.peppermint.app.ui.views.RecordingOverlayView;
 import com.peppermint.app.ui.views.SearchListBarAdapter;
 import com.peppermint.app.ui.views.SearchListBarView;
 import com.peppermint.app.utils.AnimatorBuilder;
@@ -65,7 +68,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     private PepperMintPreferences mPreferences;
     private CustomActionBarActivity mActivity;
-    private RecordingView mRecordingViewOverlay;
+    private RecordingOverlayView mRecordingViewOverlay;
     private boolean mSendRecording = false;
 
     // swipe-related
@@ -224,7 +227,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
             for(int i=0; i<getListView().getChildCount(); i++) {
                 AnimatedAvatarView v = (AnimatedAvatarView) getListView().getChildAt(i).findViewById(R.id.imgPhoto);
-                if(v != null) {
+                if(!v.isShowStaticAvatar()) {
                     possibleAnimationsList.add(v);
                 }
             }
@@ -268,13 +271,16 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) getActivity().getApplication();
 
-        mRecordingViewOverlay = (RecordingView) mActivity.createOverlay(R.layout.v_recording_overlay_layout, RECORDING_OVERLAY_TAG, false);
+        mRecordingViewOverlay = (RecordingOverlayView) mActivity.createOverlay(R.layout.v_recording_overlay_layout, RECORDING_OVERLAY_TAG, false);
 
         // hold popup
         mHoldPopup = new PopupWindow(mActivity);
         mHoldPopup.setContentView(inflater.inflate(R.layout.v_recipients_popup, null));
         mHoldPopup.setBackgroundDrawable(Utils.getDrawable(mActivity, R.drawable.img_popup));
         mHoldPopup.setAnimationStyle(R.style.Peppermint_PopupAnimation);
+        // do not let the popup get in the way of user interaction
+        mHoldPopup.setFocusable(false);
+        mHoldPopup.setTouchable(false);
 
         // global touch interceptor to hide keyboard
         mActivity.getTouchInterceptor().setOnTouchListener(new View.OnTouchListener() {
@@ -383,12 +389,15 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         super.onDestroy();
     }
 
-    public boolean showRecordingOverlay(Runnable onRecordingCancel) {
-        return mActivity.showOverlay(RECORDING_OVERLAY_TAG, false, onRecordingCancel);
+    public boolean showRecordingOverlay() {
+        mRecordingViewOverlay.start();
+        return mActivity.showOverlay(RECORDING_OVERLAY_TAG, true, null);
     }
 
     public boolean hideRecordingOverlay() {
-        return mActivity.hideOverlay(RECORDING_OVERLAY_TAG, RECORDING_OVERLAY_HIDE_DELAY, false);   // FIXME animated hide is buggy
+        //mRecordingViewOverlay.blinkLeft();
+        mRecordingViewOverlay.stop();
+        return mActivity.hideOverlay(RECORDING_OVERLAY_TAG, RECORDING_OVERLAY_HIDE_DELAY, true);   // FIXME animated hide is buggy
     }
 
     public int clearFilters() {
@@ -447,7 +456,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
         // start recording
-        if(showRecordingOverlay(null)) {
+        if(showRecordingOverlay()) {
             Recipient recipient = mRecipientAdapter instanceof RecipientCursorAdapter ?
                     ((RecipientCursorAdapter) mRecipientAdapter).getRecipient(position) :
                     ((RecipientArrayAdapter) mRecipientAdapter).getItem(position);
@@ -484,7 +493,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                         mRecordManager.stopRecording(true);
                     } else {
                         // release: send
-                        if (mRecordingViewOverlay.getSeconds() < 2) {
+                        if (mRecordingViewOverlay.getMillis() < 2000) {
                             Toast.makeText(mActivity, R.string.msg_record_at_least, Toast.LENGTH_SHORT).show();
                             mRecordManager.stopRecording(true);
                         } else {
@@ -507,36 +516,46 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        onSearch(mSearchListBarView.getSearchText());
+    }
+
+    @Override
     public void onSearch(String filter) {
-        RecipientType recipientType = (RecipientType) mSearchListBarView.getSelectedItem();
-        List<Long> recentList = mPreferences.getRecentContactUris();
+        // check permission
+        if(ContextCompat.checkSelfPermission(mActivity,
+                Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
 
-        if(recentList != null && recentList.size() > 0 && recipientType.isStarred() != null && recipientType.isStarred()) {
-            Long[] recentArray = recentList.toArray(new Long[recentList.size()]);
-            if (mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
-                ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(null);
-            }
-            mRecipientAdapter = RecipientArrayAdapter.get((PeppermintApp) getActivity().getApplication(), getActivity(), recentArray);
-            getListView().setAdapter(mRecipientAdapter);
-            mRecipientAdapter.notifyDataSetChanged();
-            return;
-        }
+            RecipientType recipientType = (RecipientType) mSearchListBarView.getSelectedItem();
+            List<Long> recentList = mPreferences.getRecentContactUris();
 
-        FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(getActivity(), null, filter, recipientType.isStarred(), recipientType.getMimeTypes());
-        setListShown(false);
-        cursor.filterAsync(new FilteredCursor.FilterCallback() {
-            @Override
-            public void done(FilteredCursor cursor) {
+            if (recentList != null && recentList.size() > 0 && recipientType.isStarred() != null && recipientType.isStarred()) {
+                Long[] recentArray = recentList.toArray(new Long[recentList.size()]);
                 if (mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
-                    ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(cursor);
-                } else {
-                    mRecipientAdapter = new RecipientCursorAdapter((PeppermintApp) getActivity().getApplication(), getActivity(), cursor);
-                    getListView().setAdapter(mRecipientAdapter);
+                    ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(null);
                 }
+                mRecipientAdapter = RecipientArrayAdapter.get((PeppermintApp) getActivity().getApplication(), getActivity(), recentArray);
+                getListView().setAdapter(mRecipientAdapter);
                 mRecipientAdapter.notifyDataSetChanged();
-                setListShown(true);
+                return;
             }
-        });
+
+            FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(getActivity(), null, filter, recipientType.isStarred(), recipientType.getMimeTypes());
+            setListShown(false);
+            cursor.filterAsync(new FilteredCursor.FilterCallback() {
+                @Override
+                public void done(FilteredCursor cursor) {
+                    if (mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
+                        ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(cursor);
+                    } else {
+                        mRecipientAdapter = new RecipientCursorAdapter((PeppermintApp) getActivity().getApplication(), getActivity(), cursor);
+                        getListView().setAdapter(mRecipientAdapter);
+                    }
+                    mRecipientAdapter.notifyDataSetChanged();
+                    setListShown(true);
+                }
+            });
+        }
     }
 
     private void dismissPopup() {

@@ -89,5 +89,7 @@
     <string name="swipe_to_cancel">Swipe to cancel</string>
     <string name="hold_record_release_send">Hold to record, release to send</string>
     <string name="recording_for">Recording for %1$s</string>
+    <string name="must_supply_mandatory_permissions">One or more of the required permissions are disabled. Please grant all required permissions and try again.</string>
+    <string name="msg_no_gplay">No Google play services available. The task of sending your record has been queued. Please make sure you have an up to date version of Google play services installed.</string>
 
 </resources>

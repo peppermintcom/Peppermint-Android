@@ -140,7 +140,7 @@ public class AnimatedView extends TextureView {
         this.setMeasuredDimension((int) mWidth, (int) mHeight);
     }
 
-    protected void doDraw() {
+    protected synchronized void doDraw() {
         Canvas canvas = lockCanvas();
         if (canvas != null) {
             if (mDrawingListener != null) {
@@ -242,6 +242,10 @@ public class AnimatedView extends TextureView {
 
     public boolean removeLayer(Layer layer) {
         return this.mAnimatedLayerList.remove(layer);
+    }
+
+    public void removeLayers() {
+        this.mAnimatedLayerList.clear();
     }
 
     public AnimatedViewListener getDrawingListener() {

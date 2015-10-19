@@ -11,11 +11,9 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
-import com.peppermint.app.R;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.exceptions.ElectableForQueueingException;
-import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
 import com.peppermint.app.sending.gmail.GmailSender;
 import com.peppermint.app.sending.nativemail.IntentMailSender;
 import com.peppermint.app.utils.Utils;
@@ -334,8 +332,8 @@ public class SenderManager implements SenderListener {
                     sendingRequest.setSent(false);
                     SendingRequest.insertOrUpdate(db, sendingRequest);
 
-                    if(error instanceof NoInternetConnectionException) {
-                        Toast.makeText(mContext, R.string.msg_no_internet, Toast.LENGTH_SHORT).show();
+                    if(error.getMessage() != null) {
+                        Toast.makeText(mContext, error.getMessage(), Toast.LENGTH_LONG).show();
                     }
 
                     if (mEventBus != null) {

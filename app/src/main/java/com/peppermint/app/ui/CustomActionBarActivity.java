@@ -53,6 +53,8 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
     private ActionBarDrawerToggle mDrawerToggle;
     private DrawerLayout mLytDrawer;
     private ListView mLstDrawer;
+    private ImageView mImgUserAvatar;
+    private TextView mTxtUsername;
     protected PepperMintPreferences mPreferences;
 
     // Overlay
@@ -119,17 +121,9 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
 
         mNavigationItemList = getNavigationItems();
 
-        String[] data = Utils.getUserData(this);
-        ImageView imgUserAvatar = (ImageView) findViewById(R.id.imgUserAvatar);
-        TextView txtUserName = (TextView) findViewById(R.id.txtUserName);
-        txtUserName.setTypeface(app.getFontBold());
-        if(data[1] != null) {
-            imgUserAvatar.setImageURI(Uri.parse(data[1]));
-        } else {
-            imgUserAvatar.setImageResource(R.drawable.ic_anonymous_green_48dp);
-        }
-        data[0] = mPreferences.getDisplayName();
-        txtUserName.setText(data[0]);
+        mImgUserAvatar = (ImageView) findViewById(R.id.imgUserAvatar);
+        mTxtUsername = (TextView) findViewById(R.id.txtUserName);
+        mTxtUsername.setTypeface(app.getFontBold());
 
         mLytDrawer = (DrawerLayout) findViewById(R.id.drawer);
         if(mNavigationItemList == null || mNavigationItemList.size() <= 1) {
@@ -204,6 +198,19 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
         getFragmentManager().beginTransaction().add(R.id.container, introScreenFragment).commit();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        String[] data = Utils.getUserData(this);
+        if(data[1] != null) {
+            mImgUserAvatar.setImageURI(Uri.parse(data[1]));
+        } else {
+            mImgUserAvatar.setImageResource(R.drawable.ic_anonymous_green_48dp);
+        }
+        data[0] = mPreferences.getDisplayName();
+        mTxtUsername.setText(data[0]);
+    }
+
     /**
      * Create the overlay layout (inflated from the layout resource id)
      * @param layoutRes the layout resource id
@@ -263,6 +270,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
 
         if(animated) {
             Animator anim = mAnimatorBuilder.buildFadeInAnimator(ow.view);
+            anim.setDuration(400);
             anim.start();
         }
 
@@ -311,6 +319,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
             public void run() {
                 if(animated) {
                     Animator anim = mAnimatorBuilder.buildFadeOutAnimator(ow.view);
+                    anim.setDuration(400);
                     anim.addListener(overlayListener);
                     anim.start();
                 } else {
@@ -396,7 +405,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
         getWindow().setAttributes(attrs);
     }
 
-    private void selectItemFromDrawer(final int position) {
+    protected void selectItemFromDrawer(final int position) {
         NavigationItem navItem = mNavigationItemList.get(position);
 
         if(navItem.getFragmentClass() != null) {

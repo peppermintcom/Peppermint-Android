@@ -162,7 +162,7 @@ public class PepperMintPreferences {
                 setDisplayName(data[0]);
             } else {
                 name = mContext.getString(R.string.peppermint_user);
-                setDisplayName(name);
+                //setDisplayName(name);
             }
         }
         return name;
