@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <color name="orange_text">#f1693f</color>
+
     <color name="divider_grey">#dce5e4</color>
     <color name="box_fill">#ffffff</color>
     <color name="box_shadow">#53af95</color>

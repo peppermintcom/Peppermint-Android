@@ -68,7 +68,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private AnimatorBuilder mAnimatorBuilder;
     private SenderServiceManager mSendRecordManager;
     private View lytStatus;
-    private TextView txtStatus;
+    private TextView txtStatus, txtTapToCancel;
     private ImageView imgStatus;
     private SenderServiceManager.Listener mSendRecordListener = new SenderServiceManager.Listener() {
         private void hide(int delay) {
@@ -141,6 +141,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         public void onBoundSendService() {
             if(mSendRecordManager.isSending()) {
                 txtStatus.setText(getString(R.string.sending));
+                txtTapToCancel.setVisibility(View.VISIBLE);
                 imgStatus.setVisibility(View.GONE);
                 show();
             } else {
@@ -168,6 +169,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             if(!mSendRecordManager.isSending()) {
                 showAndHide();
                 txtStatus.setText(getString(R.string.sent));
+                txtTapToCancel.setVisibility(View.GONE);
                 imgStatus.setVisibility(View.VISIBLE);
             }
         }
@@ -281,9 +283,20 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         // bottom status bar
         lytStatus = v.findViewById(R.id.lytStatus);
         txtStatus = (TextView) v.findViewById(R.id.txtStatus);
+        txtTapToCancel = (TextView) v.findViewById(R.id.txtTapToCancel);
         imgStatus = (ImageView) v.findViewById(R.id.imgStatus);
 
         txtStatus.setTypeface(app.getFontSemibold());
+        txtTapToCancel.setTypeface(app.getFontSemibold());
+
+        lytStatus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mSendRecordManager.cancel();
+                txtTapToCancel.setVisibility(View.GONE);
+                txtStatus.setText(R.string.cancelling);
+            }
+        });
 
         return v;
     }

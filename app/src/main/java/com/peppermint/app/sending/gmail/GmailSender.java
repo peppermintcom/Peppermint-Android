@@ -35,7 +35,7 @@ public class GmailSender extends Sender {
     public static final String PARAM_GMAIL_CREDENTIAL = "GmailSendingTask_paramGmailCredentials";
 
     // Gmail API required permissions
-    private static final String[] SCOPES = { GmailScopes.GMAIL_COMPOSE };
+    private static final String[] SCOPES = { GmailScopes.GMAIL_COMPOSE, GmailScopes.GMAIL_MODIFY };
 
     protected Gmail mService;
     protected GoogleAccountCredential mCredential;

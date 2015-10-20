@@ -86,5 +86,7 @@
 
     <string name="peppermint_user">Peppermint User</string>
     <string name="msg_message_norecipient_error">No recipient information found. Please try again later.</string>
+    <string name="tap_to_cancel">Tap to cancel</string>
+    <string name="cancelling">Cancelling...</string>
 
 </resources>
