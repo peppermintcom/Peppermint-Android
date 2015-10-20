@@ -121,6 +121,36 @@ public class AnimatedAvatarView extends AnimatedView {
         sillyAvatar.setCornerRadius(mCornerRadius);
         mAvatars.add(sillyAvatar);
 
+        AngryAvatarAnimatedLayer angryAvatar = new AngryAvatarAnimatedLayer(getContext(), 2500, mBitmapPaint);
+        angryAvatar.setBorderWidth(mBorderWidth);
+        angryAvatar.setBorderPaint(mBorderPaint);
+        angryAvatar.setCornerRadius(mCornerRadius);
+        mAvatars.add(angryAvatar);
+
+        CryingAvatarAnimatedLayer cryingAvatar = new CryingAvatarAnimatedLayer(getContext(), 2500, mBitmapPaint);
+        cryingAvatar.setBorderWidth(mBorderWidth);
+        cryingAvatar.setBorderPaint(mBorderPaint);
+        cryingAvatar.setCornerRadius(mCornerRadius);
+        mAvatars.add(cryingAvatar);
+
+        EvilAvatarAnimatedLayer evilAvatar = new EvilAvatarAnimatedLayer(getContext(), 2500, mBitmapPaint);
+        evilAvatar.setBorderWidth(mBorderWidth);
+        evilAvatar.setBorderPaint(mBorderPaint);
+        evilAvatar.setCornerRadius(mCornerRadius);
+        mAvatars.add(evilAvatar);
+
+        SadAvatarAnimatedLayer sadAvatar = new SadAvatarAnimatedLayer(getContext(), 2500, mBitmapPaint);
+        sadAvatar.setBorderWidth(mBorderWidth);
+        sadAvatar.setBorderPaint(mBorderPaint);
+        sadAvatar.setCornerRadius(mCornerRadius);
+        mAvatars.add(sadAvatar);
+
+        AnxiousAvatarAnimatedLayer anxiousAvatar = new AnxiousAvatarAnimatedLayer(getContext(), 2500, mBitmapPaint);
+        anxiousAvatar.setBorderWidth(mBorderWidth);
+        anxiousAvatar.setBorderPaint(mBorderPaint);
+        anxiousAvatar.setCornerRadius(mCornerRadius);
+        mAvatars.add(anxiousAvatar);
+
         mStaticAvatar = new BitmapLayer(getContext(), R.drawable.ic_anonymous_green_48dp, mBitmapPaint);
         mStaticAvatar.setBorderWidth(mBorderWidth);
         mStaticAvatar.setBorderPaint(mBorderPaint);
