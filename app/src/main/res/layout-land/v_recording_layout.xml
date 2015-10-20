@@ -69,8 +69,9 @@
 
             <com.peppermint.app.ui.canvas.progress.RecordProgressBarsView
                 android:id="@+id/cvRecord"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_width="190dp"
+                android:layout_height="190dp"
+                android:layout_gravity="center"
                 style="?attr/recordProgressStyle" />
 
         </FrameLayout>

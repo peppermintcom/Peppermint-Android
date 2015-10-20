@@ -131,12 +131,17 @@ public class AnimatedView extends TextureView {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         mWidth = MeasureSpec.getSize(widthMeasureSpec);
         mHeight = MeasureSpec.getSize(heightMeasureSpec);
-        if(MeasureSpec.getMode(heightMeasureSpec) == MeasureSpec.UNSPECIFIED) {
-            mHeight = Utils.dpToPx(getContext(), DEF_DESIRED_SIZE_DP);
-        }
-        if(MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED) {
+
+        int wMode = MeasureSpec.getMode(widthMeasureSpec);
+        int hMode = MeasureSpec.getMode(heightMeasureSpec);
+
+        if(wMode == MeasureSpec.UNSPECIFIED) {
             mWidth = Utils.dpToPx(getContext(), DEF_DESIRED_SIZE_DP);
         }
+        if(hMode == MeasureSpec.UNSPECIFIED) {
+            mHeight = Utils.dpToPx(getContext(), DEF_DESIRED_SIZE_DP);
+        }
+
         this.setMeasuredDimension((int) mWidth, (int) mHeight);
     }
 

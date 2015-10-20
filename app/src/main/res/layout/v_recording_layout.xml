@@ -36,39 +36,34 @@
         android:textColor="@color/light_grey_text"
         android:text="@string/swipe_to_cancel" />
 
-    <RelativeLayout
+    <LinearLayout
         android:id="@+id/tapLayout"
         android:layout_below="@id/txtVia"
         android:layout_above="@id/txtSwipe"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingLeft="45dp"
-        android:paddingRight="45dp"
-        android:paddingTop="45dp"
-        android:paddingBottom="45dp"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp"
+        android:orientation="vertical"
         android:gravity="center">
+
+        <com.peppermint.app.ui.canvas.progress.RecordProgressBarsView
+            android:id="@+id/cvRecord"
+            android:layout_width="190dp"
+            android:layout_height="190dp"
+            android:layout_marginBottom="10dp"
+            style="?attr/recordProgressStyle" />
 
         <TextView
             android:id="@+id/txtDuration"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
             android:textSize="50dp"
             android:textColor="@color/white"
             android:text="0:00" />
 
-        <com.peppermint.app.ui.canvas.progress.RecordProgressBarsView
-            android:id="@+id/cvRecord"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_above="@id/txtDuration"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
-            android:layout_marginBottom="10dp"
-            style="?attr/recordProgressStyle" />
-
-    </RelativeLayout>
+    </LinearLayout>
 
 </RelativeLayout>

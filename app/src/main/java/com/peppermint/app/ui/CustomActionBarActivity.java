@@ -240,7 +240,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
         ow.disableAllTouch = disableAllTouch;
         mOverlayMap.put(tag, ow);
 
-        rootView.addView(overlayView);
+        rootView.addView(overlayView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         return overlayView;
     }

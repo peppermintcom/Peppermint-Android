@@ -109,7 +109,7 @@ public class AnimatedAvatarView extends AnimatedView {
         tongueAvatar.setCornerRadius(mCornerRadius);
         mAvatars.add(tongueAvatar);
 
-        SurprisedAvatarAnimatedLayer surprisedAvatar = new SurprisedAvatarAnimatedLayer(getContext(), 500, mBitmapPaint);
+        SurprisedAvatarAnimatedLayer surprisedAvatar = new SurprisedAvatarAnimatedLayer(getContext(), 2000, mBitmapPaint);
         surprisedAvatar.setBorderWidth(mBorderWidth);
         surprisedAvatar.setBorderPaint(mBorderPaint);
         surprisedAvatar.setCornerRadius(mCornerRadius);

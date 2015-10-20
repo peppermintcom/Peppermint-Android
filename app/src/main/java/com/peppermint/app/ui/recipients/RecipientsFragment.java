@@ -51,12 +51,9 @@ import java.util.Random;
 public class RecipientsFragment extends ListFragment implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener, View.OnTouchListener,
         SearchListBarView.OnSearchListener, RecordServiceManager.Listener {
 
-    public static final int REQUEST_RECORD = 1;
-
     // recording overlay
     private static final String RECORDING_OVERLAY_TAG = "RECORDING";
     private static final int RECORDING_OVERLAY_HIDE_DELAY = 1000;
-    private static final String DEFAULT_FILENAME = "Peppermint";
 
     // keys to save the instance state
     private static final String RECIPIENT_TYPE_POS_KEY = "RecipientsFragment_RecipientTypePosition";
@@ -74,7 +71,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     // swipe-related
     private float x1, x2, y1, y2;
     private long t1, t2;
-    private static final int MIN_SWIPE_DISTANCE = 150;        // min swipe distance
+    private int mMinSwipeDistance;
+    private static final int MIN_SWIPE_DISTANCE_DP = 60;        // min swipe distance
     private static final int MAX_SWIPE_DURATION = 300;        // max swipe duration
 
     // the recipient list
@@ -270,6 +268,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) getActivity().getApplication();
+
+        mMinSwipeDistance = Utils.dpToPx(mActivity, MIN_SWIPE_DISTANCE_DP);
 
         mRecordingViewOverlay = (RecordingOverlayView) mActivity.createOverlay(R.layout.v_recording_overlay_layout, RECORDING_OVERLAY_TAG, false);
 
@@ -488,7 +488,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 if(hideRecordingOverlay()) {
                     mSendRecording = false;
 
-                    if ((Math.abs(deltaX) > MIN_SWIPE_DISTANCE || Math.abs(deltaY) > MIN_SWIPE_DISTANCE) && (t2 - t1) < MAX_SWIPE_DURATION) {
+                    if ((Math.abs(deltaX) > mMinSwipeDistance || Math.abs(deltaY) > mMinSwipeDistance) && (t2 - t1) < MAX_SWIPE_DURATION) {
                         // swipe: cancel
                         mRecordManager.stopRecording(true);
                     } else {
