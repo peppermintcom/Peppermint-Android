@@ -117,7 +117,7 @@ public class RecordProgressBarsView extends AnimatedView {
             mBitmapPaint.setFilterBitmap(true);
             mBitmapPaint.setDither(true);
 
-            mRecordBars = new RecordBarsLayer(getContext(), (long) (DEF_CYCLE_SECONDS * 1000f), mBitmapPaint);
+            mRecordBars = new RecordBarsLayer(getContext(), (long) (DEF_CYCLE_SECONDS * 1000f / 3f), mBitmapPaint);
             mLeftEye = new ProgressEyeAnimatedLayer(getContext(), (long) (DEF_CYCLE_SECONDS * 1000f), 1000, mBitmapPaint);
             mRightEye = new ProgressEyeAnimatedLayer(getContext(), (long) (DEF_CYCLE_SECONDS * 1000f), 1000, mBitmapPaint);
             mProgressBox = new ProgressBoxAnimatedLayer(getContext(), (long) (DEF_CYCLE_SECONDS * 2000f), true, mCornerRadius, mProgressThickness, mBorderPaint, mBorderPaint, mFillBackground ? mBackgroundPaint : null, mBackgroundPressedPaint);
