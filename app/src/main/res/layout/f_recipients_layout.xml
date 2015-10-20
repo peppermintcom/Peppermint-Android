@@ -34,6 +34,15 @@
             android:layout_marginLeft="5dp"
             android:text="@string/sending" />
 
+        <TextView
+            android:id="@+id/txtTapToCancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="15dp"
+            android:textColor="@color/orange_text"
+            android:textSize="14dp"
+            android:text="@string/tap_to_cancel" />
+
     </LinearLayout>
 
     <FrameLayout

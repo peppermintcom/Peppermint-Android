@@ -274,6 +274,7 @@ public class SenderManager implements SenderListener {
 
     @Override
     public void onSendingTaskCancelled(SendingTask sendingTask, SendingRequest sendingRequest) {
+        mTaskMap.remove(sendingRequest.getId());
         if(mEventBus != null) {
             mEventBus.post(new SendingEvent(sendingTask, SendingEvent.EVENT_CANCELLED));
         }
