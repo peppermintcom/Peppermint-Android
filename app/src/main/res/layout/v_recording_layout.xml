@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="30dp"
+    android:background="@drawable/background_darkgreen_transparent">
+
+    <TextView
+        android:id="@+id/txtRecordingFor"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="24dp"
+        android:textColor="@color/white"
+        android:text="Recording for Bob Adams"/>
+
+    <TextView
+        android:id="@+id/txtVia"
+        android:layout_below="@id/txtRecordingFor"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="22dp"
+        android:textColor="@color/white"
+        android:text="012345678"/>
+
+    <TextView
+        android:id="@+id/txtSwipe"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="30dp"
+        android:textColor="@color/light_grey_text"
+        android:text="@string/swipe_to_cancel" />
+
+    <LinearLayout
+        android:id="@+id/tapLayout"
+        android:layout_below="@id/txtVia"
+        android:layout_above="@id/txtSwipe"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <com.peppermint.app.ui.canvas.progress.RecordProgressBarsView
+            android:id="@+id/cvRecord"
+            android:layout_width="190dp"
+            android:layout_height="190dp"
+            android:layout_marginBottom="10dp"
+            style="?attr/recordProgressStyle" />
+
+        <TextView
+            android:id="@+id/txtDuration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="50dp"
+            android:textColor="@color/white"
+            android:text="0:00" />
+
+    </LinearLayout>
+
+</RelativeLayout>
