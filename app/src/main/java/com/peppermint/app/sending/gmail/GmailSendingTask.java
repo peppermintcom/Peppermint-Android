@@ -1,10 +1,11 @@
 package com.peppermint.app.sending.gmail;
 
 import com.crashlytics.android.Crashlytics;
-import com.google.android.gms.auth.GooglePlayServicesAvailabilityException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 import com.google.api.client.util.Base64;
 import com.google.api.services.gmail.Gmail;
+import com.google.api.services.gmail.model.Draft;
 import com.google.api.services.gmail.model.Message;
 import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
@@ -79,9 +80,19 @@ public class GmailSendingTask extends SendingTask {
                     (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO),
                     Utils.parseTimestamp(getSendingRequest().getRegistrationTimestamp()));
             Message message = createMessageWithEmail(email);
-            ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().messages().send("me", message).execute();
+            Draft draft = new Draft();
+            draft.setMessage(message);
+            draft = ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().drafts().create("me", draft).execute();
+
+            if(!isCancelled()) {
+                ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().drafts().send("me", draft).execute();
+            } else {
+                ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().drafts().delete("me", draft.getId());
+            }
         } catch(GooglePlayServicesAvailabilityIOException e) {
             throw new ElectableForQueueingException(getSender().getContext().getString(R.string.msg_no_gplay), e);
+        } catch(UserRecoverableAuthIOException e) {
+            throw e;
         } catch(IOException e) {
             Crashlytics.logException(e);
             throw new NoInternetConnectionException(getSender().getContext().getString(R.string.msg_no_internet), e);
