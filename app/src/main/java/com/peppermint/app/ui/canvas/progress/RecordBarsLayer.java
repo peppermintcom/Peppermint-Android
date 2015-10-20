@@ -2,7 +2,6 @@ package com.peppermint.app.ui.canvas.progress;
 
 import android.content.Context;
 import android.graphics.Paint;
-import android.util.Log;
 
 import com.peppermint.app.ui.canvas.BitmapSequenceAnimatedLayer;
 
@@ -16,9 +15,9 @@ public class RecordBarsLayer extends BitmapSequenceAnimatedLayer {
         super(context, duration, paint);
         setLooping(true);
 
-        int[] frames = new int[215];
-        for(int i=0; i<=214; i++) {
-            frames[i] = context.getResources().getIdentifier("img_bars_" + String.format("%05d", i), "drawable", context.getPackageName());
+        int[] frames = new int[73];
+        for(int i=0; i<73; i++) {
+            frames[i] = context.getResources().getIdentifier("img_recording_bars_" + i, "drawable", context.getPackageName());
         }
         setBitmapSequenceResourceIds(true, frames);
     }
