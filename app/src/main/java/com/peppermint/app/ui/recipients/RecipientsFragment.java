@@ -49,8 +49,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private static final String RECIPIENT_TYPE_POS_KEY = "RecipientsFragment_RecipientTypePosition";
     private static final String RECIPIENT_TYPE_SEARCH_KEY = "RecipientsFragment_RecipientTypeSearch";
 
-    private static final int FIXED_AVATAR_ANIMATION_INTERVAL_MS = 30000;
-    private static final int VARIABLE_AVATAR_ANIMATION_INTERVAL_MS = 30000;
+    private static final int FIXED_AVATAR_ANIMATION_INTERVAL_MS = 15000;
+    private static final int VARIABLE_AVATAR_ANIMATION_INTERVAL_MS = 15000;
 
     private PepperMintPreferences mPreferences;
     private CustomActionBarActivity mActivity;
