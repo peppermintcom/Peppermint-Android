@@ -12,9 +12,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:textSize="24dp"
+        android:textSize="20dp"
         android:textColor="@color/white"
-        android:text="Recording for Bob Adams"/>
+        android:text="Recording for Bob Adams"
+        android:maxLines="3"
+        android:ellipsize="end"
+        android:singleLine="false"
+        android:scrollHorizontally="true" />
 
     <TextView
         android:id="@+id/txtVia"
@@ -22,9 +26,13 @@
         android:layout_centerHorizontal="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="22dp"
+        android:textSize="18dp"
         android:textColor="@color/white"
-        android:text="012345678"/>
+        android:text="012345678"
+        android:singleLine="true"
+        android:ellipsize="marquee"
+        android:marqueeRepeatLimit ="marquee_forever"
+        android:scrollHorizontally="true" />
 
     <TextView
         android:id="@+id/txtSwipe"
@@ -32,7 +40,7 @@
         android:layout_centerHorizontal="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="30dp"
+        android:textSize="26dp"
         android:textColor="@color/light_grey_text"
         android:text="@string/swipe_to_cancel" />
 
@@ -60,7 +68,7 @@
             android:id="@+id/txtDuration"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="50dp"
+            android:textSize="44dp"
             android:textColor="@color/white"
             android:text="0:00" />
 

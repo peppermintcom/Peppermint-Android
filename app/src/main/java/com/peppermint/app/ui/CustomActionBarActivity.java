@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -14,6 +15,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -276,7 +278,8 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
 
         if(ow.disableAutoScreenRotation) {
             ow.requestedOrientation = getRequestedOrientation();
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
+            //noinspection ResourceType
+            setRequestedOrientation(getActivityInfoOrientation());
         }
 
         if(animated) {
@@ -286,6 +289,23 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
         }
 
         return true;
+    }
+
+    private int getActivityInfoOrientation() {
+        // rotation depends on devices natural orientation (in tablets it's landscape; portrait on phones)
+        // thus, 0 rotation is landscape on tablets and portrait on phones
+        int rotation = getWindowManager().getDefaultDisplay().getRotation();
+        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+            if(rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_270) {
+                return ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+            }
+            return ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
+        }
+
+        if(rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_90) {
+            return ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+        }
+        return ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
     }
 
     /**

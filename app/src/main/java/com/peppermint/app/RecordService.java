@@ -316,6 +316,7 @@ public class RecordService extends Service {
         if(isRecording()) {
             stop(true);
         }
+        stopForeground(true);
         super.onDestroy();
     }
 
@@ -375,13 +376,13 @@ public class RecordService extends Service {
     }
 
     private Notification getNotification() {
-        Intent notificationIntent = new Intent(this, RecordingActivity.class);
+        /*Intent notificationIntent = new Intent(this, RecordingActivity.class);
         notificationIntent.putExtra(RecordingFragment.INTENT_RECIPIENT_EXTRA, mRecipient);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         // make sure that the main activity of the app is present in the backstack
         stackBuilder.addParentStack(RecordingActivity.class);
         stackBuilder.addNextIntent(notificationIntent);
-        PendingIntent pendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);*/
 
         // FIXME use proper icons for these notifications
         // TODO add pause/resume + send + discard? actions to notification perhaps?
@@ -389,8 +390,8 @@ public class RecordService extends Service {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(RecordService.this)
                 .setSmallIcon(R.drawable.ic_mic_24dp)
                 .setContentTitle(getString(R.string.app_name))
-                .setContentText(getString(mBinder.isPaused() ? R.string.paused : R.string.recording))
-                .setContentIntent(pendingIntent);
+                .setContentText(getString(mBinder.isPaused() ? R.string.paused : R.string.recording));
+                //.setContentIntent(pendingIntent);
 
         return builder.build();
     }
