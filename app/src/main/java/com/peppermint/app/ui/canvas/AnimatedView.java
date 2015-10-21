@@ -175,7 +175,7 @@ public class AnimatedView extends TextureView {
     /**
      * Reset all animated layers.
      */
-    public void resetAnimations() {
+    public synchronized void resetAnimations() {
         for(Layer layer : mAnimatedLayerList) {
             if(layer instanceof AnimatedLayer) {
                 ((AnimatedLayer) layer).reset();
@@ -188,7 +188,7 @@ public class AnimatedView extends TextureView {
      * <strong>This doesn't start the drawing thread, which must be launched through
      * {@link #startDrawingThread()}</strong>
      */
-    public void startAnimations() {
+    public synchronized void startAnimations() {
         for(Layer layer : mAnimatedLayerList) {
             if(layer instanceof AnimatedLayer) {
                 ((AnimatedLayer) layer).start();
@@ -199,7 +199,7 @@ public class AnimatedView extends TextureView {
     /**
      * Stop animations for all animated layers.
      */
-    public void stopAnimations() {
+    public synchronized void stopAnimations() {
         for(Layer layer : mAnimatedLayerList) {
             if(layer instanceof AnimatedLayer) {
                 ((AnimatedLayer) layer).stop();
@@ -237,19 +237,19 @@ public class AnimatedView extends TextureView {
         return mAnimatedLayerList;
     }
 
-    public void setLayers(List<Layer> mAnimatedLayerList) {
+    public synchronized void setLayers(List<Layer> mAnimatedLayerList) {
         this.mAnimatedLayerList = mAnimatedLayerList;
     }
 
-    public void addLayer(Layer layer) {
+    public synchronized void addLayer(Layer layer) {
         this.mAnimatedLayerList.add(layer);
     }
 
-    public boolean removeLayer(Layer layer) {
+    public synchronized boolean removeLayer(Layer layer) {
         return this.mAnimatedLayerList.remove(layer);
     }
 
-    public void removeLayers() {
+    public synchronized void removeLayers() {
         this.mAnimatedLayerList.clear();
     }
 
