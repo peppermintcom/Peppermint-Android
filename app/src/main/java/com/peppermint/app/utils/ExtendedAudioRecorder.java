@@ -329,7 +329,9 @@ public class ExtendedAudioRecorder {
                 sData[i] = (short) (prevData + (.25f * (sData[i] - prevData)));
             }
             //gainOld = gain;
-            dataOld = sData[numRead-1];
+            if(numRead > 0) {
+                dataOld = sData[numRead - 1];
+            }
             //decOld = (short) (dataOld - sData[numRead-2]);
 
             // encode in AAC using the native encoder

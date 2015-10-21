@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -61,7 +62,8 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
     private AnimatorBuilder mAnimatorBuilder;
     private Handler mDelayHandler = new Handler();
     private class OverlayWrapper {
-        View view; boolean disableAllTouch;
+        View view; boolean disableAllTouch, disableAutoScreenRotation;
+        int requestedOrientation;
         Runnable onOverlayCancel;
     }
     private Map<String, OverlayWrapper> mOverlayMap = new HashMap<>();
@@ -81,6 +83,9 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
             mOverlayHidding.remove(ow.view.getTag());
             if(ow.disableAllTouch) {
                 enableDisableAllTouch(true);
+            }
+            if(ow.disableAutoScreenRotation) {
+                setRequestedOrientation(ow.requestedOrientation);
             }
             if(isCancel && ow.onOverlayCancel != null) {
                 ow.onOverlayCancel.run();
@@ -217,17 +222,17 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
      * @param tag the tag of the overlay
      * @return the root view containing the inflated layout
      */
-    public View createOverlay(int layoutRes, String tag, boolean disableAllTouch) {
+    public View createOverlay(int layoutRes, String tag, boolean disableAllTouch, boolean disableAutoScreenRotation) {
         if(mOverlayMap.containsKey(tag)) {
             return mOverlayMap.get(tag).view;
         }
 
         LayoutInflater li = getLayoutInflater();
         View overlayView =  li.inflate(layoutRes, null);
-        return createOverlay(overlayView, tag, disableAllTouch);
+        return createOverlay(overlayView, tag, disableAllTouch, disableAutoScreenRotation);
     }
 
-    public View createOverlay(View overlayView, String tag, boolean disableAllTouch) {
+    public View createOverlay(View overlayView, String tag, boolean disableAllTouch, boolean disableAutoScreenRotation) {
         if(mOverlayMap.containsKey(tag)) {
             return mOverlayMap.get(tag).view;
         }
@@ -238,6 +243,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
         OverlayWrapper ow = new OverlayWrapper();
         ow.view = overlayView;
         ow.disableAllTouch = disableAllTouch;
+        ow.disableAutoScreenRotation = disableAutoScreenRotation;
         mOverlayMap.put(tag, ow);
 
         rootView.addView(overlayView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -266,6 +272,11 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
 
         if(ow.disableAllTouch) {
             enableDisableAllTouch(false);
+        }
+
+        if(ow.disableAutoScreenRotation) {
+            ow.requestedOrientation = getRequestedOrientation();
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
         }
 
         if(animated) {
