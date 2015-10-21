@@ -168,12 +168,7 @@ public class RecipientAdapterUtils {
             imgPhoto.setStaticDrawable(Uri.parse(recipient.getPhotoUri()));
             imgPhoto.setShowStaticAvatar(true);
         } else {
-            if(recipient.getMimeType().equals(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)) {
-                imgPhoto.setShowStaticAvatar(false);
-            } else {
-                imgPhoto.setStaticDrawable(R.drawable.ic_anonymous_blue_48dp);
-                imgPhoto.setShowStaticAvatar(true);
-            }
+            imgPhoto.setShowStaticAvatar(false);
         }
 
         txtName.setText(recipient.getName());
