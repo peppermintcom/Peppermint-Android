@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.app.ListFragment;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -74,6 +75,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private int mMinSwipeDistance;
     private static final int MIN_SWIPE_DISTANCE_DP = 60;        // min swipe distance
     private static final int MAX_SWIPE_DURATION = 300;        // max swipe duration
+
+    private MediaPlayer mRecordSoundPlayer;
 
     // the recipient list
     private View mRecipientListContainer;
@@ -271,6 +274,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) getActivity().getApplication();
 
+        mRecordSoundPlayer = MediaPlayer.create(mActivity, R.raw.s_record);
+
         mMinSwipeDistance = Utils.dpToPx(mActivity, MIN_SWIPE_DISTANCE_DP);
 
         mRecordingViewOverlay = (RecordingOverlayView) mActivity.createOverlay(R.layout.v_recording_overlay_layout, RECORDING_OVERLAY_TAG, false, true);
@@ -386,6 +391,16 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     }
 
     @Override
+    public void onPause() {
+        if(hideRecordingOverlay(false)) {
+            mSendRecording = false;
+            mRecordManager.stopRecording(true);
+        }
+
+        super.onPause();
+    }
+
+    @Override
     public void onStop() {
         super.onStop();
         mHandler.removeCallbacks(mAnimationRunnable);
@@ -397,6 +412,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onDestroy() {
+        if(mRecordSoundPlayer.isPlaying()) {
+            mRecordSoundPlayer.stop();
+        }
+        mRecordSoundPlayer.release();
+
         mSearchListBarView.deinit();
         if(mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
             // this closes the cursor inside the adapter
@@ -410,10 +430,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         return mActivity.showOverlay(RECORDING_OVERLAY_TAG, true, null);
     }
 
-    public boolean hideRecordingOverlay() {
+    public boolean hideRecordingOverlay(boolean animated) {
         //mRecordingViewOverlay.blinkLeft();
         mRecordingViewOverlay.stop();
-        return mActivity.hideOverlay(RECORDING_OVERLAY_TAG, RECORDING_OVERLAY_HIDE_DELAY, true);   // FIXME animated hide is buggy
+        return mActivity.hideOverlay(RECORDING_OVERLAY_TAG, RECORDING_OVERLAY_HIDE_DELAY, animated);   // FIXME animated hide is buggy
     }
 
     public int clearFilters() {
@@ -471,8 +491,16 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        setRecordDuration(0);
+
         // start recording
         if(showRecordingOverlay()) {
+            if(mRecordSoundPlayer.isPlaying()) {
+                mRecordSoundPlayer.stop();
+            }
+            mRecordSoundPlayer.seekTo(0);
+            mRecordSoundPlayer.start();
+
             Recipient recipient = mRecipientAdapter instanceof RecipientCursorAdapter ?
                     ((RecipientCursorAdapter) mRecipientAdapter).getRecipient(position) :
                     ((RecipientArrayAdapter) mRecipientAdapter).getItem(position);
@@ -501,7 +529,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 float deltaX = x2 - x1;
                 float deltaY = y2 - y1;
 
-                if(hideRecordingOverlay()) {
+                if(hideRecordingOverlay(true)) {
                     mSendRecording = false;
 
                     if ((Math.abs(deltaX) > mMinSwipeDistance || Math.abs(deltaY) > mMinSwipeDistance) && (t2 - t1) < MAX_SWIPE_DURATION) {
@@ -625,7 +653,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public void onErrorRecording(RecordService.Event event) {
         Toast.makeText(getActivity(), getString(R.string.msg_message_record_error), Toast.LENGTH_LONG).show();
-        hideRecordingOverlay();
+        hideRecordingOverlay(true);
     }
 
     @Override

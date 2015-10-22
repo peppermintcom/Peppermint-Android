@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
@@ -37,13 +38,6 @@ public class SettingsFragment extends PreferenceFragment {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.pref_global);
 
-        PeppermintApp app = (PeppermintApp) getActivity().getApplication();
-
-        // inflate and init custom action bar view
-        TextView actionBarView = (TextView) LayoutInflater.from(getActivity()).inflate(R.layout.v_settings_actionbar, null, false);
-        actionBarView.setTypeface(app.getFontSemibold());
-        ((CustomActionBarActivity) getActivity()).getCustomActionBar().setContents(actionBarView, false);
-
         mPrefGmailAccount = findPreference(GmailSenderPreferences.PREF_ACCOUNT_NAME_KEY);
         mPrefGmailAccount.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
@@ -52,10 +46,20 @@ public class SettingsFragment extends PreferenceFragment {
                 sender.init();
                 startActivityForResult(sender.getCredential().newChooseAccountIntent(), PREF_GMAIL_ACCOUNT_REQUEST);
                 sender.deinit();
-                sender = null;
                 return true;
             }
         });
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        PeppermintApp app = (PeppermintApp) getActivity().getApplication();
+
+        // inflate and init custom action bar view
+        TextView actionBarView = (TextView) LayoutInflater.from(getActivity()).inflate(R.layout.v_settings_actionbar, null, false);
+        actionBarView.setTypeface(app.getFontSemibold());
+        ((CustomActionBarActivity) getActivity()).getCustomActionBar().setContents(actionBarView, false);
     }
 
     @Override

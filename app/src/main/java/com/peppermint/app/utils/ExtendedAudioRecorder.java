@@ -309,6 +309,16 @@ public class ExtendedAudioRecorder {
         mEncoder.init((int) bitrate, 1, sampleRate, 16, mTempFilePath);
 
         short sData[] = new short[bufferElements2Rec];
+
+        // bo code to ignore the first 250ms to avoid noises and button sounds
+        final int ignoreTimeMs = 250;
+        final int ignoreShortAmount = (int) ((float) sampleRate * ((float) ignoreTimeMs / 1000f));
+        int ignoredShortsLeft = ignoreShortAmount;
+        while(ignoredShortsLeft > 0) {
+            ignoredShortsLeft = ignoredShortsLeft - recorder.read(sData, 0, ignoredShortsLeft > bufferElements2Rec ? bufferElements2Rec : ignoredShortsLeft);
+        }
+        // eo code to ignore the first 250ms to avoid noises and button sounds
+
         long now = android.os.SystemClock.uptimeMillis();
 
         while (mRecording) {
