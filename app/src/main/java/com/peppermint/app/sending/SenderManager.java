@@ -220,6 +220,13 @@ public class SenderManager implements SenderListener {
      * @return the UUID of the sending request
      */
     private UUID send(SendingRequest sendingRequest, Sender sender) {
+        while(sender != null && sender.getSenderPreferences() != null && !sender.getSenderPreferences().isEnabled()) {
+            sender = sender.getFailureChainSender();
+        }
+        if(sender == null) {
+            throw new RuntimeException("No sender available. Make sure that all possible senders are not disabled.");
+        }
+
         SendingTask task = sender.newTask(sendingRequest);
         mTaskMap.put(sendingRequest.getId(), task);
         task.executeOnExecutor(mExecutor);

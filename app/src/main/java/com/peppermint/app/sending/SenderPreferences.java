@@ -11,6 +11,10 @@ import android.preference.PreferenceManager;
  */
 public class SenderPreferences {
 
+    public static String getEnabledPreferenceKey(Class<? extends SenderPreferences> prefClass) {
+        return prefClass.getSimpleName() + "_isEnabled";
+    }
+
     private SharedPreferences mSharedPreferences;
     private Context mContext;
 
@@ -21,6 +25,16 @@ public class SenderPreferences {
 
     public SharedPreferences getSharedPreferences() {
         return mSharedPreferences;
+    }
+
+    public void setEnabled(boolean val) {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putBoolean(getEnabledPreferenceKey(this.getClass()), val);
+        editor.commit();
+    }
+
+    public boolean isEnabled() {
+        return getSharedPreferences().getBoolean(getEnabledPreferenceKey(this.getClass()), true);
     }
 
 }

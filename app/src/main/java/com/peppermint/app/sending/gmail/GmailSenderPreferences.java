@@ -14,7 +14,6 @@ public class GmailSenderPreferences extends SenderPreferences {
 
     // GmailSendingTask shared preference keys
     public static final String PREF_ACCOUNT_NAME_KEY = "prefAccountName";
-    public static final String PREF_SKIP_IF_PERMISSION_REQ_KEY = "prefSkipIfPermissionRequired";
 
     public GmailSenderPreferences(Context context) {
         super(context);
@@ -28,15 +27,5 @@ public class GmailSenderPreferences extends SenderPreferences {
 
     public String getPreferredAccountName() {
         return getSharedPreferences().getString(PREF_ACCOUNT_NAME_KEY, null);
-    }
-
-    public void setSkipIfPermissionRequired(boolean doSkip) {
-        SharedPreferences.Editor editor = getSharedPreferences().edit();
-        editor.putBoolean(PREF_SKIP_IF_PERMISSION_REQ_KEY, doSkip);
-        editor.commit();
-    }
-
-    public boolean getSkipIfPermissionRequired() {
-        return getSharedPreferences().getBoolean(PREF_SKIP_IF_PERMISSION_REQ_KEY, false);
     }
 }

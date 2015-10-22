@@ -19,7 +19,6 @@ import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.sending.SendingErrorHandler;
 import com.peppermint.app.sending.SendingTask;
-import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -77,7 +76,7 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
                 doRecover(recoveredTask);
                 return;
             } else if(resultCode == Activity.RESULT_CANCELED) {
-                preferences.setSkipIfPermissionRequired(true);
+                preferences.setEnabled(false);
                 Toast.makeText(getContext(), R.string.msg_cancelled_gmail_api, Toast.LENGTH_LONG).show();
             }
         }
@@ -96,11 +95,10 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
 
         // in this case just ask for permissions
         if(e instanceof UserRecoverableAuthIOException) {
-            if(preferences.getSkipIfPermissionRequired()) {
+/*            if(preferences.getSkipIfPermissionRequired()) {
                 doNotRecover(failedSendingTask);
                 return;
-            }
-
+            }*/
             startActivityForResult(request.getId(), REQUEST_AUTHORIZATION, ((UserRecoverableAuthIOException) e).getIntent());
             return;
         }
@@ -140,11 +138,12 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
             return;
         }
 
-        // fail right away, since the manager will queue these for re-execution later
-        if(e instanceof NoInternetConnectionException) {
+        // this might include small connection issues, even if there's internet connection
+        // so allow the retries
+        /*if(e instanceof NoInternetConnectionException) {
             doNotRecover(failedSendingTask);
             return;
-        }
+        }*/
 
         if(!mRetryMap.containsKey(request.getId())) {
             mRetryMap.put(request.getId(), 1);
