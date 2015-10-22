@@ -43,7 +43,7 @@
     <string name="msg_cancelled_gmail_api">No permission to send emails. You will be forwarded to the native email app from now on.</string>
     <string name="msg_message_sent">Your Peppermint message to %1$s has been sent!</string>
     <string name="msg_message_send_error">An error occurred while trying to send your Peppermint message to %1$s. Please try again later.</string>
-    <string name="msg_no_internet">No internet connection available. The task of sending your record has been queued.</string>
+    <string name="msg_no_internet">No internet connection. Peppermint will send your message when you connect.</string>
     <string name="go_to_internet_settings">Check Settings</string>
 
     <string name="filename_message_from">Message-from-</string>
@@ -82,7 +82,6 @@
     <string name="menu_contacts">Contacts</string>
     <string name="menu_tutorial">Tutorial</string>
     <string name="msg_message_record_error">An error has occurred while recording. Please try again later. If the error persists, please contact our support team.</string>
-    <string name="title_activity_splash">SplashActivity</string>
 
     <string name="peppermint_user">Peppermint User</string>
     <string name="msg_message_norecipient_error">No recipient information found. Please try again later.</string>
