@@ -151,6 +151,12 @@ public class AnimatedAvatarView extends AnimatedView {
         anxiousAvatar.setCornerRadius(mCornerRadius);
         mAvatars.add(anxiousAvatar);
 
+        InLoveAvatarAnimatedLayer inloveAvatar = new InLoveAvatarAnimatedLayer(getContext(), 2500, mBitmapPaint);
+        inloveAvatar.setBorderWidth(mBorderWidth);
+        inloveAvatar.setBorderPaint(mBorderPaint);
+        inloveAvatar.setCornerRadius(mCornerRadius);
+        mAvatars.add(inloveAvatar);
+
         mStaticAvatar = new BitmapLayer(getContext(), R.drawable.ic_anonymous_green_48dp, mBitmapPaint);
         mStaticAvatar.setBorderWidth(mBorderWidth);
         mStaticAvatar.setBorderPaint(mBorderPaint);

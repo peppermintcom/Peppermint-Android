@@ -12,6 +12,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.peppermint.app.ui.CustomActionBarActivity;
+import com.peppermint.app.ui.settings.SettingsFragment;
 import com.peppermint.app.ui.recipients.RecipientsFragment;
 import com.peppermint.app.ui.tutorial.TutorialActivity;
 import com.peppermint.app.ui.views.NavigationItem;
@@ -41,7 +42,7 @@ public class MainActivity extends CustomActionBarActivity {
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
         navItems.add(new NavigationItem(getString(R.string.menu_contacts), R.drawable.ic_drawer_contacts, RecipientsFragment.class));
-        navItems.add(new NavigationItem(getString(R.string.menu_settings), R.drawable.ic_drawer_settings, RecipientsFragment.class));
+        navItems.add(new NavigationItem(getString(R.string.menu_settings), R.drawable.ic_drawer_settings, SettingsFragment.class));
         navItems.add(new NavigationItem(getString(R.string.menu_tutorial), R.drawable.ic_drawer_help, new Runnable() {
             @Override
             public void run() {

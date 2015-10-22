@@ -16,16 +16,16 @@ import java.util.ArrayList;
  */
 public class PepperMintPreferences {
 
-    protected static final String RECENT_CONTACT_URIS_KEY = "recentContactUris";
+    public static final String RECENT_CONTACT_URIS_KEY = "recentContactUris";
 
-    protected static final String HIDE_NONMAIN_CONTACTS_KEY = "hideNonMainContacts";
+    public static final String HIDE_NONMAIN_CONTACTS_KEY = "hideNonMainContacts";
     protected static final boolean HIDE_NONMAIN_CONTACTS_DEFAULT = false;
 
-    protected static final String IS_FIRST_RUN_KEY = "isFirstRun";
+    public static final String IS_FIRST_RUN_KEY = "isFirstRun";
 
-    protected static final String MAIL_SUBJECT_KEY = "mailSubject";
-    protected static final String MAIL_BODY_KEY = "mailBody";
-    protected static final String DISPLAY_NAME_KEY = "displayName";
+    public static final String MAIL_SUBJECT_KEY = "mailSubject";
+    public static final String MAIL_BODY_KEY = "mailBody";
+    public static final String DISPLAY_NAME_KEY = "displayName";
 
     protected static final int RECENT_CONTACTS_LIST_LIMIT = 50;
 

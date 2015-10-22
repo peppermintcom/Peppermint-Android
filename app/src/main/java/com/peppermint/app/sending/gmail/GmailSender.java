@@ -101,4 +101,12 @@ public class GmailSender extends Sender {
     public SenderPreferences getSenderPreferences() {
         return mPreferences;
     }
+
+    public GoogleAccountCredential getCredential() {
+        return mCredential;
+    }
+
+    public Gmail getService() {
+        return mService;
+    }
 }
