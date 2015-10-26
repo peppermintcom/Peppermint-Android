@@ -164,15 +164,17 @@ public class RecipientAdapterUtils {
         txtName.setTypeface(app.getFontSemibold());
         txtContact.setTypeface(app.getFontSemibold());
 
-        if(recipient.getPhotoUri() != null) {
+        if(recipient != null && recipient.getPhotoUri() != null) {
             imgPhoto.setStaticDrawable(Uri.parse(recipient.getPhotoUri()));
             imgPhoto.setShowStaticAvatar(true);
         } else {
             imgPhoto.setShowStaticAvatar(false);
         }
 
-        txtName.setText(recipient.getName());
-        txtContact.setText(recipient.getVia());
+        if(recipient != null) {
+            txtName.setText(recipient.getName());
+            txtContact.setText(recipient.getVia());
+        }
 
         return v;
     }

@@ -28,6 +28,6 @@
         android:layout_marginRight="5dp"
         android:inputType="text"
         android:singleLine="true"
-        android:imeOptions="actionSearch" />
+        android:imeOptions="actionSearch|flagNoExtractUi" />
 
 </RelativeLayout>

@@ -40,7 +40,8 @@
         android:layout_centerHorizontal="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="26dp"
+        android:gravity="center"
+        android:textSize="23dp"
         android:textColor="@color/light_grey_text"
         android:text="@string/swipe_to_cancel" />
 

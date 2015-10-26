@@ -15,6 +15,7 @@ public class NavigationItem {
     protected Runnable mRunnable;
     protected String mTag;
     protected boolean mShowSeparator = false;
+    protected boolean mVisible = true;
 
     public NavigationItem(String title, int iconResId, Class<? extends Fragment> fragmentClass) {
         this.mIconResId = iconResId;
@@ -25,9 +26,10 @@ public class NavigationItem {
         }
     }
 
-    public NavigationItem(String title, int iconResId, Class<? extends Fragment> fragmentClass, boolean showSeparator) {
+    public NavigationItem(String title, int iconResId, Class<? extends Fragment> fragmentClass, boolean showSeparator, boolean isVisible) {
         this(title, iconResId, fragmentClass);
         this.mShowSeparator = showSeparator;
+        this.mVisible = isVisible;
     }
 
     public NavigationItem(String title, int iconResId, Runnable runnable, boolean showSeparator) {
@@ -82,5 +84,13 @@ public class NavigationItem {
 
     public void setRunnable(Runnable mRunnable) {
         this.mRunnable = mRunnable;
+    }
+
+    public boolean isVisible() {
+        return mVisible;
+    }
+
+    public void setVisible(boolean mVisible) {
+        this.mVisible = mVisible;
     }
 }

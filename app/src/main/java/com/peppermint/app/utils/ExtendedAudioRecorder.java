@@ -44,6 +44,7 @@ public class ExtendedAudioRecorder {
     private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO;
     private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
     private static final float MAX_GAIN = 5f;
+    private static final int MAX_EMPTY_ITERATIONS = 5;
 
     // current recording context variables
     private static final String DEFAULT_FILE_PREFIX = "Record";
@@ -131,6 +132,7 @@ public class ExtendedAudioRecorder {
                     error = t;
                     Log.e(TAG, t.getMessage(), t);
                 } finally {
+                    mRecording = false;
                     if (recorder != null) {
                         try {
                             recorder.stop();
@@ -160,7 +162,9 @@ public class ExtendedAudioRecorder {
 
                 if (mListener != null) {
                     if (error != null) {
-                        Crashlytics.logException(error);
+                        if(!(error instanceof NoMicDataIOException)) {
+                            Crashlytics.logException(error);
+                        }
                         mListener.onError(mFilePath, mFullDuration, mFullSize, mAmplitude, error);
                     } else {
                         if (mPaused) {
@@ -314,17 +318,22 @@ public class ExtendedAudioRecorder {
         final int ignoreTimeMs = 250;
         final int ignoreShortAmount = (int) ((float) sampleRate * ((float) ignoreTimeMs / 1000f));
         int ignoredShortsLeft = ignoreShortAmount;
-        while(ignoredShortsLeft > 0) {
+        int emptyIts = 0;
+        while(ignoredShortsLeft > 0 && emptyIts < MAX_EMPTY_ITERATIONS) {
             ignoredShortsLeft = ignoredShortsLeft - recorder.read(sData, 0, ignoredShortsLeft > bufferElements2Rec ? bufferElements2Rec : ignoredShortsLeft);
+            emptyIts++;
         }
         // eo code to ignore the first 250ms to avoid noises and button sounds
 
         long now = android.os.SystemClock.uptimeMillis();
+        emptyIts = 0;
+        int totalRead = 0;
 
-        while (mRecording) {
+        while (mRecording && !(totalRead == 0 && emptyIts >= MAX_EMPTY_ITERATIONS)) {
             // gets the voice output from microphone to short format
             int numRead = recorder.read(sData, 0, bufferElements2Rec);
             double[] bufferData = getBufferData(sData, 0, bufferElements2Rec);
+            totalRead += numRead;
 
             mAmplitude = (int) bufferData[0];
             float gain = (float) bufferData[2];
@@ -341,6 +350,8 @@ public class ExtendedAudioRecorder {
             //gainOld = gain;
             if(numRead > 0) {
                 dataOld = sData[numRead - 1];
+            } else {
+                emptyIts++;
             }
             //decOld = (short) (dataOld - sData[numRead-2]);
 
@@ -357,6 +368,10 @@ public class ExtendedAudioRecorder {
 
         // close the output file stream present in the native encoder
         mEncoder.uninit();
+
+        if(emptyIts >= MAX_EMPTY_ITERATIONS && totalRead == 0) {
+            throw new NoMicDataIOException();
+        }
     }
 
     protected boolean startRecording(boolean isResume) {

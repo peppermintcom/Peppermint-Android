@@ -7,6 +7,7 @@ import android.app.ListFragment;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -42,6 +43,7 @@ import com.peppermint.app.ui.views.SearchListBarAdapter;
 import com.peppermint.app.ui.views.SearchListBarView;
 import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
+import com.peppermint.app.utils.NoMicDataIOException;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
 
@@ -315,9 +317,14 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         if (savedInstanceState != null) {
             selectedItemPosition = savedInstanceState.getInt(RECIPIENT_TYPE_POS_KEY, 0);
             mSearchListBarView.setSearchText(savedInstanceState.getString(RECIPIENT_TYPE_SEARCH_KEY, null));
+        } else {
+            if(!hasRecentsOrFavourites()) {
+                // select "all contacts" in case there are not fav/recent contacts
+                selectedItemPosition = 1;
+            }
         }
         mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
-        mSearchListBarView.setOnSearchListener(this);
+        //mSearchListBarView.setOnSearchListener(this);
 
         mActivity.getCustomActionBar().setContents(mSearchListBarView, false);
 
@@ -382,6 +389,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public void onStart() {
         super.onStart();
+
         onSearch(mSearchListBarView.getSearchText());
         mSearchListBarView.setOnSearchListener(this);
         mSendRecordManager.bind();
@@ -589,6 +597,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             cursor.filterAsync(new FilteredCursor.FilterCallback() {
                 @Override
                 public void done(FilteredCursor cursor) {
+                    if(getActivity() == null) {
+                        return;
+                    }
+                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && getActivity().isDestroyed()) {
+                        return;
+                    }
+
                     if (mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
                         ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(cursor);
                     } else {
@@ -600,6 +615,21 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 }
             });
         }
+    }
+
+    private boolean hasRecentsOrFavourites() {
+        if (ContextCompat.checkSelfPermission(mActivity,
+                Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            return false;
+        }
+
+        List<Long> recentList = mPreferences.getRecentContactUris();
+        if(recentList != null && recentList.size() > 0) {
+            return true;
+        }
+
+        FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(getActivity(), null, null, true, mRecipientTypeAdapter.getItem(0).getMimeTypes());
+        return cursor != null && cursor.getOriginalCursor() != null && cursor.getOriginalCursor().moveToFirst();
     }
 
     private void dismissPopup() {
@@ -652,7 +682,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onErrorRecording(RecordService.Event event) {
-        Toast.makeText(getActivity(), getString(R.string.msg_message_record_error), Toast.LENGTH_LONG).show();
+        if(event.getError() instanceof NoMicDataIOException) {
+            Toast.makeText(getActivity(), getString(R.string.msg_message_nomicdata_error), Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getActivity(), getString(R.string.msg_message_record_error), Toast.LENGTH_LONG).show();
+        }
         hideRecordingOverlay(true);
     }
 

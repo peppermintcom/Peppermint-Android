@@ -255,6 +255,7 @@ public class RecordService extends Service {
 
         @Override
         public void onError(String filePath, long durationInMillis, float sizeKbs, int amplitude, Throwable t) {
+            stopForeground(true);
             Event e = new Event(newRecording(mRecorder), mRecipient, t);
             mEventBus.post(e);
         }

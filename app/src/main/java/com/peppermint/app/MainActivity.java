@@ -12,8 +12,9 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.peppermint.app.ui.CustomActionBarActivity;
-import com.peppermint.app.ui.settings.SettingsFragment;
 import com.peppermint.app.ui.recipients.RecipientsFragment;
+import com.peppermint.app.ui.settings.SettingsActivity;
+import com.peppermint.app.ui.settings.SettingsFragment;
 import com.peppermint.app.ui.tutorial.TutorialActivity;
 import com.peppermint.app.ui.views.NavigationItem;
 
@@ -41,13 +42,25 @@ public class MainActivity extends CustomActionBarActivity {
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
-        navItems.add(new NavigationItem(getString(R.string.menu_contacts), R.drawable.ic_drawer_contacts, RecipientsFragment.class));
-        navItems.add(new NavigationItem(getString(R.string.menu_settings), R.drawable.ic_drawer_settings, SettingsFragment.class));
+        navItems.add(new NavigationItem(getString(R.string.menu_contacts), R.drawable.ic_drawer_contacts, RecipientsFragment.class, false, false));
+        navItems.add(new NavigationItem(getString(R.string.menu_settings), R.drawable.ic_drawer_settings, new Runnable() {
+            @Override
+            public void run() {
+                Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+                startActivity(intent);
+            }
+        }, true));
         navItems.add(new NavigationItem(getString(R.string.menu_tutorial), R.drawable.ic_drawer_help, new Runnable() {
             @Override
             public void run() {
                 Intent intent = new Intent(MainActivity.this, TutorialActivity.class);
                 startActivity(intent);
+            }
+        }, true));
+        navItems.add(new NavigationItem(getString(R.string.menu_help_feedback), R.drawable.ic_drawer_feedback, new Runnable() {
+            @Override
+            public void run() {
+                // TODO implement help and feedback
             }
         }, true));
         return navItems;

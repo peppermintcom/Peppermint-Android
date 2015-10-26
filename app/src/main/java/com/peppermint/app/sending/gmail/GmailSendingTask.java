@@ -44,6 +44,8 @@ public class GmailSendingTask extends SendingTask {
 
     private static final String TAG = GmailSendingTask.class.getSimpleName();
 
+    private static final long MIN_SEND_TIME = 5000; // ms
+
     private static final String CONTENT_TYPE_AUDIO = "audio/mpeg";
     private static final String CONTENT_TYPE_VIDEO = "video/mpeg";
 
@@ -73,6 +75,8 @@ public class GmailSendingTask extends SendingTask {
         }
 
         try {
+            long now = android.os.SystemClock.uptimeMillis();
+
             MimeMessage email = createEmailWithAttachment(getSendingRequest().getRecipient().getVia(),
                     preferredAccountName, (String) getParameter(GmailSender.PARAM_DISPLAY_NAME),
                     getSendingRequest().getSubject(), getSendingRequest().getBody(),
@@ -83,6 +87,18 @@ public class GmailSendingTask extends SendingTask {
             Draft draft = new Draft();
             draft.setMessage(message);
             draft = ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().drafts().create("me", draft).execute();
+
+            // make the sending process last at least 5 secs
+            if(!isCancelled()) {
+                long duration = android.os.SystemClock.uptimeMillis() - now;
+                if (duration < MIN_SEND_TIME) {
+                    try {
+                        Thread.sleep(MIN_SEND_TIME - duration);
+                    } catch (InterruptedException e) {
+                        // do nothing here; just skip
+                    }
+                }
+            }
 
             if(!isCancelled()) {
                 ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().drafts().send("me", draft).execute();
