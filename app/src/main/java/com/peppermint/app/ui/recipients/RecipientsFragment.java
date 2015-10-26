@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.app.ListFragment;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.content.ContextCompat;
@@ -257,9 +258,14 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         if (savedInstanceState != null) {
             selectedItemPosition = savedInstanceState.getInt(RECIPIENT_TYPE_POS_KEY, 0);
             mSearchListBarView.setSearchText(savedInstanceState.getString(RECIPIENT_TYPE_SEARCH_KEY, null));
+        } else {
+            if(!hasRecentsOrFavourites()) {
+                // select "all contacts" in case there are not fav/recent contacts
+                selectedItemPosition = 1;
+            }
         }
         mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
-        mSearchListBarView.setOnSearchListener(this);
+        //mSearchListBarView.setOnSearchListener(this);
 
         mActivity.getCustomActionBar().setContents(mSearchListBarView, false);
 
@@ -319,6 +325,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public void onStart() {
         super.onStart();
+
         onSearch(mSearchListBarView.getSearchText());
         mSearchListBarView.setOnSearchListener(this);
         mSendRecordManager.bind();
@@ -442,6 +449,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             cursor.filterAsync(new FilteredCursor.FilterCallback() {
                 @Override
                 public void done(FilteredCursor cursor) {
+                    if(getActivity() == null) {
+                        return;
+                    }
+                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && getActivity().isDestroyed()) {
+                        return;
+                    }
+
                     if (mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
                         ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(cursor);
                     } else {
@@ -453,5 +467,20 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 }
             });
         }
+    }
+
+    private boolean hasRecentsOrFavourites() {
+        if (ContextCompat.checkSelfPermission(mActivity,
+                Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            return false;
+        }
+
+        List<Long> recentList = mPreferences.getRecentContactUris();
+        if(recentList != null && recentList.size() > 0) {
+            return true;
+        }
+
+        FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(getActivity(), null, null, true, mRecipientTypeAdapter.getItem(0).getMimeTypes());
+        return cursor != null && cursor.getOriginalCursor() != null && cursor.getOriginalCursor().moveToFirst();
     }
 }

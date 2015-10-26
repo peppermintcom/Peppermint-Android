@@ -214,7 +214,7 @@ public class SenderService extends Service {
     }
 
     private Notification getNotification() {
-        Intent notificationIntent = new Intent(SenderService.this, RecordingActivity.class);
+        Intent notificationIntent = new Intent(SenderService.this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(SenderService.this, 0, notificationIntent, 0);
 
         // FIXME use proper icons for these notifications

@@ -6,6 +6,8 @@ import android.os.Build;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -26,6 +28,7 @@ public class CustomActionBarView extends RelativeLayout {
     private boolean mMenuAsUpInit = false;
     private ImageButton mMenuButton;
     private RelativeLayout mContainer;
+    private FrameLayout mTouchInterceptor;
 
     private List<View> mOriginalContents;
 
@@ -71,6 +74,10 @@ public class CustomActionBarView extends RelativeLayout {
             }
         }
 
+        mTouchInterceptor = new FrameLayout(getContext());
+        mTouchInterceptor.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        mContainer.addView(mTouchInterceptor);
+
         mMenuButton = (ImageButton) findViewById(R.id.btnMenu);
         setDisplayMenuAsUpEnabled(mMenuAsUpInit);
 
@@ -99,6 +106,7 @@ public class CustomActionBarView extends RelativeLayout {
         v.setLayoutParams(params);
         mContainer.removeAllViews();
         mContainer.addView(v);
+        mContainer.addView(mTouchInterceptor);
         invalidate();
     }
 
@@ -107,6 +115,7 @@ public class CustomActionBarView extends RelativeLayout {
         for(int i=0; i<mOriginalContents.size(); i++) {
             mContainer.addView(mOriginalContents.get(i));
         }
+        mContainer.addView(mTouchInterceptor);
         invalidate();
     }
 
@@ -120,5 +129,9 @@ public class CustomActionBarView extends RelativeLayout {
         } else {
             mMenuButton.setImageResource(R.drawable.ic_menu_14dp);
         }
+    }
+
+    public FrameLayout getTouchInterceptor() {
+        return mTouchInterceptor;
     }
 }

@@ -25,6 +25,7 @@ import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.ui.canvas.old.PeppermintRecordView;
+import com.peppermint.app.utils.NoMicDataIOException;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
 
@@ -252,7 +253,11 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
 
     @Override
     public void onErrorRecording(RecordService.Event event) {
-        Toast.makeText(getActivity(), getString(R.string.msg_message_record_error), Toast.LENGTH_LONG).show();
+        if(event.getError() instanceof NoMicDataIOException) {
+            Toast.makeText(getActivity(), getString(R.string.msg_message_nomicdata_error), Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getActivity(), getString(R.string.msg_message_record_error), Toast.LENGTH_LONG).show();
+        }
         getActivity().finish();
     }
 

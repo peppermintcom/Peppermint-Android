@@ -15,6 +15,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
@@ -121,19 +122,37 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
         setContentView(getContentViewResourceId());
         getCustomActionBar().initViews();
 
+        getCustomActionBar().getTouchInterceptor().setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                mLytDrawer.closeDrawers();
+                return false;
+            }
+        });
+
         mPreferences = new PepperMintPreferences(this);
         PeppermintApp app = (PeppermintApp) getApplication();
 
         mLytOverlay = (FrameLayout) findViewById(R.id.lytOverlay);
 
         mNavigationItemList = getNavigationItems();
+        int amountVisible = 0;
+        for(NavigationItem item : mNavigationItemList) {
+            if(item.isVisible()) {
+                amountVisible++;
+            }
+        }
+        NavigationItem firstNavigationItem = mNavigationItemList.get(0);
+        if(!firstNavigationItem.isVisible()) {
+            mNavigationItemList.remove(0);
+        }
 
         mImgUserAvatar = (ImageView) findViewById(R.id.imgUserAvatar);
         mTxtUsername = (TextView) findViewById(R.id.txtUserName);
         mTxtUsername.setTypeface(app.getFontBold());
 
         mLytDrawer = (DrawerLayout) findViewById(R.id.drawer);
-        if(mNavigationItemList == null || mNavigationItemList.size() <= 1) {
+        if(mNavigationItemList == null || amountVisible <= 0) {
             mLytDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
             getCustomActionBar().setDisplayMenuAsUpEnabled(true);
             getCustomActionBar().getMenuButton().setOnClickListener(new View.OnClickListener() {
@@ -195,7 +214,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
         // show intro screen
         Fragment introScreenFragment;
         try {
-            introScreenFragment = mNavigationItemList.get(0).getFragmentClass().newInstance();
+            introScreenFragment = firstNavigationItem.getFragmentClass().newInstance();
             if(getIntent() != null) {
                 introScreenFragment.setArguments(getIntent().getExtras());
             }

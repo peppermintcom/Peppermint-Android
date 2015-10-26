@@ -18,7 +18,7 @@ public class RecordingActivity extends CustomActionBarActivity {
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
-        navItems.add(new NavigationItem("Recording", R.drawable.ic_recipienttype_allcontacts, RecordingFragment.class));
+        navItems.add(new NavigationItem("Recording", R.drawable.ic_recipienttype_allcontacts, RecordingFragment.class, false, false));
         return navItems;
     }
 

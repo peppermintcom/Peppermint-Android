@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import com.peppermint.app.R;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,6 +24,7 @@ public class DrawerListAdapter extends BaseAdapter {
     protected Context mContext;
     protected List<NavigationItem> mList;
     protected Typeface mFont;
+    protected List<NavigationItem> mHiddenList;
 
     public DrawerListAdapter(Context context, List<NavigationItem> list, Typeface font) {
         this.mContext = context;
@@ -64,6 +66,12 @@ public class DrawerListAdapter extends BaseAdapter {
 
         titleView.setText(mList.get(position).getTitle());
         iconView.setImageResource(mList.get(position).getIconResId());
+
+        if(!mList.get(position).isVisible()) {
+            parent.setVisibility(View.GONE);
+        } else {
+            parent.setVisibility(View.VISIBLE);
+        }
 
         return view;
     }

@@ -104,4 +104,5 @@
     <string name="pref_title_emailcategory">Email</string>
     <string name="pref_title_gmailsubject">Subject</string>
     <string name="pref_summary_gmailsubject">The email subject</string>
+    <string name="msg_message_nomicdata_error">Unable to get any audio from the microphone. Please ensure that no other apps are using it.</string>
 </resources>
