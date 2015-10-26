@@ -656,6 +656,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
         if(mSendRecording) {
             mPreferences.addRecentContactUri(event.getRecipient().getContactId());
+
+            // if the user has gone through the sending process without
+            // discarding the recording, then clear the search filter
+            mSearchListBarView.clearSearch(0);
+
             mSendRecordManager.startAndSend(event.getRecipient(), event.getRecording());
             mSendRecording = false;
         }
