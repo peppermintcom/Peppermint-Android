@@ -127,7 +127,7 @@ public class MainActivity extends CustomActionBarActivity {
                     finish();
                 } else {
                     // easy way to refresh (not optimized)
-                    selectItemFromDrawer(0);
+                    refreshFragment();
                 }
             } else {
                 Toast.makeText(this, R.string.must_supply_mandatory_permissions, Toast.LENGTH_LONG).show();

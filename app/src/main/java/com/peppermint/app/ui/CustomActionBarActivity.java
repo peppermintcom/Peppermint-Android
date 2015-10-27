@@ -224,6 +224,19 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
         getFragmentManager().beginTransaction().add(R.id.container, introScreenFragment).commit();
     }
 
+    protected void refreshFragment() {
+        Fragment fragment = getFragmentManager().findFragmentById(R.id.container);
+        if(fragment == null) {
+            return;
+        }
+        try {
+            fragment = fragment.getClass().newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
