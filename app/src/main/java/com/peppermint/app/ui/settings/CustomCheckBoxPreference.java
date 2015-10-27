@@ -10,6 +10,8 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
+import com.peppermint.app.R;
+import com.peppermint.app.utils.Utils;
 
 /**
  * Created by Nuno Luz on 22-10-2015.
@@ -39,6 +41,9 @@ public class CustomCheckBoxPreference extends CheckBoxPreference {
 
         TextView txtTitle = (TextView) view.findViewById(android.R.id.title);
         TextView txtSummary = (TextView) view.findViewById(android.R.id.summary);
+
+        txtTitle.setTextColor(Utils.getColor(getContext(), R.color.black));
+        txtSummary.setTextColor(Utils.getColor(getContext(), R.color.dark_grey_text));
 
         PeppermintApp app = (PeppermintApp) ((Activity) getContext()).getApplication();
         txtTitle.setTypeface(app.getFontSemibold());

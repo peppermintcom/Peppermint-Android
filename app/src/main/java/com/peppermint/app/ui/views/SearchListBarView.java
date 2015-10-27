@@ -9,9 +9,11 @@ import android.os.Build;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.EditText;
@@ -19,6 +21,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ListPopupWindow;
 import android.widget.PopupWindow;
+import android.widget.TextView;
 
 import com.peppermint.app.R;
 import com.peppermint.app.utils.Utils;
@@ -43,7 +46,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
     private LayoutInflater mLayoutInflater;
     private InputMethodManager mInputMethodManager;
 
-    private ImageButton mBtnList;
+    private ImageButton mBtnList, mBtnClear;
     private EditText mTxtSearch;
     private ListPopupWindow mListPopupWindow;
 
@@ -97,6 +100,14 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         mLayoutInflater = LayoutInflater.from(getContext());
         mLayoutInflater.inflate(R.layout.v_search_and_list_box_layout, this);
 
+        mBtnClear = (ImageButton) findViewById(R.id.btnClear);
+        mBtnClear.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clearSearch(-1);
+            }
+        });
+
         mBtnList = (ImageButton) findViewById(R.id.btnList);
         mBtnList.setOnClickListener(new OnClickListener() {
             @Override
@@ -110,6 +121,16 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
 
         mTxtSearch = (EditText) findViewById(R.id.txtSearch);
         mTxtSearch.addTextChangedListener(mTextWatcher);
+        mTxtSearch.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_GO) {
+                    hideKeyboard();
+                    return true;
+                }
+                return false;
+            }
+        });
 
         TypedArray a = getContext().getTheme().obtainStyledAttributes(new int[] {R.attr.normalBoxRadius});
         int offset = a.getDimensionPixelSize(0, 0) + Utils.dpToPx(getContext(), 1);
@@ -152,11 +173,15 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         }
     }
 
+    private void hideKeyboard() {
+        requestFocus();
+        mTxtSearch.clearFocus();
+        mInputMethodManager.hideSoftInputFromWindow(mTxtSearch.getWindowToken(), 0);
+    }
+
     public void removeSearchTextFocus(MotionEvent event) {
         if(event == null) {
-            requestFocus();
-            mTxtSearch.clearFocus();
-            mInputMethodManager.hideSoftInputFromWindow(mTxtSearch.getWindowToken(), 0);
+            hideKeyboard();
             return;
         }
 
@@ -164,9 +189,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
             Rect outRect = new Rect();
             mTxtSearch.getGlobalVisibleRect(outRect);
             if (!outRect.contains((int) event.getRawX(), (int) event.getRawY())) {
-                requestFocus();
-                mTxtSearch.clearFocus();
-                mInputMethodManager.hideSoftInputFromWindow(mTxtSearch.getWindowToken(), 0);
+                hideKeyboard();
             }
         }
     }
@@ -184,6 +207,12 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
             if(searchableItemPos >= 0) {
                 innerSetSelectedItemPosition(searchableItemPos);
             }
+        }
+
+        if(searchText == null) {
+            mBtnClear.setVisibility(GONE);
+        } else {
+            mBtnClear.setVisibility(VISIBLE);
         }
 
         if(mListener != null) {

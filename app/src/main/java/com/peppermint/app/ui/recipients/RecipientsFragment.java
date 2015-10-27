@@ -27,6 +27,7 @@ import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientType;
 import com.peppermint.app.sending.SendingEvent;
+import com.peppermint.app.sending.nativemail.IntentMailSendingTask;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.canvas.progress.LoadingView;
@@ -142,8 +143,17 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         @Override
         public void onBoundSendService() {
+            onBoundSendService(null);
+        }
+
+        private void onBoundSendService(SendingEvent event) {
             if(mSendRecordManager.isSending()) {
-                txtStatus.setText(getString(R.string.sending));
+                // do not show message for IntentMailSender
+                if(event != null && event.getSendingTask() instanceof IntentMailSendingTask) {
+                    return;
+                }
+
+                txtStatus.setText(getString(R.string.uploading));
                 txtTapToCancel.setVisibility(View.VISIBLE);
                 imgStatus.setVisibility(View.GONE);
                 show();
@@ -154,22 +164,27 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         @Override
         public void onSendStarted(SendingEvent event) {
-            onBoundSendService();
+            onBoundSendService(event);
         }
 
         @Override
         public void onSendCancelled(SendingEvent event) {
-            onBoundSendService();
+            onBoundSendService(event);
         }
 
         @Override
         public void onSendError(SendingEvent event) {
-            onBoundSendService();
+            onBoundSendService(event);
         }
 
         @Override
         public void onSendFinished(SendingEvent event) {
             if(!mSendRecordManager.isSending()) {
+                // do not show message for IntentMailSender
+                if(event != null && event.getSendingTask() instanceof IntentMailSendingTask) {
+                    hide(0);
+                    return;
+                }
                 showAndHide();
                 txtStatus.setText(getString(R.string.sent));
                 txtTapToCancel.setVisibility(View.GONE);
@@ -183,7 +198,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         @Override
         public void onSendQueued(SendingEvent event) {
-            onBoundSendService();
+            onBoundSendService(event);
         }
     };
 

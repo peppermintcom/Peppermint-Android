@@ -5,7 +5,7 @@
         android:summary="@string/pref_summary_displayname"
         android:defaultValue="@string/peppermint_user" />
 
-    <PreferenceCategory
+    <com.peppermint.app.ui.settings.CustomPreferenceCategory
         android:title="@string/pref_title_emailcategory">
 
         <com.peppermint.app.ui.settings.CustomCheckBoxPreference android:key="GmailSenderPreferences_isEnabled"
@@ -24,5 +24,5 @@
             android:summary="@string/pref_summary_gmailsubject"
             android:defaultValue="@string/default_mail_subject" />
 
-    </PreferenceCategory>
+    </com.peppermint.app.ui.settings.CustomPreferenceCategory>
 </PreferenceScreen>
