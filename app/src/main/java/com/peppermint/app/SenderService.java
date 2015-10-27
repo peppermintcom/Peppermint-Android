@@ -223,7 +223,7 @@ public class SenderService extends Service {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(SenderService.this)
                 .setSmallIcon(R.drawable.ic_mail_36dp)
                 .setContentTitle(getString(R.string.app_name))
-                .setContentText(getString(R.string.sending))
+                .setContentText(getString(R.string.uploading))
                 .setContentIntent(pendingIntent);
 
         return builder.build();

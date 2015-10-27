@@ -257,6 +257,15 @@ public class Utils {
         }
     }
 
+    public static int getColor(Context context, int colorRes) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            return context.getResources().getColor(colorRes, context.getTheme());
+        } else {
+            //noinspection deprecation
+            return context.getResources().getColor(colorRes);
+        }
+    }
+
     public static int getStatusBarHeight(Context context) {
         int result = 0;
         int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");

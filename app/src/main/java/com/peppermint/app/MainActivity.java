@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Fragment;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -14,7 +15,6 @@ import android.widget.Toast;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.recipients.RecipientsFragment;
 import com.peppermint.app.ui.settings.SettingsActivity;
-import com.peppermint.app.ui.settings.SettingsFragment;
 import com.peppermint.app.ui.tutorial.TutorialActivity;
 import com.peppermint.app.ui.views.NavigationItem;
 
@@ -36,6 +36,8 @@ public class MainActivity extends CustomActionBarActivity {
         "android.permission.USE_CREDENTIALS",
         Manifest.permission.INSTALL_SHORTCUT
     };
+    private static final String SUPPORT_EMAIL = "support@peppermint.com";
+    private static final String SUPPORT_SUBJECT = "Peppermint Android app help & feedback";
 
     private List<String> mPermissionsToAsk;
 
@@ -60,7 +62,10 @@ public class MainActivity extends CustomActionBarActivity {
         navItems.add(new NavigationItem(getString(R.string.menu_help_feedback), R.drawable.ic_drawer_feedback, new Runnable() {
             @Override
             public void run() {
-                // TODO implement help and feedback
+                Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + SUPPORT_EMAIL));
+                i.putExtra(Intent.EXTRA_SUBJECT, SUPPORT_SUBJECT);
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(Intent.createChooser(i, getString(R.string.send_email)));
             }
         }, true));
         return navItems;

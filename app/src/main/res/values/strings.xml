@@ -37,7 +37,7 @@
     <string name="default_mail_subject">I sent you a voice message</string>
     <string name="default_mail_body_listen">Here\'s my message.</string>
     <string name="default_mail_body_reply"><![CDATA[Reply via <a href="http://www.peppermint.com/">Peppermint.com</a>]]></string>
-    <string name="sending">Sending…</string>
+    <string name="uploading">Uploading…</string>
     <string name="send_record">Send Record</string>
 
     <string name="msg_cancelled_gmail_api">No permission to send emails. You will be forwarded to the native email app from now on.</string>
@@ -106,4 +106,6 @@
     <string name="pref_title_gmailsubject">Subject</string>
     <string name="pref_summary_gmailsubject">The email subject</string>
     <string name="msg_message_nomicdata_error">Unable to get any audio from the microphone. Please ensure that no other apps are using it.</string>
+
+    <string name="send_email">Send Email</string>
 </resources>

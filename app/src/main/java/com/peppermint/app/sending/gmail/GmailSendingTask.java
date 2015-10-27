@@ -3,6 +3,7 @@ package com.peppermint.app.sending.gmail;
 import com.crashlytics.android.Crashlytics;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.util.Base64;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Draft;
@@ -105,6 +106,8 @@ public class GmailSendingTask extends SendingTask {
             } else {
                 ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().drafts().delete("me", draft.getId());
             }
+        } catch(GoogleJsonResponseException e) {
+            throw e;
         } catch(GooglePlayServicesAvailabilityIOException e) {
             throw new ElectableForQueueingException(getSender().getContext().getString(R.string.msg_no_gplay), e);
         } catch(UserRecoverableAuthIOException e) {
