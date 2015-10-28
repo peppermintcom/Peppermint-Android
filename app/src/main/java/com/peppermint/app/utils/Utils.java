@@ -13,6 +13,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.provider.ContactsContract;
+import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -258,12 +259,7 @@ public class Utils {
     }
 
     public static int getColor(Context context, int colorRes) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            return context.getResources().getColor(colorRes, context.getTheme());
-        } else {
-            //noinspection deprecation
-            return context.getResources().getColor(colorRes);
-        }
+        return ContextCompat.getColor(context, colorRes);
     }
 
     public static int getStatusBarHeight(Context context) {

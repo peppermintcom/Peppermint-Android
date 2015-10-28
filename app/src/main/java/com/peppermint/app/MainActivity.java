@@ -37,7 +37,7 @@ public class MainActivity extends CustomActionBarActivity {
         Manifest.permission.INSTALL_SHORTCUT
     };
     private static final String SUPPORT_EMAIL = "support@peppermint.com";
-    private static final String SUPPORT_SUBJECT = "Peppermint Android app help & feedback";
+    private static final String SUPPORT_SUBJECT = "Feedback or question about Peppermint Android app";
 
     private List<String> mPermissionsToAsk;
 
