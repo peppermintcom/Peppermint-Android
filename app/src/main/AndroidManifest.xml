@@ -10,9 +10,13 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
 
+    <!-- GET_ACCOUNTS & USE_CREDENTIALS is used to obtain account details and credentials for the Gmail API -->
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
+    <!-- READ_PHONE_STATE is used to obtain the device unique ID -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
     <application
         android:name=".PeppermintApp"
@@ -66,7 +70,8 @@
                 android:value=".MainActivity" />
         </activity>
 
-        <!-- UI: HELPER GET RESULT -->
+        <!-- UI: HELPER GET RESULT (utilitary invisible activity that allows services to
+            launch other activities and obtain a result through "onActivityResult") -->
         <activity
             android:name=".sending.GetResultActivity"
             android:theme="@style/Theme.Transparent" >
@@ -82,6 +87,13 @@
         <!-- SERV: SENDING -->
         <service
             android:name=".SenderService"
+            android:enabled="true"
+            android:exported="false" >
+        </service>
+
+        <!-- SERV: HTTP REST -->
+        <service
+            android:name=".rest.HttpClientService"
             android:enabled="true"
             android:exported="false" >
         </service>

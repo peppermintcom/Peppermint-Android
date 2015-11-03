@@ -1,7 +1,10 @@
 package com.peppermint.app.sending.sms;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.widget.Toast;
 
+import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderListener;
@@ -22,6 +25,10 @@ public class SMSSender extends Sender {
 
     @Override
     public SendingTask newTask(SendingRequest sendingRequest) {
+        if (!getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Toast.makeText(getContext(), R.string.msg_message_sms_disabled, Toast.LENGTH_LONG).show();
+            return null;
+        }
         return new SMSSendingTask(this, sendingRequest, getSenderListener(), getParameters(), getSenderPreferences());
     }
 

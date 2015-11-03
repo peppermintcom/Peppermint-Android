@@ -291,6 +291,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) getActivity().getApplication();
 
+        mSendRecordManager.start();
+
         mRecordSoundPlayer = MediaPlayer.create(mActivity, R.raw.s_record);
 
         mMinSwipeDistance = Utils.dpToPx(mActivity, MIN_SWIPE_DISTANCE_DP);

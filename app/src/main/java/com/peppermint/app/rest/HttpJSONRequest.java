@@ -10,6 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Created by Nuno Luz (nluz@mobaton.com) on 02-07-2015.
+ *
+ * <p>
+ *     HttpRequest that outputs a {@link List} of objects as a {@link JSONArray} to the request body.<br />
+ *     Requires the appropriate {@link JSONParser} to do it.
+ * </p>
  */
 public class HttpJSONRequest<T> extends HttpRequest {
 

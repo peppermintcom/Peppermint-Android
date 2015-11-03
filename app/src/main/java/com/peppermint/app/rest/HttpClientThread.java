@@ -13,16 +13,16 @@ import java.net.HttpURLConnection;
  *     The runnable that executes a {@link HttpRequest} in a background_gradient thread (pool).
  * </p>
  */
-public class HttpClientRunnable extends Thread {
+public class HttpClientThread extends Thread {
 	
-	private static final String TAG = HttpClientRunnable.class.getSimpleName();
+	private static final String TAG = HttpClientThread.class.getSimpleName();
 
-	private HttpClientRunnableListener mListener;
+	private HttpClientThreadListener mListener;
 	private HttpRequest mRequest;                   // the running request
     private HttpResponse mResponse;                 // the running request response
 	private HttpURLConnection mConnection;          // the running request connection
 
-	public HttpClientRunnable(HttpClientRunnableListener listener, HttpRequest request, HttpResponse response) {
+	public HttpClientThread(HttpClientThreadListener listener, HttpRequest request, HttpResponse response) {
 		this.mListener = listener;
 		this.mRequest = request;
         this.mResponse = response;
@@ -32,8 +32,8 @@ public class HttpClientRunnable extends Thread {
      * Executes a {@link HttpRequest}.<br />
      * Its listener methods are invoked as follows:
      * <ol>
-     *     <li>{@link HttpClientRunnableListener#onConnect(HttpClientRunnable, HttpRequest)} - through the background_gradient thread handler</li>
-     *     <li>{@link HttpClientRunnableListener#onDisconnect(HttpClientRunnable, HttpRequest, HttpResponse)} - through the background_gradient thread handler</li>
+     *     <li>{@link HttpClientThreadListener#onConnect(HttpClientThread, HttpRequest)} - through the background_gradient thread handler</li>
+     *     <li>{@link HttpClientThreadListener#onDisconnect(HttpClientThread, HttpRequest, HttpResponse)} - through the background_gradient thread handler</li>
      * </ol>
      */
 	@Override
@@ -50,6 +50,7 @@ public class HttpClientRunnable extends Thread {
                     if(mRequest.getBody() != null) {
                         OutputStream outStream = mConnection.getOutputStream();
                         mRequest.writeBody(outStream);
+                        outStream.flush();
                         outStream.close();
                     }
                 }

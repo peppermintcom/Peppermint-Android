@@ -35,6 +35,8 @@
     <string name="cancel">Cancel</string>
 
     <string name="default_mail_subject">I sent you a voice message</string>
+    <string name="default_sms_body">Here\'s my message from Peppermint. Listen at %1$s</string>
+    <string name="default_mail_body_url"><![CDATA[<p>Here\'s my message.</p><audio controls="controls"><source src="%1$s" type="%2$s" /><a href="%1$s" type="%2$s">%1$s</a></audio>]]></string>
     <string name="default_mail_body_listen">Here\'s my message.</string>
     <string name="default_mail_body_reply"><![CDATA[Reply via <a href="http://www.peppermint.com/">Peppermint.com</a>]]></string>
     <string name="uploading">Uploading…</string>
@@ -108,4 +110,5 @@
     <string name="msg_message_nomicdata_error">Unable to get any audio from the microphone. Please ensure that no other apps are using it.</string>
 
     <string name="send_email">Send Email</string>
+    <string name="msg_message_sms_disabled">Your device either has telephony disabled or does not support it. Sending text messages is not possible.</string>
 </resources>

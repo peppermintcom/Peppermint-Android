@@ -18,7 +18,6 @@ import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.SenderManager;
 import com.peppermint.app.sending.SendingEvent;
 import com.peppermint.app.sending.gmail.GmailSender;
-import com.peppermint.app.ui.recording.RecordingActivity;
 import com.peppermint.app.utils.PepperMintPreferences;
 
 import java.util.HashMap;
@@ -188,9 +187,8 @@ public class SenderService extends Service {
     }
 
     private SendingRequest send(Recipient recipient, Recording recording) {
-        // FIXME use proper URLs and remove the dummy ones
-        String body = "<p>" + String.format(getString(R.string.default_mail_body_listen), "http://peppermint.com/msg?id=1234-1234-1234-DUMMY") +
-                "</p><br />" + getString(R.string.default_mail_body_reply);
+        // default body if no url is supplied (each sender is currently responsible for building its own message body)
+        String body = "<p>" + getString(R.string.default_mail_body_listen) + "</p><br />" + getString(R.string.default_mail_body_reply);
         SendingRequest sendingRequest = new SendingRequest(recording, recipient, mPreferences.getMailSubject(), body);
 
         mSenderManager.send(sendingRequest);
@@ -217,7 +215,6 @@ public class SenderService extends Service {
         Intent notificationIntent = new Intent(SenderService.this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(SenderService.this, 0, notificationIntent, 0);
 
-        // FIXME use proper icons for these notifications
         // TODO add cancel action to notification perhaps?
         // TODO add progress percentage to the notification whenever possible (depends on sender)
         NotificationCompat.Builder builder = new NotificationCompat.Builder(SenderService.this)
