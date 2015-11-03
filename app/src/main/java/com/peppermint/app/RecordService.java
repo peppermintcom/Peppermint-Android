@@ -2,7 +2,6 @@ package com.peppermint.app;
 
 import android.app.Notification;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -10,13 +9,10 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
-import com.peppermint.app.ui.recording.RecordingActivity;
-import com.peppermint.app.ui.recording.RecordingFragment;
 import com.peppermint.app.utils.ExtendedAudioRecorder;
 
 import de.greenrobot.event.EventBus;
@@ -54,6 +50,8 @@ public class RecordService extends Service {
     public static final int EVENT_ERROR = 6;
 
     protected RecordServiceBinder mBinder = new RecordServiceBinder();
+
+    private float mMaxAmplitude;
 
     /**
      * The service binder used by external components to interact with the service.
@@ -155,14 +153,17 @@ public class RecordService extends Service {
         }
     }
 
-    private static float getLoudnessFromAmplitude(float amplitude) {
-        float topAmplitude = 500f;
-
-        while((amplitude > topAmplitude)) {
-            topAmplitude += 500f;
+    private float getLoudnessFromAmplitude(float amplitude) {
+        while((mMaxAmplitude - amplitude) < 500f) {
+            mMaxAmplitude += 1000f;
         }
 
-        return amplitude / topAmplitude;
+        // gradually adapt the max amplitude to allow useful loudness range values
+        if(mMaxAmplitude > 4000f) {
+            mMaxAmplitude -= 500f;
+        }
+
+        return Math.min(1, amplitude / mMaxAmplitude);
     }
 
     private static Recording newRecording(ExtendedAudioRecorder recorder) {
@@ -335,6 +336,7 @@ public class RecordService extends Service {
         }
 
         mRecipient = recipient;
+        mMaxAmplitude = 16000f;
 
         if(filePrefix == null) {
             mRecorder = new ExtendedAudioRecorder(RecordService.this);

@@ -109,6 +109,24 @@ public class SendingRequest {
     }
 
     /**
+     * Deletes the supplied sending request data (UUID must be supplied).
+     * An SQLException is thrown if the sending request UUID does not exist in the database.
+     *
+     * @param db the local database connection
+     * @param sendingRequest the sending request
+     * @throws SQLException
+     */
+    public static void delete(SQLiteDatabase db, SendingRequest sendingRequest) throws SQLException {
+        Recipient.delete(db, sendingRequest.getRecipient());
+        Recording.delete(db, sendingRequest.getRecording());
+
+        long id = db.delete("tbl_sending_request", "sending_request_uuid = ?", new String[]{sendingRequest.getId().toString()});
+        if(id < 0) {
+            throw new SQLException("Unable to delete sending request!");
+        }
+    }
+
+    /**
      * Obtains the sending request cursor with the supplied UUID from the database.
      *
      * @param db the local database connection

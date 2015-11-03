@@ -58,7 +58,7 @@
         android:orientation="vertical"
         android:gravity="center">
 
-        <com.peppermint.app.ui.canvas.progress.RecordProgressBarsView
+        <com.peppermint.app.ui.canvas.sound.RecordProgressBarsView
             android:id="@+id/cvRecord"
             android:layout_width="190dp"
             android:layout_height="190dp"

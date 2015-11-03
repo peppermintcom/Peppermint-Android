@@ -129,7 +129,7 @@ public abstract class SendingErrorHandler {
     protected void doNotRecover(SendingTask recoveringTask) {
         mRecoveringTaskMap.remove(recoveringTask.getSendingRequest().getId());
         if(mSenderListener != null) {
-            mSenderListener.onSendingRequestNotRecovered(recoveringTask, recoveringTask.getSendingRequest());
+            mSenderListener.onSendingRequestNotRecovered(recoveringTask, recoveringTask.getSendingRequest(), recoveringTask.getError());
         }
     }
 

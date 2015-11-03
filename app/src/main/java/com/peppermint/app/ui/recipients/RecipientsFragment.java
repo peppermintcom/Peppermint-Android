@@ -699,6 +699,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onLoudnessRecording(RecordService.Event event) {
+        mRecordingViewOverlay.pushAmplitude(event.getLoudness());
         setRecordDuration(event.getRecording().getDurationMillis());
     }
 

@@ -13,7 +13,7 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.peppermint.app.R;
-import com.peppermint.app.ui.canvas.progress.RecordProgressBarsView;
+import com.peppermint.app.ui.canvas.sound.RecordProgressBarsView;
 
 /**
  * Created by Nuno Luz on 16-10-2015.
@@ -113,6 +113,10 @@ public class RecordingOverlayView extends FrameLayout {
         }
 
         mTxtDuration.setText((hours > 0 ? hours + ":" : "") + mins + ":" + (secs < 10 ? "0" : "") + secs);
+    }
+
+    public void pushAmplitude(float... values) {
+        mRecordView.getBars().pushAmplitude(values);
     }
 
     /*public float getSeconds() {

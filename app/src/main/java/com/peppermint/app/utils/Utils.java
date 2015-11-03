@@ -2,6 +2,7 @@ package com.peppermint.app.utils;
 
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -14,6 +15,7 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.provider.ContactsContract;
 import android.support.v4.content.ContextCompat;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -336,6 +338,19 @@ public class Utils {
         }
 
         return data;
+    }
+
+    /**
+     * Check if the device supports telephony and if a SIM card is available.
+     * @param context the context
+     * @return true if supported; false if not
+     */
+    public static boolean isSimAvailable(Context context) {
+        if(!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return false;
+        }
+        TelephonyManager telManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        return telManager.getSimState() != TelephonyManager.SIM_STATE_ABSENT;
     }
 
     /**

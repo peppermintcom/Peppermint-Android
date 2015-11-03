@@ -71,7 +71,8 @@ public interface SenderListener {
      *
      * @param previousSendingTask the sending task instance that failed
      * @param sendingRequest the sending request
+     * @param error the thrown error
      */
-    void onSendingRequestNotRecovered(SendingTask previousSendingTask, SendingRequest sendingRequest);
+    void onSendingRequestNotRecovered(SendingTask previousSendingTask, SendingRequest sendingRequest, Throwable error);
 }
 

@@ -249,10 +249,6 @@ public class SenderManager implements SenderListener {
         }
 
         SendingTask task = sender.newTask(sendingRequest);
-        if(task == null) {
-            return null;
-        }
-
         mTaskMap.put(sendingRequest.getId(), task);
         task.executeOnExecutor(mExecutor);
         return sendingRequest.getId();
@@ -319,7 +315,13 @@ public class SenderManager implements SenderListener {
             if(mEventBus != null) {
                 mEventBus.post(new SendingEvent(sendingTask, SendingEvent.EVENT_INTERMEDIATE_FINISHED));
             }
-            send(sendingRequest, nextSender);
+
+            try {
+                send(sendingRequest, nextSender);
+            } catch(Throwable t) {
+                onSendingRequestNotRecovered(sendingTask, sendingRequest, t);
+            }
+
             return;
         }
 
@@ -345,7 +347,7 @@ public class SenderManager implements SenderListener {
         if(errorHandler != null) {
             errorHandler.tryToRecover(sendingTask);
         } else {
-            onSendingRequestNotRecovered(sendingTask, sendingRequest);
+            onSendingRequestNotRecovered(sendingTask, sendingRequest, sendingTask.getError());
         }
     }
 
@@ -363,13 +365,13 @@ public class SenderManager implements SenderListener {
     }
 
     @Override
-    public void onSendingRequestNotRecovered(SendingTask previousSendingTask, SendingRequest sendingRequest) {
-        Throwable error = previousSendingTask.getError();
+    public void onSendingRequestNotRecovered(SendingTask previousSendingTask, SendingRequest sendingRequest, Throwable error) {
+        //Throwable error = previousSendingTask.getError();
         Sender nextSender = previousSendingTask.getSender().getFailureChainSender();
         if(nextSender == null || error instanceof ElectableForQueueingException) {
             mTaskMap.remove(sendingRequest.getId());
+            SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
             if(error instanceof ElectableForQueueingException) {
-                SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
                 try {
                     sendingRequest.setSent(false);
                     SendingRequest.insertOrUpdate(db, sendingRequest);
@@ -387,13 +389,19 @@ public class SenderManager implements SenderListener {
                         mEventBus.post(new SendingEvent(previousSendingTask, e));
                     }
                 }
-                db.close();
             } else {
+                try {
+                    SendingRequest.delete(db, sendingRequest);
+                } catch (SQLException e) {
+                    // log the exception but the main exception is in the asynctask
+                    Log.e(TAG, "Error deleting sending request " + sendingRequest.getId() + ". May not exist and that's ok.", e);
+                }
                 Crashlytics.logException(previousSendingTask.getError());
                 if (mEventBus != null) {
                     mEventBus.post(new SendingEvent(previousSendingTask, error));
                 }
             }
+            db.close();
         } else {
             Crashlytics.log(Log.WARN, TAG, "Chain sender required due to error... " + error.toString());
             send(sendingRequest, nextSender);
