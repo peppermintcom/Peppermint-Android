@@ -34,7 +34,8 @@ public class MainActivity extends CustomActionBarActivity {
 
         Manifest.permission.GET_ACCOUNTS,
         "android.permission.USE_CREDENTIALS",
-        Manifest.permission.INSTALL_SHORTCUT
+        Manifest.permission.INSTALL_SHORTCUT,
+        Manifest.permission.READ_PHONE_STATE
     };
     private static final String SUPPORT_EMAIL = "support@peppermint.com";
     private static final String SUPPORT_SUBJECT = "Feedback or question about Peppermint Android app";
@@ -101,6 +102,14 @@ public class MainActivity extends CustomActionBarActivity {
             if(ContextCompat.checkSelfPermission(this,
                     PERMISSIONS[i]) != PackageManager.PERMISSION_GRANTED) {
                 mPermissionsToAsk.add(PERMISSIONS[i]);
+            }
+        }
+
+        // extra conditional permission SMS_SEND
+        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            if(ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+                mPermissionsToAsk.add(Manifest.permission.SEND_SMS);
             }
         }
 

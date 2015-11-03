@@ -144,11 +144,16 @@ public class SenderServiceManager {
         mContext.startService(intent);
     }
 
+    public void start() {
+        Intent intent = new Intent(mContext, SenderService.class);
+        mContext.startService(intent);
+    }
+
     /**
      * Starts the service.
      * <b>Also binds this manager to the service.</b>
      */
-    public void start() {
+    public void startAndBind() {
         Intent intent = new Intent(mContext, SenderService.class);
         mContext.startService(intent);
         bind();

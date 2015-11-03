@@ -80,7 +80,7 @@ public class HttpClientService extends Service {
 
     /**
      * Runnable that cancels a particular request in a secondary/background_gradient thread.<br />
-     * This must happen in a background_gradient thread since the {@link HttpClientRunnable#cancel()} invokes the {@link HttpURLConnection#disconnect()} method.
+     * This must happen in a background_gradient thread since the {@link HttpClientThread#cancel()} invokes the {@link HttpURLConnection#disconnect()} method.
      */
     public class CancelRunnable implements Runnable {
         private HttpRequest mRequest;
@@ -152,22 +152,22 @@ public class HttpClientService extends Service {
             KEEP_ALIVE_TIME_UNIT,
             mWorkQueue);
 
-    protected Map<UUID, HttpClientRunnable> mRunningMap = new HashMap<>();
+    protected Map<UUID, HttpClientThread> mRunningMap = new HashMap<>();
     protected Map<UUID, HttpClientServiceEvent> mFinishedRequests = new HashMap<>();
 
     /**
-     * Listens for events triggered by the {@link HttpClientRunnable} in a background_gradient thread.
+     * Listens for events triggered by the {@link HttpClientThread} in a background_gradient thread.
      */
-    protected HttpClientRunnableListener mListener = new HttpClientRunnableListener() {
+    protected HttpClientThreadListener mListener = new HttpClientThreadListener() {
         @Override
-        public void onConnect(HttpClientRunnable runnable, HttpRequest request) {
+        public void onConnect(HttpClientThread runnable, HttpRequest request) {
             // do nothing for now
             Log.d(TAG, "Connecting for request " + request.getEndpoint() + " (" + request.getUUID() + ")");
             Log.d(TAG, "Request (" + request.getUUID() + "): " + request.getBody());
         }
 
         @Override
-        public void onDisconnect(HttpClientRunnable runnable, HttpRequest request, HttpResponse response) {
+        public void onDisconnect(HttpClientThread runnable, HttpRequest request, HttpResponse response) {
             // send the success/error event to the HttpClientManager through the EventBus
             HttpClientServiceEvent ev;
             if(response.getException() != null || (response.getCode()/100) != 2) {
@@ -211,7 +211,7 @@ public class HttpClientService extends Service {
         if(intent != null && intent.hasExtra(INTENT_DATA_REQUEST) && intent.hasExtra(INTENT_DATA_RESPONSE)) {
             HttpRequest request = intent.getParcelableExtra(INTENT_DATA_REQUEST);
             HttpResponse response = intent.getParcelableExtra(INTENT_DATA_RESPONSE);
-            HttpClientRunnable runnable = new HttpClientRunnable(mListener, request, response);
+            HttpClientThread runnable = new HttpClientThread(mListener, request, response);
             mThreadPool.execute(runnable);
             mRunningMap.put(request.getUUID(), runnable);
         }

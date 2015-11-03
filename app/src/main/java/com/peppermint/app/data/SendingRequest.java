@@ -8,7 +8,9 @@ import com.peppermint.app.utils.Utils;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -170,6 +172,9 @@ public class SendingRequest {
     private String mRegistrationTimestamp = Utils.getCurrentTimestamp();
     private boolean mSent = false;
 
+    // extra parameters about the sending request that can be stored by/feed to senders
+    private Map<String, Object> mParameters = new HashMap<>();
+
     public SendingRequest() {
     }
 
@@ -239,5 +244,26 @@ public class SendingRequest {
 
     public void setSent(boolean mSent) {
         this.mSent = mSent;
+    }
+
+    public Map<String, Object> getParameters() {
+        return mParameters;
+    }
+
+    public SendingRequest setParameters(Map<String, Object> mParameters) {
+        this.mParameters = mParameters;
+        return this;
+    }
+
+    public Object getParameter(String key) {
+        if(!mParameters.containsKey(key)) {
+            return null;
+        }
+        return mParameters.get(key);
+    }
+
+    public SendingRequest setParameter(String key, Object value) {
+        mParameters.put(key, value);
+        return this;
     }
 }

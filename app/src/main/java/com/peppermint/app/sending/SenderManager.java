@@ -16,6 +16,8 @@ import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.exceptions.ElectableForQueueingException;
 import com.peppermint.app.sending.gmail.GmailSender;
 import com.peppermint.app.sending.nativemail.IntentMailSender;
+import com.peppermint.app.sending.server.ServerSender;
+import com.peppermint.app.sending.sms.SMSSender;
 import com.peppermint.app.utils.Utils;
 
 import java.sql.SQLException;
@@ -134,17 +136,30 @@ public class SenderManager implements SenderListener {
 
         // here we add all available sender instances to the sender map
         // add gmail api + email intent sender chain
+        ServerSender gmailServerSender = new ServerSender(mContext, this);
+        gmailServerSender.getParameters().putAll(defaultSenderParameters);
+
         GmailSender gmailSender = new GmailSender(mContext, this);
         gmailSender.getParameters().putAll(defaultSenderParameters);
 
         IntentMailSender intentMailSender = new IntentMailSender(mContext, this);
         intentMailSender.getParameters().putAll(defaultSenderParameters);
 
+        gmailServerSender.setSuccessChainSender(gmailSender);
         gmailSender.setFailureChainSender(intentMailSender);
 
-        mSenderMap.put(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, gmailSender);
+        mSenderMap.put(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, gmailServerSender);
 
-        // TODO add sms/text message sender
+        //sms/text message sender
+        ServerSender smsServerSender = new ServerSender(mContext, this);
+        smsServerSender.getParameters().putAll(defaultSenderParameters);
+
+        SMSSender smsSender = new SMSSender(mContext, this);
+        smsSender.getParameters().putAll(defaultSenderParameters);
+
+        smsServerSender.setSuccessChainSender(smsSender);
+
+        mSenderMap.put(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, smsServerSender);
     }
 
     /**
@@ -161,6 +176,12 @@ public class SenderManager implements SenderListener {
             while(sender != null) {
                 sender.init();
                 sender = sender.getFailureChainSender();
+            }
+        }
+        for(Sender sender : mSenderMap.values()) {
+            while(sender != null) {
+                sender.init();
+                sender = sender.getSuccessChainSender();
             }
         }
         mContext.registerReceiver(mConnectivityChangeReceiver, mConnectivityChangeFilter);
@@ -188,6 +209,12 @@ public class SenderManager implements SenderListener {
                 sender = sender.getFailureChainSender();
             }
         }
+        for(Sender sender : mSenderMap.values()) {
+            while(sender != null) {
+                sender.deinit();
+                sender = sender.getSuccessChainSender();
+            }
+        }
     }
 
     /**
@@ -197,12 +224,6 @@ public class SenderManager implements SenderListener {
      */
     public UUID send(SendingRequest sendingRequest) {
         String mimeType = sendingRequest.getRecipient().getMimeType();
-
-        // TODO remove this "IF" once SMS send is implemented
-        if(mimeType.compareToIgnoreCase(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE) == 0) {
-            Toast.makeText(mContext, "Sending through SMS/text message is not yet implemented. Please try again later.", Toast.LENGTH_LONG).show();
-            return null;
-        }
 
         // check if there's a sender for the specified recipient mime type
         if(!mSenderMap.containsKey(mimeType)) {
@@ -228,6 +249,10 @@ public class SenderManager implements SenderListener {
         }
 
         SendingTask task = sender.newTask(sendingRequest);
+        if(task == null) {
+            return null;
+        }
+
         mTaskMap.put(sendingRequest.getId(), task);
         task.executeOnExecutor(mExecutor);
         return sendingRequest.getId();
@@ -289,6 +314,15 @@ public class SenderManager implements SenderListener {
 
     @Override
     public void onSendingTaskFinished(SendingTask sendingTask, SendingRequest sendingRequest) {
+        Sender nextSender = sendingTask.getSender().getSuccessChainSender();
+        if(nextSender != null) {
+            if(mEventBus != null) {
+                mEventBus.post(new SendingEvent(sendingTask, SendingEvent.EVENT_INTERMEDIATE_FINISHED));
+            }
+            send(sendingRequest, nextSender);
+            return;
+        }
+
         SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
         try {
             sendingRequest.setSent(true);

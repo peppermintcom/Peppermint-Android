@@ -16,6 +16,7 @@ import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.sending.SendingTask;
 import com.peppermint.app.sending.exceptions.ElectableForQueueingException;
 import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
+import com.peppermint.app.sending.server.ServerSendingTask;
 import com.peppermint.app.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
@@ -47,8 +48,9 @@ public class GmailSendingTask extends SendingTask {
 
     private static final long MIN_SEND_TIME = 5000; // ms
 
-    private static final String CONTENT_TYPE_AUDIO = "audio/mpeg";
-    private static final String CONTENT_TYPE_VIDEO = "video/mpeg";
+    // FIXME the content type value should be stored in the Recording instance to avoid redundancy
+    private static final String CONTENT_TYPE_AUDIO = "audio/mp4";
+    private static final String CONTENT_TYPE_VIDEO = "video/mp4";
 
     public GmailSendingTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
         super(sender, sendingRequest, listener);
@@ -74,6 +76,10 @@ public class GmailSendingTask extends SendingTask {
         if(preferredAccountName == null) {
             throw new GmailPreferredAccountNotSetException();
         }
+
+        String url = (String) getSendingRequest().getParameter(ServerSendingTask.PARAM_SHORT_URL);
+        String body = "<p>" + String.format(getSender().getContext().getString(R.string.default_mail_body_url), url, (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO)) + "</p><br />" + getSender().getContext().getString(R.string.default_mail_body_reply);
+        getSendingRequest().setBody(body);
 
         try {
             long now = android.os.SystemClock.uptimeMillis();

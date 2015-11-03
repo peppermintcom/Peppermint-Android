@@ -30,6 +30,7 @@ public abstract class Sender {
     private SenderListener mSenderListener;
     private Map<String, Object> mParameters;
     private Sender mFailureChainSender;
+    private Sender mSuccessChainSender;
 
     public Sender(Context context, SenderListener senderListener) {
         this.mParameters = new HashMap<>();
@@ -131,5 +132,13 @@ public abstract class Sender {
 
     public void setFailureChainSender(Sender mFailureChainSender) {
         this.mFailureChainSender = mFailureChainSender;
+    }
+
+    public Sender getSuccessChainSender() {
+        return mSuccessChainSender;
+    }
+
+    public void setSuccessChainSender(Sender mSuccessChainSender) {
+        this.mSuccessChainSender = mSuccessChainSender;
     }
 }
