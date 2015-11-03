@@ -80,6 +80,10 @@ public class HttpRequest implements Parcelable {
 		this(endpoint, requestMethod);
 		this.mForceOnlyGetAndPost = forceOnlyGetAndPost;
 	}
+
+    protected long getContentLength() {
+        return -1;
+    }
 	
 	/**
 	 * 
@@ -111,7 +115,13 @@ public class HttpRequest implements Parcelable {
 		conn.setUseCaches(false);
 		//conn.setDoInput(true);
 		conn.setDoOutput(true);
-		conn.setChunkedStreamingMode(0);
+        long contentLength = getContentLength();
+        if(contentLength < 0) {
+            conn.setChunkedStreamingMode(0);
+        } else {
+			// should be supplied for binary content
+            headerParams.put("Content-Length", String.valueOf(contentLength));
+        }
 
 		// set request method
 		if(mForceOnlyGetAndPost && mRequestMethod >= 3) {
@@ -184,6 +194,7 @@ public class HttpRequest implements Parcelable {
     public void writeBody(OutputStream outStream) throws IOException {
         OutputStreamWriter writer = new OutputStreamWriter(outStream);
         writer.write(body);
+        writer.flush();     // important! without the flush the body might be empty!
     }
 
 	/**

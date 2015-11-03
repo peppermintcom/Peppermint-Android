@@ -37,6 +37,11 @@ public class SendingEvent {
      */
     public static final int EVENT_QUEUED = 6;
 
+    /**
+     * When the whole sender chain is not finished, but one intermediate sender finishes successfully
+     */
+    public static final int EVENT_INTERMEDIATE_FINISHED = 7;
+
     private SendingTask mTask;
     private int mType;
     private Throwable mError;

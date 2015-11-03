@@ -94,6 +94,21 @@ public class Recording implements Serializable {
     }
 
     /**
+     * Deletes the supplied recording data (ID must be supplied).
+     * An SQLException is thrown if the recording ID does not exist in the database.
+     *
+     * @param db the local database connection
+     * @param recording the recording
+     * @throws SQLException
+     */
+    public static void delete(SQLiteDatabase db, Recording recording) throws SQLException {
+        long id = db.delete("tbl_sending_request_recording", "recording_id = " + recording.getId(), null);
+        if(id < 0) {
+            throw new SQLException("Unable to delete the recording!");
+        }
+    }
+
+    /**
      * Obtains the recording with the supplied ID from the database.
      *
      * @param db the local database connection

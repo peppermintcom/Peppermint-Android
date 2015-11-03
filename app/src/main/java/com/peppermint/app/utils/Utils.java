@@ -2,6 +2,7 @@ package com.peppermint.app.utils;
 
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -14,6 +15,7 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.provider.ContactsContract;
 import android.support.v4.content.ContextCompat;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -21,13 +23,10 @@ import android.view.Display;
 import android.view.WindowManager;
 import android.widget.ImageView;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.URL;
 import java.text.Normalizer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -149,7 +148,7 @@ public class Utils {
     }
 
     public static boolean isInternetActive(Context context) {
-        try {
+        /*try {
             HttpURLConnection urlc = (HttpURLConnection) (new URL("http://www.google.com").openConnection());
             urlc.setRequestProperty("User-Agent", "Test");
             urlc.setRequestProperty("Connection", "close");
@@ -159,7 +158,8 @@ public class Utils {
         } catch (IOException e) {
             Log.e(Utils.class.getSimpleName(), "Error checking internet connection", e);
             return false;
-        }
+        }*/
+        return true;
     }
 
     /**
@@ -176,7 +176,7 @@ public class Utils {
         } catch (UnsupportedEncodingException e1) {
             throw new RuntimeException(e1);
         }
-        return Base64.encodeToString(decodedBytes, Base64.DEFAULT);
+        return Base64.encodeToString(decodedBytes, Base64.URL_SAFE|Base64.NO_WRAP);
     }
 
     /**
@@ -187,6 +187,19 @@ public class Utils {
         String release = Build.VERSION.RELEASE;
         int sdkVersion = Build.VERSION.SDK_INT;
         return "Android SDK: " + sdkVersion + " (" + release + ")";
+    }
+
+    /**
+     * Get a friendly string containing the device manufacturer and model.
+     * @return the string
+     */
+    public static String getDeviceName() {
+        String manufacturer = Build.MANUFACTURER;
+        String model = Build.MODEL;
+        if (model.startsWith(manufacturer)) {
+            return model;
+        }
+        return manufacturer + " " + model;
     }
 
     /**
@@ -220,6 +233,11 @@ public class Utils {
         return "";
     }
 
+    /**
+     * Creates a {@link Bitmap} instance from the supplied {@link Drawable}.
+     * @param drawable the drawable
+     * @return the bitmap
+     */
     public static Bitmap drawableToBitmap (Drawable drawable) {
         Bitmap bitmap;
 
@@ -242,6 +260,12 @@ public class Utils {
         return bitmap;
     }
 
+    /**
+     * Normalizes the string and replaces/removes all special characters.<br />
+     * The resulting string can be safely used as an ID and/or file name.
+     * @param str the clean string
+     * @return the original string
+     */
     public static String normalizeAndCleanString(String str) {
         if(str == null) {
             return null;
@@ -249,6 +273,12 @@ public class Utils {
         return Normalizer.normalize(str, Normalizer.Form.NFC).replace(' ', '-').replaceAll("[^a-zA-Z0-9\\.]", "");
     }
 
+    /**
+     * Get a drawable from resources according to the current API.
+     * @param context the context
+     * @param drawableRes the drawable resource id
+     * @return the drawable instance
+     */
     public static Drawable getDrawable(Context context, int drawableRes) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             return context.getResources().getDrawable(drawableRes, context.getTheme());
@@ -258,10 +288,21 @@ public class Utils {
         }
     }
 
+    /**
+     * Get a color from resources according to the current API.
+     * @param context the context
+     * @param colorRes the color resource id
+     * @return the color
+     */
     public static int getColor(Context context, int colorRes) {
         return ContextCompat.getColor(context, colorRes);
     }
 
+    /**
+     * Get the status bar height according to the current API and theme.
+     * @param context the context
+     * @return the height in pixels
+     */
     public static int getStatusBarHeight(Context context) {
         int result = 0;
         int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
@@ -271,6 +312,12 @@ public class Utils {
         return result;
     }
 
+    /**
+     * Tries to get user information from the contacts content provider (requires permission READ_CONTACTS/WRITE_CONTACTS).<br />
+     *
+     * @param context the context
+     * @return an array of strings containing: 0) the display name, 1) the photo URI; null if no data is found or doesn't have permission
+     */
     public static String[] getUserData(Context context) {
         String[] data = new String[2];
         try {
@@ -293,14 +340,42 @@ public class Utils {
         return data;
     }
 
+    /**
+     * Check if the device supports telephony and if a SIM card is available.
+     * @param context the context
+     * @return true if supported; false if not
+     */
+    public static boolean isSimAvailable(Context context) {
+        if(!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return false;
+        }
+        TelephonyManager telManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        return telManager.getSimState() != TelephonyManager.SIM_STATE_ABSENT;
+    }
+
+    /**
+     * Get current timestamp in the "yyyy-MM-dd HH-mm-ss" format.
+     * @return the current timestamp
+     */
     public static String getCurrentTimestamp() {
         return DATETIME_FORMAT.format(Calendar.getInstance().getTime());
     }
 
+    /**
+     * Parse timestamps into a date object. The timestamp format must be "yyyy-MM-dd HH-mm-ss".
+     * @param ts the timestamp string
+     * @return the timestamp date instance
+     * @throws ParseException
+     */
     public static Date parseTimestamp(String ts) throws ParseException {
         return DATETIME_FORMAT.parse(ts);
     }
 
+    /**
+     * Converts an array of shorts into an array of bytes (double the length).
+     * @param sData the short array
+     * @return the byte array
+     */
     public static byte[] short2Byte(short[] sData) {
         int shortArrsize = sData.length;
         byte[] bytes = new byte[shortArrsize * 2];

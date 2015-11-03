@@ -93,6 +93,21 @@ public class Recipient implements Serializable {
     }
 
     /**
+     * Deletes the supplied recipient data (ID must be supplied).
+     * An SQLException is thrown if the recipient ID does not exist in the database.
+     *
+     * @param db the local database connection
+     * @param recipient the recipient
+     * @throws SQLException
+     */
+    public static void delete(SQLiteDatabase db, Recipient recipient) throws SQLException {
+        long id = db.delete("tbl_sending_request_recipient", "recipient_id = " + recipient.getId(), null);
+        if(id < 0) {
+            throw new SQLException("Unable to delete the recipient!");
+        }
+    }
+
+    /**
      * Obtains the recipient with the supplied ID from the database.
      *
      * @param db the local database connection

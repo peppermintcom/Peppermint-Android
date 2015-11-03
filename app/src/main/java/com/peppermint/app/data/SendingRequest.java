@@ -8,7 +8,9 @@ import com.peppermint.app.utils.Utils;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -107,6 +109,24 @@ public class SendingRequest {
     }
 
     /**
+     * Deletes the supplied sending request data (UUID must be supplied).
+     * An SQLException is thrown if the sending request UUID does not exist in the database.
+     *
+     * @param db the local database connection
+     * @param sendingRequest the sending request
+     * @throws SQLException
+     */
+    public static void delete(SQLiteDatabase db, SendingRequest sendingRequest) throws SQLException {
+        Recipient.delete(db, sendingRequest.getRecipient());
+        Recording.delete(db, sendingRequest.getRecording());
+
+        long id = db.delete("tbl_sending_request", "sending_request_uuid = ?", new String[]{sendingRequest.getId().toString()});
+        if(id < 0) {
+            throw new SQLException("Unable to delete sending request!");
+        }
+    }
+
+    /**
      * Obtains the sending request cursor with the supplied UUID from the database.
      *
      * @param db the local database connection
@@ -169,6 +189,9 @@ public class SendingRequest {
     private String mBody;
     private String mRegistrationTimestamp = Utils.getCurrentTimestamp();
     private boolean mSent = false;
+
+    // extra parameters about the sending request that can be stored by/feed to senders
+    private Map<String, Object> mParameters = new HashMap<>();
 
     public SendingRequest() {
     }
@@ -239,5 +262,26 @@ public class SendingRequest {
 
     public void setSent(boolean mSent) {
         this.mSent = mSent;
+    }
+
+    public Map<String, Object> getParameters() {
+        return mParameters;
+    }
+
+    public SendingRequest setParameters(Map<String, Object> mParameters) {
+        this.mParameters = mParameters;
+        return this;
+    }
+
+    public Object getParameter(String key) {
+        if(!mParameters.containsKey(key)) {
+            return null;
+        }
+        return mParameters.get(key);
+    }
+
+    public SendingRequest setParameter(String key, Object value) {
+        mParameters.put(key, value);
+        return this;
     }
 }

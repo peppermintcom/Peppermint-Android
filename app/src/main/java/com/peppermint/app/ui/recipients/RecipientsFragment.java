@@ -252,6 +252,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) getActivity().getApplication();
 
+        mSendRecordManager.start();
+
         // global touch interceptor to hide keyboard
         mActivity.getTouchInterceptor().setOnTouchListener(new View.OnTouchListener() {
             @Override
