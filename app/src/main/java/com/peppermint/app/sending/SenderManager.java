@@ -22,6 +22,7 @@ import com.peppermint.app.utils.Utils;
 
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -270,10 +271,14 @@ public class SenderManager implements SenderListener {
     /**
      * Cancels all sending tasks under execution.
      */
-    public void cancel() {
+    public boolean cancel() {
+        boolean canceledSome = false;
         for(UUID uuid : mTaskMap.keySet()) {
-            mTaskMap.get(uuid).cancel(true);
+            if(mTaskMap.get(uuid).cancel(true)) {
+                canceledSome = true;
+            }
         }
+        return canceledSome;
     }
 
     /**
@@ -282,7 +287,7 @@ public class SenderManager implements SenderListener {
      * @return true if sending/executing; false otherwise
      */
     public boolean isSending(UUID uuid) {
-        return mTaskMap.containsKey(uuid);
+        return mTaskMap.containsKey(uuid) && !mTaskMap.get(uuid).isCancelled();
     }
 
     /**
@@ -290,7 +295,19 @@ public class SenderManager implements SenderListener {
      * @return true if there is; false otherwise
      */
     public boolean isSending() {
-        return mTaskMap.size() > 0;
+        if(mTaskMap.size() <= 0) {
+            return false;
+        }
+
+        boolean someOngoing = false;
+        Iterator<Map.Entry<UUID, SendingTask>> it = mTaskMap.entrySet().iterator();
+        while(it.hasNext() && !someOngoing) {
+            if(!it.next().getValue().isCancelled()) {
+                someOngoing = true;
+            }
+        }
+
+        return someOngoing;
     }
 
     @Override

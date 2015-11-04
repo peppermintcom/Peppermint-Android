@@ -81,11 +81,11 @@ public class SenderService extends Service {
          * <b>If the send request is ongoing, it might get sent anyway.</b>
          * @param sendingRequestUuid the UUID of the send request returned by {@link #send(Recipient, Recording)}
          */
-        void cancel(UUID sendingRequestUuid) {
-            SenderService.this.cancel(sendingRequestUuid);
+        boolean cancel(UUID sendingRequestUuid) {
+            return SenderService.this.cancel(sendingRequestUuid);
         }
-        void cancel() {
-            SenderService.this.cancel(null);
+        boolean cancel() {
+            return SenderService.this.cancel(null);
         }
 
         /**
@@ -196,12 +196,11 @@ public class SenderService extends Service {
         return sendingRequest;
     }
 
-    private void cancel(UUID sendingRequestUuid) {
+    private boolean cancel(UUID sendingRequestUuid) {
         if(sendingRequestUuid != null) {
-            mSenderManager.cancel(sendingRequestUuid);
-        } else {
-            mSenderManager.cancel();
+            return mSenderManager.cancel(sendingRequestUuid);
         }
+        return mSenderManager.cancel();
     }
 
     private boolean isSending(UUID sendingRequestUuid) {
