@@ -71,6 +71,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private CustomActionBarActivity mActivity;
     private RecordingOverlayView mRecordingViewOverlay;
     private boolean mSendRecording = false;
+    private boolean mDestroyed = false;
 
     // swipe-related
     private float x1, x2, y1, y2;
@@ -285,6 +286,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         mRecordManager = new RecordServiceManager(activity);
         mRecordManager.setListener(this);
+        mDestroyed = false;
     }
 
     @Override
@@ -447,6 +449,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             // this closes the cursor inside the adapter
             ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(null);
         }
+        mDestroyed = true;
         super.onDestroy();
     }
 
@@ -650,7 +653,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     }
 
     private void dismissPopup() {
-        if(mHoldPopup.isShowing() && !isDetached()) {
+        if(mHoldPopup.isShowing() && !isDetached() && !mDestroyed) {
             mHoldPopup.dismiss();
             mHandler.removeCallbacks(mDismissPopupRunnable);
         }

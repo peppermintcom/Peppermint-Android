@@ -6,6 +6,7 @@ import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Build;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
@@ -54,17 +55,23 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
     private int mMinSearchCharacters = MIN_SEARCH_CHARACTERS;
     private int mSelectedItemPosition = 0;
 
+    private Handler mHandler = new Handler();
+
     private TextWatcher mTextWatcher = new TextWatcher() {
         @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-        }
-
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) { /* nothing to do here */ }
         @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-        }
-
+        public void onTextChanged(CharSequence s, int start, int before, int count) { /* nothing to do here */ }
         @Override
         public void afterTextChanged(Editable s) {
+            mHandler.removeCallbacks(mSearchRunnable);
+            mHandler.postDelayed(mSearchRunnable, 10);
+        }
+    };
+
+    private Runnable mSearchRunnable = new Runnable() {
+        @Override
+        public void run() {
             if(mTxtSearch.length() <= 0) {
                 innerSetSelectedItemPosition(0);
             }
