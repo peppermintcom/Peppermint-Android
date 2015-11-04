@@ -6,6 +6,7 @@ import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Build;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
@@ -54,21 +55,47 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
     private int mMinSearchCharacters = MIN_SEARCH_CHARACTERS;
     private int mSelectedItemPosition = 0;
 
+    private Handler mHandler = new Handler();
+
     private TextWatcher mTextWatcher = new TextWatcher() {
         @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-        }
-
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) { /* nothing to do here */ }
         @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-        }
-
+        public void onTextChanged(CharSequence s, int start, int before, int count) { /* nothing to do here */ }
         @Override
         public void afterTextChanged(Editable s) {
-            if(mTxtSearch.length() <= 0) {
+            mHandler.removeCallbacks(mSearchRunnable);
+            mHandler.postDelayed(mSearchRunnable, 10);
+        }
+    };
+
+    private Runnable mSearchRunnable = new Runnable() {
+        @Override
+        public void run() {
+            String searchText = getSearchText();
+
+            // go back to recent/fav contacts if the search field was emptied
+            if(searchText == null) {
                 innerSetSelectedItemPosition(0);
+            } else {
+                // otherwise, if the current pos doesn't allow searching - move to next
+                // position until one that allows searching is found
+                if(!getSelectedItem().isSearchable()) {
+                    int searchableItemPos = -1;
+                    int count = mAdapter.getCount();
+                    for(int i=0; i<count && searchableItemPos < 0; i++) {
+                        if(mAdapter.getItem(i).isSearchable()) {
+                            searchableItemPos = i;
+                        }
+                    }
+                    if(searchableItemPos >= 0) {
+                        innerSetSelectedItemPosition(searchableItemPos);
+                    }
+                }
             }
-            doSearch();
+
+            // just trigger the search process
+            innerTriggerSearch();
         }
     };
 
@@ -114,12 +141,17 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
             public void onClick(View v) {
             if(!mListPopupWindow.isShowing()) {
                 mListPopupWindow.show();
+                // this is required since setSelection() only works when the view is showing
+                mListPopupWindow.setSelection(mSelectedItemPosition);
                 mBtnList.setEnabled(false);
             }
             }
         });
 
         mTxtSearch = (EditText) findViewById(R.id.txtSearch);
+        // this disables default restore view state mechanism (it was triggering
+        // the text watcher every time the screen was rotated)
+        mTxtSearch.setSaveEnabled(false);
         mTxtSearch.addTextChangedListener(mTextWatcher);
         mTxtSearch.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -143,7 +175,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         mListPopupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
             @Override
             public void onDismiss() {
-            postDelayed(new Runnable() {
+                postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         mBtnList.setEnabled(true);
@@ -194,47 +226,37 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         }
     }
 
-    private void doSearch() {
+    private void innerTriggerSearch() {
         String searchText = getSearchText();
-        if(searchText != null && !getSelectedItem().isSearchable()) {
-            int searchableItemPos = -1;
-            int count = mAdapter.getCount();
-            for(int i=0; i<count && searchableItemPos < 0; i++) {
-                if(mAdapter.getItem(i).isSearchable()) {
-                    searchableItemPos = i;
-                }
-            }
-            if(searchableItemPos >= 0) {
-                innerSetSelectedItemPosition(searchableItemPos);
-            }
-        }
-
         if(searchText == null) {
             mBtnClear.setVisibility(GONE);
         } else {
             mBtnClear.setVisibility(VISIBLE);
         }
-
         if(mListener != null) {
-            mListener.onSearch(getSearchText());
+            mListener.onSearch(searchText);
         }
     }
 
     private void innerSetSelectedItemPosition(int position) {
         mSelectedItemPosition = position;
+        mListPopupWindow.setSelection(position);
+
+        // set imagebutton drawable with selected contact list icon
         ListItem item = (ListItem) mAdapter.getItem(position);
         mBtnList.setImageResource(item.getDrawableResource());
-        mListPopupWindow.setSelection(position);
-        mTxtSearch.removeTextChangedListener(mTextWatcher);
+
+        // reset text if not searchable
         if(!item.isSearchable()) {
+            mTxtSearch.removeTextChangedListener(mTextWatcher);
             mTxtSearch.setText("");
+            mTxtSearch.addTextChangedListener(mTextWatcher);
         }
-        mTxtSearch.addTextChangedListener(mTextWatcher);
     }
 
     public void setSelectedItemPosition(int position) {
         innerSetSelectedItemPosition(position);
-        doSearch();
+        innerTriggerSearch();
     }
 
     @Override
@@ -253,11 +275,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
     }
 
     public int getSelectedItemPosition() {
-        int pos = mListPopupWindow.getSelectedItemPosition();
-        if(pos == AdapterView.INVALID_POSITION) {
-            pos = mSelectedItemPosition;
-        }
-        return pos;
+        return mSelectedItemPosition;
     }
 
     public ListItem getSelectedItem() {
@@ -265,11 +283,14 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
     }
 
     public boolean clearSearch(int resetToPosition) {
-        if(mTxtSearch.length() > 0) {
+        // reset only if there's a search going on
+        if(getSearchText() != null) {
             if(resetToPosition >= 0) {
+                // reset to a particular position
                 innerSetSelectedItemPosition(resetToPosition);
             }
             mTxtSearch.setText("");
+            // also remove the input focus
             removeSearchTextFocus(null);
             return true;
         }
@@ -304,7 +325,6 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         if(text == null) {
             text = "";
         }
-
         mTxtSearch.setText(text);
     }
 

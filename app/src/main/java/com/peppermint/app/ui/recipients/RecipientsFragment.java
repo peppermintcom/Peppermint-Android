@@ -141,7 +141,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         int selectedItemPosition = 0;
         if (savedInstanceState != null) {
             selectedItemPosition = savedInstanceState.getInt(RECIPIENT_TYPE_POS_KEY, 0);
-            mSearchListBarView.setSearchText(savedInstanceState.getString(RECIPIENT_TYPE_SEARCH_KEY, null));
+            String searchText = savedInstanceState.getString(RECIPIENT_TYPE_SEARCH_KEY, null);
+            if(searchText != null) {
+                mSearchListBarView.setSearchText(searchText);
+            }
         } else {
             if(!hasRecentsOrFavourites()) {
                 // select "all contacts" in case there are not fav/recent contacts
@@ -324,6 +327,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                     if(getActivity() == null) {
                         return;
                     }
+                    // in some recent versions getActivity() doesn't return null
+                    // when the activity is destroyed, so just check with the proper method
                     if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && getActivity().isDestroyed()) {
                         return;
                     }
