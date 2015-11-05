@@ -13,6 +13,7 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.peppermint.app.R;
+import com.peppermint.app.ui.canvas.AnimatedView;
 import com.peppermint.app.ui.canvas.sound.RecordProgressBarsView;
 
 /**
@@ -21,7 +22,7 @@ import com.peppermint.app.ui.canvas.sound.RecordProgressBarsView;
  * The recording overlay that shows up while recording.
  *
  */
-public class RecordingOverlayView extends FrameLayout {
+public class RecordingOverlayView extends FrameLayout implements AnimatedView.ExplosionListener {
 
     private TextView mTxtRecordingFor, mTxtVia, mTxtDuration, mTxtSwipe;
     private RecordProgressBarsView mRecordView;
@@ -74,6 +75,7 @@ public class RecordingOverlayView extends FrameLayout {
         Typeface typeface = Typeface.createFromAsset(getContext().getAssets(), textFont);
 
         mRecordView = (RecordProgressBarsView) findViewById(R.id.cvRecord);
+        mRecordView.setExplosionListener(this);
 
         mTxtRecordingFor = (TextView) findViewById(R.id.txtRecordingFor);
         mTxtVia = (TextView) findViewById(R.id.txtVia);
@@ -87,6 +89,7 @@ public class RecordingOverlayView extends FrameLayout {
     }
 
     public void start() {
+        mRecordView.resetAnimations();
         mRecordView.startAnimations();
         mRecordView.startDrawingThread();
     }
@@ -94,6 +97,10 @@ public class RecordingOverlayView extends FrameLayout {
     public void stop() {
         mRecordView.stopDrawingThread();
         mRecordView.stopAnimations();
+    }
+
+    public void explode() {
+        mRecordView.startExplosion();
     }
 
     public void blinkLeft() {
@@ -135,4 +142,8 @@ public class RecordingOverlayView extends FrameLayout {
         mTxtVia.setText(via);
     }
 
+    @Override
+    public void onExplosionFinished() {
+        stop();
+    }
 }

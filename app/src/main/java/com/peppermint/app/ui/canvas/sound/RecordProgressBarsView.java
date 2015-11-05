@@ -30,18 +30,19 @@ public class RecordProgressBarsView extends AnimatedView {
 
     private static final int DEF_CORNER_RADIUS_DP = 50;
     private static final int DEF_PROGRESS_THICKNESS_DP = 10;
+    private static final int DEF_EXPLOSION_PADDING_DP = 20;
+
     private static final String DEF_BORDER_COLOR = "#ffffff";
     private static final String DEF_BACKGROUND_COLOR1 = "#68c4a3";
     private static final String DEF_BACKGROUND_COLOR2 = "#2ebdb2";
     private static final String DEF_PRESSED_BACKGROUND_COLOR1 = "#000000";
     private static final String DEF_PRESSED_BACKGROUND_COLOR2 = "#000000";
 
-    private float mSeconds;
-
     private float mCornerRadius, mProgressThickness;
     private int mBackgroundColor1, mBackgroundColor2, mPressedBackgroundColor1, mPressedBackgroundColor2, mBorderColor;
     private Paint mBackgroundPaint, mBackgroundPressedPaint, mBorderPaint, mBitmapPaint;
     private boolean mFillBackground;
+    private float mContentWidth, mContentHeight;
 
     private LevelBarsAnimatedLayer mRecordBars;
     private ProgressEyeAnimatedLayer mLeftEye, mRightEye;
@@ -70,7 +71,6 @@ public class RecordProgressBarsView extends AnimatedView {
 
     protected void init(AttributeSet attrs) {
         try {
-            mSeconds = 0;
             mCornerRadius = Utils.dpToPx(getContext(), DEF_CORNER_RADIUS_DP);
             mProgressThickness = Utils.dpToPx(getContext(), DEF_PROGRESS_THICKNESS_DP);
 
@@ -87,10 +87,11 @@ public class RecordProgressBarsView extends AnimatedView {
                         0, 0);
 
                 try {
-                    mSeconds = a.getFloat(R.styleable.PeppermintView_seconds, 0);
-
                     mCornerRadius = a.getDimensionPixelSize(R.styleable.PeppermintView_cornerRadius, Utils.dpToPx(getContext(), DEF_CORNER_RADIUS_DP));
                     mProgressThickness = a.getDimensionPixelSize(R.styleable.PeppermintView_borderWidth, Utils.dpToPx(getContext(), DEF_PROGRESS_THICKNESS_DP));
+
+                    mContentHeight = a.getDimensionPixelSize(R.styleable.PeppermintView_contentHeight, 0);
+                    mContentWidth = a.getDimensionPixelSize(R.styleable.PeppermintView_contentWidth, 0);
 
                     mBorderColor = a.getColor(R.styleable.PeppermintView_borderColor, Color.parseColor(DEF_BORDER_COLOR));
                     mBackgroundColor1 = a.getColor(R.styleable.PeppermintView_backgroundColor1, Color.parseColor(DEF_BACKGROUND_COLOR1));
@@ -149,18 +150,30 @@ public class RecordProgressBarsView extends AnimatedView {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
+        // explosion padding or content size
+        float localHeight = getLocalHeight() - Utils.dpToPx(getContext(), DEF_EXPLOSION_PADDING_DP);
+        float localWidth = getLocalHeight() - Utils.dpToPx(getContext(), DEF_EXPLOSION_PADDING_DP);
+
+        if(mContentHeight != 0 && mContentWidth != 0) {
+            localHeight = mContentHeight;
+            localWidth = mContentWidth;
+        }
+
+        float paddingHeight = (getLocalHeight() - localHeight) / 2f;
+        float paddingWidth = (getLocalWidth() - localWidth) / 2f;
+
         // background gradients
-        mBackgroundPaint.setShader(new LinearGradient(0, 0, getLocalWidth(), getLocalHeight(), mBackgroundColor1, mBackgroundColor2, Shader.TileMode.MIRROR));
-        mBackgroundPressedPaint.setShader(new LinearGradient(0, 0, getLocalWidth(), getLocalHeight(), mPressedBackgroundColor1, mPressedBackgroundColor2, Shader.TileMode.MIRROR));
+        mBackgroundPaint.setShader(new LinearGradient(0, 0, localWidth, localHeight, mBackgroundColor1, mBackgroundColor2, Shader.TileMode.MIRROR));
+        mBackgroundPressedPaint.setShader(new LinearGradient(0, 0, localWidth, localHeight, mPressedBackgroundColor1, mPressedBackgroundColor2, Shader.TileMode.MIRROR));
 
         // box bounds
-        Rect fullBounds = new Rect(0, 0, (int) getLocalWidth(), (int) getLocalHeight());
+        Rect fullBounds = new Rect((int) paddingWidth, (int) paddingHeight,  Math.round(getLocalWidth() - paddingWidth), Math.round(getLocalHeight() - paddingHeight));
         mProgressBox.setBounds(fullBounds);
 
         // eye bounds
         final float eyeXFactor = 7f;
         final float eyeYFactor = 5.5f;
-        float fullSideLength = (getLocalWidth() > getLocalHeight() ? getLocalHeight() : getLocalWidth());
+        float fullSideLength = (localWidth > localHeight ? localHeight : localWidth);
         int eyeRadius = (int) (fullSideLength / 18f);
         int eyeCenterX = (int) (fullBounds.centerX() - (fullSideLength / eyeXFactor));
         int eyeCenterY = (int) (fullBounds.centerY() - (fullSideLength / eyeYFactor));

@@ -14,6 +14,9 @@
         <attr name="pressedBackgroundColor1" format="color"/>
         <attr name="pressedBackgroundColor2" format="color"/>
 
+        <attr name="contentHeight" format="dimension" />
+        <attr name="contentWidth" format="dimension" />
+
         <!-- PeppermintLoadingView -->
         <attr name="textFont" format="string" />
         <attr name="text" format="string" />

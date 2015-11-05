@@ -419,6 +419,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onPause() {
+        mRecordingViewOverlay.stop();
         if(hideRecordingOverlay(false)) {
             mSendRecording = false;
             mRecordManager.stopRecording(true);
@@ -460,7 +461,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     public boolean hideRecordingOverlay(boolean animated) {
         //mRecordingViewOverlay.blinkLeft();
-        mRecordingViewOverlay.stop();
+        //mRecordingViewOverlay.stop();
         return mActivity.hideOverlay(RECORDING_OVERLAY_TAG, RECORDING_OVERLAY_HIDE_DELAY, animated);   // FIXME animated hide is buggy
     }
 
@@ -562,9 +563,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
                     if ((Math.abs(deltaX) > mMinSwipeDistance || Math.abs(deltaY) > mMinSwipeDistance) && (t2 - t1) < MAX_SWIPE_DURATION) {
                         // swipe: cancel
+                        mRecordingViewOverlay.explode();
                         mRecordManager.stopRecording(true);
                     } else {
                         // release: send
+                        mRecordingViewOverlay.stop();
                         if (mRecordingViewOverlay.getMillis() < 2000) {
                             Toast.makeText(mActivity, R.string.msg_record_at_least, Toast.LENGTH_SHORT).show();
                             mRecordManager.stopRecording(true);
@@ -713,6 +716,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         } else {
             Toast.makeText(getActivity(), getString(R.string.msg_message_record_error), Toast.LENGTH_LONG).show();
         }
+
+        mRecordingViewOverlay.explode();
         hideRecordingOverlay(true);
     }
 

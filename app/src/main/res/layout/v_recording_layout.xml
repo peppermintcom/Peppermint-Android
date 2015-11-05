@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="30dp"
+    android:paddingTop="30dp"
+    android:paddingBottom="30dp"
     android:background="@drawable/background_darkgreen_transparent">
 
     <TextView
@@ -45,34 +47,40 @@
         android:textColor="@color/light_grey_text"
         android:text="@string/swipe_to_cancel" />
 
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/tapLayout"
         android:layout_below="@id/txtVia"
         android:layout_above="@id/txtSwipe"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingLeft="15dp"
-        android:paddingRight="15dp"
         android:paddingTop="15dp"
         android:paddingBottom="15dp"
-        android:orientation="vertical"
-        android:gravity="center">
+        android:orientation="vertical">
 
-        <com.peppermint.app.ui.canvas.sound.RecordProgressBarsView
-            android:id="@+id/cvRecord"
-            android:layout_width="190dp"
-            android:layout_height="190dp"
-            android:layout_marginBottom="10dp"
-            style="?attr/recordProgressStyle" />
-
+        <!-- it's important that this text view is not set to wrap content
+             otherwise it triggers onMeasure from other animated views, which is
+             quite computationally expensive -->
         <TextView
             android:id="@+id/txtDuration"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:gravity="center"
             android:textSize="44dp"
             android:textColor="@color/white"
             android:text="0:00" />
 
-    </LinearLayout>
+        <com.peppermint.app.ui.canvas.sound.RecordProgressBarsView
+            android:id="@+id/cvRecord"
+            custom:contentWidth="190dp"
+            custom:contentHeight="190dp"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:layout_above="@id/txtDuration"
+            android:layout_marginBottom="10dp"
+            style="?attr/recordProgressStyle" />
+
+    </RelativeLayout>
 
 </RelativeLayout>
