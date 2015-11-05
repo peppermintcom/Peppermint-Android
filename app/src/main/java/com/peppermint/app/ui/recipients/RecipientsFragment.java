@@ -1,7 +1,6 @@
 package com.peppermint.app.ui.recipients;
 
 import android.Manifest;
-import android.animation.Animator;
 import android.app.Activity;
 import android.app.ListFragment;
 import android.content.pm.PackageManager;
@@ -21,7 +20,6 @@ import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
-import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,15 +32,12 @@ import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientType;
 import com.peppermint.app.data.Recording;
-import com.peppermint.app.sending.SendingEvent;
-import com.peppermint.app.sending.nativemail.IntentMailSendingTask;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.canvas.progress.LoadingView;
 import com.peppermint.app.ui.views.RecordingOverlayView;
 import com.peppermint.app.ui.views.SearchListBarAdapter;
 import com.peppermint.app.ui.views.SearchListBarView;
-import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.NoMicDataIOException;
 import com.peppermint.app.utils.PepperMintPreferences;
@@ -106,139 +101,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private RecordServiceManager mRecordManager;
 
     // bottom bar
-    private AnimatorBuilder mAnimatorBuilder;
-    private SenderServiceManager mSendRecordManager;
-    private View lytStatus;
-    private TextView txtStatus, txtTapToCancel;
-    private ImageView imgStatus;
-    private SenderServiceManager.Listener mSendRecordListener = new SenderServiceManager.Listener() {
-        private void hide(int delay) {
-            if(lytStatus.getVisibility() == View.VISIBLE) {
-                Animator anim = mAnimatorBuilder.buildSlideOutBottomAnimator(delay, lytStatus, 0);
-                anim.addListener(new Animator.AnimatorListener() {
-                    @Override
-                    public void onAnimationStart(Animator animation) {
+    private SenderServiceManager mSenderServiceManager;
+    private SenderControlLayout mLytSenderControl;
 
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        lytStatus.setVisibility(View.GONE);
-                    }
-
-                    @Override
-                    public void onAnimationCancel(Animator animation) {
-
-                    }
-
-                    @Override
-                    public void onAnimationRepeat(Animator animation) {
-
-                    }
-                });
-                anim.start();
-            }
-        }
-
-        private void show() {
-            if(lytStatus.getVisibility() == View.GONE) {
-                Animator anim = mAnimatorBuilder.buildFadeSlideInBottomAnimator(lytStatus);
-                anim.start();
-            }
-            lytStatus.setVisibility(View.VISIBLE);
-        }
-
-        private void showAndHide() {
-            if(lytStatus.getVisibility() != View.GONE) {
-                hide(5000);
-            } else {
-                Animator anim = mAnimatorBuilder.buildFadeSlideInBottomAnimator(lytStatus);
-                anim.addListener(new Animator.AnimatorListener() {
-                    @Override
-                    public void onAnimationStart(Animator animation) {
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        hide(5000);
-                    }
-
-                    @Override
-                    public void onAnimationCancel(Animator animation) {
-
-                    }
-
-                    @Override
-                    public void onAnimationRepeat(Animator animation) {
-
-                    }
-                });
-                anim.start();
-                lytStatus.setVisibility(View.VISIBLE);
-            }
-        }
-
-        @Override
-        public void onBoundSendService() {
-            onBoundSendService(null);
-        }
-
-        private void onBoundSendService(SendingEvent event) {
-            if(mSendRecordManager.isSending()) {
-                // do not show message for IntentMailSender
-                if(event != null && event.getSendingTask() instanceof IntentMailSendingTask) {
-                    return;
-                }
-
-                txtStatus.setText(getString(R.string.uploading));
-                txtTapToCancel.setVisibility(View.VISIBLE);
-                imgStatus.setVisibility(View.GONE);
-                show();
-            } else {
-                hide(500);
-            }
-        }
-
-        @Override
-        public void onSendStarted(SendingEvent event) {
-            onBoundSendService(event);
-        }
-
-        @Override
-        public void onSendCancelled(SendingEvent event) {
-            onBoundSendService(event);
-        }
-
-        @Override
-        public void onSendError(SendingEvent event) {
-            onBoundSendService(event);
-        }
-
-        @Override
-        public void onSendFinished(SendingEvent event) {
-            if(!mSendRecordManager.isSending()) {
-                // do not show message for IntentMailSender
-                if(event != null && event.getSendingTask() instanceof IntentMailSendingTask) {
-                    hide(0);
-                    return;
-                }
-                showAndHide();
-                txtStatus.setText(getString(R.string.sent));
-                txtTapToCancel.setVisibility(View.GONE);
-                imgStatus.setVisibility(View.VISIBLE);
-            }
-        }
-
-        @Override
-        public void onSendProgress(SendingEvent event) {
-        }
-
-        @Override
-        public void onSendQueued(SendingEvent event) {
-            onBoundSendService(event);
-        }
-    };
-
+    // smiley face (avatar) random animations
     private final Random mRandom = new Random();
     private final Handler mHandler = new Handler();
     private final Runnable mAnimationRunnable = new Runnable() {
@@ -246,6 +112,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         public void run() {
             List<AnimatedAvatarView> possibleAnimationsList = new ArrayList<>();
 
+            // get all anonymous avatar instances
             for(int i=0; i<getListView().getChildCount(); i++) {
                 AnimatedAvatarView v = (AnimatedAvatarView) getListView().getChildAt(i).findViewById(R.id.imgPhoto);
                 if(!v.isShowStaticAvatar()) {
@@ -253,8 +120,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 }
             }
 
+            // randomly pick one
             int index = possibleAnimationsList.size() > 0 ? mRandom.nextInt(possibleAnimationsList.size()) : 0;
 
+            // start the animation for the picked avatar and stop all others (avoids unnecessary drawing threads)
             for(int i=0; i<possibleAnimationsList.size(); i++) {
                 AnimatedAvatarView v = possibleAnimationsList.get(i);
                 if(i == index) {
@@ -280,10 +149,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         mActivity = (CustomActionBarActivity) activity;
         mPreferences = new PepperMintPreferences(activity);
-        mSendRecordManager = new SenderServiceManager(activity);
-        mSendRecordManager.setListener(mSendRecordListener);
-        mAnimatorBuilder = new AnimatorBuilder();
-
+        mSenderServiceManager = new SenderServiceManager(activity);
+        
         mRecordManager = new RecordServiceManager(activity);
         mRecordManager.setListener(this);
         mDestroyed = false;
@@ -293,7 +160,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) getActivity().getApplication();
 
-        mSendRecordManager.start();
+        mSenderServiceManager.start();
+        mRecordManager.start(false);
 
         mRecordSoundPlayer = MediaPlayer.create(mActivity, R.raw.s_record);
 
@@ -335,7 +203,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         int selectedItemPosition = 0;
         if (savedInstanceState != null) {
             selectedItemPosition = savedInstanceState.getInt(RECIPIENT_TYPE_POS_KEY, 0);
-            mSearchListBarView.setSearchText(savedInstanceState.getString(RECIPIENT_TYPE_SEARCH_KEY, null));
+            String searchText = savedInstanceState.getString(RECIPIENT_TYPE_SEARCH_KEY, null);
+            if(searchText != null) {
+                mSearchListBarView.setSearchText(searchText);
+            }
         } else {
             if(!hasRecentsOrFavourites()) {
                 // select "all contacts" in case there are not fav/recent contacts
@@ -367,24 +238,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mRecipientListContainer =  v.findViewById(R.id.listContainer);
 
         // bottom status bar
-        lytStatus = v.findViewById(R.id.lytStatus);
-        txtStatus = (TextView) v.findViewById(R.id.txtStatus);
-        txtTapToCancel = (TextView) v.findViewById(R.id.txtTapToCancel);
-        imgStatus = (ImageView) v.findViewById(R.id.imgStatus);
-
-        txtStatus.setTypeface(app.getFontSemibold());
-        txtTapToCancel.setTypeface(app.getFontSemibold());
-
-        lytStatus.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mSendRecordManager.cancel();
-                txtTapToCancel.setVisibility(View.GONE);
-                txtStatus.setText(R.string.cancelling);
-            }
-        });
-
-        mRecordManager.start(false);
+        mLytSenderControl = (SenderControlLayout) v.findViewById(R.id.lytStatus);
+        mLytSenderControl.setSenderManager(mSenderServiceManager);
+        mLytSenderControl.setTypeface(app.getFontSemibold());
+        mSenderServiceManager.setListener(mLytSenderControl);
 
         return v;
     }
@@ -411,7 +268,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         onSearch(mSearchListBarView.getSearchText());
         mSearchListBarView.setOnSearchListener(this);
-        mSendRecordManager.bind();
+        mSenderServiceManager.bind();
         mRecordManager.bind();
 
         mHandler.postDelayed(mAnimationRunnable, FIXED_AVATAR_ANIMATION_INTERVAL_MS + mRandom.nextInt(VARIABLE_AVATAR_ANIMATION_INTERVAL_MS));
@@ -433,8 +290,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         super.onStop();
         mHandler.removeCallbacks(mAnimationRunnable);
 
+        mSenderServiceManager.unbind();
         mRecordManager.unbind();
-        mSendRecordManager.unbind();
         mSearchListBarView.setOnSearchListener(null);
     }
 
@@ -623,6 +480,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                     if(getActivity() == null) {
                         return;
                     }
+                    // in some recent versions getActivity() doesn't return null
+                    // when the activity is destroyed, so just check with the proper method
                     if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && getActivity().isDestroyed()) {
                         return;
                     }
@@ -684,7 +543,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             // discarding the recording, then clear the search filter
             mSearchListBarView.clearSearch(0);
 
-            mSendRecordManager.startAndSend(event.getRecipient(), event.getRecording());
+            mSenderServiceManager.startAndSend(event.getRecipient(), event.getRecording());
             mSendRecording = false;
         }
     }

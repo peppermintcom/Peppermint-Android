@@ -195,6 +195,13 @@ public class RecordProgressBarsView extends AnimatedView {
         mRecordBars.setBounds(barsBounds);
     }
 
+    @Override
+    public synchronized void resetAnimations() {
+        super.resetAnimations();
+        mLeftEye.setElapsedTime(7500);
+        mRightEye.setElapsedTime(7500);
+    }
+
     public void blink() {
         mLeftEye.blink();
         mRightEye.blink();

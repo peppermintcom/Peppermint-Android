@@ -208,12 +208,12 @@ public class SenderServiceManager {
      * Cancels the send file request with the supplied {@link UUID}.
      * @param uuid the {@link UUID} of the send file request/task
      */
-    public void cancel(UUID uuid) {
-        mService.cancel(uuid);
+    public boolean cancel(UUID uuid) {
+        return mService.cancel(uuid);
     }
 
-    public void cancel() {
-        mService.cancel();
+    public boolean cancel() {
+        return mService.cancel();
     }
 
     public boolean isSending(UUID uuid) {
