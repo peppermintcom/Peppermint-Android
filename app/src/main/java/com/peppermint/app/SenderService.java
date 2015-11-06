@@ -17,7 +17,6 @@ import com.peppermint.app.data.Recording;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.SenderManager;
 import com.peppermint.app.sending.SendingEvent;
-import com.peppermint.app.sending.gmail.GmailSender;
 import com.peppermint.app.utils.PepperMintPreferences;
 
 import java.util.HashMap;
@@ -123,7 +122,7 @@ public class SenderService extends Service {
         mPreferences = new PepperMintPreferences(this);
 
         Map<String, Object> senderParameters = new HashMap<>();
-        senderParameters.put(GmailSender.PARAM_DISPLAY_NAME, mPreferences.getDisplayName());
+        // empty parameters
         mSenderManager = new SenderManager(this, mEventBus, senderParameters);
         mSenderManager.init();
     }

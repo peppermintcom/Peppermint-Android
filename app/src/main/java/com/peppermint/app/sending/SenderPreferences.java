@@ -37,4 +37,7 @@ public class SenderPreferences {
         return getSharedPreferences().getBoolean(getEnabledPreferenceKey(this.getClass()), true);
     }
 
+    public Context getContext() {
+        return mContext;
+    }
 }

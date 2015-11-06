@@ -1,11 +1,14 @@
 package com.peppermint.app.ui.recipients;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorSet;
 import android.app.Activity;
 import android.app.ListFragment;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Build;
+import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.content.ContextCompat;
@@ -14,11 +17,11 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.SenderServiceManager;
@@ -31,9 +34,11 @@ import com.peppermint.app.ui.recording.RecordingActivity;
 import com.peppermint.app.ui.recording.RecordingFragment;
 import com.peppermint.app.ui.views.SearchListBarAdapter;
 import com.peppermint.app.ui.views.SearchListBarView;
+import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.PepperMintPreferences;
 
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -51,6 +56,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     private PepperMintPreferences mPreferences;
     private CustomActionBarActivity mActivity;
+    private AnimatorBuilder mAnimatorBuilder;
 
     // the recipient list
     private View mRecipientListContainer;
@@ -66,6 +72,72 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     // bottom bar
     private SenderServiceManager mSenderServiceManager;
     private SenderControlLayout mLytSenderControl;
+
+    // search
+    private GetRecipients mGetRecipientsTask;
+    private class GetRecipients extends AsyncTask<String, Void, Object> {
+        private RecipientType _recipientType;
+
+        @Override
+        protected void onPreExecute() {
+            setListShown(false);
+            _recipientType = (RecipientType) mSearchListBarView.getSelectedItem();
+        }
+
+        @Override
+        protected Object doInBackground(String... filters) {
+            try {
+                if (ContextCompat.checkSelfPermission(mActivity,
+                        Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+
+                    List<Long> recentList = mPreferences.getRecentContactUris();
+
+                    if (recentList != null && recentList.size() > 0 && _recipientType.isStarred() != null && _recipientType.isStarred()) {
+                        return recentList.toArray(new Long[recentList.size()]);
+                    }
+
+                    FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(getActivity(), null, filters[0], _recipientType.isStarred(), _recipientType.getMimeTypes());
+                    cursor.filter();
+                    return cursor;
+                }
+            } catch(Throwable e) {
+                if(!(e instanceof InterruptedIOException)) {
+                    Crashlytics.logException(e);
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Object data) {
+            if(data != null) {
+                if (data instanceof Cursor) {
+                    // use cursor
+                    if (mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
+                        ((RecipientCursorAdapter) mRecipientAdapter).changeCursor((Cursor) data);
+                    } else {
+                        mRecipientAdapter = new RecipientCursorAdapter((PeppermintApp) getActivity().getApplication(), getActivity(), (Cursor) data);
+                        getListView().setAdapter(mRecipientAdapter);
+                    }
+                } else {
+                    // use array
+                    if (mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
+                        ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(null);
+                    }
+                    mRecipientAdapter = RecipientArrayAdapter.get((PeppermintApp) getActivity().getApplication(), getActivity(), (Long[]) data);
+                    getListView().setAdapter(mRecipientAdapter);
+                }
+                mRecipientAdapter.notifyDataSetChanged();
+            }
+            setListShown(true);
+        }
+
+        @Override
+        protected void onCancelled(Object o) {
+            /* nothing to do here; keep the list hidden */
+        }
+    }
 
     // smiley face (avatar) random animations
     private final Random mRandom = new Random();
@@ -102,6 +174,35 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         }
     };
 
+    // loading animation
+    private AnimatorSet mLoadingAnimator;
+    private Animator.AnimatorListener mLoadingAnimatorListener = new Animator.AnimatorListener() {
+        @Override
+        public void onAnimationStart(Animator animation) {
+            if(mRecipientListShown) {
+                mRecipientListContainer.setVisibility(View.VISIBLE);
+            } else {
+                mRecipientLoadingView.startAnimations();
+                mRecipientLoadingView.startDrawingThread();
+                mRecipientLoadingContainer.setVisibility(View.VISIBLE);
+            }
+        }
+        @Override
+        public void onAnimationEnd(Animator animation) {
+            if(mRecipientListShown) {
+                mRecipientLoadingContainer.setVisibility(View.INVISIBLE);
+                mRecipientLoadingView.stopAnimations();
+                mRecipientLoadingView.stopDrawingThread();
+            } else {
+                mRecipientListContainer.setVisibility(View.INVISIBLE);
+            }
+        }
+        @Override
+        public void onAnimationCancel(Animator animation) { }
+        @Override
+        public void onAnimationRepeat(Animator animation) { }
+    };
+
     public RecipientsFragment() {
     }
 
@@ -113,6 +214,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mActivity = (CustomActionBarActivity) activity;
         mPreferences = new PepperMintPreferences(activity);
         mSenderServiceManager = new SenderServiceManager(activity);
+        mAnimatorBuilder = new AnimatorBuilder();
     }
 
     @Override
@@ -180,6 +282,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mLytSenderControl.setSenderManager(mSenderServiceManager);
         mLytSenderControl.setTypeface(app.getFontSemibold());
         mSenderServiceManager.setListener(mLytSenderControl);
+
+        // avoid showing "no contacts" for a split second, right after creation
+        setListShownNoAnimation(false);
 
         return v;
     }
@@ -251,31 +356,25 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         if (mRecipientListShown == shown) {
             return;
         }
+
+        if(mLoadingAnimator != null && mLoadingAnimator.isRunning()) {
+            mLoadingAnimator.cancel();
+            mLoadingAnimator.removeAllListeners();
+            mLoadingAnimatorListener.onAnimationEnd(null);
+        }
+
         mRecipientListShown = shown;
-        if (shown) {
-            if (animate && getActivity() != null) {
-                mRecipientLoadingContainer.startAnimation(AnimationUtils.loadAnimation(
-                        getActivity(), android.R.anim.fade_out));
-                mRecipientListContainer.startAnimation(AnimationUtils.loadAnimation(
-                        getActivity(), android.R.anim.fade_in));
-            }
-            mRecipientLoadingContainer.setVisibility(View.INVISIBLE);
-            mRecipientListContainer.setVisibility(View.VISIBLE);
 
-            mRecipientLoadingView.stopAnimations();
-            mRecipientLoadingView.stopDrawingThread();
+        if (animate && getActivity() != null) {
+            Animator fadeOut = mAnimatorBuilder.buildFadeOutAnimator(shown ? mRecipientLoadingContainer : mRecipientListContainer);
+            Animator fadeIn = mAnimatorBuilder.buildFadeInAnimator(shown ? mRecipientListContainer : mRecipientLoadingContainer);
+            mLoadingAnimator = new AnimatorSet();
+            mLoadingAnimator.addListener(mLoadingAnimatorListener);
+            mLoadingAnimator.playTogether(fadeOut, fadeIn);
+            mLoadingAnimator.start();
         } else {
-            if (animate && getActivity() != null) {
-                mRecipientLoadingContainer.startAnimation(AnimationUtils.loadAnimation(
-                        getActivity(), android.R.anim.fade_in));
-                mRecipientListContainer.startAnimation(AnimationUtils.loadAnimation(
-                        getActivity(), android.R.anim.fade_out));
-            }
-            mRecipientLoadingContainer.setVisibility(View.VISIBLE);
-            mRecipientListContainer.setVisibility(View.INVISIBLE);
-
-            mRecipientLoadingView.startAnimations();
-            mRecipientLoadingView.startDrawingThread();
+            mLoadingAnimatorListener.onAnimationStart(null);
+            mLoadingAnimatorListener.onAnimationEnd(null);
         }
     }
     @Override
@@ -301,49 +400,12 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onSearch(String filter) {
-
-        if (ContextCompat.checkSelfPermission(mActivity,
-                Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
-
-            RecipientType recipientType = (RecipientType) mSearchListBarView.getSelectedItem();
-            List<Long> recentList = mPreferences.getRecentContactUris();
-
-            if (recentList != null && recentList.size() > 0 && recipientType.isStarred() != null && recipientType.isStarred()) {
-                Long[] recentArray = recentList.toArray(new Long[recentList.size()]);
-                if (mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
-                    ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(null);
-                }
-                mRecipientAdapter = RecipientArrayAdapter.get((PeppermintApp) getActivity().getApplication(), getActivity(), recentArray);
-                getListView().setAdapter(mRecipientAdapter);
-                mRecipientAdapter.notifyDataSetChanged();
-                return;
-            }
-
-            FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(getActivity(), null, filter, recipientType.isStarred(), recipientType.getMimeTypes());
-            setListShown(false);
-            cursor.filterAsync(new FilteredCursor.FilterCallback() {
-                @Override
-                public void done(FilteredCursor cursor) {
-                    if(getActivity() == null) {
-                        return;
-                    }
-                    // in some recent versions getActivity() doesn't return null
-                    // when the activity is destroyed, so just check with the proper method
-                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && getActivity().isDestroyed()) {
-                        return;
-                    }
-
-                    if (mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
-                        ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(cursor);
-                    } else {
-                        mRecipientAdapter = new RecipientCursorAdapter((PeppermintApp) getActivity().getApplication(), getActivity(), cursor);
-                        getListView().setAdapter(mRecipientAdapter);
-                    }
-                    mRecipientAdapter.notifyDataSetChanged();
-                    setListShown(true);
-                }
-            });
+        if(mGetRecipientsTask != null && !mGetRecipientsTask.isCancelled() && mGetRecipientsTask.getStatus() != AsyncTask.Status.FINISHED) {
+            mGetRecipientsTask.cancel(true);
         }
+
+        mGetRecipientsTask = new GetRecipients();
+        mGetRecipientsTask.execute(filter);
     }
 
     private boolean hasRecentsOrFavourites() {

@@ -3,11 +3,9 @@ package com.peppermint.app.sending.sms;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.Uri;
 import android.telephony.SmsManager;
 
 import com.peppermint.app.R;
@@ -91,7 +89,7 @@ public class SMSSendingTask extends SendingTask {
 
             // the following code does not seem to be necessary (at least for Android 6)
             // it adds the SMS to the content provider so that it shows up on the native SMS app
-            ContentValues values = new ContentValues();
+            /*ContentValues values = new ContentValues();
             values.put("address", getSendingRequest().getRecipient().getVia()); // phone number to send
             values.put("date", String.valueOf(System.currentTimeMillis()));
             values.put("read", "1"); // if you want to mark is as unread set to 0
@@ -99,7 +97,7 @@ public class SMSSendingTask extends SendingTask {
             values.put("body", getSendingRequest().getBody());
 
             Uri uri = Uri.parse("content://sms/");
-            getSender().getContext().getContentResolver().insert(uri, values);
+            getSender().getContext().getContentResolver().insert(uri, values);*/
         } finally {
             getSender().getContext().unregisterReceiver(mReceiver);
             mRunner = null;

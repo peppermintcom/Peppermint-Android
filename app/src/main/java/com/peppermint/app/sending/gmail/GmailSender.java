@@ -1,8 +1,7 @@
 package com.peppermint.app.sending.gmail;
 
 import android.content.Context;
-import android.database.Cursor;
-import android.provider.ContactsContract;
+import android.content.SharedPreferences;
 
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
@@ -30,7 +29,6 @@ import java.util.Arrays;
 public class GmailSender extends Sender {
 
     // GmailSendingTask parameter keys
-    public static final String PARAM_DISPLAY_NAME = "GmailSendingTask_paramDisplayName";
     public static final String PARAM_GMAIL_SERVICE = "GmailSendingTask_paramGmailService";
     public static final String PARAM_GMAIL_CREDENTIAL = "GmailSendingTask_paramGmailCredentials";
 
@@ -46,26 +44,23 @@ public class GmailSender extends Sender {
     private GmailSendingErrorHandler mErrorHandler;
     private GmailSenderPreferences mPreferences;
 
+    private SharedPreferences.OnSharedPreferenceChangeListener mSharedPreferenceListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+            if(key.compareTo(GmailSenderPreferences.PREF_ACCOUNT_NAME_KEY) == 0) {
+                setupCredentials();
+            } else if(key.compareTo(GmailSenderPreferences.DISPLAY_NAME_KEY) == 0) {
+
+            }
+        }
+    };
+
     public GmailSender(Context context, SenderListener senderListener) {
         super(context, senderListener);
         mPreferences = new GmailSenderPreferences(getContext());
     }
 
-    @Override
-    public void init() {
-        if(getParameter(PARAM_DISPLAY_NAME) == null) {
-            Cursor cursor = getContext().getContentResolver().query(ContactsContract.Profile.CONTENT_URI, null, null, null, null);
-            if(cursor != null) {
-                if (cursor.getCount() == 1 && cursor.moveToFirst()) {
-                    String userName = cursor.getString(cursor.getColumnIndex(ContactsContract.Profile.DISPLAY_NAME));
-                    if (userName != null) {
-                        setParameter(PARAM_DISPLAY_NAME, userName);
-                    }
-                }
-                cursor.close();
-            }
-        }
-
+    private void setupCredentials() {
         // initialize the Gmail API objects and pass them as parameters to the error handler
         // and to all associated sending tasks
         this.mCredential = GoogleAccountCredential.usingOAuth2(
@@ -80,8 +75,19 @@ public class GmailSender extends Sender {
 
         setParameter(PARAM_GMAIL_CREDENTIAL, mCredential);
         setParameter(PARAM_GMAIL_SERVICE, mService);
+    }
 
+    @Override
+    public void init() {
+        setupCredentials();
+        mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(mSharedPreferenceListener);
         super.init();
+    }
+
+    @Override
+    public void deinit() {
+        mPreferences.getSharedPreferences().unregisterOnSharedPreferenceChangeListener(mSharedPreferenceListener);
+        super.deinit();
     }
 
     @Override
