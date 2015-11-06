@@ -9,6 +9,7 @@ import android.preference.PreferenceFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
@@ -19,6 +20,8 @@ import com.peppermint.app.ui.CustomActionBarActivity;
 public class SettingsFragment extends PreferenceFragment {
 
     private static final String TAG = SettingsFragment.class.getSimpleName();
+
+    private static final String PREF_DISPLAY_NAME_KEY = "displayName";
 
     private static final int PREF_GMAIL_ACCOUNT_REQUEST = 1199;
 
@@ -47,6 +50,19 @@ public class SettingsFragment extends PreferenceFragment {
                 startActivityForResult(sender.getCredential().newChooseAccountIntent(), PREF_GMAIL_ACCOUNT_REQUEST);
                 sender.deinit();
                 return true;
+            }
+        });
+
+        Preference mPrefDisplayName = findPreference(PREF_DISPLAY_NAME_KEY);
+        mPrefDisplayName.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                if (newValue.toString().trim().length() > 0) {
+                    return true;
+                }
+
+                Toast.makeText(getActivity(), R.string.msg_message_invalid_displayname, Toast.LENGTH_LONG).show();
+                return false;
             }
         });
     }

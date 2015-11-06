@@ -70,6 +70,8 @@ public class RecordProgressBarsView extends AnimatedView {
     }
 
     protected void init(AttributeSet attrs) {
+        setExplosionEnabled(true);
+
         try {
             mCornerRadius = Utils.dpToPx(getContext(), DEF_CORNER_RADIUS_DP);
             mProgressThickness = Utils.dpToPx(getContext(), DEF_PROGRESS_THICKNESS_DP);

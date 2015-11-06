@@ -111,4 +111,5 @@
 
     <string name="send_email">Send Email</string>
     <string name="msg_message_sms_disabled">Your device either has telephony disabled or does not support it. Sending text messages is not possible.</string>
+    <string name="msg_message_invalid_displayname">Please input a valid display name</string>
 </resources>

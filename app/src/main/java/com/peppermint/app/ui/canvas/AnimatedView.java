@@ -164,6 +164,7 @@ public class AnimatedView extends TextureView {
     private long mScaleFrames = 0;
 
     // explosion animation
+    private boolean mExplosionEnabled = false;
     private Camera mCamera;
     private Bitmap mBackedBitmap, mExplosionBaseBitmap;
     private Canvas mBackedCanvas, mExplosionBaseCanvas;
@@ -271,6 +272,19 @@ public class AnimatedView extends TextureView {
         }
     }
 
+    protected void resetExplosionCanvas() {
+        // init explosion base bitmap (holds a print of the last frame before the explosion)
+        // this frame is used to draw static content inside each explosion fragment
+        if(mExplosionBaseBitmap != null) {
+            mExplosionBaseBitmap.recycle();
+        }
+
+        if(mWidth > 0 && mHeight > 0) {
+            mExplosionBaseBitmap = Bitmap.createBitmap((int) mWidth, (int) mHeight, Bitmap.Config.ARGB_8888);
+            mExplosionBaseCanvas = new Canvas(mExplosionBaseBitmap);
+        }
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         mWidth = MeasureSpec.getSize(widthMeasureSpec);
@@ -286,13 +300,9 @@ public class AnimatedView extends TextureView {
             mHeight = Utils.dpToPx(getContext(), DEF_DESIRED_SIZE_DP);
         }
 
-        // init explosion base bitmap (holds a print of the last frame before the explosion)
-        // this frame is used to draw static content inside each explosion fragment
-        if(mExplosionBaseBitmap != null) {
-            mExplosionBaseBitmap.recycle();
+        if(mExplosionEnabled) {
+            resetExplosionCanvas();
         }
-        mExplosionBaseBitmap = Bitmap.createBitmap((int) mWidth, (int) mHeight, Bitmap.Config.ARGB_8888);
-        mExplosionBaseCanvas = new Canvas(mExplosionBaseBitmap);
 
         this.setMeasuredDimension((int) mWidth, (int) mHeight);
     }
@@ -527,5 +537,16 @@ public class AnimatedView extends TextureView {
 
     public void setExplosionListener(ExplosionListener mExplosionListener) {
         this.mExplosionListener = mExplosionListener;
+    }
+
+    public void setExplosionEnabled(boolean mExplosionEnabled) {
+        this.mExplosionEnabled = mExplosionEnabled;
+        if(mExplosionEnabled) {
+            resetExplosionCanvas();
+        }
+    }
+
+    public boolean isExplosionEnabled() {
+        return mExplosionEnabled;
     }
 }

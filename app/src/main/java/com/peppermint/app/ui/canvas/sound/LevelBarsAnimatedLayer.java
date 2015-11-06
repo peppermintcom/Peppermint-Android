@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.view.View;
-import android.view.animation.AccelerateDecelerateInterpolator;
 
 import com.peppermint.app.ui.canvas.AnimatedLayerBase;
 import com.peppermint.app.utils.Utils;
@@ -23,7 +22,6 @@ public class LevelBarsAnimatedLayer extends AnimatedLayerBase {
 
     private static final int DEFAULT_BAR_AMOUNT = 6;
     private static final int DEFAULT_BAR_SPACING_DP = 1;
-    private static final int DEFAULT_BALL_SPACING_DP = 3;
 
     private int mBarAmount = DEFAULT_BAR_AMOUNT;
     private List<Float> mBarValues = new ArrayList<>();
@@ -48,7 +46,7 @@ public class LevelBarsAnimatedLayer extends AnimatedLayerBase {
         mPaintBottom35.setColor(Color.parseColor("#59FFFFFF"));
 
         mPaintTop = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mPaintTop.setColor(Color.GREEN);
+        mPaintTop.setColor(Color.parseColor("#22857b"));
 
         mBarSpacing = Utils.dpToPx(context, DEFAULT_BAR_SPACING_DP);
     }

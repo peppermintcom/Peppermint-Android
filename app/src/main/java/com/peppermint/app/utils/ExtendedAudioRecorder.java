@@ -314,8 +314,8 @@ public class ExtendedAudioRecorder {
 
         short sData[] = new short[bufferElements2Rec];
 
-        // bo code to ignore the first 250ms to avoid noises and button sounds
-        final int ignoreTimeMs = 250;
+        // bo code to ignore the first 350ms to avoid noises and button sounds
+        final int ignoreTimeMs = 350;
         final int ignoreShortAmount = (int) ((float) sampleRate * ((float) ignoreTimeMs / 1000f));
         int ignoredShortsLeft = ignoreShortAmount;
         int emptyIts = 0;
@@ -323,7 +323,7 @@ public class ExtendedAudioRecorder {
             ignoredShortsLeft = ignoredShortsLeft - recorder.read(sData, 0, ignoredShortsLeft > bufferElements2Rec ? bufferElements2Rec : ignoredShortsLeft);
             emptyIts++;
         }
-        // eo code to ignore the first 250ms to avoid noises and button sounds
+        // eo code to ignore the first 350ms to avoid noises and button sounds
 
         long now = android.os.SystemClock.uptimeMillis();
         emptyIts = 0;
