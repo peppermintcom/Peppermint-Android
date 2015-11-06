@@ -53,7 +53,7 @@ public class LevelBarsAnimatedLayer extends AnimatedLayerBase {
 
     private void drawBar(Canvas canvas, float barValue) {
         canvas.save();
-        float barHeight = Math.max(2f, barValue*2f);
+        float barHeight = Math.max(1f, barValue*2f);
         for (int j = 0; j < barHeight; j++) {
             canvas.drawCircle(mCircleRadius, -mCircleRadius, mCircleRadius, j >= 6 ? mPaintTop : mPaintBottom);
             canvas.translate(0, -((mCircleRadius*2f) + mBarSpacing));
@@ -81,7 +81,7 @@ public class LevelBarsAnimatedLayer extends AnimatedLayerBase {
         canvas.translate(getBounds().centerX() - (mSize / 2f), getBounds().centerY() + (mSize / 2f));
 
         canvas.save();
-        canvas.translate(((mCircleRadius * 2f) + mBarSpacing) * (effectPos + (mReversed ? 1 : 0)), (-((mCircleRadius * 2f) + mBarSpacing)) * 2);
+        canvas.translate(((mCircleRadius * 2f) + mBarSpacing) * (effectPos + (mReversed ? 1 : 0)), (-((mCircleRadius * 2f) + mBarSpacing)));
         canvas.drawCircle(mCircleRadius, -mCircleRadius, mCircleRadius, mPaintBottom);
 
         int spaceBehind = mReversed ? ((mBarAmount*2)-2) - effectPos : effectPos;
@@ -98,11 +98,11 @@ public class LevelBarsAnimatedLayer extends AnimatedLayerBase {
 
         canvas.restore();
 
-        for (int i = mBarAmount - 1; i >= 0; i--) {
+        for (int i = 0; i < mBarAmount; i++) {
             drawBar(canvas, mBarValues.size() > i ? mBarValues.get(i) : 0f);
             canvas.translate((mCircleRadius*2f) + mBarSpacing, 0);
         }
-        for (int i = 0; i < mBarAmount; i++) {
+        for (int i = mBarAmount - 1; i >= 0; i--) {
             drawBar(canvas, mBarValues.size() > i ? mBarValues.get(i) : 0f);
             canvas.translate((mCircleRadius*2f) + mBarSpacing, 0);
         }
