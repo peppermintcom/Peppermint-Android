@@ -53,8 +53,7 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
 
     @Override
     protected void onMeasure(Rect bounds) {
-        int currentFrame = (int) Math.round(getInterpolatedElapsedTime() / getDuration() * (mBitmapSequenceRes.length - 1));
-        initShader(currentFrame);
+        super.onMeasure(bounds);
     }
 
     @Override

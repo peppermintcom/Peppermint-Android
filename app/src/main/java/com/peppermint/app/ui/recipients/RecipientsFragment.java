@@ -5,12 +5,15 @@ import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.app.Activity;
 import android.app.ListFragment;
+import android.content.ContentProviderOperation;
+import android.content.ContentProviderResult;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.ContactsContract;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.view.LayoutInflater;
@@ -19,7 +22,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.CursorAdapter;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.PeppermintApp;
@@ -37,10 +44,13 @@ import com.peppermint.app.ui.views.SearchListBarView;
 import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.PepperMintPreferences;
+import com.peppermint.app.utils.Utils;
 
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class RecipientsFragment extends ListFragment implements AdapterView.OnItemClickListener, SearchListBarView.OnSearchListener {
@@ -65,6 +75,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private boolean mRecipientListShown;
     private BaseAdapter mRecipientAdapter;
 
+    // new recipient view
+    private EditText mTxtNewName, mTxtNewContact;
+    private ImageButton mBtnNew;
+    private AnimatedAvatarView mNewAvatarView;
+
     // the custom action bar (with recipient type filter and recipient search)
     private SearchListBarView mSearchListBarView;
     private SearchListBarAdapter<RecipientType> mRecipientTypeAdapter;
@@ -75,8 +90,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     // search
     private GetRecipients mGetRecipientsTask;
-    private class GetRecipients extends AsyncTask<String, Void, Object> {
+    private class GetRecipients extends AsyncTask<Void, Void, Object> {
         private RecipientType _recipientType;
+        private String _filter;
+
+        protected GetRecipients(String filter) {
+            this._filter = filter;
+        }
 
         @Override
         protected void onPreExecute() {
@@ -85,7 +105,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         }
 
         @Override
-        protected Object doInBackground(String... filters) {
+        protected Object doInBackground(Void... nothing) {
             try {
                 if (ContextCompat.checkSelfPermission(mActivity,
                         Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
@@ -93,10 +113,27 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                     List<Long> recentList = mPreferences.getRecentContactUris();
 
                     if (recentList != null && recentList.size() > 0 && _recipientType.isStarred() != null && _recipientType.isStarred()) {
-                        return recentList.toArray(new Long[recentList.size()]);
+
+                        Map<Long, Recipient> recipientMap = new HashMap<>();
+
+                        Cursor cursor = RecipientAdapterUtils.getRecipientsCursor(getActivity(), recentList, null, null, null);
+                        recentList.clear();
+                        while(cursor.moveToNext()) {
+                            Recipient recipient = RecipientAdapterUtils.getRecipient(cursor);
+                            // this if removes deleted/invalid contacts from the list
+                            if(recipient.getVia() != null && recipient.getVia().trim().length() > 0) {
+                                recipientMap.put(recipient.getContactId(), recipient);
+                                recentList.add(recipient.getContactId());
+                            }
+                        }
+                        cursor.close();
+
+                        if(recentList.size() > 0) {
+                            return new RecipientArrayAdapter((PeppermintApp) getActivity().getApplication(), getActivity(), recipientMap, recentList);
+                        }
                     }
 
-                    FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(getActivity(), null, filters[0], _recipientType.isStarred(), _recipientType.getMimeTypes());
+                    FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(getActivity(), null, _filter, _recipientType.isStarred(), _recipientType.getMimeTypes());
                     cursor.filter();
                     return cursor;
                 }
@@ -114,21 +151,24 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             if(data != null) {
                 if (data instanceof Cursor) {
                     // use cursor
-                    if (mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
-                        ((RecipientCursorAdapter) mRecipientAdapter).changeCursor((Cursor) data);
+                    if (mRecipientAdapter != null && mRecipientAdapter instanceof CursorAdapter) {
+                        ((CursorAdapter) mRecipientAdapter).changeCursor((Cursor) data);
                     } else {
                         mRecipientAdapter = new RecipientCursorAdapter((PeppermintApp) getActivity().getApplication(), getActivity(), (Cursor) data);
                         getListView().setAdapter(mRecipientAdapter);
                     }
                 } else {
-                    // use array
-                    if (mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
-                        ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(null);
+                    // use adapter
+                    if (mRecipientAdapter != null && mRecipientAdapter instanceof CursorAdapter) {
+                        ((CursorAdapter) mRecipientAdapter).changeCursor(null);
                     }
-                    mRecipientAdapter = RecipientArrayAdapter.get((PeppermintApp) getActivity().getApplication(), getActivity(), (Long[]) data);
+                    mRecipientAdapter = (BaseAdapter) data;
                     getListView().setAdapter(mRecipientAdapter);
                 }
                 mRecipientAdapter.notifyDataSetChanged();
+                if(mRecipientAdapter.getCount() <= 0) {
+                    mTxtNewName.setText(_filter);
+                }
             }
             setListShown(true);
         }
@@ -153,6 +193,12 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 if(!v.isShowStaticAvatar()) {
                     possibleAnimationsList.add(v);
                 }
+            }
+
+            if(mNewAvatarView.getVisibility() == View.VISIBLE) {
+                possibleAnimationsList.add(mNewAvatarView);
+            } else {
+                mNewAvatarView.stopDrawingThread();
             }
 
             // randomly pick one
@@ -268,6 +314,79 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         txtEmpty2.setTypeface(app.getFontSemibold());
         int peppermintColor = ContextCompat.getColor(getActivity(), R.color.green_text);
         txtEmpty2.setText(Html.fromHtml(String.format(getString(R.string.msg_add_some_friends), String.format("#%06X", (0xFFFFFF & peppermintColor)))));
+
+        // init new recipient view
+        TextView txtNewVia = (TextView) v.findViewById(R.id.txtVia);
+        mTxtNewName = (EditText) v.findViewById(R.id.txtName);
+        mTxtNewContact = (EditText) v.findViewById(R.id.txtContact);
+        mBtnNew = (ImageButton) v.findViewById(R.id.btnAddContact);
+        mNewAvatarView = (AnimatedAvatarView) v.findViewById(R.id.imgPhoto);
+
+        txtNewVia.setTypeface(app.getFontRegular());
+        mTxtNewName.setTypeface(app.getFontSemibold());
+        mTxtNewContact.setTypeface(app.getFontSemibold());
+        mNewAvatarView.setShowStaticAvatar(false);
+        mBtnNew.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String name = mTxtNewName.getText().toString().trim();
+                String via = mTxtNewContact.getText().toString().trim();
+                String mimeType = null;
+
+                // validate display name
+                if(name.length() <= 0) {
+                    Toast.makeText(getActivity(), R.string.msg_message_invalid_contactname, Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                // validate email
+                if(Utils.isValidEmail(via)) {
+                    mimeType = ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE;
+                } else if(Utils.isValidPhoneNumber(via)) {
+                    mimeType = ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE;
+                }
+
+                if(mimeType == null) {
+                    Toast.makeText(getActivity(), R.string.msg_message_invalid_contactvia, Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+
+                // create raw contact
+                ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
+                        .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
+                        .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null).build());
+
+                // add display name data
+                ops.add(ContentProviderOperation
+                        .newInsert(ContactsContract.Data.CONTENT_URI)
+                        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                        .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+                        .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name)
+                        .build());
+
+                // add phone/email data
+                ops.add(ContentProviderOperation
+                        .newInsert(ContactsContract.Data.CONTENT_URI)
+                        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                        .withValue(ContactsContract.Data.MIMETYPE, mimeType)
+                        .withValue(ContactsContract.Data.DATA1, via).build());
+
+                try {
+                    ContentProviderResult[] res = getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+                    if(res.length < ops.size()) {
+                        throw new RuntimeException("Not all operations were performed while trying to insert contact: Total Ops = " + ops.size() + "; Performed = " + res.length);
+                    }
+                    Toast.makeText(getActivity(), R.string.msg_message_contact_added, Toast.LENGTH_LONG).show();
+                    // refresh listview
+                    mSearchListBarView.setSearchText(mSearchListBarView.getSearchText());
+                } catch (Throwable e) {
+                    Toast.makeText(getActivity(), R.string.msg_message_unable_addcontact, Toast.LENGTH_LONG).show();
+                    Crashlytics.logException(e);
+                }
+            }
+        });
 
         // init loading recipients view
         mRecipientListShown = true;
@@ -404,8 +523,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             mGetRecipientsTask.cancel(true);
         }
 
-        mGetRecipientsTask = new GetRecipients();
-        mGetRecipientsTask.execute(filter);
+        mGetRecipientsTask = new GetRecipients(filter);
+        mGetRecipientsTask.execute();
     }
 
     private boolean hasRecentsOrFavourites() {

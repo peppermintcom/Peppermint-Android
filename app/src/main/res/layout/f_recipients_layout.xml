@@ -25,46 +25,139 @@
             android:listSelector="@drawable/background_white_to_solid_pressed"
             android:drawSelectorOnTop="false"/>
 
-        <LinearLayout android:id="@id/android:empty"
+        <RelativeLayout android:id="@id/android:empty"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center_horizontal|top">
+            android:fitsSystemWindows="true">
 
-            <TextView
-                android:id="@+id/txtEmpty1"
+            <LinearLayout
+                android:layout_alignParentTop="true"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center_horizontal|top">
+
+                <TextView
+                    android:id="@+id/txtEmpty1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="16dp"
+                    android:layout_marginLeft="30dp"
+                    android:layout_marginRight="30dp"
+                    android:gravity="center"
+                    android:textSize="20dp"
+                    android:textColor="@color/grey_text"
+                    android:text="@string/msg_no_contacts"/>
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="80dp"
+                    android:layout_marginLeft="80dp"
+                    android:src="@drawable/img_no_contacts"/>
+
+                <TextView
+                    android:id="@+id/txtEmpty2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="20dp"
+                    android:layout_marginLeft="30dp"
+                    android:layout_marginRight="30dp"
+                    android:gravity="center"
+                    android:textSize="14dp"
+                    android:textColor="@color/dark_grey_text"
+                    android:text="@string/msg_add_some_friends"/>
+
+            </LinearLayout>
+
+            <RelativeLayout
+                android:layout_alignParentBottom="true"
+                android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:layout_marginBottom="16dp"
-                android:layout_marginLeft="30dp"
-                android:layout_marginRight="30dp"
-                android:gravity="center"
-                android:textSize="20dp"
-                android:textColor="@color/grey_text"
-                android:text="@string/msg_no_contacts"/>
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:gravity="center_vertical"
+                android:background="@color/white">
 
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="80dp"
-                android:layout_marginLeft="80dp"
-                android:src="@drawable/img_no_contacts"/>
+                <com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView
+                    android:layout_alignParentLeft="true"
+                    android:layout_centerVertical="true"
+                    android:id="@+id/imgPhoto"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginRight="16dp"
+                    custom:cornerRadius="10dp"
+                    custom:borderWidth="2dp"
+                    custom:borderColor="@color/white" />
 
-            <TextView
-                android:id="@+id/txtEmpty2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="20dp"
-                android:layout_marginLeft="30dp"
-                android:layout_marginRight="30dp"
-                android:gravity="center"
-                android:textSize="14dp"
-                android:textColor="@color/dark_grey_text"
-                android:text="@string/msg_add_some_friends"/>
+                <ImageButton
+                    android:layout_alignParentRight="true"
+                    android:id="@+id/btnAddContact"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_add_48dp"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/background_ripple" />
 
-        </LinearLayout>
+                <LinearLayout
+                    android:layout_toRightOf="@id/imgPhoto"
+                    android:layout_toLeftOf="@id/btnAddContact"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <EditText
+                        android:id="@+id/txtName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="0dp"
+                        android:textSize="18dp"
+                        android:textColor="@color/black"
+                        android:inputType="text"
+                        android:hint="@string/new_contact_name"
+                        android:singleLine="true"
+                        android:imeOptions="flagNoExtractUi" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:id="@+id/txtVia"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/via"
+                            android:textColor="@color/grey_text"
+                            android:layout_marginRight="5dp" />
+
+                        <EditText
+                            android:id="@+id/txtContact"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="0dp"
+                            android:textColor="@color/green_text"
+                            android:textStyle="bold"
+                            android:hint="@string/phone_or_email"
+                            android:inputType="text"
+                            android:singleLine="true"
+                            android:imeOptions="flagNoExtractUi" />
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </RelativeLayout>
+
+
+        </RelativeLayout>
+
+
     </FrameLayout>
 
     <LinearLayout android:id="@+id/progressContainer"

@@ -26,6 +26,7 @@ public class MainActivity extends CustomActionBarActivity {
     private static final int PERMISSION_REQUEST = 109;
     private static final String[] PERMISSIONS = {
         Manifest.permission.READ_CONTACTS,
+        Manifest.permission.WRITE_CONTACTS,
         "android.permission.READ_PROFILE",
         Manifest.permission.RECORD_AUDIO,
         Manifest.permission.WRITE_EXTERNAL_STORAGE,

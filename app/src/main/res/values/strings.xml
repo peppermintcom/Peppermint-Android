@@ -111,4 +111,10 @@
     <string name="send_email">Send Email</string>
     <string name="msg_message_sms_disabled">Your device either has telephony disabled or does not support it. Sending text messages is not possible.</string>
     <string name="msg_message_invalid_displayname">Please input a valid display name</string>
+    <string name="new_contact_name">New Contact Name</string>
+    <string name="phone_or_email">Phone or Email</string>
+    <string name="msg_message_invalid_contactname">Please input a valid contact name</string>
+    <string name="msg_message_invalid_contactvia">Please input a valid email address or phone number</string>
+    <string name="msg_message_unable_addcontact">Unable to add contact. Please try again later</string>
+    <string name="msg_message_contact_added">Contact added successfully!</string>
 </resources>
