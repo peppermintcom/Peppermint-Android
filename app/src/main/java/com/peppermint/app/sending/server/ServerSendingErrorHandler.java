@@ -3,7 +3,6 @@ package com.peppermint.app.sending.server;
 import android.content.Context;
 import android.os.Build;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.data.SendingRequest;
@@ -70,8 +69,6 @@ public class ServerSendingErrorHandler extends SendingErrorHandler implements Ht
 
         UUID deviceUuid = new UUID(androidId.hashCode(), ((long)tmDevice.hashCode() << 32) | tmSerial.hashCode());
         String deviceId = deviceUuid.toString();
-
-        Log.d(TAG, "ID: " + deviceId + " - KEY: " + Build.SERIAL);
 
         return new String[]{ deviceId, Build.SERIAL};
     }

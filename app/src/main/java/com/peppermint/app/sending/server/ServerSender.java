@@ -3,6 +3,7 @@ package com.peppermint.app.sending.server;
 import android.content.Context;
 
 import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.sending.GoogleSenderPreferences;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
@@ -20,10 +21,12 @@ public class ServerSender extends Sender {
 
     protected ServerClientManager mManager;
 
+    private GoogleSenderPreferences mPreferences;
     private ServerSendingErrorHandler mErrorHandler;
 
     public ServerSender(Context context, SenderListener senderListener) {
         super(context, senderListener);
+        mPreferences = new GoogleSenderPreferences(getContext());
     }
 
     @Override
@@ -61,7 +64,7 @@ public class ServerSender extends Sender {
 
     @Override
     public SenderPreferences getSenderPreferences() {
-        return null;
+        return mPreferences;
     }
 
     public ServerClientManager getManager() {

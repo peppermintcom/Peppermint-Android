@@ -3,7 +3,7 @@ package com.peppermint.app.sending.gmail;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.peppermint.app.sending.SenderPreferences;
+import com.peppermint.app.sending.GoogleSenderPreferences;
 import com.peppermint.app.utils.Utils;
 
 /**
@@ -11,10 +11,7 @@ import com.peppermint.app.utils.Utils;
  *
  * Preferences for the {@link GmailSender}.
  */
-public class GmailSenderPreferences extends SenderPreferences {
-
-    // GmailSendingTask shared preference keys
-    public static final String PREF_ACCOUNT_NAME_KEY = "prefAccountName";
+public class GmailSenderPreferences extends GoogleSenderPreferences {
 
     public static final String DISPLAY_NAME_KEY = "displayName";
 
@@ -22,14 +19,8 @@ public class GmailSenderPreferences extends SenderPreferences {
         super(context);
     }
 
-    public void setPreferredAccountName(String accountName) {
-        SharedPreferences.Editor editor = getSharedPreferences().edit();
-        editor.putString(PREF_ACCOUNT_NAME_KEY, accountName);
-        editor.commit();
-    }
-
-    public String getPreferredAccountName() {
-        return getSharedPreferences().getString(PREF_ACCOUNT_NAME_KEY, null);
+    public GmailSenderPreferences(Context context, SharedPreferences sharedPreferences) {
+        super(context, sharedPreferences);
     }
 
     public void setDisplayName(String name) {

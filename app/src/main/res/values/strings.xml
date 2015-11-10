@@ -118,4 +118,10 @@
     <string name="msg_message_unable_addcontact">Unable to add contact. Please try again later</string>
     <string name="msg_message_contact_added">Contact added successfully!</string>
     <string name="msg_message_exceeded_maxduration">Maximum recording time has been reached. Stopped recording</string>
+    <string name="pick_account">Pick a Google account:</string>
+    <string name="this_account_will_be_used">This account will be used for authentication and to send email messages</string>
+    <string name="no_google_accounts_found">No Google accounts found!</string>
+    <string name="tap_to_add_account">Tap to add a Google account to your device</string>
+    <string name="must_authenticate_using_account">You must authenticate using a Google account. Please pick one and try again</string>
+    <string name="peppermint_sign_in">Sign In to Peppermint</string>
 </resources>

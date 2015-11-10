@@ -1,0 +1,94 @@
+package com.peppermint.app.ui.authentication;
+
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.app.Activity;
+import android.app.ListFragment;
+import android.content.Intent;
+import android.os.Bundle;
+import android.provider.Settings;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.LinearLayout;
+
+import com.peppermint.app.R;
+import com.peppermint.app.utils.PepperMintPreferences;
+
+/**
+ * Created by Nuno Luz on 10-11-2015.
+ */
+public class AuthFragment extends ListFragment implements View.OnClickListener, AdapterView.OnItemClickListener {
+
+    public static final String INTENT_ACCOUNT_NAME_KEY = "AuthActivity_AccountName";
+
+    public static boolean startAuthentication(Activity callerActivity, int requestCode) {
+        PepperMintPreferences prefs = new PepperMintPreferences(callerActivity);
+        if(prefs.getGmailPreferences().getPreferredAccountName() != null) {
+            return false;
+        }
+
+        Account[] accounts = AccountManager.get(callerActivity).getAccountsByType("com.google");
+        if(accounts.length == 1) {
+            prefs.getGmailPreferences().setPreferredAccountName(accounts[0].name);
+            return false;
+        }
+
+        Intent intent = new Intent(callerActivity, AuthActivity.class);
+        callerActivity.startActivityForResult(intent, requestCode);
+        return true;
+    }
+
+    private LinearLayout mEmptyContainer;
+    private AuthArrayAdapter mAdapter;
+    private Account[] mAccounts;
+    private PepperMintPreferences mPreferences;
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public void onAttach(Activity context) {
+        super.onAttach(context);
+        mPreferences = new PepperMintPreferences(getActivity());
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        // inflate the view
+        View v = inflater.inflate(R.layout.f_authentication, container, false);
+
+        mEmptyContainer = (LinearLayout) v.findViewById(android.R.id.empty);
+        mEmptyContainer.setOnClickListener(this);
+
+        return v;
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        getListView().setOnItemClickListener(this);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mAccounts = AccountManager.get(getActivity()).getAccountsByType("com.google");
+        mAdapter = new AuthArrayAdapter(getActivity(), mAccounts);
+        getListView().setAdapter(mAdapter);
+    }
+
+    @Override
+    public void onClick(View v) {
+        if(v.equals(mEmptyContainer)) {
+            startActivity(new Intent(Settings.ACTION_ADD_ACCOUNT));
+            return;
+        }
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        mPreferences.getGmailPreferences().setPreferredAccountName(mAccounts[position].name);
+        getActivity().setResult(Activity.RESULT_OK);
+        getActivity().finish();
+    }
+}

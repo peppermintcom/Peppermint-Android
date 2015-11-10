@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
 import com.peppermint.app.R;
+import com.peppermint.app.sending.gmail.GmailSenderPreferences;
 
 import java.util.ArrayList;
 
@@ -32,10 +33,13 @@ public class PepperMintPreferences {
     protected SharedPreferences mSettings;
     protected SharedPreferences.Editor mEditor;
     protected Context mContext;
+    protected GmailSenderPreferences mGmailPreferences;
 
     public PepperMintPreferences(Context context) {
         this.mContext = context;
         this.mSettings = PreferenceManager.getDefaultSharedPreferences(mContext);
+
+        mGmailPreferences = new GmailSenderPreferences(mContext, mSettings);
     }
 
     public SharedPreferences getSharedPreferences() {
@@ -176,5 +180,9 @@ public class PepperMintPreferences {
         edit();
         mEditor.putBoolean(IS_FIRST_RUN_KEY, val);
         commit();
+    }
+
+    public GmailSenderPreferences getGmailPreferences() {
+        return mGmailPreferences;
     }
 }
