@@ -72,6 +72,7 @@
 
             </LinearLayout>
 
+            <!-- To add new contact/recipient -->
             <RelativeLayout
                 android:layout_alignParentBottom="true"
                 android:orientation="horizontal"
@@ -149,15 +150,9 @@
                             android:singleLine="true"
                             android:imeOptions="flagNoExtractUi" />
                     </LinearLayout>
-
                 </LinearLayout>
-
             </RelativeLayout>
-
-
         </RelativeLayout>
-
-
     </FrameLayout>
 
     <LinearLayout android:id="@+id/progressContainer"

@@ -181,8 +181,8 @@ public class RecordServiceManager {
      * @param filePrefix the filename prefix of the record
      * @param recipient the recipient of the record
      */
-    public void startRecording(String filePrefix, Recipient recipient) {
-        mService.start(filePrefix, recipient);
+    public void startRecording(String filePrefix, Recipient recipient, long maxDurationMillis) {
+        mService.start(filePrefix, recipient, maxDurationMillis);
     }
 
     /**
@@ -233,5 +233,13 @@ public class RecordServiceManager {
 
     public boolean isBound() {
         return mIsBound;
+    }
+
+    public Recipient getCurrentRecipient() {
+        return mService.getCurrentRecipient();
+    }
+
+    public Recording getCurrentRecording() {
+        return mService.getCurrentRecording();
     }
 }

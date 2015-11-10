@@ -117,4 +117,5 @@
     <string name="msg_message_invalid_contactvia">Please input a valid email address or phone number</string>
     <string name="msg_message_unable_addcontact">Unable to add contact. Please try again later</string>
     <string name="msg_message_contact_added">Contact added successfully!</string>
+    <string name="msg_message_exceeded_maxduration">Maximum recording time has been reached. Stopped recording</string>
 </resources>
