@@ -1,6 +1,7 @@
 package com.peppermint.app;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -13,6 +14,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.peppermint.app.ui.CustomActionBarActivity;
+import com.peppermint.app.ui.authentication.AuthFragment;
 import com.peppermint.app.ui.recipients.RecipientsFragment;
 import com.peppermint.app.ui.settings.SettingsActivity;
 import com.peppermint.app.ui.tutorial.TutorialActivity;
@@ -23,9 +25,11 @@ import java.util.List;
 
 public class MainActivity extends CustomActionBarActivity {
 
+    private static final int AUTHENTICATION_REQUEST = 110;
     private static final int PERMISSION_REQUEST = 109;
     private static final String[] PERMISSIONS = {
         Manifest.permission.READ_CONTACTS,
+        Manifest.permission.WRITE_CONTACTS,
         "android.permission.READ_PROFILE",
         Manifest.permission.RECORD_AUDIO,
         Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -86,7 +90,6 @@ public class MainActivity extends CustomActionBarActivity {
             intent.setAction("com.android.launcher.action.INSTALL_SHORTCUT");
             sendBroadcast(intent);
 
-            mPreferences.setFirstRun(false);
             Intent tutorialIntent = new Intent(this, TutorialActivity.class);
             startActivity(tutorialIntent);
         }
@@ -97,26 +100,36 @@ public class MainActivity extends CustomActionBarActivity {
         super.onResume();
         Log.d("TAG", "onResume");
 
-        mPermissionsToAsk = new ArrayList<>();
-        for(int i=0; i<PERMISSIONS.length; i++) {
-            if(ContextCompat.checkSelfPermission(this,
-                    PERMISSIONS[i]) != PackageManager.PERMISSION_GRANTED) {
-                mPermissionsToAsk.add(PERMISSIONS[i]);
+        // only verify permissions and authentication after the tutorial is presented
+        // i.e. after second onResume()
+        if(!mPreferences.isFirstRun()) {
+            mPermissionsToAsk = new ArrayList<>();
+            for (int i = 0; i < PERMISSIONS.length; i++) {
+                if (ContextCompat.checkSelfPermission(this,
+                        PERMISSIONS[i]) != PackageManager.PERMISSION_GRANTED) {
+                    mPermissionsToAsk.add(PERMISSIONS[i]);
+                }
             }
-        }
 
-        // extra conditional permission SMS_SEND
-        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            if(ContextCompat.checkSelfPermission(this,
-                    Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
-                mPermissionsToAsk.add(Manifest.permission.SEND_SMS);
+            // extra conditional permission SMS_SEND
+            if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+                if (ContextCompat.checkSelfPermission(this,
+                        Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+                    mPermissionsToAsk.add(Manifest.permission.SEND_SMS);
+                }
             }
-        }
 
-        if(mPermissionsToAsk.size() > 0) {
-            ActivityCompat.requestPermissions(this,
-                    mPermissionsToAsk.toArray(new String[mPermissionsToAsk.size()]),
-                    PERMISSION_REQUEST);
+            // first request all permissions
+            if (mPermissionsToAsk.size() > 0) {
+                ActivityCompat.requestPermissions(this,
+                        mPermissionsToAsk.toArray(new String[mPermissionsToAsk.size()]),
+                        PERMISSION_REQUEST);
+            } else {
+                // afterwards, request authentication
+                AuthFragment.startAuthentication(this, AUTHENTICATION_REQUEST);
+            }
+        } else {
+            mPreferences.setFirstRun(false);
         }
     }
 
@@ -140,6 +153,18 @@ public class MainActivity extends CustomActionBarActivity {
                 }
             } else {
                 Toast.makeText(this, R.string.must_supply_mandatory_permissions, Toast.LENGTH_LONG).show();
+                finish();
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode == AUTHENTICATION_REQUEST) {
+            if(resultCode != Activity.RESULT_OK) {
+                Toast.makeText(this, R.string.must_authenticate_using_account, Toast.LENGTH_LONG).show();
                 finish();
             }
         }

@@ -1,7 +1,6 @@
 package com.peppermint.app.ui.recipients;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -9,7 +8,7 @@ import android.widget.ArrayAdapter;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.data.Recipient;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,25 +20,11 @@ import java.util.Map;
  */
 public class RecipientArrayAdapter extends ArrayAdapter<Recipient> {
 
-    public static RecipientArrayAdapter get(PeppermintApp app, Context context, Long[] allowedIds) {
-
-        Map<Long, Recipient> recipientMap = new HashMap<>();
-
-        Cursor cursor = RecipientAdapterUtils.getRecipientsCursor(context, allowedIds, null, null, null);
-        while(cursor.moveToNext()) {
-            Recipient recipient = RecipientAdapterUtils.getRecipient(cursor);
-            recipientMap.put(recipient.getContactId(), recipient);
-        }
-        cursor.close();
-
-        return new RecipientArrayAdapter(app, context, recipientMap, allowedIds);
-    }
-
     private PeppermintApp mApp;
     private Map<Long, Recipient> mRecipientMap;
-    private Long[] mAllowedIds;
+    private List<Long> mAllowedIds;
 
-    public RecipientArrayAdapter(PeppermintApp app, Context context, Map<Long, Recipient> recipientMap, Long[] allowedIds) {
+    public RecipientArrayAdapter(PeppermintApp app, Context context, Map<Long, Recipient> recipientMap, List<Long> allowedIds) {
         super(context, 0);
         this.mRecipientMap = recipientMap;
         this.mApp = app;
@@ -53,17 +38,17 @@ public class RecipientArrayAdapter extends ArrayAdapter<Recipient> {
 
     @Override
     public long getItemId(int position) {
-        return mAllowedIds[position];
+        return mAllowedIds.get(position);
     }
 
     @Override
     public Recipient getItem(int position) {
-        long id = mAllowedIds[position];
+        long id = mAllowedIds.get(position);
         return mRecipientMap.get(id);
     }
 
     @Override
     public int getCount() {
-        return mAllowedIds.length;
+        return mAllowedIds.size();
     }
 }

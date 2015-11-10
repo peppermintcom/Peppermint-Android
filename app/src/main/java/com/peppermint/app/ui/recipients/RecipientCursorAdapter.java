@@ -11,6 +11,8 @@ import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.data.Recipient;
 
+import java.util.List;
+
 /**
  * Created by Nuno Luz on 27/08/2015.
  *
@@ -18,7 +20,7 @@ import com.peppermint.app.data.Recipient;
  */
 public class RecipientCursorAdapter extends CursorAdapter {
 
-    public static RecipientCursorAdapter get(PeppermintApp app, Context context, Long[] allowedIds, String freeTextSearch, Boolean areStarred, String[] allowedMimeTypes) {
+    public static RecipientCursorAdapter get(PeppermintApp app, Context context, List<Long> allowedIds, String freeTextSearch, Boolean areStarred, List<String> allowedMimeTypes) {
         return new RecipientCursorAdapter(app, context, RecipientAdapterUtils.getRecipientsCursor(context, allowedIds, freeTextSearch, areStarred, allowedMimeTypes));
     }
 

@@ -40,6 +40,8 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     // intent key containing a flag indicating if the sending of the recorded file was requested or not
     public static final String INTENT_RESULT_SENDING_EXTRA = "PepperMint_ResultSendingExtra";
 
+    private static final long MAX_DURATION_MILLIS = 600000; // 10min
+
     private PepperMintPreferences mPreferences;
 
     private RecordServiceManager mRecordManager;
@@ -87,8 +89,12 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
         mBtnRestart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mPressedRestart = true;
-                mRecordManager.stopRecording(true);
+                if(mRecordManager.isRecording()) {
+                    mPressedRestart = true;
+                    mRecordManager.stopRecording(true);
+                } else {
+                    mRecordManager.startRecording(mFilename, mRecipient, MAX_DURATION_MILLIS);
+                }
             }
         });
 
@@ -99,7 +105,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
 
                 if (!mRecordManager.isRecording() && !mRecordManager.isPaused()) {
                     mBtnPauseResume.setEnabled(false);
-                    mRecordManager.startRecording(mFilename, mRecipient);
+                    mRecordManager.startRecording(mFilename, mRecipient, MAX_DURATION_MILLIS);
                     return;
                 }
 
@@ -127,8 +133,12 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
                 if (mRecordView.getSeconds() < 2) {
                     Toast.makeText(RecordingFragment.this.getActivity(), R.string.msg_record_at_least, Toast.LENGTH_SHORT).show();
                 } else {
-                    mPressedSend = true;
-                    mRecordManager.stopRecording(false);
+                    if(mRecordManager.isRecording()) {
+                        mPressedSend = true;
+                        mRecordManager.stopRecording(false);
+                    } else {
+                        sendMessage();
+                    }
                 }
             }
         });
@@ -194,18 +204,27 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
         mLastLoudnessFactor = 1f;
 
         if(mPressedSend) {
-            mPreferences.addRecentContactUri(event.getRecipient().getContactId());
-
-            SenderServiceManager sendRecordServiceManager = new SenderServiceManager(getActivity());
-            sendRecordServiceManager.startAndSend(event.getRecipient(), event.getRecording());
-
-            Intent resultIntent = new Intent();
-            resultIntent.putExtra(INTENT_RESULT_SENDING_EXTRA, true);
-            getActivity().setResult(Activity.RESULT_OK, resultIntent);
-            getActivity().finish();
+            sendMessage();
+            mPressedSend = false;
         } else if(mPressedRestart) {
-            mRecordManager.startRecording(mFilename, mRecipient);
+            mRecordManager.startRecording(mFilename, mRecipient, MAX_DURATION_MILLIS);
+            mPressedRestart = false;
+        } else if(event.getRecording().getDurationMillis() >= MAX_DURATION_MILLIS) {
+            mBtnPauseResume.setEnabled(false);
+            Toast.makeText(getActivity(), R.string.msg_message_exceeded_maxduration, Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void sendMessage() {
+        mPreferences.addRecentContactUri(mRecipient.getContactId());
+
+        SenderServiceManager sendRecordServiceManager = new SenderServiceManager(getActivity());
+        sendRecordServiceManager.startAndSend(mRecipient, mRecordManager.getCurrentRecording());
+
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra(INTENT_RESULT_SENDING_EXTRA, true);
+        getActivity().setResult(Activity.RESULT_OK, resultIntent);
+        getActivity().finish();
     }
 
     @Override
@@ -278,7 +297,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
                 if(mRecordManager.isPaused()) {
                     mRecordManager.resumeRecording();
                 } else if(!mRecordManager.isRecording()){
-                    mRecordManager.startRecording(mFilename, mRecipient);
+                    mRecordManager.startRecording(mFilename, mRecipient, MAX_DURATION_MILLIS);
                 }
             }
         } else {

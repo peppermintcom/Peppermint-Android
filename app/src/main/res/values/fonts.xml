@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="font_regular">fonts/OpenSans-Regular.ttf</string>
+    <string name="font_semibold">fonts/OpenSans-Semibold.ttf</string>
+    <string name="font_bold">fonts/OpenSans-Bold.ttf</string>
+</resources>

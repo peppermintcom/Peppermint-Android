@@ -10,7 +10,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,7 +78,6 @@ public class FilteredCursor implements Cursor {
             return;
         }
 
-        Log.d(TAG, "Cursor Count: " + mCursor.getCount());
         mCursor.moveToPosition(-1);
         while(mCursor.moveToNext()) {
             if(filter.isValid(mCursor)) {

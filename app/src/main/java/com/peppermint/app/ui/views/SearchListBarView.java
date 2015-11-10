@@ -55,7 +55,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
     private int mMinSearchCharacters = MIN_SEARCH_CHARACTERS;
     private int mSelectedItemPosition = 0;
 
-    private Handler mHandler = new Handler();
+    /*private Handler mHandler = new Handler();*/
 
     private TextWatcher mTextWatcher = new TextWatcher() {
         @Override
@@ -64,8 +64,9 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         public void onTextChanged(CharSequence s, int start, int before, int count) { /* nothing to do here */ }
         @Override
         public void afterTextChanged(Editable s) {
-            mHandler.removeCallbacks(mSearchRunnable);
-            mHandler.postDelayed(mSearchRunnable, 10);
+            /*mHandler.removeCallbacks(mSearchRunnable);
+            mHandler.postDelayed(mSearchRunnable, 10);*/
+            mSearchRunnable.run();
         }
     };
 

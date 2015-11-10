@@ -1,14 +1,20 @@
 package com.peppermint.app.ui.recipients;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorSet;
 import android.app.Activity;
 import android.app.ListFragment;
+import android.content.ContentProviderOperation;
+import android.content.ContentProviderResult;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Point;
 import android.media.MediaPlayer;
-import android.os.Build;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
@@ -17,13 +23,16 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.CursorAdapter;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.RecordService;
@@ -38,13 +47,17 @@ import com.peppermint.app.ui.canvas.progress.LoadingView;
 import com.peppermint.app.ui.views.RecordingOverlayView;
 import com.peppermint.app.ui.views.SearchListBarAdapter;
 import com.peppermint.app.ui.views.SearchListBarView;
+import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.NoMicDataIOException;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
 
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class RecipientsFragment extends ListFragment implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener, View.OnTouchListener,
@@ -53,6 +66,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     // recording overlay
     private static final String RECORDING_OVERLAY_TAG = "RECORDING";
     private static final int RECORDING_OVERLAY_HIDE_DELAY = 1000;
+    private static final long MAX_DURATION_MILLIS = 15000; // 10min
 
     // keys to save the instance state
     private static final String RECIPIENT_TYPE_POS_KEY = "RecipientsFragment_RecipientTypePosition";
@@ -64,6 +78,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     private PepperMintPreferences mPreferences;
     private CustomActionBarActivity mActivity;
+    private AnimatorBuilder mAnimatorBuilder;
     private RecordingOverlayView mRecordingViewOverlay;
     private boolean mSendRecording = false;
     private boolean mDestroyed = false;
@@ -83,6 +98,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private LoadingView mRecipientLoadingView;
     private boolean mRecipientListShown;
     private BaseAdapter mRecipientAdapter;
+
+    // new recipient view
+    private EditText mTxtNewName, mTxtNewContact;
+    private ImageButton mBtnNew;
+    private AnimatedAvatarView mNewAvatarView;
 
     private PopupWindow mHoldPopup;
     private Point mLastTouchPoint = new Point();
@@ -104,6 +124,97 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private SenderServiceManager mSenderServiceManager;
     private SenderControlLayout mLytSenderControl;
 
+    // search
+    private GetRecipients mGetRecipientsTask;
+    private class GetRecipients extends AsyncTask<Void, Void, Object> {
+        private RecipientType _recipientType;
+        private String _filter;
+
+        protected GetRecipients(String filter) {
+            this._filter = filter;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            setListShown(false);
+            _recipientType = (RecipientType) mSearchListBarView.getSelectedItem();
+        }
+
+        @Override
+        protected Object doInBackground(Void... nothing) {
+            try {
+                if (ContextCompat.checkSelfPermission(mActivity,
+                        Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+
+                    List<Long> recentList = mPreferences.getRecentContactUris();
+
+                    if (recentList != null && recentList.size() > 0 && _recipientType.isStarred() != null && _recipientType.isStarred()) {
+
+                        Map<Long, Recipient> recipientMap = new HashMap<>();
+
+                        Cursor cursor = RecipientAdapterUtils.getRecipientsCursor(getActivity(), recentList, null, null, null);
+                        recentList.clear();
+                        while(cursor.moveToNext()) {
+                            Recipient recipient = RecipientAdapterUtils.getRecipient(cursor);
+                            // this if removes deleted/invalid contacts from the list
+                            if(recipient.getVia() != null && recipient.getVia().trim().length() > 0) {
+                                recipientMap.put(recipient.getContactId(), recipient);
+                                recentList.add(recipient.getContactId());
+                            }
+                        }
+                        cursor.close();
+
+                        if(recentList.size() > 0) {
+                            return new RecipientArrayAdapter((PeppermintApp) getActivity().getApplication(), getActivity(), recipientMap, recentList);
+                        }
+                    }
+
+                    FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(getActivity(), null, _filter, _recipientType.isStarred(), _recipientType.getMimeTypes());
+                    cursor.filter();
+                    return cursor;
+                }
+            } catch(Throwable e) {
+                if(!(e instanceof InterruptedIOException)) {
+                    Crashlytics.logException(e);
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Object data) {
+            if(data != null) {
+                if (data instanceof Cursor) {
+                    // use cursor
+                    if (mRecipientAdapter != null && mRecipientAdapter instanceof CursorAdapter) {
+                        ((CursorAdapter) mRecipientAdapter).changeCursor((Cursor) data);
+                    } else {
+                        mRecipientAdapter = new RecipientCursorAdapter((PeppermintApp) getActivity().getApplication(), getActivity(), (Cursor) data);
+                        getListView().setAdapter(mRecipientAdapter);
+                    }
+                } else {
+                    // use adapter
+                    if (mRecipientAdapter != null && mRecipientAdapter instanceof CursorAdapter) {
+                        ((CursorAdapter) mRecipientAdapter).changeCursor(null);
+                    }
+                    mRecipientAdapter = (BaseAdapter) data;
+                    getListView().setAdapter(mRecipientAdapter);
+                }
+                mRecipientAdapter.notifyDataSetChanged();
+                if(mRecipientAdapter.getCount() <= 0) {
+                    mTxtNewName.setText(_filter);
+                }
+            }
+            setListShown(true);
+        }
+
+        @Override
+        protected void onCancelled(Object o) {
+            /* nothing to do here; keep the list hidden */
+        }
+    }
+
     // smiley face (avatar) random animations
     private final Random mRandom = new Random();
     private final Handler mHandler = new Handler();
@@ -118,6 +229,12 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 if(!v.isShowStaticAvatar()) {
                     possibleAnimationsList.add(v);
                 }
+            }
+
+            if(mNewAvatarView.getVisibility() == View.VISIBLE) {
+                possibleAnimationsList.add(mNewAvatarView);
+            } else {
+                mNewAvatarView.stopDrawingThread();
             }
 
             // randomly pick one
@@ -139,6 +256,35 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         }
     };
 
+    // loading animation
+    private AnimatorSet mLoadingAnimator;
+    private Animator.AnimatorListener mLoadingAnimatorListener = new Animator.AnimatorListener() {
+        @Override
+        public void onAnimationStart(Animator animation) {
+            if(mRecipientListShown) {
+                mRecipientListContainer.setVisibility(View.VISIBLE);
+            } else {
+                mRecipientLoadingView.startAnimations();
+                mRecipientLoadingView.startDrawingThread();
+                mRecipientLoadingContainer.setVisibility(View.VISIBLE);
+            }
+        }
+        @Override
+        public void onAnimationEnd(Animator animation) {
+            if(mRecipientListShown) {
+                mRecipientLoadingContainer.setVisibility(View.INVISIBLE);
+                mRecipientLoadingView.stopAnimations();
+                mRecipientLoadingView.stopDrawingThread();
+            } else {
+                mRecipientListContainer.setVisibility(View.INVISIBLE);
+            }
+        }
+        @Override
+        public void onAnimationCancel(Animator animation) { }
+        @Override
+        public void onAnimationRepeat(Animator animation) { }
+    };
+
     public RecipientsFragment() {
     }
 
@@ -154,6 +300,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mRecordManager = new RecordServiceManager(activity);
         mRecordManager.setListener(this);
         mDestroyed = false;
+        mAnimatorBuilder = new AnimatorBuilder();
     }
 
     @Override
@@ -229,6 +376,79 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         int peppermintColor = ContextCompat.getColor(getActivity(), R.color.green_text);
         txtEmpty2.setText(Html.fromHtml(String.format(getString(R.string.msg_add_some_friends), String.format("#%06X", (0xFFFFFF & peppermintColor)))));
 
+        // init new recipient view
+        TextView txtNewVia = (TextView) v.findViewById(R.id.txtVia);
+        mTxtNewName = (EditText) v.findViewById(R.id.txtName);
+        mTxtNewContact = (EditText) v.findViewById(R.id.txtContact);
+        mBtnNew = (ImageButton) v.findViewById(R.id.btnAddContact);
+        mNewAvatarView = (AnimatedAvatarView) v.findViewById(R.id.imgPhoto);
+
+        txtNewVia.setTypeface(app.getFontRegular());
+        mTxtNewName.setTypeface(app.getFontSemibold());
+        mTxtNewContact.setTypeface(app.getFontSemibold());
+        mNewAvatarView.setShowStaticAvatar(false);
+        mBtnNew.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String name = mTxtNewName.getText().toString().trim();
+                String via = mTxtNewContact.getText().toString().trim();
+                String mimeType = null;
+
+                // validate display name
+                if(name.length() <= 0) {
+                    Toast.makeText(getActivity(), R.string.msg_message_invalid_contactname, Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                // validate email
+                if(Utils.isValidEmail(via)) {
+                    mimeType = ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE;
+                } else if(Utils.isValidPhoneNumber(via)) {
+                    mimeType = ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE;
+                }
+
+                if(mimeType == null) {
+                    Toast.makeText(getActivity(), R.string.msg_message_invalid_contactvia, Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+
+                // create raw contact
+                ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
+                        .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
+                        .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null).build());
+
+                // add display name data
+                ops.add(ContentProviderOperation
+                        .newInsert(ContactsContract.Data.CONTENT_URI)
+                        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                        .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+                        .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name)
+                        .build());
+
+                // add phone/email data
+                ops.add(ContentProviderOperation
+                        .newInsert(ContactsContract.Data.CONTENT_URI)
+                        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                        .withValue(ContactsContract.Data.MIMETYPE, mimeType)
+                        .withValue(ContactsContract.Data.DATA1, via).build());
+
+                try {
+                    ContentProviderResult[] res = getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+                    if(res.length < ops.size()) {
+                        throw new RuntimeException("Not all operations were performed while trying to insert contact: Total Ops = " + ops.size() + "; Performed = " + res.length);
+                    }
+                    Toast.makeText(getActivity(), R.string.msg_message_contact_added, Toast.LENGTH_LONG).show();
+                    // refresh listview
+                    mSearchListBarView.setSearchText(mSearchListBarView.getSearchText());
+                } catch (Throwable e) {
+                    Toast.makeText(getActivity(), R.string.msg_message_unable_addcontact, Toast.LENGTH_LONG).show();
+                    Crashlytics.logException(e);
+                }
+            }
+        });
+
         // init loading recipients view
         mRecipientListShown = true;
         mRecipientLoadingContainer = v.findViewById(R.id.progressContainer);
@@ -242,6 +462,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mLytSenderControl.setSenderManager(mSenderServiceManager);
         mLytSenderControl.setTypeface(app.getFontSemibold());
         mSenderServiceManager.setListener(mLytSenderControl);
+
+        // avoid showing "no contacts" for a split second, right after creation
+        setListShownNoAnimation(false);
 
         return v;
     }
@@ -334,31 +557,25 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         if (mRecipientListShown == shown) {
             return;
         }
+
+        if(mLoadingAnimator != null && mLoadingAnimator.isRunning()) {
+            mLoadingAnimator.cancel();
+            mLoadingAnimator.removeAllListeners();
+            mLoadingAnimatorListener.onAnimationEnd(null);
+        }
+
         mRecipientListShown = shown;
-        if (shown) {
-            if (animate && getActivity() != null) {
-                mRecipientLoadingContainer.startAnimation(AnimationUtils.loadAnimation(
-                        getActivity(), android.R.anim.fade_out));
-                mRecipientListContainer.startAnimation(AnimationUtils.loadAnimation(
-                        getActivity(), android.R.anim.fade_in));
-            }
-            mRecipientLoadingContainer.setVisibility(View.INVISIBLE);
-            mRecipientListContainer.setVisibility(View.VISIBLE);
 
-            mRecipientLoadingView.stopAnimations();
-            mRecipientLoadingView.stopDrawingThread();
+        if (animate && getActivity() != null) {
+            Animator fadeOut = mAnimatorBuilder.buildFadeOutAnimator(shown ? mRecipientLoadingContainer : mRecipientListContainer);
+            Animator fadeIn = mAnimatorBuilder.buildFadeInAnimator(shown ? mRecipientListContainer : mRecipientLoadingContainer);
+            mLoadingAnimator = new AnimatorSet();
+            mLoadingAnimator.addListener(mLoadingAnimatorListener);
+            mLoadingAnimator.playTogether(fadeOut, fadeIn);
+            mLoadingAnimator.start();
         } else {
-            if (animate && getActivity() != null) {
-                mRecipientLoadingContainer.startAnimation(AnimationUtils.loadAnimation(
-                        getActivity(), android.R.anim.fade_in));
-                mRecipientListContainer.startAnimation(AnimationUtils.loadAnimation(
-                        getActivity(), android.R.anim.fade_out));
-            }
-            mRecipientLoadingContainer.setVisibility(View.VISIBLE);
-            mRecipientListContainer.setVisibility(View.INVISIBLE);
-
-            mRecipientLoadingView.startAnimations();
-            mRecipientLoadingView.startDrawingThread();
+            mLoadingAnimatorListener.onAnimationStart(null);
+            mLoadingAnimatorListener.onAnimationEnd(null);
         }
     }
     @Override
@@ -394,7 +611,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             mRecordingViewOverlay.setName(recipient.getName());
             mRecordingViewOverlay.setVia(recipient.getVia());
             String filename = getString(R.string.filename_message_from) + Utils.normalizeAndCleanString(mPreferences.getDisplayName());
-            mRecordManager.startRecording(filename, recipient);
+            mRecordManager.startRecording(filename, recipient, MAX_DURATION_MILLIS);
         }
         return true;
     }
@@ -454,49 +671,12 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onSearch(String filter) {
-        // check permission
-        if(ContextCompat.checkSelfPermission(mActivity,
-                Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
-
-            RecipientType recipientType = (RecipientType) mSearchListBarView.getSelectedItem();
-            List<Long> recentList = mPreferences.getRecentContactUris();
-
-            if (recentList != null && recentList.size() > 0 && recipientType.isStarred() != null && recipientType.isStarred()) {
-                Long[] recentArray = recentList.toArray(new Long[recentList.size()]);
-                if (mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
-                    ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(null);
-                }
-                mRecipientAdapter = RecipientArrayAdapter.get((PeppermintApp) getActivity().getApplication(), getActivity(), recentArray);
-                getListView().setAdapter(mRecipientAdapter);
-                mRecipientAdapter.notifyDataSetChanged();
-                return;
-            }
-
-            FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(getActivity(), null, filter, recipientType.isStarred(), recipientType.getMimeTypes());
-            setListShown(false);
-            cursor.filterAsync(new FilteredCursor.FilterCallback() {
-                @Override
-                public void done(FilteredCursor cursor) {
-                    if(getActivity() == null) {
-                        return;
-                    }
-                    // in some recent versions getActivity() doesn't return null
-                    // when the activity is destroyed, so just check with the proper method
-                    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && getActivity().isDestroyed()) {
-                        return;
-                    }
-
-                    if (mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
-                        ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(cursor);
-                    } else {
-                        mRecipientAdapter = new RecipientCursorAdapter((PeppermintApp) getActivity().getApplication(), getActivity(), cursor);
-                        getListView().setAdapter(mRecipientAdapter);
-                    }
-                    mRecipientAdapter.notifyDataSetChanged();
-                    setListShown(true);
-                }
-            });
+        if(mGetRecipientsTask != null && !mGetRecipientsTask.isCancelled() && mGetRecipientsTask.getStatus() != AsyncTask.Status.FINISHED) {
+            mGetRecipientsTask.cancel(true);
         }
+
+        mGetRecipientsTask = new GetRecipients(filter);
+        mGetRecipientsTask.execute();
     }
 
     private boolean hasRecentsOrFavourites() {
@@ -536,7 +716,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public void onStopRecording(RecordService.Event event) {
         onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
-        if(mSendRecording) {
+        if(mSendRecording || mRecordManager.getCurrentRecording().getDurationMillis() >= MAX_DURATION_MILLIS) {
             mPreferences.addRecentContactUri(event.getRecipient().getContactId());
 
             // if the user has gone through the sending process without
@@ -546,6 +726,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             mSenderServiceManager.startAndSend(event.getRecipient(), event.getRecording());
             mSendRecording = false;
         }
+        hideRecordingOverlay(true);
     }
 
     @Override

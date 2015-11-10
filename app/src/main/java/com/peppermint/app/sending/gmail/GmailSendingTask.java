@@ -1,5 +1,7 @@
 package com.peppermint.app.sending.gmail;
 
+import android.util.Log;
+
 import com.crashlytics.android.Crashlytics;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
@@ -22,6 +24,7 @@ import com.peppermint.app.utils.Utils;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
@@ -77,6 +80,8 @@ public class GmailSendingTask extends SendingTask {
             throw new GmailPreferredAccountNotSetException();
         }
 
+        String displayName = ((GmailSenderPreferences) getSenderPreferences()).getDisplayName();
+
         String url = (String) getSendingRequest().getParameter(ServerSendingTask.PARAM_SHORT_URL);
         String body = "<p>" + String.format(getSender().getContext().getString(R.string.default_mail_body_url), url, (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO)) + "</p><br />" + getSender().getContext().getString(R.string.default_mail_body_reply);
         getSendingRequest().setBody(body);
@@ -85,7 +90,7 @@ public class GmailSendingTask extends SendingTask {
             long now = android.os.SystemClock.uptimeMillis();
 
             MimeMessage email = createEmailWithAttachment(getSendingRequest().getRecipient().getVia(),
-                    preferredAccountName, (String) getParameter(GmailSender.PARAM_DISPLAY_NAME),
+                    preferredAccountName, displayName,
                     getSendingRequest().getSubject(), getSendingRequest().getBody(),
                     file.getParent(), file.getName(),
                     (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO),
@@ -93,7 +98,16 @@ public class GmailSendingTask extends SendingTask {
             Message message = createMessageWithEmail(email);
             Draft draft = new Draft();
             draft.setMessage(message);
-            draft = ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().drafts().create("me", draft).execute();
+
+            try {
+                draft = ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().drafts().create("me", draft).execute();
+            } catch (InterruptedIOException e) {
+                Log.d(TAG, "Interrupted creating draft! Likely user cancelled.", e);
+                if(!isCancelled()) {
+                    Crashlytics.logException(e);
+                    throw e;
+                }
+            }
 
             // make the sending process last at least 5 secs
             if(!isCancelled()) {
@@ -108,10 +122,22 @@ public class GmailSendingTask extends SendingTask {
             }
 
             if(!isCancelled()) {
-                ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().drafts().send("me", draft).execute();
-            } else {
+                try {
+                    ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().drafts().send("me", draft).execute();
+                } catch (InterruptedIOException e) {
+                    Log.d(TAG, "Interrupted sending draft! Likely user cancelled.", e);
+                    if(!isCancelled()) {
+                        Crashlytics.logException(e);
+                        ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().drafts().delete("me", draft.getId());
+                        throw e;
+                    }
+                }
+            }
+
+            if(isCancelled()) {
                 ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().drafts().delete("me", draft.getId());
             }
+
         } catch(GoogleJsonResponseException e) {
             throw e;
         } catch(GooglePlayServicesAvailabilityIOException e) {
@@ -119,7 +145,7 @@ public class GmailSendingTask extends SendingTask {
         } catch(UserRecoverableAuthIOException e) {
             throw e;
         } catch(IOException e) {
-            Crashlytics.logException(e);
+            Crashlytics.log(Log.ERROR, TAG, "Throwing NoInternetConnectionException: " + e.getMessage());
             throw new NoInternetConnectionException(getSender().getContext().getString(R.string.msg_no_internet), e);
         }
     }

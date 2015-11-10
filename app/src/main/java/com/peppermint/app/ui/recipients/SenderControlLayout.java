@@ -58,6 +58,7 @@ public class SenderControlLayout extends FrameLayout implements View.OnClickList
         mTxtTapToCancel = (TextView) findViewById(R.id.txtTapToCancel);
         mImgStatus = (ImageView) findViewById(R.id.imgStatus);
 
+        setClickable(true);
         setOnClickListener(this);
         mImgStatus.setVisibility(GONE);
         setVisibility(GONE);

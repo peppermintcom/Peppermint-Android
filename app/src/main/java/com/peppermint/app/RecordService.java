@@ -41,6 +41,11 @@ public class RecordService extends Service {
         This <b>must</b> be supplied if the DOSTART flag is true.
      **/
     public static final String INTENT_DATA_RECIPIENT = "RecordService_Recipient";
+    /**
+     Intent extra key for a long with the max duration for the recorded file in millis.
+     This should be supplied if the DOSTART flag is true.
+     **/
+    public static final String INTENT_DATA_MAXDURATION = "RecordService_MaxDuration";
 
     public static final int EVENT_START = 1;
     public static final int EVENT_RESUME = 2;
@@ -97,8 +102,8 @@ public class RecordService extends Service {
          * @param filePrefix the filename prefix of the record
          * @param recipient the recipient of the record
          */
-        void start(String filePrefix, Recipient recipient) {
-            RecordService.this.start(filePrefix, recipient);
+        void start(String filePrefix, Recipient recipient, long maxDurationMillis) {
+            RecordService.this.start(filePrefix, recipient, maxDurationMillis);
         }
 
         /**
@@ -293,9 +298,9 @@ public class RecordService extends Service {
         if(intent != null && intent.hasExtra(INTENT_DATA_DOSTART) && intent.hasExtra(INTENT_DATA_RECIPIENT)) {
             if(intent.getBooleanExtra(INTENT_DATA_DOSTART, false)) {
                 if(intent.hasExtra(INTENT_DATA_FILEPREFIX)) {
-                    start(intent.getStringExtra(INTENT_DATA_FILEPREFIX), (Recipient) intent.getSerializableExtra(INTENT_DATA_RECIPIENT));
+                    start(intent.getStringExtra(INTENT_DATA_FILEPREFIX), (Recipient) intent.getSerializableExtra(INTENT_DATA_RECIPIENT), intent.getLongExtra(INTENT_DATA_MAXDURATION, -1));
                 } else {
-                    start(null, (Recipient) intent.getSerializableExtra(INTENT_DATA_RECIPIENT));
+                    start(null, (Recipient) intent.getSerializableExtra(INTENT_DATA_RECIPIENT), intent.getLongExtra(INTENT_DATA_MAXDURATION, -1));
                 }
             }
         }
@@ -330,7 +335,7 @@ public class RecordService extends Service {
         return mRecorder != null && mRecorder.isPaused();
     }
 
-    void start(String filePrefix, Recipient recipient) {
+    void start(String filePrefix, Recipient recipient, long maxDurationMillis) {
         if(isRecording()) {
             throw new RuntimeException("A recording is already in progress. Available actions are pause, resume and stop.");
         }
@@ -345,7 +350,7 @@ public class RecordService extends Service {
         }
 
         mRecorder.setListener(mAudioRecorderListener);
-        mRecorder.start();
+        mRecorder.start(maxDurationMillis);
     }
 
     void pause() {

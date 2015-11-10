@@ -23,6 +23,11 @@ public class SenderPreferences {
         this.mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
     }
 
+    public SenderPreferences(Context context, SharedPreferences sharedPreferences) {
+        this.mContext = context;
+        this.mSharedPreferences = sharedPreferences;
+    }
+
     public SharedPreferences getSharedPreferences() {
         return mSharedPreferences;
     }
@@ -37,4 +42,7 @@ public class SenderPreferences {
         return getSharedPreferences().getBoolean(getEnabledPreferenceKey(this.getClass()), true);
     }
 
+    public Context getContext() {
+        return mContext;
+    }
 }

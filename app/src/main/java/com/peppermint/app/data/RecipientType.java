@@ -42,7 +42,7 @@ public class RecipientType implements SearchListBarView.ListItem {
     private long mId;
     private String mName;
     private int mIconResId;
-    private String[] mMimeTypes;
+    private List<String> mMimeTypes = new ArrayList<>();
     private Boolean mStarred;
     private boolean mSearchable = true;
 
@@ -50,7 +50,7 @@ public class RecipientType implements SearchListBarView.ListItem {
         this.mId = id;
         this.mName = name;
         this.mIconResId = iconResId;
-        this.mMimeTypes = mimeTypes;
+        setMimeType(mimeTypes);
         this.mStarred = starred;
         this.mSearchable = isSearchable;
     }
@@ -88,12 +88,15 @@ public class RecipientType implements SearchListBarView.ListItem {
         this.mIconResId = mIconResId;
     }
 
-    public String[] getMimeTypes() {
+    public List<String> getMimeTypes() {
         return mMimeTypes;
     }
 
     public void setMimeType(String[] mimeTypes) {
-        this.mMimeTypes = mimeTypes;
+        mMimeTypes.clear();
+        for(String mimeType : mimeTypes) {
+            mMimeTypes.add(mimeType);
+        }
     }
 
     public Boolean isStarred() {

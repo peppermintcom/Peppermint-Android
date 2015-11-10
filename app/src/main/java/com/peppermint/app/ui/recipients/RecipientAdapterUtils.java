@@ -76,7 +76,7 @@ public class RecipientAdapterUtils {
      * @param allowedMimeTypes the allowed mime types
      * @return the result cursor
      */
-    public static Cursor getRecipientsCursor(Context context, Long[] allowedIds, String freeTextSearch, Boolean areStarred, String[] allowedMimeTypes) {
+    public static Cursor getRecipientsCursor(Context context, List<Long> allowedIds, String freeTextSearch, Boolean areStarred, List<String> allowedMimeTypes) {
         List<String> args = new ArrayList<>();
         String condStarred = (areStarred == null ? "" : " AND " + ContactsContract.Contacts.STARRED + "=" + (areStarred ? "1" : "0"));
         String condFreeSearch = (freeTextSearch == null ? "" : " AND (LOWER(" + DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString(/*"%" + */freeTextSearch + "%") + " OR LOWER(" + ContactsContract.Data.DATA1 + ") LIKE " + DatabaseUtils.sqlEscapeString(/*"%" + */freeTextSearch + "%") + ")");
@@ -96,6 +96,7 @@ public class RecipientAdapterUtils {
 
             @Override
             public boolean isValid(Cursor cursor) {
+                // removes duplicate contacts
                 String via = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1)).trim().toLowerCase();
                 if (!mViaSet.contains(via)) {
                     mViaSet.add(via);
@@ -115,25 +116,25 @@ public class RecipientAdapterUtils {
      * @param <T> the allowed values type
      * @return the conditions string
      */
-    protected static <T> String getConditions(String field, T[] allowed, List<String> args, boolean isAnd) {
+    protected static <T> String getConditions(String field, List<T> allowed, List<String> args, boolean isAnd) {
         if(allowed == null) {
             return "1";
         }
 
         StringBuilder b = new StringBuilder();
-        for(int i=0; i<allowed.length; i++) {
+        for(int i=0; i<allowed.size(); i++) {
             if(i != 0) {
                 b.append(isAnd ? " AND " : " OR ");
             }
 
             if(args != null) {
-                args.add(allowed[i].toString());
+                args.add(allowed.get(i).toString());
                 b.append(field);
                 b.append("=?");
             } else {
                 b.append(field);
                 b.append("=");
-                b.append(allowed[i].toString());
+                b.append(allowed.get(i).toString());
             }
         }
         return b.toString();

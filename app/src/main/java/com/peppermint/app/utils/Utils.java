@@ -104,6 +104,15 @@ public class Utils {
     }
 
     /**
+     * Checks if the provided char sequence contains a valid phone number.
+     * @param phoneNumber the phone number
+     * @return true if valid; false if not
+     */
+    public static boolean isValidPhoneNumber(CharSequence phoneNumber) {
+        return !TextUtils.isEmpty(phoneNumber) && android.util.Patterns.PHONE.matcher(phoneNumber).matches();
+    }
+
+    /**
      * Scales an image (to avoid OutOfMemory exceptions) and shows it on the specified ImageView.
      * As seen in http://developer.android.com/training/camera/photobasics.html
      *

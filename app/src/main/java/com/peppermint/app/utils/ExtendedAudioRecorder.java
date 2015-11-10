@@ -66,6 +66,7 @@ public class ExtendedAudioRecorder {
     private boolean mRecording = false;
     private boolean mPaused = false;
     private boolean mDiscard = false;
+    private long mMaxDuration = -1;
 
     private Context mContext;
 
@@ -95,8 +96,8 @@ public class ExtendedAudioRecorder {
         }
     };
     public Object[] findAudioRecord() {
-        // 44100 increases the record size significantly
-        for (int rate : new int[] {/*44100, */22050, 16000, 11025, 8000}) {  // add the rates you wish to check against
+        // 44100 increases the record size significantly; to remove or not to remove?
+        for (int rate : new int[] {44100, 22050, 16000, 11025, 8000}) {  // add the rates you wish to check against
             try {
                 int bufferSize = AudioRecord.getMinBufferSize(rate, RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING);
                 if (bufferSize > 0) {
@@ -194,7 +195,7 @@ public class ExtendedAudioRecorder {
         return mPaused;
     }
 
-    public void start() {
+    public void start(long maxDurationMillis) {
         if(mRecording || mPaused) {
             throw new RuntimeException("Already recording or paused. Use pause, resume or stop.");
         }
@@ -214,6 +215,7 @@ public class ExtendedAudioRecorder {
             mFullSize = 0;
             mAmplitude = 0;
             mDiscard = false;
+            mMaxDuration = maxDurationMillis;
 
             startRecording(false);
         }
@@ -364,6 +366,12 @@ public class ExtendedAudioRecorder {
             mFullDuration += cicleNow - now;
             mFullSize = bitrate / 8f * (mFullDuration / 1000f);
             now = cicleNow;
+
+            // exit if max duration has been exceeded
+            if(mMaxDuration > 0 && mFullDuration > mMaxDuration) {
+                mDiscard = false;
+                stopRecording();
+            }
         }
 
         // close the output file stream present in the native encoder
