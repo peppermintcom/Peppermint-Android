@@ -41,6 +41,7 @@ public class ExtendedAudioRecorder {
     private static final String TAG = ExtendedAudioRecorder.class.getSimpleName();
     private static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd'_'HH-mm-ss");
 
+    private static final int SAMPLE_SIZE = 1024;
     private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO;
     private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
     private static final float MAX_GAIN = 5f;
@@ -102,11 +103,16 @@ public class ExtendedAudioRecorder {
                 int bufferSize = AudioRecord.getMinBufferSize(rate, RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING);
                 if (bufferSize > 0) {
                     // check if we can instantiate and have a success
+                    // careful with bufferSize! it seems to change the duration of the recording (gets slowed down in some cases)
                     AudioRecord recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, rate, RECORDER_CHANNELS,
-                            RECORDER_AUDIO_ENCODING, bufferElements2Rec * bytesPerElement);
+                            RECORDER_AUDIO_ENCODING, bufferSize * 5);
 
-                    if (recorder.getState() == AudioRecord.STATE_INITIALIZED)
+                    if (recorder.getState() == AudioRecord.STATE_INITIALIZED) {
+                        Log.d(TAG, "Picked AudioRecord Rate = " + rate + "; BufferSize = " + bufferSize + "; Channels = " + recorder.getChannelCount() + "; Encoding = " + recorder.getAudioFormat());
                         return new Object[]{recorder, rate};
+                    } else {
+                        recorder.release();
+                    }
                 }
             } catch(Throwable t) {
                 Crashlytics.logException(t);
@@ -178,9 +184,6 @@ public class ExtendedAudioRecorder {
             }
         }
     };
-
-    private final int bufferElements2Rec = 1024;
-    private final int bytesPerElement = 2; // 2 bytes in 16bit format
 
     public ExtendedAudioRecorder(Context context) {
         this.mContext = context;
@@ -314,16 +317,24 @@ public class ExtendedAudioRecorder {
         short dataOld = 0;
         mEncoder.init((int) bitrate, 1, sampleRate, 16, mTempFilePath);
 
-        short sData[] = new short[bufferElements2Rec];
+        short sData[] = new short[SAMPLE_SIZE];
         long now = android.os.SystemClock.uptimeMillis();
         int emptyIts = 0;
         int totalRead = 0;
 
         while (mRecording && !(totalRead == 0 && emptyIts >= MAX_EMPTY_ITERATIONS)) {
             // gets the voice output from microphone to short format
-            int numRead = recorder.read(sData, 0, bufferElements2Rec);
-            double[] bufferData = getBufferData(sData, 0, bufferElements2Rec);
+            int numRead = recorder.read(sData, 0, SAMPLE_SIZE);
+            double[] bufferData = getBufferData(sData, 0, SAMPLE_SIZE);
             totalRead += numRead;
+
+            /*StringBuilder b = new StringBuilder();
+            b.append("[ ");
+            for(int i=0; i<numRead; i++) {
+                b.append(sData[i] + ", ");
+            }
+            b.append("]");
+            Log.d(TAG, b.toString());*/
 
             mAmplitude = (int) bufferData[0];
             float gain = (float) bufferData[2];
@@ -411,6 +422,9 @@ public class ExtendedAudioRecorder {
         fc.close();
 
         discardTemp();
+
+        /*File f = new File(mTempFilePath);
+        f.renameTo(new File(mFilePath));*/
     }
 
     public boolean isRecording() {
