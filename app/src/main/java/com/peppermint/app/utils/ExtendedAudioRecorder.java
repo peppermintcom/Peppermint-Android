@@ -318,6 +318,7 @@ public class ExtendedAudioRecorder {
         mEncoder.init((int) bitrate, 1, sampleRate, 16, mTempFilePath);
 
         short sData[] = new short[SAMPLE_SIZE];
+        byte bData[] = new byte[SAMPLE_SIZE * 2];
         long now = android.os.SystemClock.uptimeMillis();
         int emptyIts = 0;
         int totalRead = 0;
@@ -357,7 +358,7 @@ public class ExtendedAudioRecorder {
             //decOld = (short) (dataOld - sData[numRead-2]);
 
             // encode in AAC using the native encoder
-            byte bData[] = Utils.short2Byte(sData);
+            Utils.short2Byte(sData, bData);
             mEncoder.encode(bData);
 
             // calculate duration

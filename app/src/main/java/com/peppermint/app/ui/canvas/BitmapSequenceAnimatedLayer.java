@@ -25,11 +25,12 @@ import java.util.List;
 public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements AnimatedLayer {
 
     private int[] mBitmapSequenceRes;
-    private BitmapDrawable[] mBitmapSequence;
+    private Bitmap[] mBitmapSequence;
 
     private Paint mPaint, mBorderPaint;
     private int mBorderWidth, mCornerRadius;
     private int mLastFrame = -1;
+    private Bitmap mLastBitmap;
 
     public BitmapSequenceAnimatedLayer(Context context, long duration, Paint paint) {
         super(context);
@@ -77,22 +78,23 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
             return;
         }
 
-        if(frame == mLastFrame) {
+        if(mLastFrame >= 0 && mBitmapSequenceRes[frame] == mBitmapSequenceRes[mLastFrame]) {
             return;
         }
 
         Bitmap bitmap = null;
         if(mBitmapSequence != null && mBitmapSequence.length > frame) {
-            bitmap = mBitmapSequence[frame].getBitmap();
+            bitmap = mBitmapSequence[frame];
         } else if(mBitmapSequenceRes.length > frame) {
-            BitmapDrawable drawable = (BitmapDrawable) Utils.getDrawable(getContext(), mBitmapSequenceRes[frame]);
-            if(drawable != null) {
-                bitmap = drawable.getBitmap();
+            bitmap = Utils.getScaledBitmap(getContext(), mBitmapSequenceRes[frame], getBounds().width() - mBorderWidth, getBounds().height() - mBorderWidth);
+            if(mLastBitmap != null) {
+                mLastBitmap.recycle();
+                mLastBitmap = bitmap;
             }
         }
 
         if(bitmap != null) {
-            BitmapShader shader = new BitmapShader(Bitmap.createScaledBitmap(bitmap, getBounds().width(), getBounds().height(), false), Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+            BitmapShader shader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
             mPaint.setShader(shader);
         } else {
             mPaint.setShader(null);
@@ -107,9 +109,15 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
 
     public void setBitmapSequenceResourceIds(boolean decodeAsYouGo, int... mBitmapSequenceRes) {
         if(!decodeAsYouGo) {
-            mBitmapSequence = new BitmapDrawable[mBitmapSequenceRes.length];
+            if(mBitmapSequence != null) {
+                for(int i=0; i<mBitmapSequence.length; i++) {
+                    mBitmapSequence[i].recycle();
+                }
+            }
+
+            mBitmapSequence = new Bitmap[mBitmapSequenceRes.length];
             for (int i = 0; i < mBitmapSequenceRes.length; i++) {
-                mBitmapSequence[i] = (BitmapDrawable) Utils.getDrawable(getContext(), mBitmapSequenceRes[i]);
+                mBitmapSequence[i] = ((BitmapDrawable) Utils.getDrawable(getContext(), mBitmapSequenceRes[i])).getBitmap();
             }
         }
 

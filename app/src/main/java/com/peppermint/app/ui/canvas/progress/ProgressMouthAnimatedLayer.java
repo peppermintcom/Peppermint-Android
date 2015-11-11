@@ -22,7 +22,7 @@ public class ProgressMouthAnimatedLayer extends BitmapSequenceAnimatedLayer {
         final int openMouth = 40;
         final int closedMouth = 40;
 
-        setBitmapSequenceResourceIds(false, new int[]{R.drawable.img_opening_mouth_1, closedMouth}
+        setBitmapSequenceResourceIds(true, new int[]{R.drawable.img_opening_mouth_1, closedMouth}
                 , new int[]{R.drawable.img_opening_mouth_2, normal1Duration}
                 , new int[]{R.drawable.img_opening_mouth_3, normal1Duration}
                 , new int[]{R.drawable.img_opening_mouth_4, normal1Duration}
