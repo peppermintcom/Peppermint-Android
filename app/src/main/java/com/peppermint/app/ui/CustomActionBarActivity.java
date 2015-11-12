@@ -102,7 +102,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
                 }
             }
             if (allHidden) {
-                setFullscreen(false);
+                //setFullscreen(false);
                 mLytOverlay.setVisibility(View.GONE);
             }
         }
@@ -300,7 +300,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
             return false;
         }
 
-        setFullscreen(true);
+        //setFullscreen(true);
         mLytOverlay.setVisibility(View.VISIBLE);
         ow.view.setVisibility(View.VISIBLE);
 
@@ -454,7 +454,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
         }
     }
 
-    private void setFullscreen(boolean fullscreen)
+    /*private void setFullscreen(boolean fullscreen)
     {
         WindowManager.LayoutParams attrs = getWindow().getAttributes();
         if (fullscreen)
@@ -466,7 +466,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
             attrs.flags &= ~WindowManager.LayoutParams.FLAG_FULLSCREEN;
         }
         getWindow().setAttributes(attrs);
-    }
+    }*/
 
     protected void selectItemFromDrawer(final int position) {
         NavigationItem navItem = mNavigationItemList.get(position);

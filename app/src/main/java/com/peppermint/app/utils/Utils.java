@@ -23,6 +23,8 @@ import android.view.Display;
 import android.view.WindowManager;
 import android.widget.ImageView;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -283,6 +285,52 @@ public class Utils {
     }
 
     /**
+     * Returns a scaled bitmap from the supplied resource id. The scaled image keeps the aspect ratio,
+     * with either or both height and width set to the supplied value.
+     *
+     * @param context the context
+     * @param resId the resource id (image/drawable id)
+     * @param width the scaled image width
+     * @param height the scaled image height
+     * @return the scaled image bitmap
+     */
+    public static Bitmap getScaledBitmap(Context context, int resId, int width, int height) {
+        Bitmap b;
+        try {
+            BitmapFactory.Options o = new BitmapFactory.Options();
+            o.inJustDecodeBounds = true;
+
+            InputStream fis = context.getResources().openRawResource(resId);
+            BitmapFactory.decodeStream(fis, null, o);
+            fis.close();
+
+            int scale = 1;
+            //if image height is greater than width
+            if (o.outHeight > o.outWidth) {
+                scale = Math.round((float) o.outWidth / (float) width);
+            }
+            //if image width is greater than height
+            else {
+                scale = Math.round((float) o.outHeight / (float) height);
+            }
+
+            // decode with inSampleSize
+            BitmapFactory.Options o2 = new BitmapFactory.Options();
+            o2.inSampleSize = scale;
+            fis = context.getResources().openRawResource(resId);
+            b = BitmapFactory.decodeStream(fis, null, o2);
+            fis.close();
+
+            Bitmap scaled = Bitmap.createScaledBitmap(b, width, height, false);
+            b.recycle();
+            b = scaled;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return b;
+    }
+
+    /**
      * Get a drawable from resources according to the current API.
      * @param context the context
      * @param drawableRes the drawable resource id
@@ -385,15 +433,18 @@ public class Utils {
      * @param sData the short array
      * @return the byte array
      */
-    public static byte[] short2Byte(short[] sData) {
+    public static byte[] short2Byte(short[] sData, byte[] bytes) {
         int shortArrsize = sData.length;
-        byte[] bytes = new byte[shortArrsize * 2];
+        if(bytes == null) {
+            bytes = new byte[shortArrsize * 2];
+        }
 
         for (int i = 0; i < shortArrsize; i++) {
             bytes[i * 2] = (byte) (sData[i] & 0x00FF);
             bytes[(i * 2) + 1] = (byte) (sData[i] >> 8);
             sData[i] = 0;
         }
+
         return bytes;
     }
 }

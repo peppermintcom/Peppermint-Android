@@ -54,18 +54,6 @@
             </intent-filter>
         </activity>
 
-        <!-- UI: RECORDING -->
-        <activity
-            android:name=".ui.recording.RecordingActivity"
-            android:label="@string/title_activity_record"
-            android:launchMode="singleTop"
-            android:parentActivityName=".MainActivity"
-            android:theme="@style/Peppermint.Theme.NoActionBar" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
-        </activity>
-
         <!-- UI: SETTINGS -->
         <activity
             android:name=".ui.settings.SettingsActivity"

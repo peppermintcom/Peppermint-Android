@@ -66,7 +66,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     // recording overlay
     private static final String RECORDING_OVERLAY_TAG = "RECORDING";
     private static final int RECORDING_OVERLAY_HIDE_DELAY = 1000;
-    private static final long MAX_DURATION_MILLIS = 15000; // 10min
+    private static final long MAX_DURATION_MILLIS = 600000; // 10min
 
     // keys to save the instance state
     private static final String RECIPIENT_TYPE_POS_KEY = "RecipientsFragment_RecipientTypePosition";
@@ -296,7 +296,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mActivity = (CustomActionBarActivity) activity;
         mPreferences = new PepperMintPreferences(activity);
         mSenderServiceManager = new SenderServiceManager(activity);
-        
+
         mRecordManager = new RecordServiceManager(activity);
         mRecordManager.setListener(this);
         mDestroyed = false;
@@ -725,6 +725,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
             mSenderServiceManager.startAndSend(event.getRecipient(), event.getRecording());
             mSendRecording = false;
+
+            if(mRecordManager.getCurrentRecording().getDurationMillis() >= MAX_DURATION_MILLIS) {
+                Toast.makeText(getActivity(), R.string.msg_message_exceeded_maxduration, Toast.LENGTH_LONG).show();
+            }
         }
         hideRecordingOverlay(true);
     }
