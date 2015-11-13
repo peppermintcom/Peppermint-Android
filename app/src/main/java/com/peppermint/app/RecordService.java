@@ -177,7 +177,7 @@ public class RecordService extends Service {
     /**
      * Event associated with the recording process of the {@link RecordService}.
      */
-    public static class Event {
+    public static class Event implements Serializable {
         // intermediate process data
         private float mLoudness;
 

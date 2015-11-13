@@ -4,9 +4,11 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,6 +27,7 @@ import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.ui.canvas.old.PeppermintRecordView;
+import com.peppermint.app.ui.views.CustomConfirmationDialog;
 import com.peppermint.app.utils.NoMicDataIOException;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
@@ -41,6 +44,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     public static final String INTENT_RESULT_SENDING_EXTRA = "PepperMint_ResultSendingExtra";
 
     private static final long MAX_DURATION_MILLIS = 600000; // 10min
+    private static final String SAVED_DIALOG_STATE_TAG = "Peppermint_SmsDialogState";
 
     private PepperMintPreferences mPreferences;
 
@@ -57,6 +61,8 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     private boolean mSavedState = false;
     private float mLastLoudnessFactor = 1.0f;
     private boolean mPressedSend = false, mPressedRestart = false;
+
+    private CustomConfirmationDialog mSmsConfirmationDialog;
 
     public RecordingFragment() {
     }
@@ -76,6 +82,35 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) getActivity().getApplication();
+
+        mSmsConfirmationDialog = new CustomConfirmationDialog(getActivity());
+        mSmsConfirmationDialog.setTitle(getString(R.string.sending_via_sms));
+        mSmsConfirmationDialog.setText(getString(R.string.when_you_send_via_sms));
+        mSmsConfirmationDialog.setTitleTypeface(app.getFontSemibold());
+        mSmsConfirmationDialog.setTextTypeface(app.getFontRegular());
+        mSmsConfirmationDialog.setButtonTypeface(app.getFontRegular());
+        mSmsConfirmationDialog.setYesClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mSmsConfirmationDialog.dismiss();
+                sendMessage();
+            }
+        });
+        mSmsConfirmationDialog.setNoClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mSmsConfirmationDialog.dismiss();
+            }
+        });
+        mSmsConfirmationDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                if(mSmsConfirmationDialog.isDoNotShowAgain()) {
+                    mPreferences.setShownSmsConfirmation(true);
+                }
+                getActivity().finish();
+            }
+        });
 
         View v = inflater.inflate(R.layout.f_recording_layout, container, false);
 
@@ -137,7 +172,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
                         mPressedSend = true;
                         mRecordManager.stopRecording(false);
                     } else {
-                        sendMessage();
+                        confirmAndSendMessage();
                     }
                 }
             }
@@ -154,6 +189,10 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
         }
 
         if(savedInstanceState != null) {
+            Bundle dialogState = savedInstanceState.getBundle(SAVED_DIALOG_STATE_TAG);
+            if (dialogState != null) {
+                mSmsConfirmationDialog.onRestoreInstanceState(dialogState);
+            }
             return v;
         }
 
@@ -181,6 +220,12 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+
+        Bundle dialogState = mSmsConfirmationDialog.onSaveInstanceState();
+        if (dialogState != null) {
+            outState.putBundle(SAVED_DIALOG_STATE_TAG, dialogState);
+        }
+
         mSavedState = true;
     }
 
@@ -204,7 +249,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
         mLastLoudnessFactor = 1f;
 
         if(mPressedSend) {
-            sendMessage();
+            confirmAndSendMessage();
             mPressedSend = false;
         } else if(mPressedRestart) {
             mRecordManager.startRecording(mFilename, mRecipient, MAX_DURATION_MILLIS);
@@ -213,6 +258,15 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
             mBtnPauseResume.setEnabled(false);
             Toast.makeText(getActivity(), R.string.msg_message_exceeded_maxduration, Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void confirmAndSendMessage() {
+        if(!mPreferences.isShownSmsConfirmation() && mRecipient.getMimeType().equals(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)) {
+            mSmsConfirmationDialog.show();
+            // FIXME record is not deleted from sdcard if person says no
+            return;
+        }
+        sendMessage();
     }
 
     private void sendMessage() {
