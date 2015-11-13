@@ -15,6 +15,8 @@ import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.utils.ExtendedAudioRecorder;
 
+import java.io.Serializable;
+
 import de.greenrobot.event.EventBus;
 
 /**
@@ -178,7 +180,7 @@ public class RecordService extends Service {
     /**
      * Event associated with the recording process of the {@link RecordService}.
      */
-    public static class Event {
+    public static class Event implements Serializable {
         // intermediate process data
         private float mLoudness;
 

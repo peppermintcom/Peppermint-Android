@@ -44,6 +44,7 @@ import com.peppermint.app.data.Recording;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.canvas.progress.LoadingView;
+import com.peppermint.app.ui.views.CustomConfirmationDialog;
 import com.peppermint.app.ui.views.RecordingOverlayView;
 import com.peppermint.app.ui.views.SearchListBarAdapter;
 import com.peppermint.app.ui.views.SearchListBarView;
@@ -71,6 +72,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     // keys to save the instance state
     private static final String RECIPIENT_TYPE_POS_KEY = "RecipientsFragment_RecipientTypePosition";
     private static final String RECIPIENT_TYPE_SEARCH_KEY = "RecipientsFragment_RecipientTypeSearch";
+    private static final String RECORDING_FINAL_EVENT_KEY = "RecipientsFragment_RecordingFinalEvent";
+    private static final String SMS_CONFIRMATION_STATE_KEY = "RecipientsFragment_SmsConfirmationState";
 
     // avatar animation frequency
     private static final int FIXED_AVATAR_ANIMATION_INTERVAL_MS = 15000;
@@ -91,6 +94,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private static final int MAX_SWIPE_DURATION = 300;        // max swipe duration
 
     private MediaPlayer mRecordSoundPlayer;
+    private CustomConfirmationDialog mSmsConfirmationDialog;
+    private RecordService.Event mFinalEvent;
 
     // the recipient list
     private View mRecipientListContainer;
@@ -307,6 +312,27 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) getActivity().getApplication();
 
+        mSmsConfirmationDialog = new CustomConfirmationDialog(getActivity());
+        mSmsConfirmationDialog.setTitle(getString(R.string.sending_via_sms));
+        mSmsConfirmationDialog.setText(getString(R.string.when_you_send_via_sms));
+        mSmsConfirmationDialog.setTitleTypeface(app.getFontSemibold());
+        mSmsConfirmationDialog.setTextTypeface(app.getFontRegular());
+        mSmsConfirmationDialog.setButtonTypeface(app.getFontRegular());
+        mSmsConfirmationDialog.setNoClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mFinalEvent = null;
+                mSmsConfirmationDialog.dismiss();
+            }
+        });
+        mSmsConfirmationDialog.setYesClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendMessage();
+                mSmsConfirmationDialog.dismiss();
+            }
+        });
+
         mSenderServiceManager.start();
         mRecordManager.start(false);
 
@@ -349,6 +375,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         int selectedItemPosition = 0;
         if (savedInstanceState != null) {
+            if(savedInstanceState.containsKey(RECORDING_FINAL_EVENT_KEY)) {
+                mFinalEvent = (RecordService.Event) savedInstanceState.getSerializable(RECORDING_FINAL_EVENT_KEY);
+            }
+
+            Bundle dialogState = savedInstanceState.getBundle(SMS_CONFIRMATION_STATE_KEY);
+            mSmsConfirmationDialog.onRestoreInstanceState(dialogState);
+
             selectedItemPosition = savedInstanceState.getInt(RECIPIENT_TYPE_POS_KEY, 0);
             String searchText = savedInstanceState.getString(RECIPIENT_TYPE_SEARCH_KEY, null);
             if(searchText != null) {
@@ -482,6 +515,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public void onSaveInstanceState(Bundle outState) {
         outState.putInt(RECIPIENT_TYPE_POS_KEY, mSearchListBarView.getSelectedItemPosition());
         outState.putString(RECIPIENT_TYPE_SEARCH_KEY, mSearchListBarView.getSearchText());
+        if(mFinalEvent != null) {
+            outState.putSerializable(RECORDING_FINAL_EVENT_KEY, mFinalEvent);
+        }
+        outState.putBundle(SMS_CONFIRMATION_STATE_KEY, mSmsConfirmationDialog.onSaveInstanceState());
         super.onSaveInstanceState(outState);
     }
 
@@ -717,17 +754,18 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public void onStopRecording(RecordService.Event event) {
         onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
         if(mSendRecording || mRecordManager.getCurrentRecording().getDurationMillis() >= MAX_DURATION_MILLIS) {
-            mPreferences.addRecentContactUri(event.getRecipient().getContactId());
-
-            // if the user has gone through the sending process without
-            // discarding the recording, then clear the search filter
-            mSearchListBarView.clearSearch(0);
-
-            mSenderServiceManager.startAndSend(event.getRecipient(), event.getRecording());
-            mSendRecording = false;
 
             if(mRecordManager.getCurrentRecording().getDurationMillis() >= MAX_DURATION_MILLIS) {
                 Toast.makeText(getActivity(), R.string.msg_message_exceeded_maxduration, Toast.LENGTH_LONG).show();
+            }
+
+            mSendRecording = false;
+
+            mFinalEvent = event;
+            if(!mPreferences.isShownSmsConfirmation() && event.getRecipient().getMimeType().equals(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)) {
+                mSmsConfirmationDialog.show();
+            } else {
+                sendMessage();
             }
         }
         hideRecordingOverlay(true);
@@ -768,6 +806,17 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public void onBoundRecording(Recording currentRecording, Recipient currentRecipient, float currentLoudness) {
         setRecordDuration(currentRecording == null ? 0 : currentRecording.getDurationMillis());
+    }
+
+    private void sendMessage() {
+        // if the user has gone through the sending process without
+        // discarding the recording, then clear the search filter
+        mSearchListBarView.clearSearch(0);
+
+        mPreferences.addRecentContactUri(mFinalEvent.getRecipient().getContactId());
+        mSenderServiceManager.startAndSend(mFinalEvent.getRecipient(), mFinalEvent.getRecording());
+
+        mFinalEvent = null;
     }
 
 }

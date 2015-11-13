@@ -18,6 +18,7 @@ import java.util.ArrayList;
 public class PepperMintPreferences {
 
     public static final String RECENT_CONTACT_URIS_KEY = "recentContactUris";
+    public static final String SHOWN_SMS_CONFIRMATION_KEY = "shownSmsConfirmation";
 
     public static final String HIDE_NONMAIN_CONTACTS_KEY = "hideNonMainContacts";
     protected static final boolean HIDE_NONMAIN_CONTACTS_DEFAULT = false;
@@ -129,6 +130,16 @@ public class PepperMintPreferences {
 
     public boolean isHideNonMainContacts() {
         return mSettings.getBoolean(HIDE_NONMAIN_CONTACTS_KEY, HIDE_NONMAIN_CONTACTS_DEFAULT);
+    }
+
+    public void setShownSmsConfirmation(boolean shown) {
+        edit();
+        mEditor.putBoolean(SHOWN_SMS_CONFIRMATION_KEY, shown);
+        commit();
+    }
+
+    public boolean isShownSmsConfirmation() {
+        return mSettings.getBoolean(SHOWN_SMS_CONFIRMATION_KEY, false);
     }
 
     public void setMailSubject(String subject) {

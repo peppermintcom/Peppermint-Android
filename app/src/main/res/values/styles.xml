@@ -101,6 +101,18 @@
         <item name="android:gravity">center_vertical</item>
     </style>
 
+    <style name="Peppermint.Dialog">
+        <item name="android:windowFrame">@null</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowTitleStyle">@null</item>
+        <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
+        <item name="android:windowSoftInputMode">stateUnspecified|adjustPan</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
     <style name="Peppermint.Spinner" parent="Widget.AppCompat.Spinner">
         <item name="android:background">@null</item>
         <item name="android:gravity">center_vertical</item>
@@ -124,7 +136,7 @@
     </style>
 
     <style name="Peppermint.ListPopupWindow" parent="Widget.AppCompat.ListPopupWindow">
-        <item name="android:popupBackground">@drawable/background_box_popupwindow</item>
+        <item name="android:popupBackground">@drawable/background_dialog</item>
         <item name="android:layout_marginLeft">0dp</item>
         <item name="android:layout_marginRight">0dp</item>
         <item name="android:layout_marginTop">0dp</item>
