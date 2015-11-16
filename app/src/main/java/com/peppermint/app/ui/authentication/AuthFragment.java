@@ -44,12 +44,14 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
     private AuthArrayAdapter mAdapter;
     private Account[] mAccounts;
     private PepperMintPreferences mPreferences;
+    private Activity mActivity;
 
     @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity context) {
         super.onAttach(context);
-        mPreferences = new PepperMintPreferences(getActivity());
+        mActivity = context;
+        mPreferences = new PepperMintPreferences(context);
     }
 
     @Override
@@ -72,8 +74,8 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
     @Override
     public void onResume() {
         super.onResume();
-        mAccounts = AccountManager.get(getActivity()).getAccountsByType("com.google");
-        mAdapter = new AuthArrayAdapter(getActivity(), mAccounts);
+        mAccounts = AccountManager.get(mActivity).getAccountsByType("com.google");
+        mAdapter = new AuthArrayAdapter(mActivity, mAccounts);
         getListView().setAdapter(mAdapter);
     }
 
@@ -88,7 +90,7 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         mPreferences.getGmailPreferences().setPreferredAccountName(mAccounts[position].name);
-        getActivity().setResult(Activity.RESULT_OK);
-        getActivity().finish();
+        mActivity.setResult(Activity.RESULT_OK);
+        mActivity.finish();
     }
 }

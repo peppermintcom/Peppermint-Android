@@ -26,6 +26,7 @@ public class SettingsFragment extends PreferenceFragment {
     private static final int PREF_GMAIL_ACCOUNT_REQUEST = 1199;
 
     private Preference mPrefGmailAccount;
+    private Activity mActivity;
 
     public SettingsFragment() {
     }
@@ -34,6 +35,7 @@ public class SettingsFragment extends PreferenceFragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        mActivity = activity;
     }
 
     @Override
@@ -45,7 +47,7 @@ public class SettingsFragment extends PreferenceFragment {
         mPrefGmailAccount.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                GmailSender sender = new GmailSender(getActivity(), null);
+                GmailSender sender = new GmailSender(mActivity, null);
                 sender.init();
                 startActivityForResult(sender.getCredential().newChooseAccountIntent(), PREF_GMAIL_ACCOUNT_REQUEST);
                 sender.deinit();
@@ -61,7 +63,7 @@ public class SettingsFragment extends PreferenceFragment {
                     return true;
                 }
 
-                Toast.makeText(getActivity(), R.string.msg_message_invalid_displayname, Toast.LENGTH_LONG).show();
+                Toast.makeText(mActivity, R.string.msg_message_invalid_displayname, Toast.LENGTH_LONG).show();
                 return false;
             }
         });
@@ -70,12 +72,12 @@ public class SettingsFragment extends PreferenceFragment {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        PeppermintApp app = (PeppermintApp) getActivity().getApplication();
+        PeppermintApp app = (PeppermintApp) mActivity.getApplication();
 
         // inflate and init custom action bar view
-        TextView actionBarView = (TextView) LayoutInflater.from(getActivity()).inflate(R.layout.v_settings_actionbar, null, false);
+        TextView actionBarView = (TextView) LayoutInflater.from(mActivity).inflate(R.layout.v_settings_actionbar, null, false);
         actionBarView.setTypeface(app.getFontSemibold());
-        ((CustomActionBarActivity) getActivity()).getCustomActionBar().setContents(actionBarView, false);
+        ((CustomActionBarActivity) mActivity).getCustomActionBar().setContents(actionBarView, false);
     }
 
     @Override
@@ -86,7 +88,7 @@ public class SettingsFragment extends PreferenceFragment {
             if (resultCode == Activity.RESULT_OK && data != null && data.getExtras() != null) {
                 String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
                 if (accountName != null) {
-                    GmailSenderPreferences prefs = new GmailSenderPreferences(getActivity());
+                    GmailSenderPreferences prefs = new GmailSenderPreferences(mActivity);
                     prefs.setPreferredAccountName(accountName);
                 }
             }

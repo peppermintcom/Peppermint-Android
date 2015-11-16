@@ -19,6 +19,8 @@ import com.peppermint.app.ui.recording.RecordingActivity;
 import com.peppermint.app.ui.recording.RecordingFragment;
 import com.peppermint.app.utils.ExtendedAudioRecorder;
 
+import java.io.Serializable;
+
 import de.greenrobot.event.EventBus;
 
 /**
