@@ -99,11 +99,19 @@ public class LevelBarsAnimatedLayer extends AnimatedLayerBase {
         canvas.restore();
 
         for (int i = 0; i < mBarAmount; i++) {
-            drawBar(canvas, mBarValues.size() > i ? mBarValues.get(i) : 0f);
+            try {
+                drawBar(canvas, mBarValues.size() > i ? mBarValues.get(i) : 0f);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                drawBar(canvas, 0f);
+            }
             canvas.translate((mCircleRadius*2f) + mBarSpacing, 0);
         }
         for (int i = mBarAmount - 1; i >= 0; i--) {
-            drawBar(canvas, mBarValues.size() > i ? mBarValues.get(i) : 0f);
+            try {
+                drawBar(canvas, mBarValues.size() > i ? mBarValues.get(i) : 0f);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                drawBar(canvas, 0f);
+            }
             canvas.translate((mCircleRadius*2f) + mBarSpacing, 0);
         }
 
@@ -124,7 +132,7 @@ public class LevelBarsAnimatedLayer extends AnimatedLayerBase {
         return mBarAmount;
     }
 
-    public void setBarAmount(int mBarAmount) {
+    public synchronized void setBarAmount(int mBarAmount) {
         this.mBarAmount = mBarAmount;
         this.mBarValues = new ArrayList<>();
     }
@@ -135,7 +143,7 @@ public class LevelBarsAnimatedLayer extends AnimatedLayerBase {
         }
     }
 
-    public void pushAmplitude(float value) {
+    public synchronized void pushAmplitude(float value) {
         if(value < 0) {
             value = 0;
         } else if(value > 1) {

@@ -18,6 +18,7 @@ import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -130,6 +131,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private SenderControlLayout mLytSenderControl;
 
     // search
+    private Object mLock = new Object();
+    private boolean mCreated = false;
     private GetRecipients mGetRecipientsTask;
     private class GetRecipients extends AsyncTask<Void, Void, Object> {
         private RecipientType _recipientType;
@@ -148,7 +151,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         @Override
         protected Object doInBackground(Void... nothing) {
             try {
-                if (ContextCompat.checkSelfPermission(mActivity,
+                if (mActivity != null && ContextCompat.checkSelfPermission(mActivity,
                         Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
 
                     List<Long> recentList = mPreferences.getRecentContactUris();
@@ -157,7 +160,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
                         Map<Long, Recipient> recipientMap = new HashMap<>();
 
-                        Cursor cursor = RecipientAdapterUtils.getRecipientsCursor(getActivity(), recentList, null, null, null);
+                        Cursor cursor = RecipientAdapterUtils.getRecipientsCursor(mActivity, recentList, null, null, null);
                         recentList.clear();
                         while(cursor.moveToNext()) {
                             Recipient recipient = RecipientAdapterUtils.getRecipient(cursor);
@@ -170,12 +173,25 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                         cursor.close();
 
                         if(recentList.size() > 0) {
-                            return new RecipientArrayAdapter((PeppermintApp) getActivity().getApplication(), getActivity(), recipientMap, recentList);
+                            return new RecipientArrayAdapter((PeppermintApp) mActivity.getApplication(), mActivity, recipientMap, recentList);
                         }
                     }
 
-                    FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(getActivity(), null, _filter, _recipientType.isStarred(), _recipientType.getMimeTypes());
+                    FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, _filter, _recipientType.isStarred(), _recipientType.getMimeTypes());
                     cursor.filter();
+
+                    synchronized (mLock) {
+                        int i=0;    // avoid hanging the thread (just in case)
+                        while(!mCreated && i < 10){
+                            try {
+                                i++;
+                                mLock.wait(1000);
+                            } catch (InterruptedException e) {
+                                // nothing to do here
+                            }
+                        }
+                    }
+
                     return cursor;
                 }
             } catch(Throwable e) {
@@ -189,13 +205,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         @Override
         protected void onPostExecute(Object data) {
-            if(data != null) {
+            if(data != null && mActivity != null && mCreated) {
                 if (data instanceof Cursor) {
                     // use cursor
                     if (mRecipientAdapter != null && mRecipientAdapter instanceof CursorAdapter) {
                         ((CursorAdapter) mRecipientAdapter).changeCursor((Cursor) data);
                     } else {
-                        mRecipientAdapter = new RecipientCursorAdapter((PeppermintApp) getActivity().getApplication(), getActivity(), (Cursor) data);
+                        mRecipientAdapter = new RecipientCursorAdapter((PeppermintApp) mActivity.getApplication(), mActivity, (Cursor) data);
                         getListView().setAdapter(mRecipientAdapter);
                     }
                 } else {
@@ -298,6 +314,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public void onAttach(Activity activity) {
         super.onAttach(activity);
 
+        Log.d("RecipientsFragment", "onAttach");
+
         mActivity = (CustomActionBarActivity) activity;
         mPreferences = new PepperMintPreferences(activity);
         mSenderServiceManager = new SenderServiceManager(activity);
@@ -309,10 +327,16 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        PeppermintApp app = (PeppermintApp) getActivity().getApplication();
+    public void onDetach() {
+        super.onDetach();
+        Log.d("RecipientsFragment", "onDetach");
+    }
 
-        mSmsConfirmationDialog = new CustomConfirmationDialog(getActivity());
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        PeppermintApp app = (PeppermintApp) mActivity.getApplication();
+
+        mSmsConfirmationDialog = new CustomConfirmationDialog(mActivity);
         mSmsConfirmationDialog.setTitle(getString(R.string.sending_via_sms));
         mSmsConfirmationDialog.setText(getString(R.string.when_you_send_via_sms));
         mSmsConfirmationDialog.setTitleTypeface(app.getFontSemibold());
@@ -406,7 +430,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         TextView txtEmpty2 = (TextView) v.findViewById(R.id.txtEmpty2);
         txtEmpty1.setTypeface(app.getFontSemibold());
         txtEmpty2.setTypeface(app.getFontSemibold());
-        int peppermintColor = ContextCompat.getColor(getActivity(), R.color.green_text);
+        int peppermintColor = ContextCompat.getColor(mActivity, R.color.green_text);
         txtEmpty2.setText(Html.fromHtml(String.format(getString(R.string.msg_add_some_friends), String.format("#%06X", (0xFFFFFF & peppermintColor)))));
 
         // init new recipient view
@@ -429,7 +453,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
                 // validate display name
                 if(name.length() <= 0) {
-                    Toast.makeText(getActivity(), R.string.msg_message_invalid_contactname, Toast.LENGTH_LONG).show();
+                    Toast.makeText(mActivity, R.string.msg_message_invalid_contactname, Toast.LENGTH_LONG).show();
                     return;
                 }
 
@@ -441,7 +465,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 }
 
                 if(mimeType == null) {
-                    Toast.makeText(getActivity(), R.string.msg_message_invalid_contactvia, Toast.LENGTH_LONG).show();
+                    Toast.makeText(mActivity, R.string.msg_message_invalid_contactvia, Toast.LENGTH_LONG).show();
                     return;
                 }
 
@@ -468,15 +492,15 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                         .withValue(ContactsContract.Data.DATA1, via).build());
 
                 try {
-                    ContentProviderResult[] res = getActivity().getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+                    ContentProviderResult[] res = mActivity.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
                     if(res.length < ops.size()) {
                         throw new RuntimeException("Not all operations were performed while trying to insert contact: Total Ops = " + ops.size() + "; Performed = " + res.length);
                     }
-                    Toast.makeText(getActivity(), R.string.msg_message_contact_added, Toast.LENGTH_LONG).show();
+                    Toast.makeText(mActivity, R.string.msg_message_contact_added, Toast.LENGTH_LONG).show();
                     // refresh listview
                     mSearchListBarView.setSearchText(mSearchListBarView.getSearchText());
                 } catch (Throwable e) {
-                    Toast.makeText(getActivity(), R.string.msg_message_unable_addcontact, Toast.LENGTH_LONG).show();
+                    Toast.makeText(mActivity, R.string.msg_message_unable_addcontact, Toast.LENGTH_LONG).show();
                     Crashlytics.logException(e);
                 }
             }
@@ -499,6 +523,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         // avoid showing "no contacts" for a split second, right after creation
         setListShownNoAnimation(false);
 
+        Log.d("RecipientsFragment", "onCreateView");
+
         return v;
     }
 
@@ -509,6 +535,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         getListView().setLongClickable(true);
         getListView().setOnItemLongClickListener(this);
         getListView().setOnTouchListener(this);
+
+        synchronized (mLock) {
+            mCreated = true;
+            mLock.notifyAll();
+        }
+
+        Log.d("RecipientsFragment", "onViewCreated");
     }
 
     @Override
@@ -553,6 +586,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mSenderServiceManager.unbind();
         mRecordManager.unbind();
         mSearchListBarView.setOnSearchListener(null);
+
+        if(mGetRecipientsTask != null && !mGetRecipientsTask.isCancelled() && mGetRecipientsTask.getStatus() != AsyncTask.Status.FINISHED) {
+            mGetRecipientsTask.cancel(true);
+        }
     }
 
     @Override
@@ -568,6 +605,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(null);
         }
         mDestroyed = true;
+        mActivity = null;
         super.onDestroy();
     }
 
@@ -603,7 +641,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         mRecipientListShown = shown;
 
-        if (animate && getActivity() != null) {
+        if (animate && mActivity != null) {
             Animator fadeOut = mAnimatorBuilder.buildFadeOutAnimator(shown ? mRecipientLoadingContainer : mRecipientListContainer);
             Animator fadeIn = mAnimatorBuilder.buildFadeInAnimator(shown ? mRecipientListContainer : mRecipientLoadingContainer);
             mLoadingAnimator = new AnimatorSet();
@@ -703,11 +741,14 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Log.d("RecipientsFragment", "onRequestPermissionsResult");
         onSearch(mSearchListBarView.getSearchText());
     }
 
     @Override
     public void onSearch(String filter) {
+        Log.d("RecipientsFragment", "onSearch");
+
         if(mGetRecipientsTask != null && !mGetRecipientsTask.isCancelled() && mGetRecipientsTask.getStatus() != AsyncTask.Status.FINISHED) {
             mGetRecipientsTask.cancel(true);
         }
@@ -727,7 +768,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             return true;
         }
 
-        FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(getActivity(), null, null, true, mRecipientTypeAdapter.getItem(0).getMimeTypes());
+        FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, null, true, mRecipientTypeAdapter.getItem(0).getMimeTypes());
         return cursor != null && cursor.getOriginalCursor() != null && cursor.getOriginalCursor().moveToFirst();
     }
 
@@ -756,7 +797,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         if(mSendRecording || mRecordManager.getCurrentRecording().getDurationMillis() >= MAX_DURATION_MILLIS) {
 
             if(mRecordManager.getCurrentRecording().getDurationMillis() >= MAX_DURATION_MILLIS) {
-                Toast.makeText(getActivity(), R.string.msg_message_exceeded_maxduration, Toast.LENGTH_LONG).show();
+                Toast.makeText(mActivity, R.string.msg_message_exceeded_maxduration, Toast.LENGTH_LONG).show();
             }
 
             mSendRecording = false;
@@ -794,9 +835,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public void onErrorRecording(RecordService.Event event) {
         if(event.getError() instanceof NoMicDataIOException) {
-            Toast.makeText(getActivity(), getString(R.string.msg_message_nomicdata_error), Toast.LENGTH_LONG).show();
+            Toast.makeText(mActivity, getString(R.string.msg_message_nomicdata_error), Toast.LENGTH_LONG).show();
         } else {
-            Toast.makeText(getActivity(), getString(R.string.msg_message_record_error), Toast.LENGTH_LONG).show();
+            Toast.makeText(mActivity, getString(R.string.msg_message_record_error), Toast.LENGTH_LONG).show();
         }
 
         mRecordingViewOverlay.explode();
