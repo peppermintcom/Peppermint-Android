@@ -25,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.net.URLEncoder;
 import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
@@ -83,7 +84,9 @@ public class GmailSendingTask extends SendingTask {
         String displayName = ((GmailSenderPreferences) getSenderPreferences()).getDisplayName();
 
         String url = (String) getSendingRequest().getParameter(ServerSendingTask.PARAM_SHORT_URL);
-        String body = "<p>" + String.format(getSender().getContext().getString(R.string.default_mail_body_url), url, (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO)) + "</p><br />" + getSender().getContext().getString(R.string.default_mail_body_reply);
+        String body = "<p>" + String.format(getSender().getContext().getString(R.string.default_mail_body_url), url,
+                (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO)) + "</p><br />" +
+                    String.format(getSender().getContext().getString(R.string.default_mail_body_reply), displayName == null ? "" : URLEncoder.encode(displayName, "UTF-8"), URLEncoder.encode(preferredAccountName, "UTF-8"));
         getSendingRequest().setBody(body);
 
         try {

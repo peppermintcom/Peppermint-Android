@@ -19,6 +19,7 @@ import com.peppermint.app.ui.recipients.RecipientsFragment;
 import com.peppermint.app.ui.settings.SettingsActivity;
 import com.peppermint.app.ui.tutorial.TutorialActivity;
 import com.peppermint.app.ui.views.NavigationItem;
+import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +33,7 @@ public class MainActivity extends CustomActionBarActivity {
         Manifest.permission.WRITE_CONTACTS,
         "android.permission.READ_PROFILE",
         Manifest.permission.RECORD_AUDIO,
-        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        /*Manifest.permission.WRITE_EXTERNAL_STORAGE,*/
         Manifest.permission.INTERNET,
         Manifest.permission.ACCESS_NETWORK_STATE,
 
@@ -43,6 +44,7 @@ public class MainActivity extends CustomActionBarActivity {
     };
     private static final String SUPPORT_EMAIL = "support@peppermint.com";
     private static final String SUPPORT_SUBJECT = "Feedback or question about Peppermint Android app";
+    private static final String SUPPORT_BODY = "\n\n\n\nNote regarding this feedback. Was provided by %1$s running %2$s with Peppermint v" + BuildConfig.VERSION_NAME;
 
     private List<String> mPermissionsToAsk;
 
@@ -69,6 +71,7 @@ public class MainActivity extends CustomActionBarActivity {
             public void run() {
                 Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + SUPPORT_EMAIL));
                 i.putExtra(Intent.EXTRA_SUBJECT, SUPPORT_SUBJECT);
+                i.putExtra(Intent.EXTRA_TEXT, String.format(SUPPORT_BODY, Utils.getDeviceName(), Utils.getAndroidVersion()));
                 i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(Intent.createChooser(i, getString(R.string.send_email)));
             }
@@ -104,10 +107,10 @@ public class MainActivity extends CustomActionBarActivity {
         // i.e. after second onResume()
         if(!mPreferences.isFirstRun()) {
             mPermissionsToAsk = new ArrayList<>();
-            for (int i = 0; i < PERMISSIONS.length; i++) {
+            for (String permission : PERMISSIONS) {
                 if (ContextCompat.checkSelfPermission(this,
-                        PERMISSIONS[i]) != PackageManager.PERMISSION_GRANTED) {
-                    mPermissionsToAsk.add(PERMISSIONS[i]);
+                        permission) != PackageManager.PERMISSION_GRANTED) {
+                    mPermissionsToAsk.add(permission);
                 }
             }
 

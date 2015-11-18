@@ -9,8 +9,8 @@
 
     <com.peppermint.app.ui.views.RoundImageView
         android:id="@+id/imgAvatar"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         custom:cornerRadius="10dp"
         custom:borderWidth="2dp"
         custom:borderColor="@color/white"

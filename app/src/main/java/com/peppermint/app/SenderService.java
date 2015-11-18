@@ -155,6 +155,10 @@ public class SenderService extends Service {
 
     @Override
     public void onDestroy() {
+        if(mIsInForegroundMode) {
+            stopForeground(true);
+            mIsInForegroundMode = false;
+        }
         mSenderManager.deinit();
         mEventBus.unregister(this);
         super.onDestroy();
