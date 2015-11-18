@@ -6,7 +6,6 @@ import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Build;
-import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
@@ -29,6 +28,8 @@ import com.peppermint.app.utils.Utils;
 
 /**
  * Created by Nuno Luz on 17-09-2015.
+ *
+ * Search bar (edittext) view by item type (spinner).
  */
 public class SearchListBarView extends FrameLayout implements AdapterView.OnItemClickListener {
 
@@ -58,15 +59,38 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
     /*private Handler mHandler = new Handler();*/
 
     private TextWatcher mTextWatcher = new TextWatcher() {
+        private int _startVia = -1;
+        private int _endVia = -1;
         @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) { /* nothing to do here */ }
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            _endVia = -1;
+            if (count == 1 && after == 0 && s.charAt(start) == '<' && (s.length() > (start+1) && s.charAt(start+1) == '>')) {
+                _endVia = start;
+            }
+        }
         @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) { /* nothing to do here */ }
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+            _startVia = -1;
+            if (count == 1 && before == 0 && s.charAt(start) == '<') {
+                _startVia = start;
+            }
+        }
         @Override
         public void afterTextChanged(Editable s) {
             /*mHandler.removeCallbacks(mSearchRunnable);
             mHandler.postDelayed(mSearchRunnable, 10);*/
-            mSearchRunnable.run();
+            if(_startVia < 0 && _endVia < 0) {
+                mSearchRunnable.run();
+            } else {
+                if(_startVia >= 0) {
+                    int keepVia = _startVia;
+                    s.append(">");
+                    mTxtSearch.setSelection(keepVia + 1);
+                }
+                if(_endVia >= 0) {
+                    s.delete(_endVia, _endVia + 1);
+                }
+            }
         }
     };
 
@@ -244,7 +268,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         mListPopupWindow.setSelection(position);
 
         // set imagebutton drawable with selected contact list icon
-        ListItem item = (ListItem) mAdapter.getItem(position);
+        ListItem item = mAdapter.getItem(position);
         mBtnList.setImageResource(item.getDrawableResource());
 
         // reset text if not searchable
@@ -280,7 +304,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
     }
 
     public ListItem getSelectedItem() {
-        return (ListItem) mAdapter.getItem(getSelectedItemPosition());
+        return mAdapter.getItem(getSelectedItemPosition());
     }
 
     public boolean clearSearch(int resetToPosition) {

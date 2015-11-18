@@ -20,8 +20,8 @@ import java.util.List;
  */
 public class RecipientCursorAdapter extends CursorAdapter {
 
-    public static RecipientCursorAdapter get(PeppermintApp app, Context context, List<Long> allowedIds, String freeTextSearch, Boolean areStarred, List<String> allowedMimeTypes) {
-        return new RecipientCursorAdapter(app, context, RecipientAdapterUtils.getRecipientsCursor(context, allowedIds, freeTextSearch, areStarred, allowedMimeTypes));
+    public static RecipientCursorAdapter get(PeppermintApp app, Context context, List<Long> allowedIds, String freeTextSearch, Boolean areStarred, List<String> allowedMimeTypes, String enforcedViaSearch) {
+        return new RecipientCursorAdapter(app, context, RecipientAdapterUtils.getRecipientsCursor(context, allowedIds, freeTextSearch, areStarred, allowedMimeTypes, enforcedViaSearch));
     }
 
     private PeppermintApp mApp;

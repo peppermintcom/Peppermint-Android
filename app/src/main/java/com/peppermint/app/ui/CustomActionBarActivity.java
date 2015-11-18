@@ -216,7 +216,22 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
         try {
             introScreenFragment = firstNavigationItem.getFragmentClass().newInstance();
             if(getIntent() != null) {
-                introScreenFragment.setArguments(getIntent().getExtras());
+                Bundle bundle = new Bundle();
+
+                if(getIntent().getExtras() != null) {
+                    bundle.putAll(getIntent().getExtras());
+                }
+
+                Uri uri = getIntent().getData();
+                if(uri != null) {
+                    for(String paramName : uri.getQueryParameterNames()) {
+                        String paramValue = uri.getQueryParameter(paramName);
+                        if (paramValue != null) {
+                            bundle.putString(paramName, paramValue);
+                        }
+                    }
+                }
+                introScreenFragment.setArguments(bundle);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

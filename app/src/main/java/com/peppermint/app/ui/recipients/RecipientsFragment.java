@@ -58,9 +58,14 @@ import com.peppermint.app.utils.Utils;
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RecipientsFragment extends ListFragment implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener, View.OnTouchListener,
         SearchListBarView.OnSearchListener, RecordServiceManager.Listener {
@@ -69,6 +74,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private static final String RECORDING_OVERLAY_TAG = "RECORDING";
     private static final int RECORDING_OVERLAY_HIDE_DELAY = 1000;
     private static final long MAX_DURATION_MILLIS = 600000; // 10min
+
+    public static final String FAST_REPLY_NAME_PARAM = "name";
+    public static final String FAST_REPLY_MAIL_PARAM = "mail";
 
     // keys to save the instance state
     private static final String RECIPIENT_TYPE_POS_KEY = "RecipientsFragment_RecipientTypePosition";
@@ -134,9 +142,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private Object mLock = new Object();
     private boolean mCreated = false;
     private GetRecipients mGetRecipientsTask;
+    private static final Pattern mViaPattern = Pattern.compile("<([^\\s]*)>");
     private class GetRecipients extends AsyncTask<Void, Void, Object> {
         private RecipientType _recipientType;
         private String _filter;
+        private String _name, _via;
 
         protected GetRecipients(String filter) {
             this._filter = filter;
@@ -146,6 +156,22 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         protected void onPreExecute() {
             setListShown(false);
             _recipientType = (RecipientType) mSearchListBarView.getSelectedItem();
+
+            if(_filter == null) {
+                return;
+            }
+
+            Matcher matcher = mViaPattern.matcher(_filter);
+            if (matcher.find()) {
+                _via = matcher.group(1);
+                _name = _filter.replaceAll(mViaPattern.pattern(), "").trim();
+
+                if(_via.length() <= 0) {
+                    _via = null; // adjust filter to via so that only one (or no) result is shown
+                }
+            } else {
+                _name = _filter;
+            }
         }
 
         @Override
@@ -160,24 +186,38 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
                         Map<Long, Recipient> recipientMap = new HashMap<>();
 
-                        Cursor cursor = RecipientAdapterUtils.getRecipientsCursor(mActivity, recentList, null, null, null);
-                        recentList.clear();
+                        Cursor cursor = RecipientAdapterUtils.getRecipientsCursor(mActivity, recentList, null, null, null, null);
+                        Set<Long> allowedSet = new HashSet<>();
                         while(cursor.moveToNext()) {
                             Recipient recipient = RecipientAdapterUtils.getRecipient(cursor);
                             // this if removes deleted/invalid contacts from the list
                             if(recipient.getVia() != null && recipient.getVia().trim().length() > 0) {
                                 recipientMap.put(recipient.getContactId(), recipient);
-                                recentList.add(recipient.getContactId());
+                                allowedSet.add(recipient.getContactId());
                             }
                         }
                         cursor.close();
+
+                        // remove invalid contacts from recent list
+                        if(recentList.size() != allowedSet.size()) {
+                            Iterator<Long> it = recentList.iterator();
+                            while (it.hasNext()) {
+                                if (!allowedSet.contains(it.next())) {
+                                    it.remove();
+                                }
+                            }
+                            mPreferences.setRecentContactUris(recentList);
+                        }
 
                         if(recentList.size() > 0) {
                             return new RecipientArrayAdapter((PeppermintApp) mActivity.getApplication(), mActivity, recipientMap, recentList);
                         }
                     }
 
-                    FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, _filter, _recipientType.isStarred(), _recipientType.getMimeTypes());
+                    FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, _name, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
+                    if(cursor.getOriginalCursor().getCount() <= 0 && _name != null && _via != null) {
+                        cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, null, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
+                    }
                     cursor.filter();
 
                     synchronized (mLock) {
@@ -223,16 +263,25 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                     getListView().setAdapter(mRecipientAdapter);
                 }
                 mRecipientAdapter.notifyDataSetChanged();
-                if(mRecipientAdapter.getCount() <= 0) {
-                    mTxtNewName.setText(_filter);
-                }
             }
+
+            if(_name != null) {
+                mTxtNewName.setText(_name);
+            } else {
+                mTxtNewName.setText("");
+            }
+            if(_via != null) {
+                mTxtNewContact.setText(_via);
+            } else {
+                mTxtNewContact.setText("");
+            }
+
             setListShown(true);
         }
 
         @Override
         protected void onCancelled(Object o) {
-            /* nothing to do here; keep the list hidden */
+            setListShown(true);
         }
     }
 
@@ -498,7 +547,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                     }
                     Toast.makeText(mActivity, R.string.msg_message_contact_added, Toast.LENGTH_LONG).show();
                     // refresh listview
-                    mSearchListBarView.setSearchText(mSearchListBarView.getSearchText());
+                    mSearchListBarView.setSearchText(name + " <" + via + ">");
                 } catch (Throwable e) {
                     Toast.makeText(mActivity, R.string.msg_message_unable_addcontact, Toast.LENGTH_LONG).show();
                     Crashlytics.logException(e);
@@ -523,7 +572,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         // avoid showing "no contacts" for a split second, right after creation
         setListShownNoAnimation(false);
 
-        Log.d("RecipientsFragment", "onCreateView");
+        if(getArguments() != null && (getArguments().containsKey(FAST_REPLY_NAME_PARAM) || getArguments().containsKey(FAST_REPLY_MAIL_PARAM))) {
+            String name = getArguments().getString(FAST_REPLY_NAME_PARAM, null);
+            String mail = getArguments().getString(FAST_REPLY_MAIL_PARAM, null);
+            mSearchListBarView.setSearchText(name + " <" + mail + ">");
+        }
 
         return v;
     }
@@ -768,7 +821,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             return true;
         }
 
-        FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, null, true, mRecipientTypeAdapter.getItem(0).getMimeTypes());
+        FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, null, true, mRecipientTypeAdapter.getItem(0).getMimeTypes(), null);
         return cursor != null && cursor.getOriginalCursor() != null && cursor.getOriginalCursor().moveToFirst();
     }
 

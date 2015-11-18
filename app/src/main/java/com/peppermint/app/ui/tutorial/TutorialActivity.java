@@ -1,5 +1,6 @@
 package com.peppermint.app.ui.tutorial;
 
+import android.animation.Animator;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
@@ -7,16 +8,18 @@ import android.app.FragmentTransaction;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
+import com.peppermint.app.utils.AnimatorBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TutorialActivity extends Activity implements FragmentManager.OnBackStackChangedListener, View.OnTouchListener {
+public class TutorialActivity extends Activity implements FragmentManager.OnBackStackChangedListener, View.OnTouchListener, View.OnClickListener {
 
     public static class TutorialFragment extends Fragment {
         protected TutorialActivity mActivity;
@@ -33,13 +36,17 @@ public class TutorialActivity extends Activity implements FragmentManager.OnBack
     }
 
     // swipe-related
-    private float x1, x2;
+    private float x1, x2, y1, y2;
     private static final int MIN_DISTANCE = 150;        // min swipe distance
 
     private List<Class<?>> mFragmentClassList = new ArrayList<>();
     private int[] mPaginatorRes;
     private TutorialFragment mCurrentFragment;
     private ImageView mImgPaginator;
+    private Button mBtnContinue;
+
+    private AnimatorBuilder mAnimatorBuilder;
+    private Animator mContinueAnimator;
 
     public TutorialActivity() {
         mFragmentClassList.add(T1PickRecipientFragment.class);
@@ -54,10 +61,16 @@ public class TutorialActivity extends Activity implements FragmentManager.OnBack
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a_tutorial_layout);
 
+        mAnimatorBuilder = new AnimatorBuilder();
+
         TextView txtPeppermint = (TextView) findViewById(R.id.txtPeppermint);
         txtPeppermint.setTypeface(((PeppermintApp) getApplication()).getFontSemibold());
 
         mImgPaginator = (ImageView) findViewById(R.id.imgPaginator);
+        mBtnContinue = (Button) findViewById(R.id.btnContinue);
+        mBtnContinue.setVisibility(View.INVISIBLE);
+        mBtnContinue.setTypeface(((PeppermintApp) getApplication()).getFontSemibold());
+        mBtnContinue.setOnClickListener(this);
 
         getFragmentManager().addOnBackStackChangedListener(this);
 
@@ -73,6 +86,14 @@ public class TutorialActivity extends Activity implements FragmentManager.OnBack
         mCurrentFragment = getFragmentInstance(0);
         mImgPaginator.setImageResource(mPaginatorRes[0]);
         getFragmentManager().beginTransaction().add(R.id.container, mCurrentFragment, mCurrentFragment.getClass().getName()).commit();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(mContinueAnimator != null && mContinueAnimator.isRunning()) {
+            mContinueAnimator.cancel();
+        }
     }
 
     public void nextFragment() {
@@ -113,6 +134,32 @@ public class TutorialActivity extends Activity implements FragmentManager.OnBack
     public void onBackStackChanged() {
         mCurrentFragment = (TutorialFragment) getFragmentManager().findFragmentById(R.id.container);
         int currentPos = mFragmentClassList.indexOf(mCurrentFragment.getClass());
+        // set final continue button visibility
+        if(currentPos >= (mFragmentClassList.size()-1)) {
+            if(mContinueAnimator != null && mContinueAnimator.isRunning()) {
+                mContinueAnimator.cancel();
+            }
+            mBtnContinue.setVisibility(View.VISIBLE);
+            mContinueAnimator = mAnimatorBuilder.buildFadeInAnimator(mBtnContinue);
+            mContinueAnimator.start();
+        } else if(mBtnContinue.getVisibility() == View.VISIBLE) {
+            if(mContinueAnimator != null && mContinueAnimator.isRunning()) {
+                mContinueAnimator.cancel();
+            }
+            mContinueAnimator = mAnimatorBuilder.buildFadeOutAnimator(mBtnContinue);
+            mContinueAnimator.addListener(new Animator.AnimatorListener() {
+                @Override
+                public void onAnimationStart(Animator animation) { }
+                @Override
+                public void onAnimationEnd(Animator animation) { mBtnContinue.setVisibility(View.INVISIBLE); }
+                @Override
+                public void onAnimationCancel(Animator animation) { mBtnContinue.setVisibility(View.INVISIBLE); }
+                @Override
+                public void onAnimationRepeat(Animator animation) { }
+            });
+            mContinueAnimator.start();
+        }
+
         mImgPaginator.setImageResource(mPaginatorRes[currentPos]);
     }
 
@@ -125,14 +172,22 @@ public class TutorialActivity extends Activity implements FragmentManager.OnBack
     }
 
     @Override
+    public void onClick(View v) {
+        nextFragment();
+    }
+
+    @Override
     public boolean onTouch(View v, MotionEvent event) {
         switch(event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 x1 = event.getX();
+                y1 = event.getY();
                 break;
             case MotionEvent.ACTION_UP:
                 x2 = event.getX();
+                y2 = event.getY();
                 float deltaX = x2 - x1;
+                float deltaY = y2 - y1;
 
                 if (Math.abs(deltaX) > MIN_DISTANCE) {
                     // left to right swipe action
@@ -143,12 +198,13 @@ public class TutorialActivity extends Activity implements FragmentManager.OnBack
                     else {
                         nextFragment();
                     }
-                } else {
+                } else if(Math.abs(deltaY) < MIN_DISTANCE) {
                     // tap
                     nextFragment();
                 }
                 break;
         }
+
         return super.onTouchEvent(event);
     }
 }

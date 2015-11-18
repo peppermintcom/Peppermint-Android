@@ -15,6 +15,8 @@ import java.util.List;
 
 /**
  * Created by Nuno Luz on 10-11-2015.
+ *
+ * Activity for user authentication.
  */
 public class AuthActivity extends CustomActionBarActivity {
 
@@ -37,6 +39,8 @@ public class AuthActivity extends CustomActionBarActivity {
         txtTitle.setTypeface(app.getFontSemibold());
 
         getCustomActionBar().setContents(v, true);
+        // disable back/menu button
+        getCustomActionBar().getMenuButton().setVisibility(View.GONE);
     }
 
     @Override
