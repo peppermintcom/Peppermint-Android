@@ -38,7 +38,7 @@
     <string name="default_sms_body">Here\'s my message from Peppermint. Listen at %1$s</string>
     <string name="default_mail_body_url"><![CDATA[<p>Here\'s my message.</p><audio controls="controls"><source src="%1$s" type="%2$s" /><a href="%1$s" type="%2$s">%1$s</a></audio>]]></string>
     <string name="default_mail_body_listen">Here\'s my message.</string>
-    <string name="default_mail_body_reply"><![CDATA[Reply via <a href="http://www.peppermint.com/">Peppermint.com</a>]]></string>
+    <string name="default_mail_body_reply"><![CDATA[Reply via <a href="https://peppermint.com/fastReply?name=%1$s&mail=%2$s">Peppermint.com</a>]]></string>
     <string name="uploading">Uploading…</string>
     <string name="send_record">Send Record</string>
 
@@ -129,4 +129,5 @@
     <string name="sending_via_sms">Sending via SMS</string>
     <string name="when_you_send_via_sms">When you send via SMS it may cost you money for each message you send (depending on your phone plan). Do you want to continue?</string>
     <string name="do_not_show_this_again">Do not ask this again and always send the message</string>
+    <string name="_continue">Continue</string>
 </resources>

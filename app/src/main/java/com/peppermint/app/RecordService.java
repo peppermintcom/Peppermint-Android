@@ -230,7 +230,12 @@ public class RecordService extends Service {
         public void onStart(String filePath, long durationInMillis, float sizeKbs, int amplitude) {
             updateLoudness();
 
-            startForeground(RecordService.class.hashCode(), getNotification());
+            if(mIsInForegroundMode) {
+                updateNotification();
+            } else {
+                startForeground(RecordService.class.hashCode(), getNotification());
+                mIsInForegroundMode = true;
+            }
 
             Event e = new Event(newRecording(mRecorder), mRecipient, amplitude, EVENT_START);
             mEventBus.post(e);
@@ -255,14 +260,20 @@ public class RecordService extends Service {
 
         @Override
         public void onStop(String filePath, long durationInMillis, float sizeKbs, int amplitude) {
-            stopForeground(true);
+            if(mIsInForegroundMode) {
+                stopForeground(true);
+                mIsInForegroundMode = false;
+            }
             Event e = new Event(newRecording(mRecorder), mRecipient, amplitude, EVENT_STOP);
             mEventBus.post(e);
         }
 
         @Override
         public void onError(String filePath, long durationInMillis, float sizeKbs, int amplitude, Throwable t) {
-            stopForeground(true);
+            if(mIsInForegroundMode) {
+                stopForeground(true);
+                mIsInForegroundMode = false;
+            }
             Event e = new Event(newRecording(mRecorder), mRecipient, t);
             mEventBus.post(e);
         }
@@ -282,6 +293,7 @@ public class RecordService extends Service {
     private transient EventBus mEventBus;                 // event bus to send events to registered listeners
     private transient ExtendedAudioRecorder mRecorder;    // the recorder
     private Recipient mRecipient;                         // the recipient of the current recording
+    private boolean mIsInForegroundMode = false;
 
     public RecordService() {
         mEventBus = new EventBus();
@@ -323,6 +335,10 @@ public class RecordService extends Service {
     public void onDestroy() {
         if(isRecording()) {
             stop(true);
+        }
+        if(mIsInForegroundMode) {
+            stopForeground(true);
+            mIsInForegroundMode = false;
         }
         super.onDestroy();
     }

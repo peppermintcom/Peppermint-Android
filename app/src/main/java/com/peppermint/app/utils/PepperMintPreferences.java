@@ -3,11 +3,13 @@ package com.peppermint.app.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
 import com.peppermint.app.R;
 import com.peppermint.app.sending.gmail.GmailSenderPreferences;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Nuno Luz (nluz@mobaton.com) on 21-06-2015.
@@ -69,6 +71,7 @@ public class PepperMintPreferences {
     }
 
     public void addRecentContactUri(long id) {
+        Log.d("PepperMintPreferences", "addRecentContactUri: " + id);
         ArrayList<Long> idList = getRecentContactUris();
 
         if(idList == null) {
@@ -88,7 +91,7 @@ public class PepperMintPreferences {
         setRecentContactUris(idList);
     }
 
-    public void setRecentContactUris(ArrayList<Long> recentContactIds) {
+    public void setRecentContactUris(List<Long> recentContactIds) {
         String contactsStr = null;
         int size;
         if(recentContactIds != null && (size = recentContactIds.size()) > 0) {

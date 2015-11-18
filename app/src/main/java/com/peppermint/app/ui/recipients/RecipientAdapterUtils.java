@@ -76,15 +76,16 @@ public class RecipientAdapterUtils {
      * @param allowedMimeTypes the allowed mime types
      * @return the result cursor
      */
-    public static Cursor getRecipientsCursor(Context context, List<Long> allowedIds, String freeTextSearch, Boolean areStarred, List<String> allowedMimeTypes) {
+    public static Cursor getRecipientsCursor(Context context, List<Long> allowedIds, String freeTextSearch, Boolean areStarred, List<String> allowedMimeTypes, String enforcedViaSearch) {
         List<String> args = new ArrayList<>();
         String condStarred = (areStarred == null ? "" : " AND " + ContactsContract.Contacts.STARRED + "=" + (areStarred ? "1" : "0"));
-        String condFreeSearch = (freeTextSearch == null ? "" : " AND (LOWER(" + DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString(/*"%" + */freeTextSearch + "%") + " OR LOWER(" + ContactsContract.Data.DATA1 + ") LIKE " + DatabaseUtils.sqlEscapeString(/*"%" + */freeTextSearch + "%") + ")");
+        String condFreeSearch = (freeTextSearch == null ? "" : " AND (LOWER(" + DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString(/*"%" + */freeTextSearch + "%") + " OR LOWER(REPLACE(" + ContactsContract.Data.DATA1 + ", ' ', '')) LIKE " + DatabaseUtils.sqlEscapeString(/*"%" + */freeTextSearch + "%") + ")");
+        String condViaSearch = (enforcedViaSearch == null ? "" : " AND (LOWER(REPLACE(" + ContactsContract.Data.DATA1 + ", ' ', '')) LIKE " + DatabaseUtils.sqlEscapeString(/*"%" + */enforcedViaSearch + "%") + ")");
         String condMimeTypes = getConditions(ContactsContract.Data.MIMETYPE, allowedMimeTypes, args, false);
         String condIds = getConditions(ContactsContract.Data._ID, allowedIds, null, false);
 
         Cursor rootCursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, PROJECTION,
-                "1" + condStarred + condFreeSearch + " AND (" + condMimeTypes + ")" + " AND (" + condIds + ")",
+                "1" + condStarred + condFreeSearch + condViaSearch + " AND (" + condMimeTypes + ")" + " AND (" + condIds + ")",
                 args.toArray(new String[args.size()]), DISPLAY_NAME + " COLLATE NOCASE");
 
         if(allowedIds != null) {

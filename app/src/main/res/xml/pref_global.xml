@@ -3,7 +3,9 @@
     <com.peppermint.app.ui.settings.CustomEditTextPreference android:key="displayName"
         android:title="@string/pref_title_displayname"
         android:summary="@string/pref_summary_displayname"
-        android:defaultValue="@string/peppermint_user" />
+        android:defaultValue="@string/peppermint_user"
+        android:maxLength="40"
+        android:singleLine="true" />
 
     <com.peppermint.app.ui.settings.CustomPreferenceCategory
         android:title="@string/pref_title_emailcategory">

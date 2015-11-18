@@ -23,7 +23,7 @@ android {
         minSdkVersion 15
         targetSdkVersion 23
         versionCode 1
-        versionName "1.0.14"
+        versionName "1.0.15"
     }
     buildTypes {
         release {
@@ -39,6 +39,12 @@ android {
     }
 }
 
+crashlytics {
+    enableNdk true
+    androidNdkOut 'obj'
+    androidNdkLibsOut 'libs'
+}
+
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'de.greenrobot:eventbus:2.4.0'
@@ -52,6 +58,7 @@ dependencies {
     compile('com.crashlytics.sdk.android:crashlytics:2.5.2@aar') {
         transitive = true;
     }
+    compile('com.crashlytics.sdk.android:crashlytics-ndk:1.1.2@aar')
 }
 
 configurations {
