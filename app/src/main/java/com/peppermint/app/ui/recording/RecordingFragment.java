@@ -51,7 +51,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     private RecordServiceManager mRecordManager;
     private PeppermintRecordView mRecordView;
     private String mFilename = DEFAULT_FILENAME;
-    private Recipient mRecipient;
+    //private Recipient mRecipient;
 
     private TextView mTxtDuration;
     private TextView mTxtTap;
@@ -65,6 +65,10 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     private CustomConfirmationDialog mSmsConfirmationDialog;
 
     public RecordingFragment() {
+    }
+
+    private Recipient getRecipient() {
+        return getArguments() != null ? (Recipient) getArguments().get(INTENT_RECIPIENT_EXTRA) : null;
     }
 
     @SuppressWarnings("deprecation")
@@ -128,7 +132,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
                     mPressedRestart = true;
                     mRecordManager.stopRecording(true);
                 } else {
-                    mRecordManager.startRecording(mFilename, mRecipient, MAX_DURATION_MILLIS);
+                    mRecordManager.startRecording(mFilename, getRecipient(), MAX_DURATION_MILLIS);
                 }
             }
         });
@@ -140,7 +144,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
 
                 if (!mRecordManager.isRecording() && !mRecordManager.isPaused()) {
                     mBtnPauseResume.setEnabled(false);
-                    mRecordManager.startRecording(mFilename, mRecipient, MAX_DURATION_MILLIS);
+                    mRecordManager.startRecording(mFilename, getRecipient(), MAX_DURATION_MILLIS);
                     return;
                 }
 
@@ -181,7 +185,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
         mRecordManager.start(false);
 
         Bundle args = getArguments();
-        if(args == null || (mRecipient = (Recipient) args.get(INTENT_RECIPIENT_EXTRA)) == null) {
+        if(args == null || getRecipient() == null) {
             Toast.makeText(getActivity(), R.string.msg_message_norecipient_error, Toast.LENGTH_LONG).show();
             Crashlytics.log(Log.ERROR, TAG, "Recipient received by fragment is null or non-existent! Unexpected access to RecordingActivity/Fragment.");
             getActivity().finish();
@@ -231,6 +235,8 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
 
     @Override
     public void onDestroy() {
+        // FIXME this destroys the recording when pressing the notification after going out of the activity
+        // move the RecordingManager to the activity instead of the fragment, and handle in the ondestroy of the activity?
         if(!mSavedState && !mPressedSend) {
             mRecordManager.stopRecording(true);
             mRecordManager.shouldStop();
@@ -252,7 +258,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
             confirmAndSendMessage();
             mPressedSend = false;
         } else if(mPressedRestart) {
-            mRecordManager.startRecording(mFilename, mRecipient, MAX_DURATION_MILLIS);
+            mRecordManager.startRecording(mFilename, getRecipient(), MAX_DURATION_MILLIS);
             mPressedRestart = false;
         } else if(event.getRecording().getDurationMillis() >= MAX_DURATION_MILLIS) {
             mBtnPauseResume.setEnabled(false);
@@ -261,7 +267,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     }
 
     private void confirmAndSendMessage() {
-        if(!mPreferences.isShownSmsConfirmation() && mRecipient.getMimeType().equals(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)) {
+        if(!mPreferences.isShownSmsConfirmation() && getRecipient().getMimeType().equals(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)) {
             mSmsConfirmationDialog.show();
             // FIXME record is not deleted from sdcard if person says no
             return;
@@ -270,10 +276,10 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     }
 
     private void sendMessage() {
-        mPreferences.addRecentContactUri(mRecipient.getContactId());
+        mPreferences.addRecentContactUri(getRecipient().getContactId());
 
         SenderServiceManager sendRecordServiceManager = new SenderServiceManager(getActivity());
-        sendRecordServiceManager.startAndSend(mRecipient, mRecordManager.getCurrentRecording());
+        sendRecordServiceManager.startAndSend(getRecipient(), mRecordManager.getCurrentRecording());
 
         Intent resultIntent = new Intent();
         resultIntent.putExtra(INTENT_RESULT_SENDING_EXTRA, true);
@@ -351,7 +357,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
                 if(mRecordManager.isPaused()) {
                     mRecordManager.resumeRecording();
                 } else if(!mRecordManager.isRecording()){
-                    mRecordManager.startRecording(mFilename, mRecipient, MAX_DURATION_MILLIS);
+                    mRecordManager.startRecording(mFilename, getRecipient(), MAX_DURATION_MILLIS);
                 }
             }
         } else {

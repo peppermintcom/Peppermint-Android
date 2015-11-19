@@ -3,6 +3,7 @@ package com.peppermint.app.rest;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.ResultReceiver;
+import android.util.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -17,6 +18,8 @@ import java.io.OutputStream;
  * </p>
  */
 public class HttpRequestFileData extends HttpRequest implements Parcelable {
+
+    private static final String TAG = HttpRequestFileData.class.getSimpleName();
 
     protected ResultReceiver mListener;
     protected File mFile;
@@ -54,6 +57,8 @@ public class HttpRequestFileData extends HttpRequest implements Parcelable {
         long sum = 0;
         final long length = mFile.length();
 
+        //long now = android.os.SystemClock.uptimeMillis();
+
         while((count = reader.read(imageData)) > 0 && !isCancelled()) {
             outStream.write(imageData, 0, count);
             outStream.flush();
@@ -64,6 +69,9 @@ public class HttpRequestFileData extends HttpRequest implements Parcelable {
                 mListener.send(percent, null);
             }
         }
+
+        //Log.d(TAG, "Finished uploading in " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
+
         reader.close();
     }
 

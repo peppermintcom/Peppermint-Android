@@ -5,10 +5,12 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
 import android.preference.Preference;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.TextView;
 
+import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.utils.Utils;
@@ -42,8 +44,19 @@ public class GmailAccountPreference extends Preference {
         TextView txtTitle = (TextView) view.findViewById(android.R.id.title);
         TextView txtSummary = (TextView) view.findViewById(android.R.id.summary);
 
-        txtTitle.setTextColor(Utils.getColor(getContext(), R.color.black));
-        txtSummary.setTextColor(Utils.getColor(getContext(), R.color.dark_grey_text));
+        try {
+            txtTitle.setTextColor(ContextCompat.getColorStateList(getContext(), R.color.color_black_to_darkgrey_disabled));
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+            txtTitle.setTextColor(Utils.getColor(getContext(), R.color.black));
+        }
+
+        try {
+            txtSummary.setTextColor(ContextCompat.getColorStateList(getContext(), R.color.color_darkgrey_to_grey_disabled));
+        } catch (Exception e) {
+            Crashlytics.logException(e);
+            txtSummary.setTextColor(Utils.getColor(getContext(), R.color.dark_grey_text));
+        }
 
         PeppermintApp app = (PeppermintApp) ((Activity) getContext()).getApplication();
         txtTitle.setTypeface(app.getFontSemibold());

@@ -48,7 +48,7 @@ public class ServerSendingTask extends SendingTask implements HttpRequestListene
         super(sendingTask);
     }
 
-    private String waitForResponse() throws NoInternetConnectionException {
+    private String waitForResponse() throws Throwable {
         try {
             Thread.sleep(SIMPLE_REQUEST_TIMEOUT);
         } catch(InterruptedException e) {
@@ -66,6 +66,9 @@ public class ServerSendingTask extends SendingTask implements HttpRequestListene
         }
         if((mResponse.getCode()/100) != 2) {
             throw new HttpResponseException();
+        }
+        if(mResponse.getException() != null) {
+            throw mResponse.getException();
         }
 
         return mResponse.getBody().toString();

@@ -3,6 +3,7 @@ package com.peppermint.app.sending;
 import android.content.Context;
 
 import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.rest.HttpClientManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,11 +27,16 @@ import java.util.Map;
  */
 public abstract class Sender {
 
+    protected static final String PARAM_HTTP_CLIENT_MANAGER = "Sender_ParamHttpClientManager";
+
     private Context mContext;
     private SenderListener mSenderListener;
     private Map<String, Object> mParameters;
     private Sender mFailureChainSender;
     private Sender mSuccessChainSender;
+
+    private HttpClientManager mHttpManager;
+    private boolean mUseHttpManager = false;
 
     public Sender(Context context, SenderListener senderListener) {
         this.mParameters = new HashMap<>();
@@ -51,6 +57,13 @@ public abstract class Sender {
         SendingErrorHandler errorHandler = getErrorHandler();
         if(errorHandler != null) {
             errorHandler.init();
+        }
+
+        if(mUseHttpManager) {
+            mHttpManager = new HttpClientManager(mContext);
+            mHttpManager.start();
+
+            setParameter(PARAM_HTTP_CLIENT_MANAGER, mHttpManager);
         }
     }
 
@@ -84,6 +97,10 @@ public abstract class Sender {
         SendingErrorHandler errorHandler = getErrorHandler();
         if(errorHandler != null) {
             errorHandler.deinit();
+        }
+
+        if(mHttpManager != null && mHttpManager.isBound()) {
+            mHttpManager.unbind();
         }
     }
 
@@ -140,5 +157,13 @@ public abstract class Sender {
 
     public void setSuccessChainSender(Sender mSuccessChainSender) {
         this.mSuccessChainSender = mSuccessChainSender;
+    }
+
+    public boolean isUseHttpManager() {
+        return mUseHttpManager;
+    }
+
+    public void setUseHttpManager(boolean mUseHttpManager) {
+        this.mUseHttpManager = mUseHttpManager;
     }
 }

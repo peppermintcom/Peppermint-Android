@@ -19,7 +19,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="16dp"
-        android:textColor="@drawable/color_green_to_white_pressed"
+        android:textColor="@color/color_green_to_white_pressed"
         />
 
 </RelativeLayout>

@@ -38,7 +38,7 @@
     <string name="default_sms_body">Here\'s my message from Peppermint. Listen at %1$s</string>
     <string name="default_mail_body_url"><![CDATA[<p>Here\'s my message.</p><audio controls="controls"><source src="%1$s" type="%2$s" /><a href="%1$s" type="%2$s">%1$s</a></audio>]]></string>
     <string name="default_mail_body_listen">Here\'s my message.</string>
-    <string name="default_mail_body_reply"><![CDATA[Reply via <a href="https://peppermint.com/fastReply?name=%1$s&mail=%2$s">Peppermint.com</a>]]></string>
+    <string name="default_mail_body_reply"><![CDATA[Reply via <a href="https://peppermint.com/reply?name=%1$s&mail=%2$s">Peppermint.com</a>]]></string>
     <string name="uploading">Uploading…</string>
     <string name="send_record">Send Record</string>
 
@@ -121,7 +121,7 @@
     <string name="pick_account">Pick a Google account:</string>
     <string name="this_account_will_be_used">This account will be used for authentication and to send email messages</string>
     <string name="no_google_accounts_found">No Google accounts found!</string>
-    <string name="tap_to_add_account">Tap to add a Google account to your device</string>
+    <string name="add_account_to_start">Add a Google account to your device to start using Peppermint</string>
     <string name="must_authenticate_using_account">You must authenticate using a Google account. Please pick one and try again</string>
     <string name="peppermint_sign_in">Sign in to Peppermint</string>
     <string name="yes">Yes</string>
@@ -130,4 +130,5 @@
     <string name="when_you_send_via_sms">When you send via SMS it may cost you money for each message you send (depending on your phone plan). Do you want to continue?</string>
     <string name="do_not_show_this_again">Do not ask this again and always send the message</string>
     <string name="_continue">Continue</string>
+    <string name="add_account">Add account</string>
 </resources>

@@ -21,7 +21,7 @@
             android:padding="10dp"
             android:background="@drawable/background_transparent_to_solid_pressed"
             android:drawableLeft="@drawable/ic_restart_states"
-            android:textColor="@drawable/color_grey_to_white_pressed"
+            android:textColor="@color/color_grey_to_white_pressed"
             android:textSize="16dp"
             android:textAllCaps="false"
             android:text="@string/rerecord" />
@@ -37,7 +37,7 @@
             android:drawableLeft="@drawable/ic_pause_states"
             android:textSize="16dp"
             android:textAllCaps="false"
-            android:textColor="@drawable/color_grey_to_white_pressed"
+            android:textColor="@color/color_grey_to_white_pressed"
             android:text="@string/pause" />
 
     </LinearLayout>

@@ -6,10 +6,16 @@
             <corners android:radius="11dp" />
         </shape>
     </item>
-    <item android:bottom="@dimen/relevant_box_shadow_size">
+    <item android:bottom="3dp">
+        <shape>
+            <solid android:color="@color/divider_grey" />
+            <corners android:radius="11dp" />
+        </shape>
+    </item>
+    <item android:left="1dp" android:right="1dp" android:top="1dp" android:bottom="@dimen/relevant_box_shadow_size">
         <shape>
             <solid android:color="@color/white" />
-            <corners android:radius="11dp" />
+            <corners android:radius="10dp" />
         </shape>
     </item>
 </layer-list>

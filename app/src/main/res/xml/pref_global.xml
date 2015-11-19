@@ -24,7 +24,10 @@
         <com.peppermint.app.ui.settings.CustomEditTextPreference android:key="mailSubject"
             android:title="@string/pref_title_gmailsubject"
             android:summary="@string/pref_summary_gmailsubject"
-            android:defaultValue="@string/default_mail_subject" />
+            android:defaultValue="@string/default_mail_subject"
+            android:maxLength="78"
+            android:singleLine="true" />
+        <!-- Max. Length: http://www.faqs.org/rfcs/rfc2822.html Sec. 2.1.1 -->
 
     </com.peppermint.app.ui.settings.CustomPreferenceCategory>
 </PreferenceScreen>

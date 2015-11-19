@@ -1,4 +1,4 @@
-package com.peppermint.app.sending.gmail;
+package com.peppermint.app.sending.mail.gmail;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -10,11 +10,14 @@ import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.auth.GoogleAuthUtil;
+import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
+import com.peppermint.app.sending.mail.MailSenderPreferences;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.sending.SendingErrorHandler;
@@ -50,7 +53,7 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
     @Override
     protected void onActivityResult(SendingTask recoveredTask, int requestCode, int resultCode, Intent data) {
         GoogleAccountCredential credential = (GoogleAccountCredential) getParameter(GmailSender.PARAM_GMAIL_CREDENTIAL);
-        GmailSenderPreferences preferences = (GmailSenderPreferences) getSenderPreferences();
+        MailSenderPreferences preferences = (MailSenderPreferences) getSenderPreferences();
 
         // the user has picked one of the multiple available google accounts to use...
         if(requestCode == REQUEST_ACCOUNT_PICKER) {
@@ -90,21 +93,22 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
 
         Throwable e = failedSendingTask.getError();
         GoogleAccountCredential credential = (GoogleAccountCredential) getParameter(GmailSender.PARAM_GMAIL_CREDENTIAL);
-        GmailSenderPreferences preferences = (GmailSenderPreferences) getSenderPreferences();
+        MailSenderPreferences preferences = (MailSenderPreferences) getSenderPreferences();
         SendingRequest request = failedSendingTask.getSendingRequest();
 
         // in this case just ask for permissions
-        if(e instanceof UserRecoverableAuthIOException) {
+        if(e instanceof UserRecoverableAuthIOException || e instanceof UserRecoverableAuthException) {
 /*            if(preferences.getSkipIfPermissionRequired()) {
                 doNotRecover(failedSendingTask);
                 return;
             }*/
-            startActivityForResult(request.getId(), REQUEST_AUTHORIZATION, ((UserRecoverableAuthIOException) e).getIntent());
+            Intent intent = e instanceof  UserRecoverableAuthIOException ? ((UserRecoverableAuthIOException) e).getIntent() : ((UserRecoverableAuthException) e).getIntent();
+            startActivityForResult(request.getId(), REQUEST_AUTHORIZATION, intent);
             return;
         }
 
         // in this case pick an account from those registered in the Android device
-        if(e instanceof GmailPreferredAccountNotSetException) {
+        if(e instanceof MailPreferredAccountNotSetException) {
             Account[] accounts = AccountManager.get(getContext()).getAccountsByType("com.google");
             if(accounts.length <= 0) {
                 // no accounts in the device, so just fail
@@ -126,7 +130,7 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
         }
 
         // in this case, try to ask for another access token
-        if(e instanceof GoogleJsonResponseException) {
+        if(e instanceof GoogleJsonResponseException || e instanceof GmailResponseException) {
             try {
                 GoogleAuthUtil.invalidateToken(getContext(), credential.getToken());
                 doRecover(failedSendingTask);

@@ -49,4 +49,10 @@ public class CustomEditTextPreference extends EditTextPreference {
         txtTitle.setTypeface(app.getFontSemibold());
         txtSummary.setTypeface(app.getFontRegular());
     }
+
+    @Override
+    protected void onDialogClosed(boolean positiveResult) {
+        super.onDialogClosed(positiveResult);
+        Utils.hideKeyboard((Activity) getContext());
+    }
 }

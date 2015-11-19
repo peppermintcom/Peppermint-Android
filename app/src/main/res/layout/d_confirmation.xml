@@ -22,7 +22,7 @@
             android:textSize="18dp"
             android:text="@string/no"
             android:textAllCaps="false"
-            android:textColor="@drawable/color_blue_to_white_pressed"
+            android:textColor="@color/color_blue_to_white_pressed"
             android:background="@drawable/background_dialog_btn_left"
             style="?android:attr/borderlessButtonStyle" />
 
@@ -34,7 +34,7 @@
             android:textSize="18dp"
             android:text="@string/yes"
             android:textAllCaps="false"
-            android:textColor="@drawable/color_blue_to_white_pressed"
+            android:textColor="@color/color_blue_to_white_pressed"
             android:background="@drawable/background_dialog_btn_right"
             style="?android:attr/borderlessButtonStyle" />
 

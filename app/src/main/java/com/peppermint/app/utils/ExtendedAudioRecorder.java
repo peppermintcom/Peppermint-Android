@@ -45,7 +45,7 @@ public class ExtendedAudioRecorder {
     private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO;
     private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
     private static final float MAX_GAIN = 5f;
-    private static final int MAX_EMPTY_ITERATIONS = 5;
+    private static final int MAX_EMPTY_ITERATIONS = 10;
 
     // current recording context variables
     private static final String DEFAULT_FILE_PREFIX = "Record";
@@ -98,17 +98,18 @@ public class ExtendedAudioRecorder {
     };
     public Object[] findAudioRecord() {
         // 44100 increases the record size significantly; to remove or not to remove?
-        for (int rate : new int[] {44100, 22050, 16000, 11025, 8000}) {  // add the rates you wish to check against
+        int[] rates = new int[] {44100, 22050, 16000, 11025, 8000};
+        for (int rate : rates) {  // add the rates you wish to check against
             try {
-                int bufferSize = AudioRecord.getMinBufferSize(rate, RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING);
-                if (bufferSize > 0) {
+                int minBufferSize = AudioRecord.getMinBufferSize(rate, RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING);
+                if (minBufferSize > 0) {
                     // check if we can instantiate and have a success
-                    // careful with bufferSize! it seems to change the duration of the recording (gets slowed down in some cases)
+                    // careful with the buffer size! it seems to mess up the duration of the recording (gets slowed down in some cases)
                     AudioRecord recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, rate, RECORDER_CHANNELS,
-                            RECORDER_AUDIO_ENCODING, bufferSize * 5);
+                            RECORDER_AUDIO_ENCODING, minBufferSize * 5);
 
                     if (recorder.getState() == AudioRecord.STATE_INITIALIZED) {
-                        Log.d(TAG, "Picked AudioRecord Rate = " + rate + "; BufferSize = " + bufferSize + "; Channels = " + recorder.getChannelCount() + "; Encoding = " + recorder.getAudioFormat());
+                        Log.d(TAG, "Picked AudioRecord Rate = " + rate + "; MinBufferSize = " + minBufferSize + "; Channels = " + recorder.getChannelCount() + "; Encoding = " + recorder.getAudioFormat());
                         return new Object[]{recorder, rate};
                     } else {
                         recorder.release();
@@ -322,11 +323,13 @@ public class ExtendedAudioRecorder {
         long now = android.os.SystemClock.uptimeMillis();
         int emptyIts = 0;
         int totalRead = 0;
+        double totalMax = 0;
 
-        while (mRecording && !(totalRead == 0 && emptyIts >= MAX_EMPTY_ITERATIONS)) {
+        while (mRecording && !(totalRead <= 0 && emptyIts >= MAX_EMPTY_ITERATIONS) && !(totalMax <= 0 && emptyIts >= MAX_EMPTY_ITERATIONS)) {
             // gets the voice output from microphone to short format
             int numRead = recorder.read(sData, 0, SAMPLE_SIZE);
             double[] bufferData = getBufferData(sData, 0, SAMPLE_SIZE);
+            totalMax += bufferData[1];
             totalRead += numRead;
 
             /*StringBuilder b = new StringBuilder();
@@ -350,11 +353,12 @@ public class ExtendedAudioRecorder {
                 sData[i] = (short) (prevData + (.25f * (sData[i] - prevData)));
             }
             //gainOld = gain;
-            if(numRead > 0) {
+            if(numRead > 0 && bufferData[1] > 0) {
                 dataOld = sData[numRead - 1];
             } else {
                 emptyIts++;
             }
+
             //decOld = (short) (dataOld - sData[numRead-2]);
 
             // encode in AAC using the native encoder
@@ -377,7 +381,8 @@ public class ExtendedAudioRecorder {
         // close the output file stream present in the native encoder
         mEncoder.uninit();
 
-        if(emptyIts >= MAX_EMPTY_ITERATIONS && totalRead == 0) {
+        // either no data is received, or the data received contains no sound (not even noise)
+        if((emptyIts >= MAX_EMPTY_ITERATIONS && totalRead <= 0) || (totalMax <= 0 && emptyIts >= MAX_EMPTY_ITERATIONS)) {
             throw new NoMicDataIOException();
         }
     }
