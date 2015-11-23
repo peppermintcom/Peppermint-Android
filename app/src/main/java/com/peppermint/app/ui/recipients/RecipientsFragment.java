@@ -903,14 +903,16 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     }
 
     private void sendMessage() {
-        // if the user has gone through the sending process without
-        // discarding the recording, then clear the search filter
-        mSearchListBarView.clearSearch(0);
-
         mPreferences.addRecentContactUri(mFinalEvent.getRecipient().getContactId());
         mSenderServiceManager.startAndSend(mFinalEvent.getRecipient(), mFinalEvent.getRecording());
 
         mFinalEvent = null;
+
+        // if the user has gone through the sending process without
+        // discarding the recording, then clear the search filter
+        if(!mSearchListBarView.clearSearch(0)) {
+            onSearch(mSearchListBarView.getSearchText());
+        }
     }
 
 }
