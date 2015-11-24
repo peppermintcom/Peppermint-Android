@@ -147,7 +147,7 @@ public class LoadingView extends AnimatedView {
     }
 
     @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
         float smallerSide = getLocalHeight() > getLocalWidth() ? getLocalWidth() : getLocalHeight();
@@ -186,7 +186,7 @@ public class LoadingView extends AnimatedView {
         return mProgress;
     }
 
-    public void setProgress(float mProgress) {
+    public synchronized void setProgress(float mProgress) {
         this.mProgress = mProgress % (float) (Math.PI * 2f);
     }
 
@@ -194,7 +194,7 @@ public class LoadingView extends AnimatedView {
         return mProgressText;
     }
 
-    public void setProgressText(String mProgressText) {
+    public synchronized void setProgressText(String mProgressText) {
         this.mProgressText = mProgressText;
     }
 }

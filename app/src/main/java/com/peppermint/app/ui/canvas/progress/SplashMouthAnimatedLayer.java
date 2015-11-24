@@ -18,7 +18,7 @@ public class SplashMouthAnimatedLayer extends BitmapSequenceAnimatedLayer {
 
         final int normal1Duration = 1;
 
-        setBitmapSequenceResourceIds(false, new int[]{R.drawable.img_opening_mouth_1, normal1Duration}
+        setBitmapSequenceResourceIds(false, new int[] {R.drawable.img_opening_mouth_1, normal1Duration}
                 , new int[]{R.drawable.img_opening_mouth_2, normal1Duration}
                 , new int[]{R.drawable.img_opening_mouth_3, normal1Duration}
                 , new int[]{R.drawable.img_opening_mouth_4, normal1Duration}

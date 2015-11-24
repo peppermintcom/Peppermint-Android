@@ -53,9 +53,11 @@ public class AnimatedView extends TextureView {
         }
 
         public void setRunning(boolean running) {
-            this.mRunning = running;
-            if(!running) {
-                interrupt();
+            synchronized (AnimatedView.this) {
+                this.mRunning = running;
+                if (!running) {
+                    interrupt();
+                }
             }
         }
     }
@@ -128,7 +130,7 @@ public class AnimatedView extends TextureView {
     }
 
     @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         mWidth = MeasureSpec.getSize(widthMeasureSpec);
         mHeight = MeasureSpec.getSize(heightMeasureSpec);
 
@@ -265,7 +267,7 @@ public class AnimatedView extends TextureView {
         return mScaleFactor;
     }
 
-    public void setScaleFactor(float mScaleFactor) {
+    public synchronized void setScaleFactor(float mScaleFactor) {
         this.mOldScaleFactor = this.mScaleFactor;
         this.mScaleDiff = mScaleFactor - this.mScaleFactor;
         this.mScaleFrames = SCALE_INTERPOLATION_DURATION / mFrameInterval;

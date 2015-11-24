@@ -141,7 +141,7 @@ public class RecordProgressView extends AnimatedView {
     }
 
     @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
         // background gradients
@@ -178,7 +178,7 @@ public class RecordProgressView extends AnimatedView {
         return mSeconds;
     }
 
-    public void setSeconds(float mSeconds) {
+    public synchronized void setSeconds(float mSeconds) {
         this.mSeconds = mSeconds;
 
         double elapsedTime = mSeconds * 1000f;
@@ -189,16 +189,16 @@ public class RecordProgressView extends AnimatedView {
         //invalidate();
     }
 
-    public void blink() {
+    public synchronized void blink() {
         mLeftEye.blink();
         mRightEye.blink();
     }
 
-    public void blinkLeftEye() {
+    public synchronized void blinkLeftEye() {
         mLeftEye.blink();
     }
 
-    public void blinkRightEye() {
+    public synchronized void blinkRightEye() {
         mRightEye.blink();
     }
 

@@ -167,7 +167,7 @@ public class AnimatedAvatarView extends AnimatedView {
     }
 
     @Override
-    public void resetAnimations() {
+    public synchronized void resetAnimations() {
         for(BitmapSequenceAnimatedLayer avatarLayer : mAvatars) {
             avatarLayer.reset();
         }
@@ -179,7 +179,7 @@ public class AnimatedAvatarView extends AnimatedView {
     }
 
     @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
         // box bounds (get values obtained in parent onMeasure)
@@ -190,13 +190,13 @@ public class AnimatedAvatarView extends AnimatedView {
         mStaticAvatar.setBounds(fullBounds);
     }
 
-    public boolean setStaticDrawable(Uri drawableUri) {
+    public synchronized boolean setStaticDrawable(Uri drawableUri) {
         mStaticAvatar.setBitmapDrawable((BitmapDrawable) getBitmapFromURI(drawableUri));
         doDraw();
         return mStaticAvatar.getBitmapDrawable() != null;
     }
 
-    public boolean setStaticDrawable(int drawableRes) {
+    public synchronized boolean setStaticDrawable(int drawableRes) {
         mStaticAvatar.setBitmapResourceId(drawableRes);
         doDraw();
         return true;
@@ -216,7 +216,7 @@ public class AnimatedAvatarView extends AnimatedView {
         return getLayers().get(0).equals(mStaticAvatar);
     }
 
-    public void setShowStaticAvatar(boolean mShowStaticAvatar) {
+    public synchronized void setShowStaticAvatar(boolean mShowStaticAvatar) {
         if(mShowStaticAvatar) {
             removeLayers();
             addLayer(mStaticAvatar);

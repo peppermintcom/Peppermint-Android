@@ -115,7 +115,7 @@ public class SplashView extends AnimatedView {
     }
 
     @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+    protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
         // background gradients
@@ -147,21 +147,21 @@ public class SplashView extends AnimatedView {
         mMouth.setBounds(mouthBounds);
     }
 
-    public void blink() {
+    public synchronized void blink() {
         mLeftEye.blink();
         mRightEye.blink();
     }
 
-    public void blinkAndHalfOpenMouth() {
+    public synchronized void blinkAndHalfOpenMouth() {
         mLeftEye.getBlinkAnimation().addAnimationListener(mBlinkListener);
         blink();
     }
 
-    public void blinkLeftEye() {
+    public synchronized void blinkLeftEye() {
         mLeftEye.blink();
     }
 
-    public void blinkRightEye() {
+    public synchronized void blinkRightEye() {
         mRightEye.blink();
     }
 

@@ -132,6 +132,7 @@ public class TutorialActivity extends Activity implements FragmentManager.OnBack
 
     @Override
     public void onBackStackChanged() {
+
         mCurrentFragment = (TutorialFragment) getFragmentManager().findFragmentById(R.id.container);
         int currentPos = mFragmentClassList.indexOf(mCurrentFragment.getClass());
         // set final continue button visibility

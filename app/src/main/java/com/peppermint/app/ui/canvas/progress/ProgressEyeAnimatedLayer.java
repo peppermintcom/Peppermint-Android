@@ -86,7 +86,7 @@ public class ProgressEyeAnimatedLayer extends AnimatedLayerBase {
         }
     }
 
-    public void blink() {
+    public synchronized void blink() {
         if(mBlinkAnimation.isRunning()) {
             return;
         }

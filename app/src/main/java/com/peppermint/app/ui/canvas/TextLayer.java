@@ -24,7 +24,7 @@ public class TextLayer extends LayerBase implements Layer {
     }
 
     @Override
-    public void draw(View view, Canvas canvas) {
+    public synchronized void draw(View view, Canvas canvas) {
         if(canvas != null) {
             String[] split = mText.split("\n");
             float offsetY = - (((mTextSize/2f)+(mTextSpacing/2f)) * (float) (split.length - 1));
@@ -42,7 +42,7 @@ public class TextLayer extends LayerBase implements Layer {
         return mTextSize;
     }
 
-    public void setTextSize(float mTextSize) {
+    public synchronized void setTextSize(float mTextSize) {
         this.mTextSize = mTextSize;
     }
 
@@ -58,7 +58,7 @@ public class TextLayer extends LayerBase implements Layer {
      * Set the vertical spacing between text lines.
      * @param mTextSpacing the new spacing in pixels
      */
-    public void setTextSpacing(float mTextSpacing) {
+    public synchronized void setTextSpacing(float mTextSpacing) {
         this.mTextSpacing = mTextSpacing;
     }
 
@@ -66,7 +66,7 @@ public class TextLayer extends LayerBase implements Layer {
         return mText;
     }
 
-    public void setText(String mText) {
+    public synchronized void setText(String mText) {
         this.mText = mText;
     }
 }

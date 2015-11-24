@@ -95,6 +95,7 @@ public class T2RecordFragment extends TutorialActivity.TutorialFragment implemen
 
     @Override
     public void onDestroy() {
+        mRecordView.getProgressBox().removeAnimationListener(this);
         super.onDestroy();
     }
 
@@ -124,6 +125,8 @@ public class T2RecordFragment extends TutorialActivity.TutorialFragment implemen
             }
         }, 500);
 
-        mRecordView.blink();
+        if(getActivity() != null) {
+            mRecordView.blink();
+        }
     }
 }
