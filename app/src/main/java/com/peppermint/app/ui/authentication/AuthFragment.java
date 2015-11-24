@@ -11,7 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.LinearLayout;
+import android.widget.Button;
 
 import com.peppermint.app.R;
 import com.peppermint.app.utils.PepperMintPreferences;
@@ -40,7 +40,7 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
         return true;
     }
 
-    private LinearLayout mEmptyContainer;
+    private Button mBtnAddAccount;
     private AuthArrayAdapter mAdapter;
     private Account[] mAccounts;
     private PepperMintPreferences mPreferences;
@@ -59,8 +59,8 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
         // inflate the view
         View v = inflater.inflate(R.layout.f_authentication, container, false);
 
-        mEmptyContainer = (LinearLayout) v.findViewById(android.R.id.empty);
-        mEmptyContainer.setOnClickListener(this);
+        mBtnAddAccount = (Button) v.findViewById(R.id.btnAddAccount);
+        mBtnAddAccount.setOnClickListener(this);
 
         return v;
     }
@@ -87,7 +87,7 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
 
     @Override
     public void onClick(View v) {
-        if(v.equals(mEmptyContainer)) {
+        if(v.equals(mBtnAddAccount)) {
             startActivity(new Intent(Settings.ACTION_ADD_ACCOUNT));
             return;
         }

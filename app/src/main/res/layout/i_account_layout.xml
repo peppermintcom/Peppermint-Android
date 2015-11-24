@@ -17,6 +17,6 @@
         android:layout_height="wrap_content"
         custom:textFont="@string/font_semibold"
         android:textSize="18dp"
-        android:textColor="@drawable/color_green_to_white_pressed"/>
+        android:textColor="@color/color_green_to_white_pressed"/>
 
 </LinearLayout>

@@ -1,4 +1,4 @@
-package com.peppermint.app.sending.nativemail;
+package com.peppermint.app.sending.mail.nativemail;
 
 import android.content.Intent;
 import android.net.Uri;
@@ -10,9 +10,12 @@ import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.sending.SendingTask;
+import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
+import com.peppermint.app.sending.mail.MailSenderPreferences;
 import com.peppermint.app.sending.server.ServerSendingTask;
 
 import java.io.File;
+import java.net.URLEncoder;
 import java.util.Map;
 
 /**
@@ -40,9 +43,24 @@ public class IntentMailSendingTask extends SendingTask {
 
     @Override
     protected void send() throws Throwable {
+        String preferredAccountName = ((MailSenderPreferences) getSenderPreferences()).getPreferredAccountName();
+        if(preferredAccountName == null) {
+            throw new MailPreferredAccountNotSetException();
+        }
+
+        String displayName = ((MailSenderPreferences) getSenderPreferences()).getDisplayName();
+
+        // build the email body
         String url = (String) getSendingRequest().getParameter(ServerSendingTask.PARAM_SHORT_URL);
-        String body = "<p>" + String.format(getSender().getContext().getString(R.string.default_mail_body_url), url, (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO)) + "</p><br />" + getSender().getContext().getString(R.string.default_mail_body_reply);
-        getSendingRequest().setBody(body);
+        StringBuilder bodyBuilder = new StringBuilder();
+        bodyBuilder.append("<p>");
+        bodyBuilder.append(String.format(getSender().getContext().getString(R.string.default_mail_body_url), url,
+                (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO)));
+        bodyBuilder.append("</p><br />");
+        bodyBuilder.append(String.format(getSender().getContext().getString(R.string.default_mail_body_reply),
+                displayName == null ? "" : URLEncoder.encode(displayName, "UTF-8"),
+                URLEncoder.encode(preferredAccountName, "UTF-8")));
+        getSendingRequest().setBody(bodyBuilder.toString());
 
         File file = getSendingRequest().getRecording().getValidatedFile();
 

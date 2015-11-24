@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item>
+    <item android:bottom="3dp">
         <shape>
-            <solid android:color="@color/box_shadow" />
+            <solid android:color="@color/divider_grey" />
             <corners android:radius="11dp" />
         </shape>
     </item>
-    <item android:bottom="@dimen/relevant_box_shadow_size">
+    <item android:left="1dp" android:right="1dp" android:top="1dp" android:bottom="@dimen/relevant_box_shadow_size">
         <shape>
             <solid android:color="@color/black" />
-            <corners android:radius="11dp" />
+            <corners android:radius="10dp" />
         </shape>
     </item>
 </layer-list>

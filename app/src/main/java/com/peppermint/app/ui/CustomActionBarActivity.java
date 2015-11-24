@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.net.Uri;
@@ -215,28 +216,38 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
         Fragment introScreenFragment;
         try {
             introScreenFragment = firstNavigationItem.getFragmentClass().newInstance();
-            if(getIntent() != null) {
-                Bundle bundle = new Bundle();
-
-                if(getIntent().getExtras() != null) {
-                    bundle.putAll(getIntent().getExtras());
-                }
-
-                Uri uri = getIntent().getData();
-                if(uri != null) {
-                    for(String paramName : uri.getQueryParameterNames()) {
-                        String paramValue = uri.getQueryParameter(paramName);
-                        if (paramValue != null) {
-                            bundle.putString(paramName, paramValue);
-                        }
-                    }
-                }
-                introScreenFragment.setArguments(bundle);
-            }
+            setFragmentArgumentsFromIntent(introScreenFragment, getIntent());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         getFragmentManager().beginTransaction().add(R.id.container, introScreenFragment).commit();
+    }
+
+    private void setFragmentArgumentsFromIntent(Fragment fragment, Intent intent) {
+        if(intent != null && fragment != null) {
+            Bundle bundle = new Bundle();
+
+            if(getIntent().getExtras() != null) {
+                bundle.putAll(getIntent().getExtras());
+            }
+
+            Uri uri = getIntent().getData();
+            if(uri != null) {
+                for(String paramName : uri.getQueryParameterNames()) {
+                    String paramValue = uri.getQueryParameter(paramName);
+                    if (paramValue != null) {
+                        bundle.putString(paramName, paramValue);
+                    }
+                }
+            }
+            fragment.setArguments(bundle);
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        /*setFragmentArgumentsFromIntent(getCurrentFragment(), intent);*/
     }
 
     protected void refreshFragment() {

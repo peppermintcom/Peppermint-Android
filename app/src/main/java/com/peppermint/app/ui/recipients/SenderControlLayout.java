@@ -15,7 +15,7 @@ import android.widget.TextView;
 import com.peppermint.app.R;
 import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.sending.SendingEvent;
-import com.peppermint.app.sending.nativemail.IntentMailSendingTask;
+import com.peppermint.app.sending.mail.nativemail.IntentMailSendingTask;
 import com.peppermint.app.utils.AnimatorBuilder;
 
 /**

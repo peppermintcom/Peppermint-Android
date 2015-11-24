@@ -13,8 +13,8 @@ import android.widget.Toast;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
-import com.peppermint.app.sending.gmail.GmailSender;
-import com.peppermint.app.sending.gmail.GmailSenderPreferences;
+import com.peppermint.app.sending.mail.MailSenderPreferences;
+import com.peppermint.app.sending.mail.gmail.GmailSender;
 import com.peppermint.app.ui.CustomActionBarActivity;
 
 public class SettingsFragment extends PreferenceFragment {
@@ -22,6 +22,7 @@ public class SettingsFragment extends PreferenceFragment {
     private static final String TAG = SettingsFragment.class.getSimpleName();
 
     private static final String PREF_DISPLAY_NAME_KEY = "displayName";
+    private static final String PREF_SUBJECT_KEY = "mailSubject";
 
     private static final int PREF_GMAIL_ACCOUNT_REQUEST = 1199;
 
@@ -43,7 +44,7 @@ public class SettingsFragment extends PreferenceFragment {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.pref_global);
 
-        mPrefGmailAccount = findPreference(GmailSenderPreferences.PREF_ACCOUNT_NAME_KEY);
+        mPrefGmailAccount = findPreference(MailSenderPreferences.PREF_ACCOUNT_NAME_KEY);
         mPrefGmailAccount.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
@@ -55,7 +56,7 @@ public class SettingsFragment extends PreferenceFragment {
             }
         });
 
-        Preference mPrefDisplayName = findPreference(PREF_DISPLAY_NAME_KEY);
+        final Preference mPrefDisplayName = findPreference(PREF_DISPLAY_NAME_KEY);
         mPrefDisplayName.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -88,7 +89,7 @@ public class SettingsFragment extends PreferenceFragment {
             if (resultCode == Activity.RESULT_OK && data != null && data.getExtras() != null) {
                 String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
                 if (accountName != null) {
-                    GmailSenderPreferences prefs = new GmailSenderPreferences(mActivity);
+                    MailSenderPreferences prefs = new MailSenderPreferences(mActivity);
                     prefs.setPreferredAccountName(accountName);
                 }
             }

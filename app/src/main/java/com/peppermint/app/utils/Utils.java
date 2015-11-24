@@ -1,5 +1,6 @@
 package com.peppermint.app.utils;
 
+import android.app.Activity;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -20,7 +21,9 @@ import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Display;
+import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 
 import java.io.IOException;
@@ -426,6 +429,22 @@ public class Utils {
      */
     public static Date parseTimestamp(String ts) throws ParseException {
         return DATETIME_FORMAT.parse(ts);
+    }
+
+    /**
+     * Hide the keyboard
+     * @param context the activity
+     */
+    public static void hideKeyboard(Activity context) {
+        context.getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN
+        );
+        View view = context.getWindow().getCurrentFocus();
+        if (view != null) {
+            view.clearFocus();
+            InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
     }
 
     /**

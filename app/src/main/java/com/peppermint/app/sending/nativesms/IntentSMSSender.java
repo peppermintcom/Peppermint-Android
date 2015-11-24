@@ -1,4 +1,4 @@
-package com.peppermint.app.sending.nativemail;
+package com.peppermint.app.sending.nativesms;
 
 import android.content.Context;
 
@@ -12,17 +12,17 @@ import com.peppermint.app.sending.SendingTask;
 /**
  * Created by Nuno Luz on 08-09-2015.
  *
- * Sender for emails using a native email app.
+ * Sender messages using a native SMS app.
  */
-public class IntentMailSender extends Sender {
+public class IntentSMSSender extends Sender {
 
-    public IntentMailSender(Context context, SenderListener senderListener) {
+    public IntentSMSSender(Context context, SenderListener senderListener) {
         super(context, senderListener);
     }
 
     @Override
     public SendingTask newTask(SendingRequest sendingRequest) {
-        return new IntentMailSendingTask(this, sendingRequest, getSenderListener(), getParameters(), getSenderPreferences());
+        return new IntentSMSSendingTask(this, sendingRequest, getSenderListener(), getParameters(), getSenderPreferences());
     }
 
     @Override

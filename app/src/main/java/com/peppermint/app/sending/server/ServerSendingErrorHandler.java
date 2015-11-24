@@ -13,7 +13,7 @@ import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.sending.SendingErrorHandler;
 import com.peppermint.app.sending.SendingTask;
-import com.peppermint.app.sending.gmail.GmailSender;
+import com.peppermint.app.sending.mail.gmail.GmailSender;
 import com.peppermint.app.utils.Utils;
 
 import org.json.JSONException;

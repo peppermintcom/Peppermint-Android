@@ -58,7 +58,7 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
     }
 
     @Override
-    public void onDraw(View view, Canvas canvas, double interpolatedElapsedTime) {
+    public synchronized void onDraw(View view, Canvas canvas, double interpolatedElapsedTime) {
         int currentFrame = (int) Math.round(interpolatedElapsedTime / getDuration() * (mBitmapSequenceRes.length - 1));
         initShader(currentFrame);
 
@@ -73,7 +73,7 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
         }
     }
 
-    private void initShader(int frame) {
+    private synchronized void initShader(int frame) {
         if(getBounds() == null || getBounds().width() <= 0 || getBounds().height() <= 0) {
             return;
         }
@@ -107,7 +107,7 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
         return mBitmapSequenceRes;
     }
 
-    public void setBitmapSequenceResourceIds(boolean decodeAsYouGo, int... mBitmapSequenceRes) {
+    public synchronized void setBitmapSequenceResourceIds(boolean decodeAsYouGo, int... mBitmapSequenceRes) {
         if(!decodeAsYouGo) {
             if(mBitmapSequence != null) {
                 for(int i=0; i<mBitmapSequence.length; i++) {
@@ -124,7 +124,7 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
         this.mBitmapSequenceRes = mBitmapSequenceRes;
     }
 
-    public void setBitmapSequenceResourceIds(boolean decodeAsYouGo, int[]... mBitmapSequenceRes) {
+    public synchronized void setBitmapSequenceResourceIds(boolean decodeAsYouGo, int[]... mBitmapSequenceRes) {
 
         List<Integer> sequenceList = new ArrayList<>();
         for(int[] bitmapData : mBitmapSequenceRes) {

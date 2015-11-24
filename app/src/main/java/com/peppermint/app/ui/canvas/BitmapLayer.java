@@ -34,12 +34,12 @@ public class BitmapLayer extends LayerBase implements Layer {
         initDrawable();
     }
 
-    private void initDrawable() {
+    private synchronized void initDrawable() {
         mDrawable = (BitmapDrawable) Utils.getDrawable(getContext(), mBitmapRes);
         initShader();
     }
 
-    private void initShader() {
+    private synchronized void initShader() {
         if(getBounds() == null || getBounds().width() <= 0 || getBounds().height() <= 0) {
             return;
         }
@@ -58,7 +58,7 @@ public class BitmapLayer extends LayerBase implements Layer {
     }
 
     @Override
-    public void draw(View view, Canvas canvas) {
+    public synchronized void draw(View view, Canvas canvas) {
         if(canvas != null) {
             canvas.save();
             canvas.translate(getBounds().left, getBounds().top);

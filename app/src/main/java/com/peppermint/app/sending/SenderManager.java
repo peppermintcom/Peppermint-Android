@@ -14,8 +14,9 @@ import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.exceptions.ElectableForQueueingException;
-import com.peppermint.app.sending.gmail.GmailSender;
-import com.peppermint.app.sending.nativemail.IntentMailSender;
+import com.peppermint.app.sending.mail.gmail.GmailSender;
+import com.peppermint.app.sending.mail.nativemail.IntentMailSender;
+import com.peppermint.app.sending.nativesms.IntentSMSSender;
 import com.peppermint.app.sending.server.ServerSender;
 import com.peppermint.app.sending.sms.SMSSender;
 import com.peppermint.app.utils.Utils;
@@ -159,6 +160,11 @@ public class SenderManager implements SenderListener {
         smsSender.getParameters().putAll(defaultSenderParameters);
 
         smsServerSender.setSuccessChainSender(smsSender);
+
+        IntentSMSSender intentSmsSender = new IntentSMSSender(mContext, this);
+        intentSmsSender.getParameters().putAll(defaultSenderParameters);
+
+        smsSender.setFailureChainSender(intentSmsSender);
 
         mSenderMap.put(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, smsServerSender);
     }

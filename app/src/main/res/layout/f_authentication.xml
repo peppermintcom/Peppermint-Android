@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_height="match_parent"
     android:layout_width="match_parent"
     android:orientation="vertical">
 
     <LinearLayout
+        android:id="@+id/lytTop"
+        android:layout_alignParentTop="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="20dp"
@@ -32,7 +34,28 @@
 
     </LinearLayout>
 
+    <Button
+        android:id="@+id/btnAddAccount"
+        android:layout_alignParentBottom="true"
+        android:layout_centerInParent="true"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:paddingTop="10dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingBottom="13dp"
+        android:textSize="18dp"
+        android:text="@string/add_account"
+        android:textAllCaps="false"
+        android:textColor="@color/color_green_to_white_pressed"
+        android:background="@drawable/background_btn"
+        style="?android:attr/borderlessButtonStyle"
+         />
+
     <ScrollView
+        android:layout_below="@id/lytTop"
+        android:layout_above="@id/btnAddAccount"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true">
@@ -71,7 +94,7 @@
                     custom:textFont="@string/font_semibold"
                     android:textColor="@color/grey_text"
                     android:textSize="18dp"
-                    android:text="@string/tap_to_add_account"/>
+                    android:text="@string/add_account_to_start"/>
 
             </LinearLayout>
 
@@ -79,4 +102,4 @@
 
     </ScrollView>
 
-</LinearLayout>
+</RelativeLayout>

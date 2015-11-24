@@ -50,13 +50,13 @@ public class ProgressBoxAnimatedLayer extends AnimatedLayerBase {
     }
 
     @Override
-    protected void onMeasure(Rect bounds) {
+    protected synchronized void onMeasure(Rect bounds) {
         mFullSideLength = bounds.width() > bounds.height() ? bounds.height() : bounds.width();
         mTotalLength = ((mFullSideLength - (mCornerRadius * 2f)) * 4f) + (mCornerLength * 4f);
     }
 
     @Override
-    public void onDraw(View view, Canvas canvas, double interpolatedElapsedTime) {
+    public synchronized void onDraw(View view, Canvas canvas, double interpolatedElapsedTime) {
         double halfDuration = getDuration() / 2f;
         Rect bounds = getBounds();
 
@@ -305,7 +305,7 @@ public class ProgressBoxAnimatedLayer extends AnimatedLayerBase {
         return mCornerRadius;
     }
 
-    public void setCornerRadius(float mCornerRadius) {
+    public synchronized void setCornerRadius(float mCornerRadius) {
         this.mCornerRadius = mCornerRadius;
         this.mCornerLength = (float) (mCornerRadius * Math.PI / 2f);    // 1/4 of perimeter
     }
@@ -318,7 +318,7 @@ public class ProgressBoxAnimatedLayer extends AnimatedLayerBase {
         return mProgressWidth;
     }
 
-    public void setProgressWidth(float mProgressWidth) {
+    public synchronized void setProgressWidth(float mProgressWidth) {
         this.mProgressWidth = mProgressWidth;
     }
 
@@ -326,7 +326,7 @@ public class ProgressBoxAnimatedLayer extends AnimatedLayerBase {
         return mProgressPaint;
     }
 
-    public void setProgressPaint(Paint mProgressPaint) {
+    public synchronized void setProgressPaint(Paint mProgressPaint) {
         this.mProgressPaint = mProgressPaint;
     }
 
@@ -334,7 +334,7 @@ public class ProgressBoxAnimatedLayer extends AnimatedLayerBase {
         return mEmptyProgressPaint;
     }
 
-    public void setEmptyProgressPaint(Paint mEmptyProgressPaint) {
+    public synchronized void setEmptyProgressPaint(Paint mEmptyProgressPaint) {
         this.mEmptyProgressPaint = mEmptyProgressPaint;
     }
 
@@ -342,7 +342,7 @@ public class ProgressBoxAnimatedLayer extends AnimatedLayerBase {
         return mBackgroundPaint;
     }
 
-    public void setBackgroundPaint(Paint mBackgroundPaint) {
+    public synchronized void setBackgroundPaint(Paint mBackgroundPaint) {
         this.mBackgroundPaint = mBackgroundPaint;
     }
 
@@ -350,7 +350,7 @@ public class ProgressBoxAnimatedLayer extends AnimatedLayerBase {
         return mProgressType;
     }
 
-    public void setProgressType(int mProgressType) {
+    public synchronized void setProgressType(int mProgressType) {
         this.mProgressType = mProgressType;
     }
 
@@ -358,7 +358,7 @@ public class ProgressBoxAnimatedLayer extends AnimatedLayerBase {
         return mBackgroundPressedPaint;
     }
 
-    public void setBackgroundPressedPaint(Paint mBackgroundPressedPaint) {
+    public synchronized void setBackgroundPressedPaint(Paint mBackgroundPressedPaint) {
         this.mBackgroundPressedPaint = mBackgroundPressedPaint;
     }
 
@@ -366,7 +366,7 @@ public class ProgressBoxAnimatedLayer extends AnimatedLayerBase {
         return mFirstPartOnly;
     }
 
-    public void setFirstPartOnly(boolean mFirstPartOnly) {
+    public synchronized void setFirstPartOnly(boolean mFirstPartOnly) {
         this.mFirstPartOnly = mFirstPartOnly;
     }
 }

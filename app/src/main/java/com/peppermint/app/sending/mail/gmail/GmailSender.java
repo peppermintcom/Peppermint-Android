@@ -1,4 +1,4 @@
-package com.peppermint.app.sending.gmail;
+package com.peppermint.app.sending.mail.gmail;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -13,6 +13,7 @@ import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.sending.mail.MailSenderPreferences;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
@@ -42,14 +43,14 @@ public class GmailSender extends Sender {
     private final JsonFactory mJsonFactory = GsonFactory.getDefaultInstance();
 
     private GmailSendingErrorHandler mErrorHandler;
-    private GmailSenderPreferences mPreferences;
+    private MailSenderPreferences mPreferences;
 
     private SharedPreferences.OnSharedPreferenceChangeListener mSharedPreferenceListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            if(key.compareTo(GmailSenderPreferences.PREF_ACCOUNT_NAME_KEY) == 0) {
+            if(key.compareTo(MailSenderPreferences.PREF_ACCOUNT_NAME_KEY) == 0) {
                 setupCredentials();
-            } else if(key.compareTo(GmailSenderPreferences.DISPLAY_NAME_KEY) == 0) {
+            } else if(key.compareTo(MailSenderPreferences.DISPLAY_NAME_KEY) == 0) {
 
             }
         }
@@ -57,7 +58,8 @@ public class GmailSender extends Sender {
 
     public GmailSender(Context context, SenderListener senderListener) {
         super(context, senderListener);
-        mPreferences = new GmailSenderPreferences(getContext());
+        mPreferences = new MailSenderPreferences(getContext());
+        setUseHttpManager(true);
     }
 
     private void setupCredentials() {

@@ -1,26 +1,38 @@
-package com.peppermint.app.sending.gmail;
+package com.peppermint.app.sending.mail;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.peppermint.app.sending.GoogleSenderPreferences;
+import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.utils.Utils;
 
 /**
  * Created by Nuno Luz on 02-10-2015.
  *
- * Preferences for the {@link GmailSender}.
+ * Preferences for Google Account.
  */
-public class GmailSenderPreferences extends GoogleSenderPreferences {
+public class MailSenderPreferences extends SenderPreferences {
 
+    // GmailSendingTask shared preference keys
+    public static final String PREF_ACCOUNT_NAME_KEY = "prefAccountName";
     public static final String DISPLAY_NAME_KEY = "displayName";
 
-    public GmailSenderPreferences(Context context) {
+    public MailSenderPreferences(Context context) {
         super(context);
     }
 
-    public GmailSenderPreferences(Context context, SharedPreferences sharedPreferences) {
+    public MailSenderPreferences(Context context, SharedPreferences sharedPreferences) {
         super(context, sharedPreferences);
+    }
+
+    public void setPreferredAccountName(String accountName) {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putString(PREF_ACCOUNT_NAME_KEY, accountName);
+        editor.commit();
+    }
+
+    public String getPreferredAccountName() {
+        return getSharedPreferences().getString(PREF_ACCOUNT_NAME_KEY, null);
     }
 
     public void setDisplayName(String name) {

@@ -18,7 +18,6 @@ import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -139,7 +138,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private SenderControlLayout mLytSenderControl;
 
     // search
-    private Object mLock = new Object();
+    private final Object mLock = new Object();
     private boolean mCreated = false;
     private GetRecipients mGetRecipientsTask;
     private static final Pattern mViaPattern = Pattern.compile("<([^\\s]*)>");
@@ -363,8 +362,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public void onAttach(Activity activity) {
         super.onAttach(activity);
 
-        Log.d("RecipientsFragment", "onAttach");
-
         mActivity = (CustomActionBarActivity) activity;
         mPreferences = new PepperMintPreferences(activity);
         mSenderServiceManager = new SenderServiceManager(activity);
@@ -378,7 +375,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public void onDetach() {
         super.onDetach();
-        Log.d("RecipientsFragment", "onDetach");
     }
 
     @Override
@@ -593,8 +589,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             mCreated = true;
             mLock.notifyAll();
         }
-
-        Log.d("RecipientsFragment", "onViewCreated");
     }
 
     @Override
@@ -794,14 +788,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Log.d("RecipientsFragment", "onRequestPermissionsResult");
         onSearch(mSearchListBarView.getSearchText());
     }
 
     @Override
     public void onSearch(String filter) {
-        Log.d("RecipientsFragment", "onSearch");
-
         if(mGetRecipientsTask != null && !mGetRecipientsTask.isCancelled() && mGetRecipientsTask.getStatus() != AsyncTask.Status.FINISHED) {
             mGetRecipientsTask.cancel(true);
         }

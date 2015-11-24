@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.telephony.SmsManager;
+import android.telephony.TelephonyManager;
 
 import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
@@ -38,7 +39,11 @@ public class SMSSendingTask extends SendingTask {
                         mRunner.interrupt();
                     }
                     break;
+                case SmsManager.RESULT_ERROR_NO_SERVICE:
+                case SmsManager.RESULT_ERROR_RADIO_OFF:
+                    break;
                 default:
+                    // TODO handle these
                     // error
             }
         }

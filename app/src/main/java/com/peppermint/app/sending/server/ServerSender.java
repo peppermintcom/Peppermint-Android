@@ -3,7 +3,7 @@ package com.peppermint.app.sending.server;
 import android.content.Context;
 
 import com.peppermint.app.data.SendingRequest;
-import com.peppermint.app.sending.GoogleSenderPreferences;
+import com.peppermint.app.sending.mail.MailSenderPreferences;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
@@ -21,12 +21,12 @@ public class ServerSender extends Sender {
 
     protected ServerClientManager mManager;
 
-    private GoogleSenderPreferences mPreferences;
+    private MailSenderPreferences mPreferences;
     private ServerSendingErrorHandler mErrorHandler;
 
     public ServerSender(Context context, SenderListener senderListener) {
         super(context, senderListener);
-        mPreferences = new GoogleSenderPreferences(getContext());
+        mPreferences = new MailSenderPreferences(getContext());
     }
 
     @Override
