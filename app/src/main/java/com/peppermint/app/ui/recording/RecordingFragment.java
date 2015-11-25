@@ -28,6 +28,7 @@ import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.ui.canvas.old.PeppermintRecordView;
 import com.peppermint.app.ui.views.CustomConfirmationDialog;
+import com.peppermint.app.ui.views.CustomToast;
 import com.peppermint.app.utils.NoMicDataIOException;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
@@ -170,7 +171,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
             @Override
             public void onClick(View v) {
                 if (mRecordView.getSeconds() < 2) {
-                    Toast.makeText(RecordingFragment.this.getActivity(), R.string.msg_record_at_least, Toast.LENGTH_SHORT).show();
+                    CustomToast.makeText(RecordingFragment.this.getActivity(), R.string.msg_record_at_least, Toast.LENGTH_SHORT).show();
                 } else {
                     if(mRecordManager.isRecording()) {
                         mPressedSend = true;
