@@ -226,7 +226,7 @@ public class AnimatedView extends TextureView {
         setOpaque(false);
     }
 
-    public void startExplosion() {
+    public synchronized void startExplosion() {
         if(mExplosionBaseCanvas != null) {
             doDrawLayers(mExplosionBaseCanvas);
 
@@ -274,7 +274,7 @@ public class AnimatedView extends TextureView {
         }
     }
 
-    protected void resetExplosionCanvas() {
+    protected synchronized void resetExplosionCanvas() {
         // init explosion base bitmap (holds a print of the last frame before the explosion)
         // this frame is used to draw static content inside each explosion fragment
         if(mExplosionBaseBitmap != null) {
@@ -309,7 +309,7 @@ public class AnimatedView extends TextureView {
         this.setMeasuredDimension((int) mWidth, (int) mHeight);
     }
 
-    private void doDrawLayers(Canvas canvas) {
+    private synchronized void doDrawLayers(Canvas canvas) {
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
         canvas.save();
         canvas.scale(mScaleFactor, mScaleFactor, canvas.getWidth() / 2f, canvas.getHeight() / 2f);
@@ -503,7 +503,7 @@ public class AnimatedView extends TextureView {
         return mDrawingListener;
     }
 
-    public void setDrawingListener(AnimatedViewListener mDrawingListener) {
+    public synchronized void setDrawingListener(AnimatedViewListener mDrawingListener) {
         this.mDrawingListener = mDrawingListener;
     }
 
@@ -541,7 +541,7 @@ public class AnimatedView extends TextureView {
         this.mExplosionListener = mExplosionListener;
     }
 
-    public void setExplosionEnabled(boolean mExplosionEnabled) {
+    public synchronized void setExplosionEnabled(boolean mExplosionEnabled) {
         this.mExplosionEnabled = mExplosionEnabled;
         if(mExplosionEnabled) {
             resetExplosionCanvas();

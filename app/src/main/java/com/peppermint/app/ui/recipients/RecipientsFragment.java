@@ -45,6 +45,7 @@ import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.canvas.progress.LoadingView;
 import com.peppermint.app.ui.views.CustomConfirmationDialog;
+import com.peppermint.app.ui.views.CustomToast;
 import com.peppermint.app.ui.views.RecordingOverlayView;
 import com.peppermint.app.ui.views.SearchListBarAdapter;
 import com.peppermint.app.ui.views.SearchListBarView;
@@ -765,7 +766,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                         // release: send
                         mRecordingViewOverlay.stop();
                         if (mRecordingViewOverlay.getMillis() < 2000) {
-                            Toast.makeText(mActivity, R.string.msg_record_at_least, Toast.LENGTH_SHORT).show();
+                            CustomToast.makeText(mActivity, R.string.msg_record_at_least, Toast.LENGTH_LONG).show();
                             mRecordManager.stopRecording(true);
                         } else {
                             mSendRecording = true;
@@ -827,7 +828,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private void showPopup(final Activity context, View parent) {
         dismissPopup();
         mHoldPopup.showAtLocation(parent, Gravity.NO_GRAVITY, mLastTouchPoint.x - Utils.dpToPx(mActivity, 80), mLastTouchPoint.y + Utils.dpToPx(mActivity, 10));
-        mHandler.postDelayed(mDismissPopupRunnable, 2000);
+        mHandler.postDelayed(mDismissPopupRunnable, 6000);
     }
 
     @Override

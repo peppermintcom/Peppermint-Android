@@ -36,9 +36,32 @@
 
     <string name="default_mail_subject">I sent you a voice message</string>
     <string name="default_sms_body">Here\'s my message from Peppermint. Listen at %1$s</string>
-    <string name="default_mail_body_url"><![CDATA[<p>Here\'s my message.</p><audio controls="controls"><source src="%1$s" type="%2$s" /><a href="%1$s" type="%2$s">%1$s</a></audio>]]></string>
+    <string name="default_mail_body_url"><![CDATA[
+        <p>Here\'s my message. Click to play</p>
+        <audio controls=\"controls\">
+            <source src=\"%1$s\" type=\"%2$s\" />
+            <a href=\"%1$s\" type=\"%2$s\" style=\"display: block;\">
+                <div style=\"float: left;\">
+                    <div>Audio Message</div>
+                    <div>Play</div>
+                </div>
+                <img src=\"http://mobaton.com/preview.png\" style=\"float: left;\" />
+            </div>
+            </a>
+        </audio>
+    ]]></string>
     <string name="default_mail_body_listen">Here\'s my message.</string>
-    <string name="default_mail_body_reply"><![CDATA[Reply via <a href="https://peppermint.com/reply?name=%1$s&mail=%2$s">Peppermint.com</a>]]></string>
+    <string name="default_mail_body_reply"><![CDATA[
+        <a href=\"https://peppermint.com/reply?name=%1$s&mail=%2$s\"
+            style=\"display: inline-block; padding: 15px 20px 15px 70px;
+                border-radius: 4px;
+                color: white; text-decoration: none; font-family: Arial, Verdana, Sans-serif; font-weight: 500; font-size: 14px;
+                background-repeat: no-repeat; background-color: #2fbbaa; background-position: 20px center;
+                background-image: url(\'http://mobaton.com/reply_icon.png\');
+                background-image: url(\'http://mobaton.com/reply_icon.png\'), -moz-linear-gradient(top, #2fbbaa 0%%, #57be92 100%%);
+                background-image: url(\'http://mobaton.com/reply_icon.png\'), -webkit-linear-gradient(top, #2fbbaa 0%%,#57be92 100%%);
+                background-image: url(\'http://mobaton.com/reply_icon.png\'), linear-gradient(to bottom, #2fbbaa 0%%,#57be92 100%%);\">Quick Reply</a>
+    ]]></string>
     <string name="uploading">Uploading…</string>
     <string name="send_record">Send Record</string>
 
@@ -76,7 +99,7 @@
     <string name="action_help_feedback"><![CDATA[Help & Feedback]]></string>
     
     <string name="msg_no_contacts">No contacts\nhave been found</string>
-    <string name="msg_add_some_friends"><![CDATA[Add some friends to your contact book first and come back to <font color="%1$s">Peppermint</font>]]></string>
+    <string name="msg_add_some_friends"><![CDATA[Add some friends to your contact book first and come back to <font color=\"%1$s\">Peppermint</font>]]></string>
     <string name="rerecord">Re-Record</string>
     <string name="record_message">Record Message</string>
     <string name="msg_record_at_least">Please record at least 2 seconds before sending</string>
