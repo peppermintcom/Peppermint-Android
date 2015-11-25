@@ -13,12 +13,12 @@ import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
-import com.peppermint.app.sending.mail.MailSenderPreferences;
 import com.peppermint.app.sending.Sender;
+import com.peppermint.app.sending.SenderErrorHandler;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SendingErrorHandler;
-import com.peppermint.app.sending.SendingTask;
+import com.peppermint.app.sending.SenderTask;
+import com.peppermint.app.sending.mail.MailSenderPreferences;
 
 import java.util.Arrays;
 
@@ -29,12 +29,12 @@ import java.util.Arrays;
  */
 public class GmailSender extends Sender {
 
-    // GmailSendingTask parameter keys
+    // GmailSenderTask parameter keys
     public static final String PARAM_GMAIL_SERVICE = "GmailSendingTask_paramGmailService";
     public static final String PARAM_GMAIL_CREDENTIAL = "GmailSendingTask_paramGmailCredentials";
 
     // Gmail API required permissions
-    private static final String[] SCOPES = { GmailScopes.GMAIL_COMPOSE, GmailScopes.GMAIL_MODIFY };
+    protected static final String[] SCOPES = { GmailScopes.GMAIL_COMPOSE, GmailScopes.GMAIL_MODIFY };
 
     protected Gmail mService;
     protected GoogleAccountCredential mCredential;
@@ -42,23 +42,21 @@ public class GmailSender extends Sender {
     private final HttpTransport mTransport = AndroidHttp.newCompatibleTransport();
     private final JsonFactory mJsonFactory = GsonFactory.getDefaultInstance();
 
-    private GmailSendingErrorHandler mErrorHandler;
-    private MailSenderPreferences mPreferences;
+    private GmailSenderErrorHandler mErrorHandler;
+    private GmailSenderPreferences mPreferences;
 
     private SharedPreferences.OnSharedPreferenceChangeListener mSharedPreferenceListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             if(key.compareTo(MailSenderPreferences.PREF_ACCOUNT_NAME_KEY) == 0) {
                 setupCredentials();
-            } else if(key.compareTo(MailSenderPreferences.DISPLAY_NAME_KEY) == 0) {
-
             }
         }
     };
 
     public GmailSender(Context context, SenderListener senderListener) {
         super(context, senderListener);
-        mPreferences = new MailSenderPreferences(getContext());
+        mPreferences = new GmailSenderPreferences(getContext());
         setUseHttpManager(true);
     }
 
@@ -93,14 +91,19 @@ public class GmailSender extends Sender {
     }
 
     @Override
-    public SendingTask newTask(SendingRequest sendingRequest) {
-        return new GmailSendingTask(this, sendingRequest, getSenderListener(), getParameters(), getSenderPreferences());
+    public SenderTask newAuthorizationTask() {
+        return new GmailAuthorizationTask(this, getSenderListener(), getParameters(), getSenderPreferences());
     }
 
     @Override
-    public SendingErrorHandler getErrorHandler() {
+    public SenderTask newTask(SendingRequest sendingRequest) {
+        return new GmailSenderTask(this, sendingRequest, getSenderListener(), getParameters(), getSenderPreferences());
+    }
+
+    @Override
+    public SenderErrorHandler getErrorHandler() {
         if(mErrorHandler == null) {
-            mErrorHandler = new GmailSendingErrorHandler(getContext(), getSenderListener(), getParameters(), getSenderPreferences());
+            mErrorHandler = new GmailSenderErrorHandler(getContext(), getSenderListener(), getParameters(), getSenderPreferences());
         }
         return mErrorHandler;
     }

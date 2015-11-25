@@ -6,10 +6,10 @@ import android.widget.Toast;
 import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.Sender;
+import com.peppermint.app.sending.SenderErrorHandler;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SendingErrorHandler;
-import com.peppermint.app.sending.SendingTask;
+import com.peppermint.app.sending.SenderTask;
 import com.peppermint.app.utils.Utils;
 
 /**
@@ -24,16 +24,16 @@ public class SMSSender extends Sender {
     }
 
     @Override
-    public SendingTask newTask(SendingRequest sendingRequest) {
+    public SenderTask newTask(SendingRequest sendingRequest) {
         if (!Utils.isSimAvailable(getContext())) {
             Toast.makeText(getContext(), R.string.msg_message_sms_disabled, Toast.LENGTH_LONG).show();
             throw new UnsupportedSMSException();
         }
-        return new SMSSendingTask(this, sendingRequest, getSenderListener(), getParameters(), getSenderPreferences());
+        return new SMSSenderTask(this, sendingRequest, getSenderListener(), getParameters(), getSenderPreferences());
     }
 
     @Override
-    public SendingErrorHandler getErrorHandler() {
+    public SenderErrorHandler getErrorHandler() {
         return null;
     }
 

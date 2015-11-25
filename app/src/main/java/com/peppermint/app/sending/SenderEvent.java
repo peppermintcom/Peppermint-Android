@@ -5,35 +5,35 @@ package com.peppermint.app.sending;
  *
  * Represents an event dispatched by the {@link SenderManager} and triggered by the Sender API.
  */
-public class SendingEvent {
+public class SenderEvent {
 
     /**
-     * When a {@link SendingTask} starts executing a {@link com.peppermint.app.data.SendingRequest}
+     * When a {@link SenderTask} starts
      */
     public static final int EVENT_STARTED = 1;
 
     /**
-     * When a {@link SendingTask} is cancelled
+     * When a {@link SenderTask} is cancelled
      */
     public static final int EVENT_CANCELLED = 2;
 
     /**
-     * When a {@link SendingTask} successfully finishes executing a {@link com.peppermint.app.data.SendingRequest}
+     * When a {@link SenderTask} successfully finishes executing
      */
     public static final int EVENT_FINISHED = 3;
 
     /**
-     * When a {@link SendingTask} finishes with an error
+     * When a {@link SenderTask} finishes with an error
      */
     public static final int EVENT_ERROR = 4;
 
     /**
-     * When a {@link SendingTask} executing a {@link com.peppermint.app.data.SendingRequest} progresses
+     * When a {@link SenderTask} progresses
      */
     public static final int EVENT_PROGRESS = 5;
 
     /**
-     * When a {@link SendingTask} fails to execute a {@link com.peppermint.app.data.SendingRequest} and is queued for retry
+     * When a {@link SenderTask} fails to execute and is queued for retry
      */
     public static final int EVENT_QUEUED = 6;
 
@@ -42,32 +42,32 @@ public class SendingEvent {
      */
     public static final int EVENT_INTERMEDIATE_FINISHED = 7;
 
-    private SendingTask mTask;
+    private SenderTask mTask;
     private int mType;
     private Throwable mError;
 
-    public SendingEvent(SendingTask task, int type) {
+    public SenderEvent(SenderTask task, int type) {
         this.mTask = task;
         this.mType = type;
     }
 
-    public SendingEvent(SendingTask task, int type, Throwable error) {
+    public SenderEvent(SenderTask task, int type, Throwable error) {
         this.mTask = task;
         this.mType = type;
         this.mError = error;
     }
 
-    public SendingEvent(SendingTask task, Throwable error) {
+    public SenderEvent(SenderTask task, Throwable error) {
         this.mTask = task;
         this.mType = EVENT_ERROR;
         this.mError = error;
     }
 
-    public SendingTask getSendingTask() {
+    public SenderTask getSenderTask() {
         return mTask;
     }
 
-    public void setSendingTask(SendingTask mTask) {
+    public void setSenderTask(SenderTask mTask) {
         this.mTask = mTask;
     }
 

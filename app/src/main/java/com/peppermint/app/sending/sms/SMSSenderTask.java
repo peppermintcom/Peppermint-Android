@@ -7,27 +7,26 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.telephony.SmsManager;
-import android.telephony.TelephonyManager;
 
 import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SendingTask;
-import com.peppermint.app.sending.server.ServerSendingTask;
+import com.peppermint.app.sending.SenderTask;
+import com.peppermint.app.sending.server.ServerSenderTask;
 
 import java.util.Map;
 
 /**
  * Created by Nuno Luz on 02-10-2015.
  *
- * SendingTask for SMS/text messages using the native Android API.
+ * SenderTask for SMS/text messages using the native Android API.
  * This is not thread-safe! An instance should only be used by a single thread.
  */
-public class SMSSendingTask extends SendingTask {
+public class SMSSenderTask extends SenderTask {
 
-    private static final long SMS_REQUEST_TIMEOUT = 60000;
+    private static final long SMS_REQUEST_TIMEOUT = 30000;
     private static final String SMS_SENT = "com.peppermint.app.SMS_SENT";
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
@@ -52,15 +51,15 @@ public class SMSSendingTask extends SendingTask {
     private Thread mRunner;
     private boolean mSent = false;
 
-    public SMSSendingTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
+    public SMSSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
         super(sender, sendingRequest, listener);
     }
 
-    public SMSSendingTask(Sender sender, SendingRequest sendingRequest, SenderListener listener, Map<String, Object> parameters, SenderPreferences preferences) {
+    public SMSSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener, Map<String, Object> parameters, SenderPreferences preferences) {
         super(sender, sendingRequest, listener, parameters, preferences);
     }
 
-    public SMSSendingTask(SendingTask sendingTask) {
+    public SMSSenderTask(SMSSenderTask sendingTask) {
         super(sendingTask);
     }
 
@@ -71,7 +70,7 @@ public class SMSSendingTask extends SendingTask {
         getSender().getContext().registerReceiver(mReceiver, mIntentFilter);
 
         try {
-            String url = (String) getSendingRequest().getParameter(ServerSendingTask.PARAM_SHORT_URL);
+            String url = (String) getSendingRequest().getParameter(ServerSenderTask.PARAM_SHORT_URL);
             getSendingRequest().setBody(String.format(getSender().getContext().getString(R.string.default_sms_body), url));
 
             Intent sentIntent = new Intent(SMS_SENT);

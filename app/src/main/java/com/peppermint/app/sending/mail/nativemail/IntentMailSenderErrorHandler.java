@@ -8,13 +8,12 @@ import android.content.Intent;
 import android.os.Build;
 
 import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.sending.SenderErrorHandler;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SendingErrorHandler;
-import com.peppermint.app.sending.SendingTask;
-import com.peppermint.app.sending.mail.gmail.GmailSender;
+import com.peppermint.app.sending.SenderTask;
 import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
-import com.peppermint.app.sending.mail.MailSenderPreferences;
+import com.peppermint.app.sending.mail.gmail.GmailSender;
 
 import java.util.Map;
 
@@ -23,21 +22,21 @@ import java.util.Map;
  *
  * Error handler for the {@link GmailSender}.
  */
-public class IntentMailSendingErrorHandler extends SendingErrorHandler {
+public class IntentMailSenderErrorHandler extends SenderErrorHandler {
 
-    private static final String TAG = IntentMailSendingErrorHandler.class.getSimpleName();
+    private static final String TAG = IntentMailSenderErrorHandler.class.getSimpleName();
 
     private static final int REQUEST_ACCOUNT_PICKER = 999;
 
     private static final String ACCOUNT_TYPE = "com.google";
 
-    public IntentMailSendingErrorHandler(Context context, SenderListener senderListener, Map<String, Object> parameters, SenderPreferences preferences) {
+    public IntentMailSenderErrorHandler(Context context, SenderListener senderListener, Map<String, Object> parameters, SenderPreferences preferences) {
         super(context, senderListener, parameters, preferences);
     }
 
     @Override
-    protected void onActivityResult(SendingTask recoveredTask, int requestCode, int resultCode, Intent data) {
-        MailSenderPreferences preferences = (MailSenderPreferences) getSenderPreferences();
+    protected void onActivityResult(SenderTask recoveredTask, int requestCode, int resultCode, Intent data) {
+        IntentMailSenderPreferences preferences = (IntentMailSenderPreferences) getSenderPreferences();
 
         // the user has picked one of the multiple available google accounts to use...
         if(requestCode == REQUEST_ACCOUNT_PICKER) {
@@ -60,11 +59,11 @@ public class IntentMailSendingErrorHandler extends SendingErrorHandler {
     }
 
     @Override
-    public void tryToRecover(SendingTask failedSendingTask) {
+    public void tryToRecover(SenderTask failedSendingTask) {
         super.tryToRecover(failedSendingTask);
 
         Throwable e = failedSendingTask.getError();
-        MailSenderPreferences preferences = (MailSenderPreferences) getSenderPreferences();
+        IntentMailSenderPreferences preferences = (IntentMailSenderPreferences) getSenderPreferences();
         SendingRequest request = failedSendingTask.getSendingRequest();
 
         // in this case pick an account from those registered in the Android device

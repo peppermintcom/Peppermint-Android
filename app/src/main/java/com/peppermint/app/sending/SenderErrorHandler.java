@@ -13,9 +13,9 @@ import java.util.UUID;
 /**
  * Created by Nuno Luz on 01-10-2015.
  * <p>
- *     Handles all errors thrown by a {@link SendingTask}. <br />
+ *     Handles all errors thrown by a {@link SenderTask}. <br />
  *     A {@link Sender} might be able to recover from some of these errors using a
- *     {@link SendingErrorHandler}.
+ *     {@link SenderErrorHandler}.
  * </p>
  * <p>
  *     As with {@link Sender}s, error handlers can be configured through Parameters and Preferences.
@@ -24,12 +24,12 @@ import java.util.UUID;
  *     the error handler instance (each implementation may have its own parameters).
  * </p>
  */
-public abstract class SendingErrorHandler {
+public abstract class SenderErrorHandler {
 
     private Context mContext;
 
     private UUID mUuid = UUID.randomUUID();
-    private Map<UUID, SendingTask> mRecoveringTaskMap;          // holds failed sending tasks that are recovering
+    private Map<UUID, SenderTask> mRecoveringTaskMap;          // holds failed sender tasks that are recovering
 
     private SenderListener mSenderListener;
 
@@ -37,7 +37,7 @@ public abstract class SendingErrorHandler {
     private SenderPreferences mSenderPreferences;
 
     /** this broadcast receiver gets results from {@link GetResultActivity} **/
-    // it allows any SendingErrorHandler to recover from an error by triggering activities
+    // it allows any SenderErrorHandler to recover from an error by triggering activities
     // this is useful for using APIs that request permissions, such as the Gmail API
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
@@ -53,14 +53,14 @@ public abstract class SendingErrorHandler {
     private final String mBroadcastType = this.getClass().getSimpleName() + "-" + mUuid.toString();
     private final IntentFilter mFilter = new IntentFilter(mBroadcastType);
 
-    public SendingErrorHandler(Context context, SenderListener senderListener) {
+    public SenderErrorHandler(Context context, SenderListener senderListener) {
         this.mContext = context;
         this.mSenderListener = senderListener;
         this.mParameters = new HashMap<>();
         this.mRecoveringTaskMap = new HashMap<>();
     }
 
-    public SendingErrorHandler(Context context, SenderListener senderListener, Map<String, Object> parameters) {
+    public SenderErrorHandler(Context context, SenderListener senderListener, Map<String, Object> parameters) {
         this.mContext = context;
         this.mSenderListener = senderListener;
         this.mRecoveringTaskMap = new HashMap<>();
@@ -69,7 +69,7 @@ public abstract class SendingErrorHandler {
         }
     }
 
-    public SendingErrorHandler(Context context, SenderListener senderListener, Map<String, Object> parameters, SenderPreferences preferences) {
+    public SenderErrorHandler(Context context, SenderListener senderListener, Map<String, Object> parameters, SenderPreferences preferences) {
         this.mContext = context;
         this.mSenderListener = senderListener;
         this.mSenderPreferences = preferences;
@@ -94,7 +94,7 @@ public abstract class SendingErrorHandler {
         LocalBroadcastManager.getInstance(mContext).unregisterReceiver(mReceiver);
     }
 
-    protected void onActivityResult(SendingTask recoveringTask, int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(SenderTask recoveringTask, int requestCode, int resultCode, Intent data) {
         doNotRecover(recoveringTask);   // nothing to recover; must be overriden to include additional behaviour
     }
 
@@ -111,41 +111,41 @@ public abstract class SendingErrorHandler {
     // this method must be overriden by subclasses to include the recovering code
     // super.tryToRecover(...) must always be invoked
     /**
-     * Tries to recover from the error throw by the failed sending task.
-     * @param failedSendingTask the failed sending task
+     * Tries to recover from the error throw by the failed sender task.
+     * @param failedSenderTask the failed sender task
      */
-    public void tryToRecover(SendingTask failedSendingTask) {
-        mRecoveringTaskMap.put(failedSendingTask.getSendingRequest().getId(), failedSendingTask);
+    public void tryToRecover(SenderTask failedSenderTask) {
+        mRecoveringTaskMap.put(failedSenderTask.getId(), failedSenderTask);
     }
 
     /**
-     * Tells the {@link Sender} that the error thrown by the failed sending task is not recoverable.
+     * Tells the {@link Sender} that the error thrown by the failed sender task is not recoverable.
      *
-     * Either {@link #doNotRecover(SendingTask)} or {@link #doRecover(SendingTask)} must be invoked
-     * for each {@link SendingTask} sent to {@link #tryToRecover(SendingTask)}. <br/>
+     * Either {@link #doNotRecover(SenderTask)} or {@link #doRecover(SenderTask)} must be invoked
+     * for each {@link SenderTask} sent to {@link #tryToRecover(SenderTask)}. <br/>
      *
      * @param recoveringTask the failed/recovering task
      */
-    protected void doNotRecover(SendingTask recoveringTask) {
-        mRecoveringTaskMap.remove(recoveringTask.getSendingRequest().getId());
+    protected void doNotRecover(SenderTask recoveringTask) {
+        mRecoveringTaskMap.remove(recoveringTask.getId());
         if(mSenderListener != null) {
-            mSenderListener.onSendingRequestNotRecovered(recoveringTask, recoveringTask.getSendingRequest(), recoveringTask.getError());
+            mSenderListener.onSendingRequestNotRecovered(recoveringTask, recoveringTask.getError());
         }
     }
 
     /**
-     * Tells the {@link Sender} that the error thrown by the failed sending task has been
+     * Tells the {@link Sender} that the error thrown by the failed sender task has been
      * handled (recovered).
      *
-     * Either {@link #doNotRecover(SendingTask)} or {@link #doRecover(SendingTask)} must be invoked
-     * for each {@link SendingTask} sent to {@link #tryToRecover(SendingTask)}. <br/>
+     * Either {@link #doNotRecover(SenderTask)} or {@link #doRecover(SenderTask)} must be invoked
+     * for each {@link SenderTask} sent to {@link #tryToRecover(SenderTask)}. <br/>
      *
      * @param recoveringTask the failed/recovering task
      */
-    protected void doRecover(SendingTask recoveringTask) {
-        mRecoveringTaskMap.remove(recoveringTask.getSendingRequest().getId());
+    protected void doRecover(SenderTask recoveringTask) {
+        mRecoveringTaskMap.remove(recoveringTask.getId());
         if(mSenderListener != null) {
-            mSenderListener.onSendingRequestRecovered(recoveringTask, recoveringTask.getSendingRequest());
+            mSenderListener.onSendingRequestRecovered(recoveringTask);
         }
     }
 

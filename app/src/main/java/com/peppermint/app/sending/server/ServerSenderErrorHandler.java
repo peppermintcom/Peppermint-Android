@@ -9,10 +9,10 @@ import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.rest.HttpRequest;
 import com.peppermint.app.rest.HttpRequestListener;
 import com.peppermint.app.rest.HttpResponse;
+import com.peppermint.app.sending.SenderErrorHandler;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SendingErrorHandler;
-import com.peppermint.app.sending.SendingTask;
+import com.peppermint.app.sending.SenderTask;
 import com.peppermint.app.sending.mail.gmail.GmailSender;
 import com.peppermint.app.utils.Utils;
 
@@ -28,19 +28,19 @@ import java.util.UUID;
  *
  * Error handler for the {@link GmailSender}.
  */
-public class ServerSendingErrorHandler extends SendingErrorHandler implements HttpRequestListener {
+public class ServerSenderErrorHandler extends SenderErrorHandler implements HttpRequestListener {
 
-    private static final String TAG = ServerSendingErrorHandler.class.getSimpleName();
+    private static final String TAG = ServerSenderErrorHandler.class.getSimpleName();
 
     private static final int MAX_RETRIES = 3;
 
     // retry map, which allows trying to send the email up to MAX_RETRIES times if it fails
     // this allows us to ask for new access tokens upon failure and retry
     protected Map<UUID, Integer> mRetryMap;
-    protected Map<UUID, SendingTask> mRecoveringMap;
+    protected Map<UUID, SenderTask> mRecoveringMap;
     protected ServerClientManager mManager;
 
-    public ServerSendingErrorHandler(Context context, SenderListener senderListener, Map<String, Object> parameters, SenderPreferences preferences) {
+    public ServerSenderErrorHandler(Context context, SenderListener senderListener, Map<String, Object> parameters, SenderPreferences preferences) {
         super(context, senderListener, parameters, preferences);
         mRetryMap = new HashMap<>();
         mRecoveringMap = new HashMap<>();
@@ -74,7 +74,7 @@ public class ServerSendingErrorHandler extends SendingErrorHandler implements Ht
     }
 
     @Override
-    public void tryToRecover(SendingTask failedSendingTask) {
+    public void tryToRecover(SenderTask failedSendingTask) {
         super.tryToRecover(failedSendingTask);
 
         Throwable e = failedSendingTask.getError();
@@ -90,7 +90,7 @@ public class ServerSendingErrorHandler extends SendingErrorHandler implements Ht
         checkRetries(failedSendingTask);
     }
 
-    private void checkRetries(SendingTask failedSendingTask) {
+    private void checkRetries(SenderTask failedSendingTask) {
         SendingRequest request = failedSendingTask.getSendingRequest();
 
         if(!mRetryMap.containsKey(request.getId())) {
@@ -112,7 +112,7 @@ public class ServerSendingErrorHandler extends SendingErrorHandler implements Ht
 
     @Override
     public void onRequestSuccess(HttpRequest request, HttpResponse response) {
-        SendingTask failedSendingTask = mRecoveringMap.remove(request.getUUID());
+        SenderTask failedSendingTask = mRecoveringMap.remove(request.getUUID());
         if(failedSendingTask == null) {
             return;
         }
@@ -132,7 +132,7 @@ public class ServerSendingErrorHandler extends SendingErrorHandler implements Ht
 
     @Override
     public void onRequestError(HttpRequest request, HttpResponse response) {
-        SendingTask failedSendingTask = mRecoveringMap.remove(request.getUUID());
+        SenderTask failedSendingTask = mRecoveringMap.remove(request.getUUID());
         if(failedSendingTask == null) {
             return;
         }

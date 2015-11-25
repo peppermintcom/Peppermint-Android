@@ -9,10 +9,10 @@ import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SendingTask;
+import com.peppermint.app.sending.SenderTask;
 import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
 import com.peppermint.app.sending.mail.MailSenderPreferences;
-import com.peppermint.app.sending.server.ServerSendingTask;
+import com.peppermint.app.sending.server.ServerSenderTask;
 
 import java.io.File;
 import java.net.URLEncoder;
@@ -21,23 +21,23 @@ import java.util.Map;
 /**
  * Created by Nuno Luz on 02-10-2015.
  *
- * SendingTask that launches a native app to send the audio/video recording through email.
+ * SenderTask that launches a native app to send the audio/video recording through email.
  */
-public class IntentMailSendingTask extends SendingTask {
+public class IntentMailSenderTask extends SenderTask {
 
     // FIXME the content type value should be stored in the Recording instance to avoid redundancy
     private static final String CONTENT_TYPE_AUDIO = "audio/mp4";
     private static final String CONTENT_TYPE_VIDEO = "video/mp4";
 
-    public IntentMailSendingTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
+    public IntentMailSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
         super(sender, sendingRequest, listener);
     }
 
-    public IntentMailSendingTask(Sender sender, SendingRequest sendingRequest, SenderListener listener, Map<String, Object> parameters, SenderPreferences preferences) {
+    public IntentMailSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener, Map<String, Object> parameters, SenderPreferences preferences) {
         super(sender, sendingRequest, listener, parameters, preferences);
     }
 
-    public IntentMailSendingTask(SendingTask sendingTask) {
+    public IntentMailSenderTask(IntentMailSenderTask sendingTask) {
         super(sendingTask);
     }
 
@@ -51,7 +51,7 @@ public class IntentMailSendingTask extends SendingTask {
         String displayName = ((MailSenderPreferences) getSenderPreferences()).getDisplayName();
 
         // build the email body
-        String url = (String) getSendingRequest().getParameter(ServerSendingTask.PARAM_SHORT_URL);
+        String url = (String) getSendingRequest().getParameter(ServerSenderTask.PARAM_SHORT_URL);
         StringBuilder bodyBuilder = new StringBuilder();
         bodyBuilder.append("<p>");
         bodyBuilder.append(String.format(getSender().getContext().getString(R.string.default_mail_body_url), url,

@@ -15,15 +15,15 @@ import com.google.api.services.gmail.model.Message;
 import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.rest.HttpResponse;
-import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
-import com.peppermint.app.sending.mail.MailSenderPreferences;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SendingTask;
+import com.peppermint.app.sending.SenderTask;
 import com.peppermint.app.sending.exceptions.ElectableForQueueingException;
 import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
-import com.peppermint.app.sending.server.ServerSendingTask;
+import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
+import com.peppermint.app.sending.mail.MailSenderPreferences;
+import com.peppermint.app.sending.server.ServerSenderTask;
 import com.peppermint.app.utils.Utils;
 
 import org.json.JSONArray;
@@ -41,27 +41,25 @@ import java.util.Map;
 /**
  * Created by Nuno Luz on 08-09-2015.
  *
- * SendingTask for emails using the Gmail API.
+ * SenderTask for emails using the Gmail API.
  */
-public class GmailSendingTask extends SendingTask {
+public class GmailSenderTask extends SenderTask {
 
-    private static final String TAG = GmailSendingTask.class.getSimpleName();
-
-    private static final long MIN_SEND_TIME = 5000; // ms
+    private static final String TAG = GmailSenderTask.class.getSimpleName();
 
     // FIXME the content type value should be stored in the Recording instance to avoid redundancy
     private static final String CONTENT_TYPE_AUDIO = "audio/mp4";
     private static final String CONTENT_TYPE_VIDEO = "video/mp4";
 
-    public GmailSendingTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
+    public GmailSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
         super(sender, sendingRequest, listener);
     }
 
-    public GmailSendingTask(Sender sender, SendingRequest sendingRequest, SenderListener listener, Map<String, Object> parameters, SenderPreferences preferences) {
+    public GmailSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener, Map<String, Object> parameters, SenderPreferences preferences) {
         super(sender, sendingRequest, listener, parameters, preferences);
     }
 
-    public GmailSendingTask(SendingTask sendingTask) {
+    public GmailSenderTask(GmailSenderTask sendingTask) {
         super(sendingTask);
     }
 
@@ -106,7 +104,7 @@ public class GmailSendingTask extends SendingTask {
         String displayName = ((MailSenderPreferences) getSenderPreferences()).getDisplayName();
 
         // build the email body
-        String url = (String) getSendingRequest().getParameter(ServerSendingTask.PARAM_SHORT_URL);
+        String url = (String) getSendingRequest().getParameter(ServerSenderTask.PARAM_SHORT_URL);
         StringBuilder bodyBuilder = new StringBuilder();
         bodyBuilder.append("<p>");
         bodyBuilder.append(String.format(getSender().getContext().getString(R.string.default_mail_body_url), url,
@@ -141,7 +139,7 @@ public class GmailSendingTask extends SendingTask {
                 }
             }
 
-            // make the sending process last at least 5 secs
+            /*// make the sending process last at least 5 secs
             if(!isCancelled()) {
                 long duration = android.os.SystemClock.uptimeMillis() - now;
                 if (duration < MIN_SEND_TIME) {
@@ -151,7 +149,7 @@ public class GmailSendingTask extends SendingTask {
                         // do nothing here; just skip
                     }
                 }
-            }
+            }*/
 
             if(!isCancelled()) {
                 try {

@@ -7,6 +7,8 @@ import android.os.Build;
 import android.preference.EditTextPreference;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
@@ -54,5 +56,11 @@ public class CustomEditTextPreference extends EditTextPreference {
     protected void onDialogClosed(boolean positiveResult) {
         super.onDialogClosed(positiveResult);
         Utils.hideKeyboard((Activity) getContext());
+    }
+
+    @Override
+    protected void onBindDialogView(View view) {
+        super.onBindDialogView(view);
+        getEditText().setSelection(getEditText().getText().length());
     }
 }

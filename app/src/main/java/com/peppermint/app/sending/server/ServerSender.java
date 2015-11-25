@@ -3,12 +3,12 @@ package com.peppermint.app.sending.server;
 import android.content.Context;
 
 import com.peppermint.app.data.SendingRequest;
-import com.peppermint.app.sending.mail.MailSenderPreferences;
 import com.peppermint.app.sending.Sender;
+import com.peppermint.app.sending.SenderErrorHandler;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SendingErrorHandler;
-import com.peppermint.app.sending.SendingTask;
+import com.peppermint.app.sending.SenderTask;
+import com.peppermint.app.sending.mail.MailSenderPreferences;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
@@ -22,7 +22,7 @@ public class ServerSender extends Sender {
     protected ServerClientManager mManager;
 
     private MailSenderPreferences mPreferences;
-    private ServerSendingErrorHandler mErrorHandler;
+    private ServerSenderErrorHandler mErrorHandler;
 
     public ServerSender(Context context, SenderListener senderListener) {
         super(context, senderListener);
@@ -38,7 +38,7 @@ public class ServerSender extends Sender {
 
         setParameter(PARAM_MANAGER, mManager);
 
-        mErrorHandler = new ServerSendingErrorHandler(getContext(), getSenderListener(), getParameters(), getSenderPreferences());
+        mErrorHandler = new ServerSenderErrorHandler(getContext(), getSenderListener(), getParameters(), getSenderPreferences());
 
         super.init();
     }
@@ -53,12 +53,12 @@ public class ServerSender extends Sender {
     }
 
     @Override
-    public SendingTask newTask(SendingRequest sendingRequest) {
-        return new ServerSendingTask(this, sendingRequest, getSenderListener(), getParameters(), getSenderPreferences());
+    public SenderTask newTask(SendingRequest sendingRequest) {
+        return new ServerSenderTask(this, sendingRequest, getSenderListener(), getParameters(), getSenderPreferences());
     }
 
     @Override
-    public SendingErrorHandler getErrorHandler() {
+    public SenderErrorHandler getErrorHandler() {
         return mErrorHandler;
     }
 

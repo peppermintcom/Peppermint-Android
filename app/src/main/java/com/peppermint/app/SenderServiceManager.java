@@ -10,7 +10,7 @@ import android.util.Log;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.data.SendingRequest;
-import com.peppermint.app.sending.SendingEvent;
+import com.peppermint.app.sending.SenderEvent;
 
 import java.util.UUID;
 
@@ -24,7 +24,7 @@ import java.util.UUID;
 public class SenderServiceManager {
 
     /**
-     * Listener for file send events (see {@link SendingEvent}).
+     * Listener for file send events (see {@link SenderEvent}).
      */
     public interface Listener {
         /**
@@ -36,37 +36,37 @@ public class SenderServiceManager {
          * Invoked when a send file request starts.
          * @param event the event
          */
-        void onSendStarted(SendingEvent event);
+        void onSendStarted(SenderEvent event);
 
         /**
          * Invoked when a send file request is cancelled.
          * @param event the event
          */
-        void onSendCancelled(SendingEvent event);
+        void onSendCancelled(SenderEvent event);
 
         /**
          * Invoked when a send file request fails.
          * @param event the event
          */
-        void onSendError(SendingEvent event);
+        void onSendError(SenderEvent event);
 
         /**
          * Invoked when a send file request finishes.
          * @param event the event
          */
-        void onSendFinished(SendingEvent event);
+        void onSendFinished(SenderEvent event);
 
         /**
          * Invoked when a send file request progresses.
          * @param event the event
          */
-        void onSendProgress(SendingEvent event);
+        void onSendProgress(SenderEvent event);
 
         /**
          * Invoked when a send file request has been queued due to a recoverable error.
          * @param event the event
          */
-        void onSendQueued(SendingEvent event);
+        void onSendQueued(SenderEvent event);
     }
 
     private static final String TAG = SenderServiceManager.class.getSimpleName();
@@ -80,28 +80,28 @@ public class SenderServiceManager {
      * Event callback triggered by the {@link RecordService} through an {@link de.greenrobot.event.EventBus}.<br />
      * @param event the event (see {@link RecordService.Event})
      */
-    public void onEventMainThread(SendingEvent event) {
+    public void onEventMainThread(SenderEvent event) {
         if(mListener == null) {
             return;
         }
 
         switch (event.getType()) {
-            case SendingEvent.EVENT_STARTED:
+            case SenderEvent.EVENT_STARTED:
                 mListener.onSendStarted(event);
                 break;
-            case SendingEvent.EVENT_ERROR:
+            case SenderEvent.EVENT_ERROR:
                 mListener.onSendError(event);
                 break;
-            case SendingEvent.EVENT_CANCELLED:
+            case SenderEvent.EVENT_CANCELLED:
                 mListener.onSendCancelled(event);
                 break;
-            case SendingEvent.EVENT_FINISHED:
+            case SenderEvent.EVENT_FINISHED:
                 mListener.onSendFinished(event);
                 break;
-            case SendingEvent.EVENT_PROGRESS:
+            case SenderEvent.EVENT_PROGRESS:
                 mListener.onSendProgress(event);
                 break;
-            case SendingEvent.EVENT_QUEUED:
+            case SenderEvent.EVENT_QUEUED:
                 mListener.onSendQueued(event);
                 break;
         }
@@ -141,6 +141,12 @@ public class SenderServiceManager {
         Intent intent = new Intent(mContext, SenderService.class);
         intent.putExtra(SenderService.INTENT_DATA_RECORDING, recording);
         intent.putExtra(SenderService.INTENT_DATA_RECIPIENT, recipient);
+        mContext.startService(intent);
+    }
+
+    public void startAndAuthorize() {
+        Intent intent = new Intent(mContext, SenderService.class);
+        intent.putExtra(SenderService.INTENT_DATA_AUTHORIZE, true);
         mContext.startService(intent);
     }
 

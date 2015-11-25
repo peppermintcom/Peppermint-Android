@@ -14,8 +14,8 @@ import android.widget.TextView;
 
 import com.peppermint.app.R;
 import com.peppermint.app.SenderServiceManager;
-import com.peppermint.app.sending.SendingEvent;
-import com.peppermint.app.sending.mail.nativemail.IntentMailSendingTask;
+import com.peppermint.app.sending.SenderEvent;
+import com.peppermint.app.sending.mail.nativemail.IntentMailSenderTask;
 import com.peppermint.app.utils.AnimatorBuilder;
 
 /**
@@ -126,10 +126,10 @@ public class SenderControlLayout extends FrameLayout implements View.OnClickList
         }
     }
 
-    private void onBoundSendService(SendingEvent event) {
+    private void onBoundSendService(SenderEvent event) {
         if(mSenderServiceManager.isSending()) {
             // do not show message for IntentMailSender
-            if(event != null && event.getSendingTask() instanceof IntentMailSendingTask) {
+            if(event != null && event.getSenderTask() instanceof IntentMailSenderTask) {
                 return;
             }
 
@@ -143,10 +143,10 @@ public class SenderControlLayout extends FrameLayout implements View.OnClickList
     }
 
     @Override
-    public void onSendFinished(SendingEvent event) {
+    public void onSendFinished(SenderEvent event) {
         if(!mSenderServiceManager.isSending()) {
             // do not show message for IntentMailSender
-            if(event != null && event.getSendingTask() instanceof IntentMailSendingTask) {
+            if(event != null && event.getSenderTask() instanceof IntentMailSenderTask) {
                 hide(0);
                 return;
             }
@@ -163,25 +163,25 @@ public class SenderControlLayout extends FrameLayout implements View.OnClickList
     }
 
     @Override
-    public void onSendStarted(SendingEvent event) {
+    public void onSendStarted(SenderEvent event) {
         onBoundSendService(event);
     }
 
     @Override
-    public void onSendCancelled(SendingEvent event) {
+    public void onSendCancelled(SenderEvent event) {
         onBoundSendService(event);
     }
 
     @Override
-    public void onSendError(SendingEvent event) {
+    public void onSendError(SenderEvent event) {
         onBoundSendService(event);
     }
 
     @Override
-    public void onSendProgress(SendingEvent event) { /* nothing to do here */ }
+    public void onSendProgress(SenderEvent event) { /* nothing to do here */ }
 
     @Override
-    public void onSendQueued(SendingEvent event) {
+    public void onSendQueued(SenderEvent event) {
         onBoundSendService(event);
     }
 }

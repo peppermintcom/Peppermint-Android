@@ -8,7 +8,7 @@ import com.peppermint.app.rest.HttpResponse;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SendingTask;
+import com.peppermint.app.sending.SenderTask;
 import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
 import com.peppermint.app.utils.Utils;
 
@@ -21,30 +21,29 @@ import java.util.UUID;
 /**
  * Created by Nuno Luz on 08-09-2015.
  *
- * SendingTask for emails using the Gmail API.
+ * SenderTask for emails using the Gmail API.
  */
-public class ServerSendingTask extends SendingTask implements HttpRequestListener {
+public class ServerSenderTask extends SenderTask implements HttpRequestListener {
 
     public static final String PARAM_SHORT_URL = "ServerSender_ShortMessageUrl";
     public static final String PARAM_CANONICAL_URL = "ServerSender_CanonicalMessageUrl";
 
-    private static final String TAG = ServerSendingTask.class.getSimpleName();
+    private static final String TAG = ServerSenderTask.class.getSimpleName();
     private static final int SIMPLE_REQUEST_TIMEOUT = 60000;
 
     private UUID mRequestId;
-    private boolean mGotResponse = false;
     private HttpResponse mResponse;
     private Thread mRunner;
 
-    public ServerSendingTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
+    public ServerSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
         super(sender, sendingRequest, listener);
     }
 
-    public ServerSendingTask(Sender sender, SendingRequest sendingRequest, SenderListener listener, Map<String, Object> parameters, SenderPreferences preferences) {
+    public ServerSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener, Map<String, Object> parameters, SenderPreferences preferences) {
         super(sender, sendingRequest, listener, parameters, preferences);
     }
 
-    public ServerSendingTask(SendingTask sendingTask) {
+    public ServerSenderTask(ServerSenderTask sendingTask) {
         super(sendingTask);
     }
 
@@ -94,7 +93,6 @@ public class ServerSendingTask extends SendingTask implements HttpRequestListene
 
         try {
             // UPLOADS ENDPOINT INVOCATION
-            mGotResponse = false;
             mResponse = null;
             mRequestId = manager.startUpload(contentType);
             JSONObject response = new JSONObject(waitForResponse());
@@ -102,7 +100,6 @@ public class ServerSendingTask extends SendingTask implements HttpRequestListene
 
             // UPLOAD TO AWS HERE!
             if(!isCancelled()) {
-                mGotResponse = false;
                 mResponse = null;
                 mRequestId = manager.performUpload(signedUrl, getSendingRequest().getRecording().getFile(), contentType, null);
                 waitForResponse();
@@ -110,7 +107,6 @@ public class ServerSendingTask extends SendingTask implements HttpRequestListene
 
             // RECORD ENDPOINT INVOCATION
             if(!isCancelled()) {
-                mGotResponse = false;
                 mResponse = null;
                 mRequestId = manager.finishUpload(signedUrl);
                 response = new JSONObject(waitForResponse());
@@ -139,7 +135,6 @@ public class ServerSendingTask extends SendingTask implements HttpRequestListene
     private void handleResult(HttpRequest request, HttpResponse response) {
         if(mRequestId != null && request.getUUID().equals(mRequestId)) {
             mResponse = response;
-            mGotResponse = true;
             if(mRunner != null) {
                 mRunner.interrupt();
             }

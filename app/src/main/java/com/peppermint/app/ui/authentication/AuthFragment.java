@@ -14,14 +14,13 @@ import android.widget.AdapterView;
 import android.widget.Button;
 
 import com.peppermint.app.R;
+import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.utils.PepperMintPreferences;
 
 /**
  * Created by Nuno Luz on 10-11-2015.
  */
 public class AuthFragment extends ListFragment implements View.OnClickListener, AdapterView.OnItemClickListener {
-
-    public static final String INTENT_ACCOUNT_NAME_KEY = "AuthActivity_AccountName";
 
     public static boolean startAuthentication(Activity callerActivity, int requestCode) {
         PepperMintPreferences prefs = new PepperMintPreferences(callerActivity);
@@ -90,6 +89,10 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         mPreferences.getGmailPreferences().setPreferredAccountName(mAccounts[position].name);
+
+        SenderServiceManager senderManager = new SenderServiceManager(mActivity.getApplicationContext());
+        senderManager.startAndAuthorize();
+
         mActivity.setResult(Activity.RESULT_OK);
         mActivity.finish();
     }

@@ -15,13 +15,11 @@ import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccoun
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.peppermint.app.R;
-import com.peppermint.app.data.SendingRequest;
-import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
-import com.peppermint.app.sending.mail.MailSenderPreferences;
+import com.peppermint.app.sending.SenderErrorHandler;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SendingErrorHandler;
-import com.peppermint.app.sending.SendingTask;
+import com.peppermint.app.sending.SenderTask;
+import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,9 +30,9 @@ import java.util.UUID;
  *
  * Error handler for the {@link GmailSender}.
  */
-public class GmailSendingErrorHandler extends SendingErrorHandler {
+public class GmailSenderErrorHandler extends SenderErrorHandler {
 
-    private static final String TAG = GmailSendingErrorHandler.class.getSimpleName();
+    private static final String TAG = GmailSenderErrorHandler.class.getSimpleName();
 
     private static final int REQUEST_AUTHORIZATION = 998;
     private static final int REQUEST_ACCOUNT_PICKER = 999;
@@ -45,15 +43,15 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
     // this allows us to ask for new access tokens upon failure and retry
     protected Map<UUID, Integer> mRetryMap;
 
-    public GmailSendingErrorHandler(Context context, SenderListener senderListener, Map<String, Object> parameters, SenderPreferences preferences) {
+    public GmailSenderErrorHandler(Context context, SenderListener senderListener, Map<String, Object> parameters, SenderPreferences preferences) {
         super(context, senderListener, parameters, preferences);
         mRetryMap = new HashMap<>();
     }
 
     @Override
-    protected void onActivityResult(SendingTask recoveredTask, int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(SenderTask recoveredTask, int requestCode, int resultCode, Intent data) {
         GoogleAccountCredential credential = (GoogleAccountCredential) getParameter(GmailSender.PARAM_GMAIL_CREDENTIAL);
-        MailSenderPreferences preferences = (MailSenderPreferences) getSenderPreferences();
+        GmailSenderPreferences preferences = (GmailSenderPreferences) getSenderPreferences();
 
         // the user has picked one of the multiple available google accounts to use...
         if(requestCode == REQUEST_ACCOUNT_PICKER) {
@@ -88,13 +86,13 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
     }
 
     @Override
-    public void tryToRecover(SendingTask failedSendingTask) {
+    public void tryToRecover(SenderTask failedSendingTask) {
         super.tryToRecover(failedSendingTask);
 
         Throwable e = failedSendingTask.getError();
         GoogleAccountCredential credential = (GoogleAccountCredential) getParameter(GmailSender.PARAM_GMAIL_CREDENTIAL);
-        MailSenderPreferences preferences = (MailSenderPreferences) getSenderPreferences();
-        SendingRequest request = failedSendingTask.getSendingRequest();
+        GmailSenderPreferences preferences = (GmailSenderPreferences) getSenderPreferences();
+        /*SendingRequest request = failedSendingTask.getSendingRequest();*/
 
         // in this case just ask for permissions
         if(e instanceof UserRecoverableAuthIOException || e instanceof UserRecoverableAuthException) {
@@ -102,8 +100,8 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
                 doNotRecover(failedSendingTask);
                 return;
             }*/
-            Intent intent = e instanceof  UserRecoverableAuthIOException ? ((UserRecoverableAuthIOException) e).getIntent() : ((UserRecoverableAuthException) e).getIntent();
-            startActivityForResult(request.getId(), REQUEST_AUTHORIZATION, intent);
+            Intent intent = e instanceof UserRecoverableAuthIOException ? ((UserRecoverableAuthIOException) e).getIntent() : ((UserRecoverableAuthException) e).getIntent();
+            startActivityForResult(failedSendingTask.getId(), REQUEST_AUTHORIZATION, intent);
             return;
         }
 
@@ -125,7 +123,7 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
             }
 
             // multiple accounts in the device - ask the user to pick one
-            startActivityForResult(request.getId(), REQUEST_ACCOUNT_PICKER, credential.newChooseAccountIntent());
+            startActivityForResult(failedSendingTask.getId(), REQUEST_ACCOUNT_PICKER, credential.newChooseAccountIntent());
             return;
         }
 
@@ -149,15 +147,15 @@ public class GmailSendingErrorHandler extends SendingErrorHandler {
             return;
         }*/
 
-        if(!mRetryMap.containsKey(request.getId())) {
-            mRetryMap.put(request.getId(), 1);
+        if(!mRetryMap.containsKey(failedSendingTask.getId())) {
+            mRetryMap.put(failedSendingTask.getId(), 1);
         } else {
-            mRetryMap.put(request.getId(), mRetryMap.get(request.getId()) + 1);
+            mRetryMap.put(failedSendingTask.getId(), mRetryMap.get(failedSendingTask.getId()) + 1);
         }
 
         // if it has failed MAX_RETRIES times, do not try it anymore
-        if(mRetryMap.get(request.getId()) > MAX_RETRIES) {
-            mRetryMap.remove(request.getId());
+        if(mRetryMap.get(failedSendingTask.getId()) > MAX_RETRIES) {
+            mRetryMap.remove(failedSendingTask.getId());
             doNotRecover(failedSendingTask);
             return;
         }
