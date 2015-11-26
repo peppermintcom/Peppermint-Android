@@ -141,7 +141,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                     List<Long> recentList = mPreferences.getRecentContactUris();
 
                     if (recentList != null && recentList.size() > 0 && _recipientType.isStarred() != null && _recipientType.isStarred()) {
-
+                        // get recent contact list
                         Map<Long, Recipient> recipientMap = new HashMap<>();
 
                         Cursor cursor = RecipientAdapterUtils.getRecipientsCursor(mActivity, recentList, null, null, null, null);
@@ -172,12 +172,15 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                         }
                     }
 
+                    // get normal full, email or phone contact list
                     FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, _name, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
                     if(cursor.getOriginalCursor().getCount() <= 0 && _name != null && _via != null) {
                         cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, null, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
                     }
                     cursor.filter();
 
+                    // for some reason this is invoked before onCreateView is complete on some devices
+                    // thus, sleep and wait for a bit while onCreateView finishes to avoid crashes
                     synchronized (mLock) {
                         int i=0;    // avoid hanging the thread (just in case)
                         while(!mCreated && i < 10){
@@ -203,9 +206,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         @Override
         protected void onPostExecute(Object data) {
+            // check if data is valid and activity has not been destroyed by the main thread
             if(data != null && mActivity != null && mCreated) {
                 if (data instanceof Cursor) {
-                    // use cursor
+                    // re-use adapter and replace cursor
                     if (mRecipientAdapter != null && mRecipientAdapter instanceof CursorAdapter) {
                         ((CursorAdapter) mRecipientAdapter).changeCursor((Cursor) data);
                     } else {
@@ -213,7 +217,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                         getListView().setAdapter(mRecipientAdapter);
                     }
                 } else {
-                    // use adapter
+                    // use new adapter
                     if (mRecipientAdapter != null && mRecipientAdapter instanceof CursorAdapter) {
                         ((CursorAdapter) mRecipientAdapter).changeCursor(null);
                     }
@@ -223,6 +227,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 mRecipientAdapter.notifyDataSetChanged();
             }
 
+            // set new contact fields according to search filter
             if(_name != null) {
                 mTxtNewName.setText(_name);
             } else {
@@ -350,17 +355,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mSearchListBarView.setListAdapter(mRecipientTypeAdapter);
         mSearchListBarView.setTypeface(app.getFontRegular());
 
-        int selectedItemPosition = 0;
+        // default view is all contacts
+        int selectedItemPosition = 1;
         if (savedInstanceState != null) {
-            selectedItemPosition = savedInstanceState.getInt(RECIPIENT_TYPE_POS_KEY, 0);
+            selectedItemPosition = savedInstanceState.getInt(RECIPIENT_TYPE_POS_KEY, 1);
             String searchText = savedInstanceState.getString(RECIPIENT_TYPE_SEARCH_KEY, null);
             if(searchText != null) {
                 mSearchListBarView.setSearchText(searchText);
-            }
-        } else {
-            if(!hasRecentsOrFavourites()) {
-                // select "all contacts" in case there are not fav/recent contacts
-                selectedItemPosition = 1;
             }
         }
         mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
