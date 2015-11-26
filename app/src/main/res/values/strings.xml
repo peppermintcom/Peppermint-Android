@@ -120,8 +120,8 @@
     <string name="tap_to_cancel">Tap to cancel</string>
     <string name="cancelling">Cancelling...</string>
 
-    <string name="pref_title_displayname">Display name</string>
-    <string name="pref_summary_displayname">Your display name (used when sending in-app emails)</string>
+    <string name="pref_title_displayname">Your name</string>
+    <string name="pref_summary_displayname">The receiver will see your name when receiving a message so you need to make sure it\'s your real name</string>
     <string name="pref_title_gmailenabled">In-app Gmail</string>
     <string name="pref_summary_gmailenabled">Send messages through Gmail without leaving the app (requires extra permissions)</string>
     <string name="pref_title_gmailaccount">Gmail account</string>
@@ -133,7 +133,7 @@
 
     <string name="send_email">Send Email</string>
     <string name="msg_message_sms_disabled">Your device either has telephony disabled or does not support it. Sending text messages is not possible.</string>
-    <string name="msg_message_invalid_displayname">Please input a valid display name</string>
+    <string name="msg_message_invalid_displayname">Please input a valid name</string>
     <string name="new_contact_name">New Contact Name</string>
     <string name="phone_or_email">Phone or Email</string>
     <string name="msg_message_invalid_contactname">Please input a valid contact name</string>
@@ -154,4 +154,6 @@
     <string name="do_not_show_this_again">Do not ask this again and always send the message</string>
     <string name="_continue">Continue</string>
     <string name="add_account">Add account</string>
+    <string name="your_name_">Your name:</string>
+    <string name="msg_insert_name">You must insert a valid name</string>
 </resources>

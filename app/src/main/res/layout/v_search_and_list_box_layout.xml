@@ -42,6 +42,7 @@
         android:layout_marginRight="5dp"
         android:inputType="text"
         android:singleLine="true"
-        android:imeOptions="actionSearch|flagNoExtractUi" />
+        android:imeOptions="actionSearch|flagNoExtractUi"
+        android:textCursorDrawable="@drawable/ic_cursor"/>
 
 </RelativeLayout>

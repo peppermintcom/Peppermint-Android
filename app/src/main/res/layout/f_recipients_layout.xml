@@ -122,7 +122,8 @@
                         android:inputType="text"
                         android:hint="@string/new_contact_name"
                         android:singleLine="true"
-                        android:imeOptions="flagNoExtractUi" />
+                        android:imeOptions="flagNoExtractUi"
+                        android:textCursorDrawable="@drawable/ic_cursor"/>
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -148,7 +149,8 @@
                             android:hint="@string/phone_or_email"
                             android:inputType="text"
                             android:singleLine="true"
-                            android:imeOptions="flagNoExtractUi" />
+                            android:imeOptions="flagNoExtractUi"
+                            android:textCursorDrawable="@drawable/ic_cursor"/>
                     </LinearLayout>
                 </LinearLayout>
             </RelativeLayout>

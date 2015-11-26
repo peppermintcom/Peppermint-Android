@@ -5,7 +5,8 @@
         android:summary="@string/pref_summary_displayname"
         android:defaultValue="@string/peppermint_user"
         android:maxLength="40"
-        android:singleLine="true" />
+        android:singleLine="true"
+        android:textCursorDrawable="@drawable/ic_cursor" />
 
     <com.peppermint.app.ui.settings.CustomPreferenceCategory
         android:title="@string/pref_title_emailcategory">
@@ -26,7 +27,8 @@
             android:summary="@string/pref_summary_gmailsubject"
             android:defaultValue="@string/default_mail_subject"
             android:maxLength="78"
-            android:singleLine="true" />
+            android:singleLine="true"
+            android:textCursorDrawable="@drawable/ic_cursor"/>
         <!-- Max. Length: http://www.faqs.org/rfcs/rfc2822.html Sec. 2.1.1 -->
 
     </com.peppermint.app.ui.settings.CustomPreferenceCategory>
