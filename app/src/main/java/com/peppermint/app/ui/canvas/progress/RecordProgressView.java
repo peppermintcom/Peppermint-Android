@@ -10,6 +10,7 @@ import android.graphics.Rect;
 import android.graphics.Shader;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.view.View;
 
 import com.peppermint.app.R;
 import com.peppermint.app.ui.canvas.AnimatedLayerSet;
@@ -125,7 +126,7 @@ public class RecordProgressView extends AnimatedView {
         mBorderPaint.setStyle(Paint.Style.FILL);
         mBorderPaint.setColor(mBorderColor);
 
-        mBitmapPaint = new Paint();
+        mBitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mBitmapPaint.setAntiAlias(true);
         mBitmapPaint.setFilterBitmap(true);
         mBitmapPaint.setDither(true);

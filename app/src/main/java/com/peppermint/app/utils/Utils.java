@@ -324,7 +324,7 @@ public class Utils {
             b = BitmapFactory.decodeStream(fis, null, o2);
             fis.close();
 
-            Bitmap scaled = Bitmap.createScaledBitmap(b, width, height, false);
+            Bitmap scaled = Bitmap.createScaledBitmap(b, width, height, true);
             b.recycle();
             b = scaled;
         } catch (IOException e) {
