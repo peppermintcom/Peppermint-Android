@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.peppermint.app.ui.views.CustomFontTextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/text1"
+    android:orientation="vertical" android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="5dp"
+    custom:textFont="@string/font_semibold"
+    android:textColor="@color/white"
+    android:textSize="14dp" />

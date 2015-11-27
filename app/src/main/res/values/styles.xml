@@ -135,6 +135,14 @@
         <item name="android:textStyle">normal</item>
     </style>
 
+    <style name="Peppermint.CustomEditText" parent="Peppermint.EditText">
+        <item name="android:background">@drawable/background_edittext</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:paddingLeft">8dp</item>
+        <item name="android:paddingRight">8dp</item>
+    </style>
+
     <style name="Peppermint.ListPopupWindow" parent="Widget.AppCompat.ListPopupWindow">
         <item name="android:popupBackground">@drawable/background_listpopup</item>
         <item name="android:layout_marginLeft">0dp</item>

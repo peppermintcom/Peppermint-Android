@@ -1,78 +1,69 @@
 package com.peppermint.app.sending;
 
-import com.peppermint.app.data.SendingRequest;
-
 /**
  * Created by Nuno Luz on 01-10-2015.
  *
- * Listener of sending events triggered by a Sender (SendingTask and SenderErrorHandler).
+ * Listener of sender events triggered by a SenderTask.
  */
 public interface SenderListener {
     /**
-     * Triggered when the sending task starts.
+     * Triggered when the sender task starts.
      * This method may not execute on the main thread!
      *
-     * @param sendingTask the sending task instance
-     * @param sendingRequest the sending request
+     * @param senderTask the sender task instance
      */
-    void onSendingTaskStarted(SendingTask sendingTask, SendingRequest sendingRequest);
+    void onSendingTaskStarted(SenderTask senderTask);
 
     /**
-     * Triggered when the sending task is cancelled.
+     * Triggered when the sender task is cancelled.
      * This method may not execute on the main thread!
      *
-     * @param sendingTask the sending task instance
-     * @param sendingRequest the sending request
+     * @param senderTask the sender task instance
      */
-    void onSendingTaskCancelled(SendingTask sendingTask, SendingRequest sendingRequest);
+    void onSendingTaskCancelled(SenderTask senderTask);
 
     /**
-     * Triggered when the sending task finishes successfully.
+     * Triggered when the sender task finishes successfully.
      * This method may not execute on the main thread!
      *
-     * @param sendingTask the sending task instance
-     * @param sendingRequest the sending request
+     * @param senderTask the sender task instance
      */
-    void onSendingTaskFinished(SendingTask sendingTask, SendingRequest sendingRequest);
+    void onSendingTaskFinished(SenderTask senderTask);
 
     /**
      * Triggered when the sending task finishes with an error.
      * This method may not execute on the main thread!
      *
-     * @param sendingTask the sending task instance
-     * @param sendingRequest the sending request
+     * @param senderTask the sender task instance
      * @param error the thrown error
      */
-    void onSendingTaskError(SendingTask sendingTask, SendingRequest sendingRequest, Throwable error);
+    void onSendingTaskError(SenderTask senderTask, Throwable error);
 
     /**
-     * Triggered when the sending task progresses.
-     * Not all senders provide progress information!
+     * Triggered when the sender task progresses.
+     * Not all sender tasks provide progress information!
      * This method may not execute on the main thread!
      *
-     * @param sendingTask the sending task instance
-     * @param sendingRequest the sending request
+     * @param senderTask the sender task instance
      * @param progressValue the current progress value
      */
-    void onSendingTaskProgress(SendingTask sendingTask, SendingRequest sendingRequest, float progressValue);
+    void onSendingTaskProgress(SenderTask senderTask, float progressValue);
 
     /**
-     * Triggered by the {@link SendingErrorHandler} when the {@link Sender} has recovered from a failed {@link SendingTask}.
+     * Triggered by the {@link SenderErrorHandler} when the {@link Sender} has recovered from a failed {@link SenderTask}.
      * This method may not execute on the main thread!
      *
-     * @param previousSendingTask the sending task instance that failed
-     * @param sendingRequest the sending request
+     * @param previousSenderTask the sender task instance that failed
      */
-    void onSendingRequestRecovered(SendingTask previousSendingTask, SendingRequest sendingRequest);
+    void onSendingRequestRecovered(SenderTask previousSenderTask);
 
     /**
-     * Triggered by the {@link SendingErrorHandler} when the {@link Sender} cannot recover from a failed {@link SendingTask}.
+     * Triggered by the {@link SenderErrorHandler} when the {@link Sender} cannot recover from a failed {@link SenderTask}.
      * This method may not execute on the main thread!
      *
-     * @param previousSendingTask the sending task instance that failed
-     * @param sendingRequest the sending request
+     * @param previousSenderTask the sender task instance that failed
      * @param error the thrown error
      */
-    void onSendingRequestNotRecovered(SendingTask previousSendingTask, SendingRequest sendingRequest, Throwable error);
+    void onSendingRequestNotRecovered(SenderTask previousSenderTask, Throwable error);
 }
 

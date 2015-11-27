@@ -3,6 +3,7 @@ package com.peppermint.app.sending;
 import android.content.Context;
 
 import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.rest.HttpAsyncTask;
 import com.peppermint.app.rest.HttpClientManager;
 
 import java.util.HashMap;
@@ -26,8 +27,6 @@ import java.util.Map;
  * </p>
  */
 public abstract class Sender {
-
-    protected static final String PARAM_HTTP_CLIENT_MANAGER = "Sender_ParamHttpClientManager";
 
     private Context mContext;
     private SenderListener mSenderListener;
@@ -54,7 +53,7 @@ public abstract class Sender {
      * Initializes the sender and its error handler.
      */
     public void init() {
-        SendingErrorHandler errorHandler = getErrorHandler();
+        SenderErrorHandler errorHandler = getErrorHandler();
         if(errorHandler != null) {
             errorHandler.init();
         }
@@ -63,16 +62,20 @@ public abstract class Sender {
             mHttpManager = new HttpClientManager(mContext);
             mHttpManager.start();
 
-            setParameter(PARAM_HTTP_CLIENT_MANAGER, mHttpManager);
+            setParameter(HttpAsyncTask.PARAM_HTTP_CLIENT_MANAGER, mHttpManager);
         }
     }
 
+    public SenderTask newAuthorizationTask() {
+        return null;
+    }
+
     /**
-     * Creates a new {@link SendingTask} instance for the specified sending request.
+     * Creates a new {@link SenderTask} instance for the specified sending request.
      * @param sendingRequest the sending request
      * @return the asynchronous task that will try to execute the sending request
      */
-    public abstract SendingTask newTask(SendingRequest sendingRequest);
+    public abstract SenderTask newTask(SendingRequest sendingRequest);
 
     /**
      * Gets the sender's error handler. Useful to check if the sender can recover from
@@ -81,7 +84,7 @@ public abstract class Sender {
      *
      * @return the error handler
      */
-    public abstract SendingErrorHandler getErrorHandler();
+    public abstract SenderErrorHandler getErrorHandler();
 
     /**
      * Android shared preferences used by this sender.
@@ -94,7 +97,7 @@ public abstract class Sender {
      * De-initializes the sender and its error handler.
      */
     public void deinit() {
-        SendingErrorHandler errorHandler = getErrorHandler();
+        SenderErrorHandler errorHandler = getErrorHandler();
         if(errorHandler != null) {
             errorHandler.deinit();
         }

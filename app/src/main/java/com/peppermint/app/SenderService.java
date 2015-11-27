@@ -15,8 +15,9 @@ import android.widget.Toast;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.sending.SenderEvent;
 import com.peppermint.app.sending.SenderManager;
-import com.peppermint.app.sending.SendingEvent;
+import com.peppermint.app.sending.mail.gmail.GmailAuthorizationTask;
 import com.peppermint.app.utils.PepperMintPreferences;
 
 import java.util.HashMap;
@@ -41,6 +42,11 @@ public class SenderService extends Service {
         Intent extra key for the {@link Recipient} of the file.
      **/
     public static final String INTENT_DATA_RECIPIENT = "SendRecordService_Recipient";
+
+    /**
+     * Intent extra key for a boolean indicating if the Gmail API authorization process should be triggered.
+     */
+    public static final String INTENT_DATA_AUTHORIZE = "SendRecordService_Authorize";
 
     protected SendRecordServiceBinder mBinder = new SendRecordServiceBinder();
 
@@ -101,11 +107,15 @@ public class SenderService extends Service {
         boolean isSending(UUID sendingRequestUuid) {
             return SenderService.this.isSending(sendingRequestUuid);
         }
+
+        void authorize() { SenderService.this.authorize(); }
     }
 
     private PepperMintPreferences mPreferences;
     private EventBus mEventBus;
     private SenderManager mSenderManager;
+
+    private GmailAuthorizationTask mGmailAuthorizationTask;
 
     private boolean mIsInForegroundMode = false;
 
@@ -131,12 +141,16 @@ public class SenderService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand: " + intent);
 
-        if(intent != null && intent.hasExtra(INTENT_DATA_RECORDING) && intent.hasExtra(INTENT_DATA_RECIPIENT)) {
-            Recording recording = (Recording) intent.getSerializableExtra(INTENT_DATA_RECORDING);
-            Recipient recipient = (Recipient) intent.getSerializableExtra(INTENT_DATA_RECIPIENT);
+        if(intent != null) {
+            if(intent.hasExtra(INTENT_DATA_RECORDING) && intent.hasExtra(INTENT_DATA_RECIPIENT)) {
+                Recording recording = (Recording) intent.getSerializableExtra(INTENT_DATA_RECORDING);
+                Recipient recipient = (Recipient) intent.getSerializableExtra(INTENT_DATA_RECIPIENT);
 
-            if(recording != null && recipient != null) {
-                send(recipient, recording);
+                if (recording != null && recipient != null) {
+                    send(recipient, recording);
+                }
+            } else if(intent.hasExtra(INTENT_DATA_AUTHORIZE) && intent.getBooleanExtra(INTENT_DATA_AUTHORIZE, false)) {
+                authorize();
             }
         }
 
@@ -164,9 +178,9 @@ public class SenderService extends Service {
         super.onDestroy();
     }
 
-    public void onEventMainThread(SendingEvent event) {
+    public void onEventMainThread(SenderEvent event) {
         switch (event.getType()) {
-            case SendingEvent.EVENT_STARTED:
+            case SenderEvent.EVENT_STARTED:
                 if (!mIsInForegroundMode) {
                     startForeground(SenderService.class.hashCode(), getNotification());
                     mIsInForegroundMode = true;
@@ -174,11 +188,11 @@ public class SenderService extends Service {
                     updateNotification();
                 }
                 break;
-            case SendingEvent.EVENT_ERROR:
-                Toast.makeText(this, String.format(getString(R.string.msg_message_send_error), event.getSendingTask().getSendingRequest().getRecipient().getName()), Toast.LENGTH_SHORT).show();
-            case SendingEvent.EVENT_QUEUED:
-            case SendingEvent.EVENT_CANCELLED:
-            case SendingEvent.EVENT_FINISHED:
+            case SenderEvent.EVENT_ERROR:
+                Toast.makeText(this, String.format(getString(R.string.msg_message_send_error), event.getSenderTask().getSendingRequest().getRecipient().getName()), Toast.LENGTH_SHORT).show();
+            case SenderEvent.EVENT_QUEUED:
+            case SenderEvent.EVENT_CANCELLED:
+            case SenderEvent.EVENT_FINISHED:
                 if (!mSenderManager.isSending()) {
                     stopForeground(true);
                     mIsInForegroundMode = false;
@@ -187,6 +201,10 @@ public class SenderService extends Service {
                 }
                 break;
         }
+    }
+
+    private void authorize() {
+        mSenderManager.authorize();
     }
 
     private SendingRequest send(Recipient recipient, Recording recording) {

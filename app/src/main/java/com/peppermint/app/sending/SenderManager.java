@@ -68,7 +68,7 @@ public class SenderManager implements SenderListener {
 
     private Map<String, Sender> mSenderMap;                     // map of senders <mime type, sender>
 
-    private Map<UUID, SendingTask> mTaskMap;                    // map of sending tasks under execution
+    private Map<UUID, SenderTask> mTaskMap;                    // map of sending tasks under execution
     private DatabaseHelper mDatabaseHelper;                     // database helper
 
     // broadcast receiver that handles connectivity status changes
@@ -224,6 +224,27 @@ public class SenderManager implements SenderListener {
         }
     }
 
+    public void authorize() {
+        for(Sender sender : mSenderMap.values()) {
+            while(sender != null) {
+                SenderTask authorizationTask = sender.newAuthorizationTask();
+                if(authorizationTask != null) {
+                    authorizationTask.executeOnExecutor(mExecutor);
+                }
+                sender = sender.getFailureChainSender();
+            }
+        }
+        for(Sender sender : mSenderMap.values()) {
+            while(sender != null) {
+                SenderTask authorizationTask = sender.newAuthorizationTask();
+                if(authorizationTask != null) {
+                    authorizationTask.executeOnExecutor(mExecutor);
+                }
+                sender = sender.getSuccessChainSender();
+            }
+        }
+    }
+
     /**
      * Tries to execute the specified sending request using one of the available {@link Sender}s.
      * @param sendingRequest the sending request
@@ -248,15 +269,15 @@ public class SenderManager implements SenderListener {
      * @return the UUID of the sending request
      */
     private UUID send(SendingRequest sendingRequest, Sender sender) {
-        while(sender != null && sender.getSenderPreferences() != null && !sender.getSenderPreferences().isEnabled()) {
+        while(sender != null && (sender.getSenderPreferences() != null && !sender.getSenderPreferences().isEnabled())) {
             sender = sender.getFailureChainSender();
         }
         if(sender == null) {
             throw new RuntimeException("No sender available. Make sure that all possible senders are not disabled.");
         }
 
-        SendingTask task = sender.newTask(sendingRequest);
-        mTaskMap.put(sendingRequest.getId(), task);
+        SenderTask task = sender.newTask(sendingRequest);
+        mTaskMap.put(task.getId(), task);
         task.executeOnExecutor(mExecutor);
         return sendingRequest.getId();
     }
@@ -306,7 +327,7 @@ public class SenderManager implements SenderListener {
         }
 
         boolean someOngoing = false;
-        Iterator<Map.Entry<UUID, SendingTask>> it = mTaskMap.entrySet().iterator();
+        Iterator<Map.Entry<UUID, SenderTask>> it = mTaskMap.entrySet().iterator();
         while(it.hasNext() && !someOngoing) {
             if(!it.next().getValue().isCancelled()) {
                 someOngoing = true;
@@ -317,32 +338,44 @@ public class SenderManager implements SenderListener {
     }
 
     @Override
-    public void onSendingTaskStarted(SendingTask sendingTask, SendingRequest sendingRequest) {
+    public void onSendingTaskStarted(SenderTask sendingTask) {
+        if(sendingTask instanceof SenderAuthorizationTask) {
+            return;
+        }
+
         if(mEventBus != null) {
-            mEventBus.post(new SendingEvent(sendingTask, SendingEvent.EVENT_STARTED));
+            mEventBus.post(new SenderEvent(sendingTask, SenderEvent.EVENT_STARTED));
         }
     }
 
     @Override
-    public void onSendingTaskCancelled(SendingTask sendingTask, SendingRequest sendingRequest) {
-        mTaskMap.remove(sendingRequest.getId());
+    public void onSendingTaskCancelled(SenderTask sendingTask) {
+        if(sendingTask instanceof SenderAuthorizationTask) {
+            return;
+        }
+
+        mTaskMap.remove(sendingTask.getId());
         if(mEventBus != null) {
-            mEventBus.post(new SendingEvent(sendingTask, SendingEvent.EVENT_CANCELLED));
+            mEventBus.post(new SenderEvent(sendingTask, SenderEvent.EVENT_CANCELLED));
         }
     }
 
     @Override
-    public void onSendingTaskFinished(SendingTask sendingTask, SendingRequest sendingRequest) {
+    public void onSendingTaskFinished(SenderTask sendingTask) {
+        if(sendingTask instanceof SenderAuthorizationTask) {
+            return;
+        }
+
         Sender nextSender = sendingTask.getSender().getSuccessChainSender();
         if(nextSender != null) {
             if(mEventBus != null) {
-                mEventBus.post(new SendingEvent(sendingTask, SendingEvent.EVENT_INTERMEDIATE_FINISHED));
+                mEventBus.post(new SenderEvent(sendingTask, SenderEvent.EVENT_INTERMEDIATE_FINISHED));
             }
 
             try {
-                send(sendingRequest, nextSender);
+                send(sendingTask.getSendingRequest(), nextSender);
             } catch(Throwable t) {
-                onSendingRequestNotRecovered(sendingTask, sendingRequest, t);
+                onSendingRequestNotRecovered(sendingTask, t);
             }
 
             return;
@@ -350,49 +383,64 @@ public class SenderManager implements SenderListener {
 
         SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
         try {
-            sendingRequest.setSent(true);
-            SendingRequest.insertOrUpdate(db, sendingRequest);
+            sendingTask.getSendingRequest().setSent(true);
+            SendingRequest.insertOrUpdate(db, sendingTask.getSendingRequest());
         } catch (SQLException e) {
             Crashlytics.logException(e);
         }
         db.close();
 
-        mTaskMap.remove(sendingRequest.getId());
+        mTaskMap.remove(sendingTask.getId());
         if(mEventBus != null) {
-            mEventBus.post(new SendingEvent(sendingTask, SendingEvent.EVENT_FINISHED));
+            mEventBus.post(new SenderEvent(sendingTask, SenderEvent.EVENT_FINISHED));
         }
     }
 
     @Override
-    public void onSendingTaskError(SendingTask sendingTask, SendingRequest sendingRequest, Throwable error) {
+    public void onSendingTaskError(SenderTask sendingTask, Throwable error) {
         // just try to recover
-        SendingErrorHandler errorHandler = sendingTask.getSender().getErrorHandler();
+        SenderErrorHandler errorHandler = sendingTask.getSender().getErrorHandler();
         if(errorHandler != null) {
             errorHandler.tryToRecover(sendingTask);
         } else {
-            onSendingRequestNotRecovered(sendingTask, sendingRequest, sendingTask.getError());
+            onSendingRequestNotRecovered(sendingTask, sendingTask.getError());
         }
     }
 
     @Override
-    public void onSendingTaskProgress(SendingTask sendingTask, SendingRequest sendingRequest, float progressValue) {
+    public void onSendingTaskProgress(SenderTask sendingTask, float progressValue) {
+        if(sendingTask instanceof SenderAuthorizationTask) {
+            return;
+        }
+
         if(mEventBus != null) {
-            mEventBus.post(new SendingEvent(sendingTask, SendingEvent.EVENT_PROGRESS));
+            mEventBus.post(new SenderEvent(sendingTask, SenderEvent.EVENT_PROGRESS));
         }
     }
 
     @Override
-    public void onSendingRequestRecovered(SendingTask previousSendingTask, SendingRequest sendingRequest) {
+    public void onSendingRequestRecovered(SenderTask previousSendingTask) {
+        if(previousSendingTask instanceof SenderAuthorizationTask) {
+            return;
+        }
+
         // try again
-        send(sendingRequest, previousSendingTask.getSender());
+        send(previousSendingTask.getSendingRequest(), previousSendingTask.getSender());
     }
 
     @Override
-    public void onSendingRequestNotRecovered(SendingTask previousSendingTask, SendingRequest sendingRequest, Throwable error) {
+    public void onSendingRequestNotRecovered(SenderTask previousSendingTask, Throwable error) {
+        if(previousSendingTask instanceof  SenderAuthorizationTask) {
+            Crashlytics.logException(error);
+            Log.e(TAG, "Unable to recover from error while requesting authorization", error);
+            return;
+        }
+
+        SendingRequest sendingRequest = previousSendingTask.getSendingRequest();
         //Throwable error = previousSendingTask.getError();
         Sender nextSender = previousSendingTask.getSender().getFailureChainSender();
         if(nextSender == null || error instanceof ElectableForQueueingException) {
-            mTaskMap.remove(sendingRequest.getId());
+            mTaskMap.remove(previousSendingTask.getId());
             SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
             if(error instanceof ElectableForQueueingException) {
                 try {
@@ -404,12 +452,12 @@ public class SenderManager implements SenderListener {
                     }
 
                     if (mEventBus != null) {
-                        mEventBus.post(new SendingEvent(previousSendingTask, SendingEvent.EVENT_QUEUED, error));
+                        mEventBus.post(new SenderEvent(previousSendingTask, SenderEvent.EVENT_QUEUED, error));
                     }
                 } catch (SQLException e) {
                     Crashlytics.logException(e);
                     if (mEventBus != null) {
-                        mEventBus.post(new SendingEvent(previousSendingTask, e));
+                        mEventBus.post(new SenderEvent(previousSendingTask, e));
                     }
                 }
             } else {
@@ -419,9 +467,11 @@ public class SenderManager implements SenderListener {
                     // log the exception but the main exception is in the asynctask
                     Log.e(TAG, "Error deleting sending request " + sendingRequest.getId() + ". May not exist and that's ok.", e);
                 }
+
+                Crashlytics.log("Exception message - " + previousSendingTask.getError().getMessage());
                 Crashlytics.logException(previousSendingTask.getError());
                 if (mEventBus != null) {
-                    mEventBus.post(new SendingEvent(previousSendingTask, error));
+                    mEventBus.post(new SenderEvent(previousSendingTask, error));
                 }
             }
             db.close();

@@ -4,10 +4,10 @@ import android.content.Context;
 
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.Sender;
+import com.peppermint.app.sending.SenderErrorHandler;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SendingErrorHandler;
-import com.peppermint.app.sending.SendingTask;
+import com.peppermint.app.sending.SenderTask;
 
 /**
  * Created by Nuno Luz on 08-09-2015.
@@ -21,12 +21,12 @@ public class IntentSMSSender extends Sender {
     }
 
     @Override
-    public SendingTask newTask(SendingRequest sendingRequest) {
-        return new IntentSMSSendingTask(this, sendingRequest, getSenderListener(), getParameters(), getSenderPreferences());
+    public SenderTask newTask(SendingRequest sendingRequest) {
+        return new IntentSMSSenderTask(this, sendingRequest, getSenderListener(), getParameters(), getSenderPreferences());
     }
 
     @Override
-    public SendingErrorHandler getErrorHandler() {
+    public SenderErrorHandler getErrorHandler() {
         return null;
     }
 

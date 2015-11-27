@@ -4,11 +4,10 @@ import android.content.Context;
 
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.Sender;
+import com.peppermint.app.sending.SenderErrorHandler;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SendingErrorHandler;
-import com.peppermint.app.sending.SendingTask;
-import com.peppermint.app.sending.mail.MailSenderPreferences;
+import com.peppermint.app.sending.SenderTask;
 
 /**
  * Created by Nuno Luz on 08-09-2015.
@@ -17,23 +16,23 @@ import com.peppermint.app.sending.mail.MailSenderPreferences;
  */
 public class IntentMailSender extends Sender {
 
-    private MailSenderPreferences mPreferences;
-    private IntentMailSendingErrorHandler mErrorHandler;
+    private IntentMailSenderPreferences mPreferences;
+    private IntentMailSenderErrorHandler mErrorHandler;
 
     public IntentMailSender(Context context, SenderListener senderListener) {
         super(context, senderListener);
-        mPreferences = new MailSenderPreferences(getContext());
+        mPreferences = new IntentMailSenderPreferences(getContext());
     }
 
     @Override
-    public SendingTask newTask(SendingRequest sendingRequest) {
-        return new IntentMailSendingTask(this, sendingRequest, getSenderListener(), getParameters(), getSenderPreferences());
+    public SenderTask newTask(SendingRequest sendingRequest) {
+        return new IntentMailSenderTask(this, sendingRequest, getSenderListener(), getParameters(), getSenderPreferences());
     }
 
     @Override
-    public SendingErrorHandler getErrorHandler() {
+    public SenderErrorHandler getErrorHandler() {
         if(mErrorHandler == null) {
-            mErrorHandler = new IntentMailSendingErrorHandler(getContext(), getSenderListener(), getParameters(), getSenderPreferences());
+            mErrorHandler = new IntentMailSenderErrorHandler(getContext(), getSenderListener(), getParameters(), getSenderPreferences());
         }
         return mErrorHandler;
     }

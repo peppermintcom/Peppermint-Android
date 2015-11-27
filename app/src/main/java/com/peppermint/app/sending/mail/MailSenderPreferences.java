@@ -13,7 +13,7 @@ import com.peppermint.app.utils.Utils;
  */
 public class MailSenderPreferences extends SenderPreferences {
 
-    // GmailSendingTask shared preference keys
+    // GmailSenderTask shared preference keys
     public static final String PREF_ACCOUNT_NAME_KEY = "prefAccountName";
     public static final String DISPLAY_NAME_KEY = "displayName";
 

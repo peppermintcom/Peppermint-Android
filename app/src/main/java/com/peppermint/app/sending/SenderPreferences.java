@@ -15,6 +15,10 @@ public class SenderPreferences {
         return prefClass.getSimpleName() + "_isEnabled";
     }
 
+    public static String getAuthorizedPreferenceKey(Class<? extends  SenderPreferences> prefClass) {
+        return prefClass.getSimpleName() + "_isAuthorized";
+    }
+
     private SharedPreferences mSharedPreferences;
     private Context mContext;
 
@@ -40,6 +44,16 @@ public class SenderPreferences {
 
     public boolean isEnabled() {
         return getSharedPreferences().getBoolean(getEnabledPreferenceKey(this.getClass()), true);
+    }
+
+    public void setAuthorized(boolean val) {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putBoolean(getAuthorizedPreferenceKey(this.getClass()), val);
+        editor.commit();
+    }
+
+    public boolean isAuthorized() {
+        return getSharedPreferences().getBoolean(getAuthorizedPreferenceKey(this.getClass()), true);
     }
 
     public Context getContext() {

@@ -72,7 +72,19 @@ public class Utils {
      */
     public static int dpToPx(Context context, int dp) {
         float density = context.getResources().getDisplayMetrics().density;
-        return Math.round((float)dp * density);
+        return Math.round((float) dp * density);
+    }
+
+    /**
+     * Converts device specific pixels to density independent pixels.
+     *
+     * @param px      A value in px (pixels) unit. Which we need to convert into db
+     * @param context Context to get resources and device specific display metrics
+     * @return A float value to represent dp equivalent to px value
+     */
+    public static float pxToDp(Context context, float px) {
+        float densityDpi = context.getResources().getDisplayMetrics().densityDpi;
+        return px / (densityDpi / 160f);
     }
 
     /**
@@ -324,7 +336,7 @@ public class Utils {
             b = BitmapFactory.decodeStream(fis, null, o2);
             fis.close();
 
-            Bitmap scaled = Bitmap.createScaledBitmap(b, width, height, false);
+            Bitmap scaled = Bitmap.createScaledBitmap(b, width, height, true);
             b.recycle();
             b = scaled;
         } catch (IOException e) {
