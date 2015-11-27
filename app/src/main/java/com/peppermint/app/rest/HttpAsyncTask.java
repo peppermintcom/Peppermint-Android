@@ -7,7 +7,6 @@ import android.util.Log;
 import com.peppermint.app.R;
 import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
 import com.peppermint.app.sending.server.AlreadyRegisteredException;
-import com.peppermint.app.sending.server.HttpResponseException;
 import com.peppermint.app.sending.server.InvalidAccessTokenException;
 
 import java.util.HashMap;
@@ -34,6 +33,7 @@ public abstract class HttpAsyncTask extends AsyncTask<Void, Float, Void> impleme
 
     // http request related
     private UUID mHttpRequestId;
+    private String mHttpRequestUrl;
     private HttpResponse mHttpResponse;
     private Thread mRunner;
 
@@ -101,7 +101,7 @@ public abstract class HttpAsyncTask extends AsyncTask<Void, Float, Void> impleme
             throw new HttpResponseException();
         }
         if(mHttpResponse.getException() != null) {
-            throw mHttpResponse.getException();
+            throw new HttpResponseException("Exception running HTTP request to " + mHttpRequestUrl, mHttpResponse.getException());
         }
 
         return mHttpResponse.getBody().toString();
@@ -136,6 +136,7 @@ public abstract class HttpAsyncTask extends AsyncTask<Void, Float, Void> impleme
 
     protected UUID executeHttpRequest(HttpRequest request, HttpResponse response) {
         mHttpRequestId = request.getUUID();
+        mHttpRequestUrl = request.getEndpoint();
         return getHttpClientManager().performRequest(request, response);
     }
 

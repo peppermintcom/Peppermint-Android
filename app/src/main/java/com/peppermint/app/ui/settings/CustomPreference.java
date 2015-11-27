@@ -4,7 +4,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
-import android.preference.EditTextPreference;
+import android.preference.Preference;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
@@ -18,27 +18,27 @@ import com.peppermint.app.utils.Utils;
 /**
  * Created by Nuno Luz on 22-10-2015.
  */
-public class CustomEditTextPreference extends EditTextPreference {
+public class CustomPreference extends Preference {
 
     private String mContent;
 
-    public CustomEditTextPreference(Context context) {
+    public CustomPreference(Context context) {
         super(context);
         setLayoutResource(R.layout.v_preference);
     }
 
-    public CustomEditTextPreference(Context context, AttributeSet attrs) {
+    public CustomPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
         setLayoutResource(R.layout.v_preference);
     }
 
-    public CustomEditTextPreference(Context context, AttributeSet attrs, int defStyleAttr) {
+    public CustomPreference(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         setLayoutResource(R.layout.v_preference);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public CustomEditTextPreference(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public CustomPreference(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         setLayoutResource(R.layout.v_preference);
     }
@@ -91,17 +91,4 @@ public class CustomEditTextPreference extends EditTextPreference {
     public void setContent(String value) {
         this.mContent = value;
     }
-
-    @Override
-    protected void onDialogClosed(boolean positiveResult) {
-        super.onDialogClosed(positiveResult);
-        Utils.hideKeyboard((Activity) getContext());
-    }
-
-    @Override
-    protected void onBindDialogView(View view) {
-        super.onBindDialogView(view);
-        getEditText().setSelection(getEditText().getText().length());
-    }
-
 }

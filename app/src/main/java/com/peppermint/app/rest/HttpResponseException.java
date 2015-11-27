@@ -1,4 +1,4 @@
-package com.peppermint.app.sending.server;
+package com.peppermint.app.rest;
 
 /**
  * Created by Nuno Luz on 28-10-2015.

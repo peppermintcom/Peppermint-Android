@@ -467,6 +467,8 @@ public class SenderManager implements SenderListener {
                     // log the exception but the main exception is in the asynctask
                     Log.e(TAG, "Error deleting sending request " + sendingRequest.getId() + ". May not exist and that's ok.", e);
                 }
+
+                Crashlytics.log("Exception message - " + previousSendingTask.getError().getMessage());
                 Crashlytics.logException(previousSendingTask.getError());
                 if (mEventBus != null) {
                     mEventBus.post(new SenderEvent(previousSendingTask, error));

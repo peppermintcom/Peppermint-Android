@@ -56,6 +56,8 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
         return true;
     }
 
+    private static final String KEY_NAME = "AuthFragment_Name";
+
     private Runnable mDismissPopupRunnable = new Runnable() {
         @Override
         public void run() {
@@ -71,6 +73,7 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
     private Account[] mAccounts;
     private PepperMintPreferences mPreferences;
     private CustomActionBarActivity mActivity;
+    private boolean mDontSetNameFromPrefs = false;
 
     private PopupWindow mNamePopup;
 
@@ -130,6 +133,19 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         getListView().setOnItemClickListener(this);
+
+        if(savedInstanceState != null && savedInstanceState.containsKey(KEY_NAME) && savedInstanceState.getString(KEY_NAME) != null) {
+            mTxtName.setText(savedInstanceState.getString(KEY_NAME));
+            mDontSetNameFromPrefs = true;
+        } else {
+            mDontSetNameFromPrefs = false;
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putString(KEY_NAME, mTxtName.getText().toString());
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -138,7 +154,10 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
         mAccounts = AccountManager.get(mActivity).getAccountsByType("com.google");
         mAdapter = new AuthArrayAdapter(mActivity, mAccounts);
         getListView().setAdapter(mAdapter);
-        mTxtName.setText(mPreferences.getDisplayName());
+        if(!mDontSetNameFromPrefs) {
+            mTxtName.setText(mPreferences.getDisplayName());
+            mDontSetNameFromPrefs = true;
+        }
         mTxtName.setSelection(mTxtName.getText().length());
     }
 

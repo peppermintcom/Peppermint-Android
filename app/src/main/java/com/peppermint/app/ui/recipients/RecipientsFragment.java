@@ -5,17 +5,14 @@ import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.app.Activity;
 import android.app.ListFragment;
-import android.content.ContentProviderOperation;
-import android.content.ContentProviderResult;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.ContactsContract;
 import android.support.v4.content.ContextCompat;
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -23,10 +20,8 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.CursorAdapter;
-import android.widget.EditText;
-import android.widget.ImageButton;
+import android.widget.FrameLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.PeppermintApp;
@@ -82,11 +77,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private LoadingView mRecipientLoadingView;
     private boolean mRecipientListShown;
     private BaseAdapter mRecipientAdapter;
-
-    // new recipient view
-    private EditText mTxtNewName, mTxtNewContact;
-    private ImageButton mBtnNew;
-    private AnimatedAvatarView mNewAvatarView;
 
     // the custom action bar (with recipient type filter and recipient search)
     private SearchListBarView mSearchListBarView;
@@ -227,18 +217,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 mRecipientAdapter.notifyDataSetChanged();
             }
 
-            // set new contact fields according to search filter
-            if(_name != null) {
-                mTxtNewName.setText(_name);
-            } else {
-                mTxtNewName.setText("");
-            }
-            if(_via != null) {
-                mTxtNewContact.setText(_via);
-            } else {
-                mTxtNewContact.setText("");
-            }
-
             setListShown(true);
         }
 
@@ -262,12 +240,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 if(!v.isShowStaticAvatar()) {
                     possibleAnimationsList.add(v);
                 }
-            }
-
-            if(mNewAvatarView.getVisibility() == View.VISIBLE) {
-                possibleAnimationsList.add(mNewAvatarView);
-            } else {
-                mNewAvatarView.stopDrawingThread();
             }
 
             // randomly pick one
@@ -374,84 +346,15 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         // init no recipients view
         TextView txtEmpty1 = (TextView) v.findViewById(R.id.txtEmpty1);
-        TextView txtEmpty2 = (TextView) v.findViewById(R.id.txtEmpty2);
         txtEmpty1.setTypeface(app.getFontSemibold());
-        txtEmpty2.setTypeface(app.getFontSemibold());
-        int peppermintColor = ContextCompat.getColor(mActivity, R.color.green_text);
-        txtEmpty2.setText(Html.fromHtml(String.format(getString(R.string.msg_add_some_friends), String.format("#%06X", (0xFFFFFF & peppermintColor)))));
 
-        // init new recipient view
-        TextView txtNewVia = (TextView) v.findViewById(R.id.txtVia);
-        mTxtNewName = (EditText) v.findViewById(R.id.txtName);
-        mTxtNewContact = (EditText) v.findViewById(R.id.txtContact);
-        mBtnNew = (ImageButton) v.findViewById(R.id.btnAddContact);
-        mNewAvatarView = (AnimatedAvatarView) v.findViewById(R.id.imgPhoto);
-
-        txtNewVia.setTypeface(app.getFontRegular());
-        mTxtNewName.setTypeface(app.getFontSemibold());
-        mTxtNewContact.setTypeface(app.getFontSemibold());
-        mNewAvatarView.setShowStaticAvatar(false);
-        mBtnNew.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String name = mTxtNewName.getText().toString().trim();
-                String via = mTxtNewContact.getText().toString().trim();
-                String mimeType = null;
-
-                // validate display name
-                if(name.length() <= 0) {
-                    Toast.makeText(mActivity, R.string.msg_message_invalid_contactname, Toast.LENGTH_LONG).show();
-                    return;
-                }
-
-                // validate email
-                if(Utils.isValidEmail(via)) {
-                    mimeType = ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE;
-                } else if(Utils.isValidPhoneNumber(via)) {
-                    mimeType = ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE;
-                }
-
-                if(mimeType == null) {
-                    Toast.makeText(mActivity, R.string.msg_message_invalid_contactvia, Toast.LENGTH_LONG).show();
-                    return;
-                }
-
-                ArrayList<ContentProviderOperation> ops = new ArrayList<>();
-
-                // create raw contact
-                ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
-                        .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
-                        .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null).build());
-
-                // add display name data
-                ops.add(ContentProviderOperation
-                        .newInsert(ContactsContract.Data.CONTENT_URI)
-                        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-                        .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
-                        .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name)
-                        .build());
-
-                // add phone/email data
-                ops.add(ContentProviderOperation
-                        .newInsert(ContactsContract.Data.CONTENT_URI)
-                        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-                        .withValue(ContactsContract.Data.MIMETYPE, mimeType)
-                        .withValue(ContactsContract.Data.DATA1, via).build());
-
-                try {
-                    ContentProviderResult[] res = mActivity.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
-                    if(res.length < ops.size()) {
-                        throw new RuntimeException("Not all operations were performed while trying to insert contact: Total Ops = " + ops.size() + "; Performed = " + res.length);
-                    }
-                    Toast.makeText(mActivity, R.string.msg_message_contact_added, Toast.LENGTH_LONG).show();
-                    // refresh listview
-                    mSearchListBarView.setSearchText(name + " <" + via + ">");
-                } catch (Throwable e) {
-                    Toast.makeText(mActivity, R.string.msg_message_unable_addcontact, Toast.LENGTH_LONG).show();
-                    Crashlytics.logException(e);
-                }
-            }
-        });
+        // bo: adjust status bar height (only do it for API 21 onwards since overlay is not working for older versions)
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            int statusBarHeight = Utils.getStatusBarHeight(mActivity);
+            FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) v.findViewById(android.R.id.empty).getLayoutParams();
+            layoutParams.bottomMargin += statusBarHeight;
+        }
+        // eo: adjust status bar height
 
         // init loading recipients view
         mRecipientListShown = true;
@@ -510,7 +413,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onStop() {
-        super.onStop();
         mHandler.removeCallbacks(mAnimationRunnable);
 
         mSenderServiceManager.unbind();
@@ -519,6 +421,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         if(mGetRecipientsTask != null && !mGetRecipientsTask.isCancelled() && mGetRecipientsTask.getStatus() != AsyncTask.Status.FINISHED) {
             mGetRecipientsTask.cancel(true);
         }
+
+        super.onStop();
     }
 
     @Override

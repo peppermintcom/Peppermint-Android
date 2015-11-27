@@ -5,6 +5,7 @@ import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.rest.HttpRequest;
 import com.peppermint.app.rest.HttpRequestListener;
 import com.peppermint.app.rest.HttpResponse;
+import com.peppermint.app.rest.HttpResponseException;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
@@ -31,6 +32,7 @@ public class ServerSenderTask extends SenderTask implements HttpRequestListener 
     private static final String TAG = ServerSenderTask.class.getSimpleName();
     private static final int SIMPLE_REQUEST_TIMEOUT = 60000;
 
+    private String mRequestUrl;
     private UUID mRequestId;
     private HttpResponse mResponse;
     private Thread mRunner;
@@ -67,7 +69,7 @@ public class ServerSenderTask extends SenderTask implements HttpRequestListener 
             throw new HttpResponseException();
         }
         if(mResponse.getException() != null) {
-            throw mResponse.getException();
+            throw new HttpResponseException("Exception running HTTP request to " + mRequestUrl, mResponse.getException());
         }
 
         return mResponse.getBody().toString();
@@ -93,6 +95,7 @@ public class ServerSenderTask extends SenderTask implements HttpRequestListener 
 
         try {
             // UPLOADS ENDPOINT INVOCATION
+            mRequestUrl = ServerClientManager.UPLOADS_ENDPOINT;
             mResponse = null;
             mRequestId = manager.startUpload(contentType);
             JSONObject response = new JSONObject(waitForResponse());
@@ -100,6 +103,7 @@ public class ServerSenderTask extends SenderTask implements HttpRequestListener 
 
             // UPLOAD TO AWS HERE!
             if(!isCancelled()) {
+                mRequestUrl = signedUrl;
                 mResponse = null;
                 mRequestId = manager.performUpload(signedUrl, getSendingRequest().getRecording().getFile(), contentType, null);
                 waitForResponse();
@@ -107,6 +111,7 @@ public class ServerSenderTask extends SenderTask implements HttpRequestListener 
 
             // RECORD ENDPOINT INVOCATION
             if(!isCancelled()) {
+                mRequestUrl = ServerClientManager.RECORD_ENDPOINT;
                 mResponse = null;
                 mRequestId = manager.finishUpload(signedUrl);
                 response = new JSONObject(waitForResponse());

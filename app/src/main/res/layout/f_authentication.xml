@@ -3,7 +3,8 @@
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_height="match_parent"
     android:layout_width="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:isScrollContainer="false">
 
     <LinearLayout
         android:id="@+id/lytTop"
@@ -32,6 +33,9 @@
             custom:textFont="@string/font_semibold"
             android:textColor="@color/black"
             android:textSize="16dp"
+            android:maxLength="40"
+            android:singleLine="true"
+            android:textCursorDrawable="@drawable/ic_cursor"
             style="@style/Peppermint.CustomEditText"/>
 
         <com.peppermint.app.ui.views.CustomFontTextView
@@ -68,7 +72,7 @@
     <Button
         android:id="@+id/btnAddAccount"
         android:layout_alignParentBottom="true"
-        android:layout_centerInParent="true"
+        android:layout_centerHorizontal="true"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
@@ -79,12 +83,13 @@
         android:textSize="16dp"
         android:text="@string/add_account"
         android:textAllCaps="false"
-        android:textColor="@color/color_green_to_white_pressed"
-        android:background="@drawable/background_btn"
+        android:textColor="@color/white"
+        android:background="@drawable/background_btn_alt"
         style="?android:attr/borderlessButtonStyle"
          />
 
     <ScrollView
+        android:id="@+id/lytScroll"
         android:layout_below="@id/lytTop"
         android:layout_above="@id/btnAddAccount"
         android:layout_width="match_parent"

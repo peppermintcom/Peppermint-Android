@@ -31,7 +31,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
     private static final int PREF_GMAIL_ACCOUNT_REQUEST = 1199;
 
-    private Preference mPrefGmailAccount;
+    private CustomPreference mPrefGmailAccount;
     private Activity mActivity;
     private PepperMintPreferences mPreferences;
 
@@ -51,7 +51,9 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.pref_global);
 
-        mPrefGmailAccount = findPreference(MailSenderPreferences.PREF_ACCOUNT_NAME_KEY);
+        String preferredAccountName = mPreferences.getGmailPreferences().getPreferredAccountName();
+        mPrefGmailAccount = (CustomPreference) findPreference(MailSenderPreferences.PREF_ACCOUNT_NAME_KEY);
+        mPrefGmailAccount.setContent(preferredAccountName);
         mPrefGmailAccount.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
@@ -63,7 +65,11 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
             }
         });
 
+        String displayName = mPreferences.getDisplayName();
         final Preference mPrefDisplayName = findPreference(PREF_DISPLAY_NAME_KEY);
+        if(displayName != null && displayName.length() >= 0) {
+            mPrefDisplayName.setTitle(displayName);
+        }
         mPrefDisplayName.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -75,6 +81,10 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                 return false;
             }
         });
+
+        String mailSubject = mPreferences.getMailSubject();
+        final CustomEditTextPreference prefMailSubject = (CustomEditTextPreference) findPreference(PREF_SUBJECT_KEY);
+        prefMailSubject.setContent(mailSubject);
 
         mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
     }

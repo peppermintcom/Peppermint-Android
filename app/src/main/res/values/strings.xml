@@ -98,7 +98,7 @@
     <string name="your_friend_doesnt_need_peppermint">Your friend doesn\'t need\nPeppermint to receive the\nmessage</string>
     <string name="action_help_feedback"><![CDATA[Help & Feedback]]></string>
     
-    <string name="msg_no_contacts">No contacts\nhave been found</string>
+    <string name="msg_no_contacts">No contacts have been found</string>
     <string name="msg_add_some_friends"><![CDATA[Add some friends to your contact book first and come back to <font color="%1$s">Peppermint</font>]]></string>
     <string name="rerecord">Re-Record</string>
     <string name="record_message">Record Message</string>
@@ -145,7 +145,7 @@
     <string name="this_account_will_be_used">This account will be used for authentication and to send email messages</string>
     <string name="no_google_accounts_found">No Google accounts found!</string>
     <string name="add_account_to_start">Add a Google account to your device to start using Peppermint</string>
-    <string name="must_authenticate_using_account">You must authenticate using a Google account. Please pick one and try again</string>
+    <string name="must_authenticate_using_account">You must authenticate using a Google account</string>
     <string name="peppermint_sign_in">Sign in to Peppermint</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -156,4 +156,12 @@
     <string name="add_account">Add account</string>
     <string name="your_name_">Your name:</string>
     <string name="msg_insert_name">You must insert a valid name</string>
+    <string name="new_contact">New contact</string>
+    <string name="save">Save</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="email">Email</string>
+    <string name="you_can_add_phone_contact_or_email">You can add a phone contact, an\nemail contact or both</string>
+    <string name="add_contact">Add Contact</string>
 </resources>
