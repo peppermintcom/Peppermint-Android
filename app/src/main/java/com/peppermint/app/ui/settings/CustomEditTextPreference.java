@@ -8,6 +8,7 @@ import android.preference.EditTextPreference;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
@@ -21,6 +22,7 @@ import com.peppermint.app.utils.Utils;
 public class CustomEditTextPreference extends EditTextPreference {
 
     private String mContent;
+    private TextView mTxtContent;
 
     public CustomEditTextPreference(Context context) {
         super(context);
@@ -41,6 +43,13 @@ public class CustomEditTextPreference extends EditTextPreference {
     public CustomEditTextPreference(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         setLayoutResource(R.layout.v_preference);
+    }
+
+    @Override
+    protected View onCreateView(ViewGroup parent) {
+        ViewGroup v = (ViewGroup) super.onCreateView(parent);
+        mTxtContent = (TextView) v.findViewById(R.id.content);
+        return v;
     }
 
     @Override
@@ -90,6 +99,14 @@ public class CustomEditTextPreference extends EditTextPreference {
 
     public void setContent(String value) {
         this.mContent = value;
+        if(mTxtContent != null) {
+            if(mContent == null) {
+                mTxtContent.setVisibility(View.GONE);
+            } else {
+                mTxtContent.setText(mContent);
+                mTxtContent.setVisibility(View.VISIBLE);
+            }
+        }
     }
 
     @Override

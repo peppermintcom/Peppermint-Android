@@ -160,4 +160,6 @@
     <string name="email">Email</string>
     <string name="you_can_add_phone_contact_or_email">You can add a phone contact, an\nemail contact or both</string>
     <string name="add_contact">Add Contact</string>
+    <string name="msg_message_invalid_contactmail">Please input a valid email address</string>
+    <string name="msg_message_invalid_contactphone">Please input a valid phone number</string>
 </resources>

@@ -28,6 +28,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     private static final String PREF_DISPLAY_NAME_KEY = "displayName";
     private static final String PREF_SUBJECT_KEY = "mailSubject";
     private static final String PREF_GMAIL_ENABLED_KEY = "GmailSenderPreferences_isEnabled";
+    private static final String PREF_GMAIL_ACCOUNT = "prefAccountName";
 
     private static final int PREF_GMAIL_ACCOUNT_REQUEST = 1199;
 
@@ -127,10 +128,19 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         Preference pref = findPreference(key);
-        if (pref != null && key.compareTo(PREF_GMAIL_ENABLED_KEY) == 0) {
-            CheckBoxPreference checkPref = (CheckBoxPreference) pref;
+        if (pref != null) {
             mPreferences.getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
-            checkPref.setChecked(sharedPreferences.getBoolean(PREF_GMAIL_ENABLED_KEY, true));
+
+            if (key.compareTo(PREF_GMAIL_ENABLED_KEY) == 0) {
+                CheckBoxPreference checkPref = (CheckBoxPreference) pref;
+                checkPref.setChecked(sharedPreferences.getBoolean(PREF_GMAIL_ENABLED_KEY, true));
+            } else if(key.compareTo(PREF_DISPLAY_NAME_KEY) == 0) {
+                pref.setTitle(sharedPreferences.getString(PREF_DISPLAY_NAME_KEY, getString(R.string.pref_title_displayname)));
+            } else if(key.compareTo(PREF_SUBJECT_KEY) == 0) {
+                ((CustomEditTextPreference) pref).setContent(sharedPreferences.getString(PREF_SUBJECT_KEY, null));
+            } else if(key.compareTo(PREF_GMAIL_ACCOUNT) == 0) {
+                ((CustomPreference) pref).setContent(sharedPreferences.getString(PREF_GMAIL_ACCOUNT, null));
+            }
             mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
         }
     }
