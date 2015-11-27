@@ -3,6 +3,7 @@ package com.peppermint.app.ui.recipients.add;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
@@ -19,6 +20,8 @@ import java.util.List;
  * Activity for user authentication.
  */
 public class NewRecipientActivity extends CustomActionBarActivity {
+
+    private Button mBtnSave;
 
     @Override
     protected List<NavigationItem> getNavigationItems() {
@@ -38,7 +41,10 @@ public class NewRecipientActivity extends CustomActionBarActivity {
         TextView txtTitle = ((TextView) v.findViewById(R.id.txtTitle));
         txtTitle.setTypeface(app.getFontSemibold());
 
-        getCustomActionBar().setContents(v, true);
+        mBtnSave = (Button) v.findViewById(R.id.btnSave);
+        mBtnSave.setTypeface(app.getFontSemibold());
+
+        getCustomActionBar().setContents(v, false);
 
         // cancel new contact icon
         getCustomActionBar().getMenuButton().setImageResource(R.drawable.ic_cancel_21dp);

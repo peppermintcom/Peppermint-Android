@@ -36,7 +36,10 @@
                 android:textColor="@color/black"
                 android:hint="@string/first_name"
                 android:textColorHint="@color/black_50percent"
-                android:background="@drawable/background_border_bottom" />
+                android:background="@drawable/background_border_bottom"
+                android:maxLength="100"
+                android:singleLine="true"
+                android:textCursorDrawable="@drawable/ic_cursor"/>
 
             <EditText
                 android:id="@+id/txtLastName"
@@ -47,7 +50,10 @@
                 android:textSize="17dp"
                 android:textColor="@color/black"
                 android:hint="@string/last_name"
-                android:textColorHint="@color/black_50percent"/>
+                android:textColorHint="@color/black_50percent"
+                android:maxLength="100"
+                android:singleLine="true"
+                android:textCursorDrawable="@drawable/ic_cursor"/>
 
         </LinearLayout>
 
@@ -71,7 +77,10 @@
             android:inputType="phone"
             android:textColorHint="@color/black_50percent"
             android:drawablePadding="10dp"
-            android:drawableRight="@drawable/background_input_phone" />
+            android:drawableRight="@drawable/background_input_phone"
+            android:maxLength="40"
+            android:singleLine="true"
+            android:textCursorDrawable="@drawable/ic_cursor"/>
 
     </LinearLayout>
 
@@ -92,7 +101,10 @@
             android:inputType="textEmailAddress"
             android:textColorHint="@color/black_50percent"
             android:drawablePadding="10dp"
-            android:drawableRight="@drawable/background_input_email" />
+            android:drawableRight="@drawable/background_input_email"
+            android:maxLength="250"
+            android:singleLine="true"
+            android:textCursorDrawable="@drawable/ic_cursor"/>
 
     </FrameLayout>
 

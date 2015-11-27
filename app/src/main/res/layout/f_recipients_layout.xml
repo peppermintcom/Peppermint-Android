@@ -58,7 +58,7 @@
 
             <!-- To add new contact/recipient -->
             <Button
-                android:id="@+id/btnAddAccount"
+                android:id="@+id/btnAddContact"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"

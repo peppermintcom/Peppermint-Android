@@ -40,6 +40,14 @@
             android:theme="@style/Peppermint.Theme.NoActionBar" >
         </activity>
 
+        <!-- UI: NEW RECIPIENT -->
+        <activity
+            android:name=".ui.recipients.add.NewRecipientActivity"
+            android:label="@string/app_name"
+            android:windowSoftInputMode="stateHidden|adjustPan"
+            android:theme="@style/Peppermint.Theme.NoActionBar" >
+        </activity>
+
         <!-- UI: MAIN W/ DRAWER -->
         <activity
             android:name=".MainActivity"

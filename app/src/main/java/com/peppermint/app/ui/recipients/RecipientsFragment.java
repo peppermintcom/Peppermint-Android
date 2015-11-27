@@ -19,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.CursorAdapter;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -32,6 +33,8 @@ import com.peppermint.app.data.RecipientType;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.canvas.progress.LoadingView;
+import com.peppermint.app.ui.recipients.add.NewRecipientActivity;
+import com.peppermint.app.ui.recipients.add.NewRecipientFragment;
 import com.peppermint.app.ui.recording.RecordingActivity;
 import com.peppermint.app.ui.recording.RecordingFragment;
 import com.peppermint.app.ui.views.SearchListBarAdapter;
@@ -56,6 +59,7 @@ import java.util.regex.Pattern;
 public class RecipientsFragment extends ListFragment implements AdapterView.OnItemClickListener, SearchListBarView.OnSearchListener {
 
     public static final int REQUEST_RECORD = 1;
+    public static final int REQUEST_NEWCONTACT = 2;
 
     public static final String FAST_REPLY_NAME_PARAM = "name";
     public static final String FAST_REPLY_MAIL_PARAM = "mail";
@@ -109,17 +113,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 return;
             }
 
-            Matcher matcher = mViaPattern.matcher(_filter);
-            if (matcher.find()) {
-                _via = matcher.group(1);
-                _name = _filter.replaceAll(mViaPattern.pattern(), "").trim();
-
-                if(_via.length() <= 0) {
-                    _via = null; // adjust filter to via so that only one (or no) result is shown
-                }
-            } else {
-                _name = _filter;
-            }
+            String[] viaName = getSearchData(_filter);
+            _via = viaName[0];
+            _name = viaName[1];
         }
 
         @Override
@@ -293,6 +289,22 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public RecipientsFragment() {
     }
 
+    private String[] getSearchData(String filter) {
+        String[] viaName = new String[2];
+        Matcher matcher = mViaPattern.matcher(filter);
+        if (matcher.find()) {
+            viaName[0] = matcher.group(1);
+            viaName[1] = filter.replaceAll(mViaPattern.pattern(), "").trim();
+
+            if(viaName[0].length() <= 0) {
+                viaName[0] = null; // adjust filter to via so that only one (or no) result is shown
+            }
+        } else {
+            viaName[1] = filter;
+        }
+        return viaName;
+    }
+
     @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
@@ -345,6 +357,23 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         View v = inflater.inflate(R.layout.f_recipients_layout, container, false);
 
         // init no recipients view
+        Button btnAddContact = (Button) v.findViewById(R.id.btnAddContact);
+        btnAddContact.setTypeface(app.getFontSemibold());
+        btnAddContact.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(mActivity, NewRecipientActivity.class);
+
+                String filter = mSearchListBarView.getSearchText();
+                if(filter != null) {
+                    String[] viaName = getSearchData(filter);
+                    intent.putExtra(NewRecipientFragment.KEY_VIA, viaName[0]);
+                    intent.putExtra(NewRecipientFragment.KEY_NAME, viaName[1]);
+                }
+                startActivityForResult(intent, REQUEST_NEWCONTACT);
+            }
+        });
+
         TextView txtEmpty1 = (TextView) v.findViewById(R.id.txtEmpty1);
         txtEmpty1.setTypeface(app.getFontSemibold());
 
@@ -443,6 +472,12 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             if(resultCode == Activity.RESULT_OK) {
                 // if the user has gone through the sending process without
                 // discarding the recording, then clear the search filter
+                mSearchListBarView.clearSearch(0);
+            }
+        } else if(requestCode == REQUEST_NEWCONTACT) {
+            if(resultCode == Activity.RESULT_OK) {
+                mSearchListBarView.setSearchText(data.getStringExtra(NewRecipientFragment.KEY_NAME) + " <" + data.getStringExtra(NewRecipientFragment.KEY_VIA) + ">");
+            } else {
                 mSearchListBarView.clearSearch(0);
             }
         }
