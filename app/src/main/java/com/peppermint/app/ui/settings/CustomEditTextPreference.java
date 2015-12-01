@@ -8,7 +8,6 @@ import android.preference.EditTextPreference;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
@@ -46,15 +45,10 @@ public class CustomEditTextPreference extends EditTextPreference {
     }
 
     @Override
-    protected View onCreateView(ViewGroup parent) {
-        ViewGroup v = (ViewGroup) super.onCreateView(parent);
-        mTxtContent = (TextView) v.findViewById(R.id.content);
-        return v;
-    }
-
-    @Override
     protected void onBindView(View view) {
         super.onBindView(view);
+
+        mTxtContent = (TextView) view.findViewById(R.id.content);
 
         TextView txtTitle = (TextView) view.findViewById(android.R.id.title);
         TextView txtSummary = (TextView) view.findViewById(android.R.id.summary);

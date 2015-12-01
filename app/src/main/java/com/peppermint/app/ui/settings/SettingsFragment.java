@@ -4,12 +4,15 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,7 +22,10 @@ import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.sending.mail.MailSenderPreferences;
 import com.peppermint.app.sending.mail.gmail.GmailSender;
 import com.peppermint.app.ui.CustomActionBarActivity;
+import com.peppermint.app.ui.views.CustomToast;
 import com.peppermint.app.utils.PepperMintPreferences;
+
+import java.util.ArrayList;
 
 public class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -33,7 +39,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     private static final int PREF_GMAIL_ACCOUNT_REQUEST = 1199;
 
     private CustomPreference mPrefGmailAccount;
-    private Activity mActivity;
+    private CustomActionBarActivity mActivity;
     private PepperMintPreferences mPreferences;
 
     public SettingsFragment() {
@@ -43,9 +49,11 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mActivity = activity;
+        mActivity = (CustomActionBarActivity) activity;
         mPreferences = new PepperMintPreferences(mActivity);
     }
+
+   /* */
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -91,14 +99,42 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
+    public void onViewCreated(final View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         PeppermintApp app = (PeppermintApp) mActivity.getApplication();
+
+        // global touch interceptor to show warning for gmail account
+        mActivity.getTouchInterceptor().setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+                if (!mPrefGmailAccount.isEnabled()) {
+
+                    ViewGroup root = (ViewGroup) view.findViewById(android.R.id.list);
+                    ArrayList<View> list = new ArrayList<View>();
+                    root.findViewsWithText(list, getString(R.string.pref_title_gmailaccount), View.FIND_VIEWS_WITH_TEXT);
+
+                    if(list.size() > 0) {
+                        Rect prefRect = new Rect();
+                        ((ViewGroup) list.get(0).getParent().getParent()).getGlobalVisibleRect(prefRect);
+                        if (prefRect.contains((int) event.getX(), (int) event.getY())) {
+                            if(event.getAction() == MotionEvent.ACTION_UP) {
+                                CustomToast.makeText(mActivity, R.string.msg_gmail_disabled, Toast.LENGTH_LONG).show();
+                            } else {
+                                return true;
+                            }
+                        }
+                    }
+                }
+
+                return false;
+            }
+        });
 
         // inflate and init custom action bar view
         TextView actionBarView = (TextView) LayoutInflater.from(mActivity).inflate(R.layout.v_settings_actionbar, null, false);
         actionBarView.setTypeface(app.getFontSemibold());
-        ((CustomActionBarActivity) mActivity).getCustomActionBar().setContents(actionBarView, false);
+        mActivity.getCustomActionBar().setContents(actionBarView, false);
     }
 
     @Override

@@ -162,4 +162,5 @@
     <string name="add_contact">Add Contact</string>
     <string name="msg_message_invalid_contactmail">Please input a valid email address</string>
     <string name="msg_message_invalid_contactphone">Please input a valid phone number</string>
+    <string name="msg_gmail_disabled">Please enable in-app Gmail before picking a Gmail account</string>
 </resources>
