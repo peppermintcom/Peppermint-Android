@@ -24,6 +24,7 @@ import com.peppermint.app.sending.mail.gmail.GmailSender;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.views.CustomToast;
 import com.peppermint.app.utils.PepperMintPreferences;
+import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
 
@@ -82,7 +83,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         mPrefDisplayName.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
-                if (newValue.toString().trim().length() > 0) {
+                if (newValue.toString().trim().length() > 0 && !Utils.isValidPhoneNumber(newValue.toString().trim())) {
                     return true;
                 }
 

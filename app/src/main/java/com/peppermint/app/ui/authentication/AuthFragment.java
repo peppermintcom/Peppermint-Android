@@ -179,7 +179,7 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        if(mTxtName.getText().toString().trim().length() <= 0) {
+        if(mTxtName.getText().toString().trim().length() <= 0 || Utils.isValidPhoneNumber(mTxtName.getText().toString().trim())) {
             showPopup(mActivity, mTxtName);
             return;
         }
