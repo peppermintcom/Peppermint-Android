@@ -1,122 +1,128 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_height="match_parent"
-    android:layout_width="match_parent"
-    android:orientation="vertical">
+    android:layout_width="match_parent">
 
     <LinearLayout
+        android:layout_height="match_parent"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="10dp"
-        android:orientation="horizontal"
-        android:background="@drawable/background_border_bottom"
-        android:gravity="center">
-
-        <ImageView
-            android:id="@+id/imgAddAvatar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:src="@drawable/ic_addavatar_70dp" />
+        android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:orientation="vertical">
+            android:padding="10dp"
+            android:orientation="horizontal"
+            android:background="@drawable/background_border_bottom"
+            android:gravity="center">
+
+            <ImageView
+                android:id="@+id/imgAddAvatar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_addavatar_70dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:orientation="vertical">
+
+                <EditText
+                    android:id="@+id/txtFirstName"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:padding="10dp"
+                    android:textSize="17dp"
+                    android:textColor="@color/black"
+                    android:hint="@string/first_name"
+                    android:textColorHint="@color/black_50percent"
+                    android:background="@drawable/background_border_bottom"
+                    android:maxLength="100"
+                    android:singleLine="true"
+                    android:textCursorDrawable="@drawable/ic_cursor"/>
+
+                <EditText
+                    android:id="@+id/txtLastName"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:padding="10dp"
+                    android:textSize="17dp"
+                    android:textColor="@color/black"
+                    android:hint="@string/last_name"
+                    android:textColorHint="@color/black_50percent"
+                    android:maxLength="100"
+                    android:singleLine="true"
+                    android:textCursorDrawable="@drawable/ic_cursor"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:background="@drawable/background_border_bottom"
+            android:orientation="horizontal">
 
             <EditText
-                android:id="@+id/txtFirstName"
+                android:id="@+id/txtPhoneNumber"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
+                android:layout_height="wrap_content"
                 android:padding="10dp"
                 android:textSize="17dp"
                 android:textColor="@color/black"
-                android:hint="@string/first_name"
+                android:hint="@string/phone_number"
+                android:inputType="phone"
                 android:textColorHint="@color/black_50percent"
-                android:background="@drawable/background_border_bottom"
-                android:maxLength="100"
-                android:singleLine="true"
-                android:textCursorDrawable="@drawable/ic_cursor"/>
-
-            <EditText
-                android:id="@+id/txtLastName"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:padding="10dp"
-                android:textSize="17dp"
-                android:textColor="@color/black"
-                android:hint="@string/last_name"
-                android:textColorHint="@color/black_50percent"
-                android:maxLength="100"
+                android:drawablePadding="10dp"
+                android:drawableRight="@drawable/background_input_phone"
+                android:maxLength="40"
                 android:singleLine="true"
                 android:textCursorDrawable="@drawable/ic_cursor"/>
 
         </LinearLayout>
 
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="10dp"
-        android:background="@drawable/background_border_bottom"
-        android:orientation="horizontal">
-
-        <EditText
-            android:id="@+id/txtPhoneNumber"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="10dp"
-            android:textSize="17dp"
-            android:textColor="@color/black"
-            android:hint="@string/phone_number"
-            android:inputType="phone"
-            android:textColorHint="@color/black_50percent"
-            android:drawablePadding="10dp"
-            android:drawableRight="@drawable/background_input_phone"
-            android:maxLength="40"
-            android:singleLine="true"
-            android:textCursorDrawable="@drawable/ic_cursor"/>
+            android:background="@drawable/background_border_bottom">
 
-    </LinearLayout>
+            <EditText
+                android:id="@+id/txtEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:textSize="17dp"
+                android:textColor="@color/black"
+                android:hint="@string/email"
+                android:inputType="textEmailAddress"
+                android:textColorHint="@color/black_50percent"
+                android:drawablePadding="10dp"
+                android:drawableRight="@drawable/background_input_email"
+                android:maxLength="250"
+                android:singleLine="true"
+                android:textCursorDrawable="@drawable/ic_cursor"/>
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="10dp"
-        android:background="@drawable/background_border_bottom">
+        </FrameLayout>
 
-        <EditText
-            android:id="@+id/txtEmail"
+        <com.peppermint.app.ui.views.simple.CustomFontTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:textSize="17dp"
-            android:textColor="@color/black"
-            android:hint="@string/email"
-            android:inputType="textEmailAddress"
-            android:textColorHint="@color/black_50percent"
-            android:drawablePadding="10dp"
-            android:drawableRight="@drawable/background_input_email"
-            android:maxLength="250"
-            android:singleLine="true"
-            android:textCursorDrawable="@drawable/ic_cursor"/>
+            android:layout_marginTop="30dp"
+            android:layout_marginBottom="20dp"
+            android:gravity="center"
+            android:text="@string/you_can_add_phone_contact_or_email"
+            android:textSize="16dp"
+            android:textColor="@color/dark_grey_text"
+            custom:textFont="@string/font_semibold"
+            />
 
-    </FrameLayout>
-
-    <com.peppermint.app.ui.views.CustomFontTextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
-        android:gravity="center"
-        android:text="@string/you_can_add_phone_contact_or_email"
-        android:textSize="16dp"
-        android:textColor="@color/dark_grey_text"
-        custom:textFont="@string/font_semibold"
-        />
-
-</LinearLayout>
+    </LinearLayout>
+</ScrollView>

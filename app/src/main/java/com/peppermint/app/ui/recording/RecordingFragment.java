@@ -27,8 +27,8 @@ import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.ui.canvas.old.PeppermintRecordView;
-import com.peppermint.app.ui.views.CustomConfirmationDialog;
-import com.peppermint.app.ui.views.CustomToast;
+import com.peppermint.app.ui.views.simple.CustomToast;
+import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.utils.NoMicDataIOException;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
@@ -89,19 +89,17 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
         PeppermintApp app = (PeppermintApp) getActivity().getApplication();
 
         mSmsConfirmationDialog = new CustomConfirmationDialog(getActivity());
-        mSmsConfirmationDialog.setTitle(getString(R.string.sending_via_sms));
-        mSmsConfirmationDialog.setText(getString(R.string.when_you_send_via_sms));
-        mSmsConfirmationDialog.setTitleTypeface(app.getFontSemibold());
-        mSmsConfirmationDialog.setTextTypeface(app.getFontRegular());
-        mSmsConfirmationDialog.setButtonTypeface(app.getFontRegular());
-        mSmsConfirmationDialog.setYesClickListener(new View.OnClickListener() {
+        mSmsConfirmationDialog.setTitleText(R.string.sending_via_sms);
+        mSmsConfirmationDialog.setMessageText(R.string.when_you_send_via_sms);
+        mSmsConfirmationDialog.setCheckText(R.string.do_not_show_this_again);
+        mSmsConfirmationDialog.setPositiveButtonListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mSmsConfirmationDialog.dismiss();
                 sendMessage();
             }
         });
-        mSmsConfirmationDialog.setNoClickListener(new View.OnClickListener() {
+        mSmsConfirmationDialog.setNegativeButtonListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mSmsConfirmationDialog.dismiss();
@@ -110,7 +108,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
         mSmsConfirmationDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
-                if(mSmsConfirmationDialog.isDoNotShowAgain()) {
+                if(mSmsConfirmationDialog.isChecked()) {
                     mPreferences.setShownSmsConfirmation(true);
                 }
                 getActivity().finish();

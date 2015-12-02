@@ -163,4 +163,6 @@
     <string name="msg_message_invalid_contactmail">Please input a valid email address</string>
     <string name="msg_message_invalid_contactphone">Please input a valid phone number</string>
     <string name="msg_gmail_disabled">Please enable in-app Gmail before picking a Gmail account</string>
+    <string name="msg_message_sms_disabled_add_contact">Sending via SMS is not possible in your device. Would you like to add an email contact?</string>
+    <string name="ok">OK</string>
 </resources>

@@ -54,7 +54,7 @@ public class RecipientAdapterUtils {
      */
     public static Recipient getRecipient(Cursor cursor) {
         long id = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data._ID));
-        //long rawId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data.RAW_CONTACT_ID));
+        long rawId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data.RAW_CONTACT_ID));
         boolean starred = cursor.getInt(cursor.getColumnIndex(ContactsContract.Data.STARRED)) != 0;
         String mime = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.MIMETYPE));
         String via = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
@@ -62,7 +62,7 @@ public class RecipientAdapterUtils {
         String name = cursor.getString(cursor.getColumnIndex(DISPLAY_NAME));
         String accountType = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_TYPE));
 
-        return new Recipient(id, starred, mime, name, accountType, photoUri, via);
+        return new Recipient(id, rawId, starred, mime, name, accountType, photoUri, via);
     }
 
     /**

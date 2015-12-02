@@ -11,7 +11,7 @@
     android:gravity="center"
     android:background="@drawable/background_white_to_solid_pressed">
 
-    <com.peppermint.app.ui.views.CustomFontTextView
+    <com.peppermint.app.ui.views.simple.CustomFontTextView
         android:id="@+id/txtName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -12,6 +12,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.ContactsContract;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -39,6 +40,7 @@ import com.peppermint.app.ui.recording.RecordingActivity;
 import com.peppermint.app.ui.recording.RecordingFragment;
 import com.peppermint.app.ui.views.SearchListBarAdapter;
 import com.peppermint.app.ui.views.SearchListBarView;
+import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.PepperMintPreferences;
@@ -67,6 +69,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     // keys to save the instance state
     private static final String RECIPIENT_TYPE_POS_KEY = "RecipientsFragment_RecipientTypePosition";
     private static final String RECIPIENT_TYPE_SEARCH_KEY = "RecipientsFragment_RecipientTypeSearch";
+    private static final String RECIPIENT_TAPPED_KEY = "RecipientsFragment_RecipientTapped";
+    private static final String SAVED_DIALOG_STATE_KEY = "RecipientsFragment_SmsDialogState";
 
     private static final int FIXED_AVATAR_ANIMATION_INTERVAL_MS = 15000;
     private static final int VARIABLE_AVATAR_ANIMATION_INTERVAL_MS = 15000;
@@ -89,6 +93,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     // bottom bar
     private SenderServiceManager mSenderServiceManager;
     private SenderControlLayout mLytSenderControl;
+    private CustomConfirmationDialog mSmsAddContactDialog;
+    private Recipient mTappedRecipient;
 
     // search
     private final Object mLock = new Object();
@@ -338,6 +344,31 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             }
         });
 
+        // dialog for unsupported SMS
+        mSmsAddContactDialog = new CustomConfirmationDialog(mActivity);
+        mSmsAddContactDialog.setTitleText(R.string.sending_via_sms);
+        mSmsAddContactDialog.setMessageText(R.string.msg_message_sms_disabled_add_contact);
+        mSmsAddContactDialog.setPositiveButtonListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(mActivity, NewRecipientActivity.class);
+                if(mTappedRecipient != null) {
+                    intent.putExtra(NewRecipientFragment.KEY_VIA, mTappedRecipient.getVia());
+                    intent.putExtra(NewRecipientFragment.KEY_NAME, mTappedRecipient.getName());
+                    intent.putExtra(NewRecipientFragment.KEY_RAW_ID, mTappedRecipient.getRawId());
+                    intent.putExtra(NewRecipientFragment.KEY_PHOTO_URL, mTappedRecipient.getPhotoUri());
+                }
+                startActivityForResult(intent, REQUEST_NEWCONTACT);
+                mSmsAddContactDialog.dismiss();
+            }
+        });
+        mSmsAddContactDialog.setNegativeButtonListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mSmsAddContactDialog.dismiss();
+            }
+        });
+
         // inflate and init custom action bar view
         mSearchListBarView = (SearchListBarView) inflater.inflate(R.layout.f_recipients_actionbar, null, false);
         mRecipientTypeAdapter = new SearchListBarAdapter<>(app.getFontRegular(), mActivity, RecipientType.getAll(mActivity));
@@ -351,6 +382,12 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             String searchText = savedInstanceState.getString(RECIPIENT_TYPE_SEARCH_KEY, null);
             if(searchText != null) {
                 mSearchListBarView.setSearchText(searchText);
+            }
+            mTappedRecipient = (Recipient) savedInstanceState.getSerializable(RECIPIENT_TAPPED_KEY);
+
+            Bundle dialogState = savedInstanceState.getBundle(SAVED_DIALOG_STATE_KEY);
+            if (dialogState != null) {
+                mSmsAddContactDialog.onRestoreInstanceState(dialogState);
             }
         } else {
             if(!hasRecents()) {
@@ -436,6 +473,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public void onSaveInstanceState(Bundle outState) {
         outState.putInt(RECIPIENT_TYPE_POS_KEY, mSearchListBarView.getSelectedItemPosition());
         outState.putString(RECIPIENT_TYPE_SEARCH_KEY, mSearchListBarView.getSearchText());
+        outState.putSerializable(RECIPIENT_TAPPED_KEY, mTappedRecipient);
+        Bundle dialogState = mSmsAddContactDialog.onSaveInstanceState();
+        if (dialogState != null) {
+            outState.putBundle(SAVED_DIALOG_STATE_KEY, dialogState);
+        }
         super.onSaveInstanceState(outState);
     }
 
@@ -548,11 +590,19 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Intent recordIntent = new Intent(mActivity, RecordingActivity.class);
 
-        Recipient recipient = mRecipientAdapter instanceof RecipientCursorAdapter ?
+        mTappedRecipient = mRecipientAdapter instanceof RecipientCursorAdapter ?
                 ((RecipientCursorAdapter) mRecipientAdapter).getRecipient(position) :
                 ((RecipientArrayAdapter) mRecipientAdapter).getItem(position);
 
-        recordIntent.putExtra(RecordingFragment.INTENT_RECIPIENT_EXTRA, recipient);
+        if (mTappedRecipient.getMimeType().compareTo(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE) == 0 &&
+                !Utils.isSimAvailable(mActivity)) {
+            if(!mSmsAddContactDialog.isShowing()) {
+                mSmsAddContactDialog.show();
+            }
+            return;
+        }
+
+        recordIntent.putExtra(RecordingFragment.INTENT_RECIPIENT_EXTRA, mTappedRecipient);
         startActivityForResult(recordIntent, REQUEST_RECORD);
     }
 
@@ -574,4 +624,5 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         return false;
     }
+
 }

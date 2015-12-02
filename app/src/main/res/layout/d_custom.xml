@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_height="wrap_content"
     android:layout_width="wrap_content"
     android:layout_margin="10dp"
@@ -9,30 +10,45 @@
     android:background="@drawable/background_dialog">
 
     <LinearLayout
-        android:layout_below="@+id/chkDoNotShowAgain"
+        android:layout_below="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/btnNo"
+        <com.peppermint.app.ui.views.simple.CustomFontButton
+            android:id="@+id/button1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            custom:textFont="@string/font_regular"
+            android:text="Button 1"
             android:textSize="18dp"
-            android:text="@string/no"
             android:textAllCaps="false"
             android:textColor="@color/color_blue_to_white_pressed"
             android:background="@drawable/background_dialog_btn_left"
             style="?android:attr/borderlessButtonStyle" />
 
-        <Button
-            android:id="@+id/btnYes"
+        <com.peppermint.app.ui.views.simple.CustomFontButton
+            android:id="@+id/button2"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:text="Button 2"
+            custom:textFont="@string/font_regular"
             android:textSize="18dp"
-            android:text="@string/yes"
+            android:textAllCaps="false"
+            android:textColor="@color/color_blue_to_white_pressed"
+            android:background="@drawable/background_dialog_btn_right"
+            style="?android:attr/borderlessButtonStyle" />
+
+        <com.peppermint.app.ui.views.simple.CustomFontButton
+            android:id="@+id/button3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Button 3"
+            custom:textFont="@string/font_regular"
+            android:textSize="18dp"
             android:textAllCaps="false"
             android:textColor="@color/color_blue_to_white_pressed"
             android:background="@drawable/background_dialog_btn_right"
@@ -40,48 +56,22 @@
 
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/txtTitle"
+    <com.peppermint.app.ui.views.simple.CustomFontTextView
+        android:id="@+id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:padding="20dp"
         android:gravity="center"
+        custom:textFont="@string/font_semibold"
         android:textSize="18dp"
         android:textColor="@color/black"
         android:text="Empty Title"/>
 
-    <TextView
-        android:id="@+id/txtText"
+    <FrameLayout android:id="@+id/container"
+        android:layout_below="@id/title"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/txtTitle"
-        android:paddingBottom="20dp"
-        android:paddingLeft="20dp"
-        android:paddingRight="20dp"
-        android:gravity="center"
-        android:singleLine="false"
-        android:textSize="16dp"
-        android:textColor="@color/black"
-        android:text="Empty Text"/>
-
-    <Button
-        android:id="@+id/chkDoNotShowAgain"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/txtText"
-        android:paddingBottom="20dp"
-        android:paddingLeft="20dp"
-        android:paddingRight="20dp"
-        android:gravity="left|center_vertical"
-        android:textAllCaps="false"
-        android:textSize="14dp"
-        android:textColor="@color/grey_text"
-        android:text="@string/do_not_show_this_again"
-        android:drawablePadding="15dp"
-        android:drawableLeft="@drawable/ic_checkbox"
-        android:drawableTint="@color/grey_text"
-        android:background="@android:color/transparent"
-        style="?android:attr/borderlessButtonStyle"/>
+        android:layout_height="wrap_content">
+    </FrameLayout>
 
 </RelativeLayout>

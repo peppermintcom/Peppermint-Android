@@ -7,6 +7,7 @@ import android.content.ContentProviderResult;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -19,11 +20,14 @@ import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.ui.CustomActionBarActivity;
+import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
+import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Popup;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Nuno Luz on 10-11-2015.
@@ -34,6 +38,8 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     public static final String KEY_NAME = "NewRecipientFragment_Name";
     public static final String KEY_PHONE = "NewRecipientFragment_Phone";
     public static final String KEY_MAIL = "NewRecipientFragment_Mail";
+    public static final String KEY_RAW_ID = "NewRecipientFragment_RawId";
+    public static final String KEY_PHOTO_URL = "NewRecipientFragment_PhotoUrl";
 
     private PepperMintPreferences mPreferences;
     private CustomActionBarActivity mActivity;
@@ -102,7 +108,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                     mTxtLastName.setText(lastName);
                     mTxtLastName.setSelection(lastName.length());
 
-                    String firstName = name.substring(0, name.length() - names[names.length - 1].length());
+                    String firstName = name.substring(0, name.length() - names[names.length - 1].length()).trim();
                     mTxtFirstName.setText(firstName);
                     mTxtFirstName.setSelection(firstName.length());
                 } else {
@@ -149,10 +155,14 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     public void onClick(View v) {
         // TODO save to specific account
 
+        long rawId = 0;
+        if(getArguments() != null) {
+            rawId = getArguments().getLong(KEY_RAW_ID, 0);
+        }
+
         String name = (mTxtFirstName.getText().toString().trim() + " " + mTxtLastName.getText().toString().trim()).trim();
         String phone = mTxtPhone.getText().toString().trim();
         String email = mTxtMail.getText().toString().trim();
-        String mimeType = null;
 
         // validate display name
         if(name.length() <= 0) {
@@ -180,33 +190,69 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         ArrayList<ContentProviderOperation> ops = new ArrayList<>();
 
         // create raw contact
-        ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
-                .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
-                .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null).build());
+        if(rawId <= 0) {
+            ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
+                    .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
+                    .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null).build());
+        }
 
         // add display name data
-        ops.add(ContentProviderOperation
-                .newInsert(ContactsContract.Data.CONTENT_URI)
-                .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-                .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
-                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name)
-                .build());
+        ContentProviderOperation.Builder op = null;
+        if(rawId <= 0) {
+            op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
+        } else {
+            ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
+                    .withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=? AND " + ContactsContract.Data.MIMETYPE + "=?",
+                            new String[]{String.valueOf(rawId), ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE})
+                    .build());
+
+            op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                    .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawId);
+        }
+        ops.add(op.withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name).build());
+
 
         // add email data
         if(email.length() > 0) {
-            ops.add(ContentProviderOperation
-                    .newInsert(ContactsContract.Data.CONTENT_URI)
-                    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-                    .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
-                    .withValue(ContactsContract.Data.DATA1, email).build());
+            List<String> mimeTypes = new ArrayList<>();
+            mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
+            FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, null, null, mimeTypes, email);
+            boolean alreadyHasEmail = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
+
+            if(!alreadyHasEmail) {
+                if (rawId <= 0) {
+                    op = ContentProviderOperation
+                            .newInsert(ContactsContract.Data.CONTENT_URI)
+                            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
+                } else {
+                    op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                            .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawId);
+                }
+                ops.add(op.withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
+                        .withValue(ContactsContract.Data.DATA1, email).build());
+            }
         }
 
         if(phone.length() > 0) {
-            ops.add(ContentProviderOperation
-                    .newInsert(ContactsContract.Data.CONTENT_URI)
-                    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
-                    .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
-                    .withValue(ContactsContract.Data.DATA1, phone).build());
+            List<String> mimeTypes = new ArrayList<>();
+            mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
+            FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, null, null, mimeTypes, phone);
+            boolean alreadyHasPhone = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
+
+            if(!alreadyHasPhone) {
+                if (rawId <= 0) {
+                    op = ContentProviderOperation
+                            .newInsert(ContactsContract.Data.CONTENT_URI)
+                            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
+                } else {
+                    op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                            .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawId);
+                }
+                ops.add(op.withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+                        .withValue(ContactsContract.Data.DATA1, phone).build());
+            }
         }
 
         try {
@@ -226,6 +272,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
             mActivity.finish();
         } catch (Throwable e) {
             Toast.makeText(mActivity, R.string.msg_message_unable_addcontact, Toast.LENGTH_LONG).show();
+            Log.d(NewRecipientFragment.class.getSimpleName(), "Unable to add contact", e);
             Crashlytics.logException(e);
         }
     }

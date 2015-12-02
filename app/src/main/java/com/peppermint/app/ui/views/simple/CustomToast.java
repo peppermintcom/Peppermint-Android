@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.views;
+package com.peppermint.app.ui.views.simple;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -10,6 +10,8 @@ import android.widget.Toast;
 
 /**
  * Created by Nuno Luz on 24-11-2015.
+ *
+ * Custom styled {@link Toast}.
  */
 public class CustomToast {
 

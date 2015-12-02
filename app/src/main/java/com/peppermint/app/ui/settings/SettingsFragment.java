@@ -22,7 +22,7 @@ import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.sending.mail.MailSenderPreferences;
 import com.peppermint.app.sending.mail.gmail.GmailSender;
 import com.peppermint.app.ui.CustomActionBarActivity;
-import com.peppermint.app.ui.views.CustomToast;
+import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
 
@@ -53,8 +53,6 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         mActivity = (CustomActionBarActivity) activity;
         mPreferences = new PepperMintPreferences(mActivity);
     }
-
-   /* */
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -141,6 +139,17 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     @Override
     public void onDestroy() {
         mPreferences.getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+
+        // custom dialog preferences can't listen to activity events
+        // so invoke the onActivityDestroy from here (this dismisses the dialog)
+        int prefCount = getPreferenceScreen().getRootAdapter().getCount();
+        for(int i=0; i<prefCount; i++) {
+            Object pref = getPreferenceScreen().getRootAdapter().getItem(i);
+            if(pref instanceof CustomDialogPreference) {
+                ((CustomDialogPreference) pref).onActivityDestroy();
+            }
+        }
+
         super.onDestroy();
     }
 
