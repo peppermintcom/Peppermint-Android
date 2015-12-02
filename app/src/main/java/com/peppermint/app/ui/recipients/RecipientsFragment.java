@@ -58,8 +58,8 @@ import java.util.regex.Pattern;
 
 public class RecipientsFragment extends ListFragment implements AdapterView.OnItemClickListener, SearchListBarView.OnSearchListener {
 
-    public static final int REQUEST_RECORD = 1;
-    public static final int REQUEST_NEWCONTACT = 2;
+    public static final int REQUEST_RECORD = 111;
+    public static final int REQUEST_NEWCONTACT = 222;
 
     public static final String FAST_REPLY_NAME_PARAM = "name";
     public static final String FAST_REPLY_MAIL_PARAM = "mail";
