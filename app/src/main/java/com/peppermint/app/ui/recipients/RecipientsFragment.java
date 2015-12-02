@@ -124,38 +124,42 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 if (mActivity != null && ContextCompat.checkSelfPermission(mActivity,
                         Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
 
-                    List<Long> recentList = mPreferences.getRecentContactUris();
+                    if (_recipientType.isStarred() != null && _recipientType.isStarred()) {
+                        List<Long> recentList = mPreferences.getRecentContactUris();
+                        if(recentList == null) {
+                            // empty list to show no contacts
+                            recentList = new ArrayList<>();
+                        }
 
-                    if (recentList != null && recentList.size() > 0 && _recipientType.isStarred() != null && _recipientType.isStarred()) {
                         // get recent contact list
                         Map<Long, Recipient> recipientMap = new HashMap<>();
 
-                        Cursor cursor = RecipientAdapterUtils.getRecipientsCursor(mActivity, recentList, null, null, null, null);
-                        Set<Long> allowedSet = new HashSet<>();
-                        while(cursor.moveToNext()) {
-                            Recipient recipient = RecipientAdapterUtils.getRecipient(cursor);
-                            // this if removes deleted/invalid contacts from the list
-                            if(recipient.getVia() != null && recipient.getVia().trim().length() > 0) {
-                                recipientMap.put(recipient.getContactId(), recipient);
-                                allowedSet.add(recipient.getContactId());
-                            }
-                        }
-                        cursor.close();
-
-                        // remove invalid contacts from recent list
-                        if(recentList.size() != allowedSet.size()) {
-                            Iterator<Long> it = recentList.iterator();
-                            while (it.hasNext()) {
-                                if (!allowedSet.contains(it.next())) {
-                                    it.remove();
+                        if(recentList.size() > 0) {
+                            Cursor cursor = RecipientAdapterUtils.getRecipientsCursor(mActivity, recentList, null, null, null, null);
+                            Set<Long> allowedSet = new HashSet<>();
+                            while (cursor.moveToNext()) {
+                                Recipient recipient = RecipientAdapterUtils.getRecipient(cursor);
+                                // this if removes deleted/invalid contacts from the list
+                                if (recipient.getVia() != null && recipient.getVia().trim().length() > 0) {
+                                    recipientMap.put(recipient.getContactId(), recipient);
+                                    allowedSet.add(recipient.getContactId());
                                 }
                             }
-                            mPreferences.setRecentContactUris(recentList);
+                            cursor.close();
+
+                            // remove invalid contacts from recent list
+                            if (recentList.size() != allowedSet.size()) {
+                                Iterator<Long> it = recentList.iterator();
+                                while (it.hasNext()) {
+                                    if (!allowedSet.contains(it.next())) {
+                                        it.remove();
+                                    }
+                                }
+                                mPreferences.setRecentContactUris(recentList);
+                            }
                         }
 
-                        if(recentList.size() > 0) {
-                            return new RecipientArrayAdapter((PeppermintApp) mActivity.getApplication(), mActivity, recipientMap, recentList);
-                        }
+                        return new RecipientArrayAdapter((PeppermintApp) mActivity.getApplication(), mActivity, recipientMap, recentList);
                     }
 
                     // get normal full, email or phone contact list
@@ -328,6 +332,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
                     mSearchListBarView.removeSearchTextFocus(event);
+                    getView().requestFocus();
                 }
                 return false;
             }
@@ -340,12 +345,17 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mSearchListBarView.setTypeface(app.getFontRegular());
 
         // default view is all contacts
-        int selectedItemPosition = 1;
+        int selectedItemPosition = 0;
         if (savedInstanceState != null) {
-            selectedItemPosition = savedInstanceState.getInt(RECIPIENT_TYPE_POS_KEY, 1);
+            selectedItemPosition = savedInstanceState.getInt(RECIPIENT_TYPE_POS_KEY, 0);
             String searchText = savedInstanceState.getString(RECIPIENT_TYPE_SEARCH_KEY, null);
             if(searchText != null) {
                 mSearchListBarView.setSearchText(searchText);
+            }
+        } else {
+            if(!hasRecents()) {
+                // select "all contacts" in case there are not fav/recent contacts
+                selectedItemPosition = 1;
             }
         }
         mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
@@ -438,6 +448,15 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mSenderServiceManager.bind();
 
         mHandler.postDelayed(mAnimationRunnable, FIXED_AVATAR_ANIMATION_INTERVAL_MS + mRandom.nextInt(VARIABLE_AVATAR_ANIMATION_INTERVAL_MS));
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // avoid cursor focus and keyboard when opening
+        // if it is on onStart(), it doesn't work for screen rotations
+        mSearchListBarView.removeSearchTextFocus(null);
+        getView().requestFocus();
     }
 
     @Override
@@ -547,18 +566,12 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mGetRecipientsTask.execute();
     }
 
-    private boolean hasRecentsOrFavourites() {
-        if (ContextCompat.checkSelfPermission(mActivity,
-                Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-            return false;
-        }
-
+    private boolean hasRecents() {
         List<Long> recentList = mPreferences.getRecentContactUris();
         if(recentList != null && recentList.size() > 0) {
             return true;
         }
 
-        FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, null, true, mRecipientTypeAdapter.getItem(0).getMimeTypes(), null);
-        return cursor != null && cursor.getOriginalCursor() != null && cursor.getOriginalCursor().moveToFirst();
+        return false;
     }
 }

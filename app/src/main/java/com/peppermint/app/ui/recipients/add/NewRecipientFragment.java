@@ -131,6 +131,11 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
     }
