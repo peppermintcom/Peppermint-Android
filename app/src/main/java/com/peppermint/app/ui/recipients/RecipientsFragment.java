@@ -537,7 +537,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             }
         } else if(requestCode == REQUEST_NEWCONTACT) {
             if(resultCode == Activity.RESULT_OK) {
-                mSearchListBarView.setSearchText(data.getStringExtra(NewRecipientFragment.KEY_NAME) + " <" + data.getStringExtra(NewRecipientFragment.KEY_VIA) + ">");
+                mSearchListBarView.setSearchText(data.getStringExtra(NewRecipientFragment.KEY_NAME));
             } else {
                 mSearchListBarView.clearSearch(0);
             }
