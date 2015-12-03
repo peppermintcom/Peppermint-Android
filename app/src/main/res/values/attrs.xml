@@ -26,6 +26,8 @@
 
         <!-- AnimatedGIFView -->
         <attr name="drawablePressed" format="reference" />
+
+        <attr name="minVisibilityHeight" format="dimension" />
     </declare-styleable>
 
     <declare-styleable name="SearchListBarView">
