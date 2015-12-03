@@ -33,7 +33,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     private static final String TAG = SettingsFragment.class.getSimpleName();
 
     private static final String PREF_DISPLAY_NAME_KEY = "displayName";
-    private static final String PREF_SUBJECT_KEY = "mailSubject";
+    // private static final String PREF_SUBJECT_KEY = "mailSubject";
     private static final String PREF_GMAIL_ENABLED_KEY = "GmailSenderPreferences_isEnabled";
     private static final String PREF_GMAIL_ACCOUNT = "prefAccountName";
 
@@ -90,9 +90,9 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
             }
         });
 
-        String mailSubject = mPreferences.getMailSubject();
+        /*String mailSubject = mPreferences.getMailSubject();
         final CustomEditTextPreference prefMailSubject = (CustomEditTextPreference) findPreference(PREF_SUBJECT_KEY);
-        prefMailSubject.setContent(mailSubject);
+        prefMailSubject.setContent(mailSubject);*/
 
         mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
     }
@@ -182,9 +182,9 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                 checkPref.setChecked(sharedPreferences.getBoolean(PREF_GMAIL_ENABLED_KEY, true));
             } else if(key.compareTo(PREF_DISPLAY_NAME_KEY) == 0) {
                 pref.setTitle(sharedPreferences.getString(PREF_DISPLAY_NAME_KEY, getString(R.string.pref_title_displayname)));
-            } else if(key.compareTo(PREF_SUBJECT_KEY) == 0) {
+            } /*else if(key.compareTo(PREF_SUBJECT_KEY) == 0) {
                 ((CustomEditTextPreference) pref).setContent(sharedPreferences.getString(PREF_SUBJECT_KEY, null));
-            } else if(key.compareTo(PREF_GMAIL_ACCOUNT) == 0) {
+            }*/ else if(key.compareTo(PREF_GMAIL_ACCOUNT) == 0) {
                 ((CustomPreference) pref).setContent(sharedPreferences.getString(PREF_GMAIL_ACCOUNT, null));
             }
             mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
