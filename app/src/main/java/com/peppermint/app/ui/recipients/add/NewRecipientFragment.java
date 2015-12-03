@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -40,6 +41,131 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     public static final String KEY_MAIL = "NewRecipientFragment_Mail";
     public static final String KEY_RAW_ID = "NewRecipientFragment_RawId";
     public static final String KEY_PHOTO_URL = "NewRecipientFragment_PhotoUrl";
+    public static final String KEY_ERROR = "NewRecipientFragment_Error";
+
+    public static final int ERR_INVALID_NAME = 1;
+    public static final int ERR_INVALID_VIA = 2;
+    public static final int ERR_INVALID_EMAIL = 3;
+    public static final int ERR_INVALID_PHONE = 4;
+    public static final int ERR_UNABLE_TO_ADD = 5;
+
+
+    public static Bundle insertRecipientContact(Context context, long rawId, String name, String phone, String email) {
+        Bundle bundle = new Bundle();
+
+        name = name == null ? "" : name.trim();
+        phone = phone == null ? "" : phone.trim();
+        email = email == null ? "" : email.trim();
+
+        // validate display name
+        if(name.length() <= 0) {
+            bundle.putInt(KEY_ERROR, ERR_INVALID_NAME);
+            return bundle;
+        }
+
+        // validate one of email or phone
+        if(email.length() <= 0 && phone.length() <= 0) {
+            bundle.putInt(KEY_ERROR, ERR_INVALID_VIA);
+            return bundle;
+        }
+
+        // validate email
+        if(email.length() > 0 && !Utils.isValidEmail(email)) {
+            bundle.putInt(KEY_ERROR, ERR_INVALID_EMAIL);
+            return bundle;
+        }
+
+        if(phone.length() > 0 && !Utils.isValidPhoneNumber(phone)) {
+            bundle.putInt(KEY_ERROR, ERR_INVALID_PHONE);
+            return bundle;
+        }
+
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+
+        // create raw contact
+        if(rawId <= 0) {
+            ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
+                    .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
+                    .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null).build());
+        }
+
+        // add display name data
+        ContentProviderOperation.Builder op = null;
+        if(rawId <= 0) {
+            op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
+        } else {
+            ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
+                    .withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=? AND " + ContactsContract.Data.MIMETYPE + "=?",
+                            new String[]{String.valueOf(rawId), ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE})
+                    .build());
+
+            op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                    .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawId);
+        }
+        ops.add(op.withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name).build());
+
+
+        // add email data
+        if(email.length() > 0) {
+            List<String> mimeTypes = new ArrayList<>();
+            mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
+            FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(context, null, null, null, mimeTypes, email);
+            boolean alreadyHasEmail = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
+
+            if(!alreadyHasEmail) {
+                if (rawId <= 0) {
+                    op = ContentProviderOperation
+                            .newInsert(ContactsContract.Data.CONTENT_URI)
+                            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
+                } else {
+                    op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                            .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawId);
+                }
+                ops.add(op.withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
+                        .withValue(ContactsContract.Data.DATA1, email).build());
+            }
+        }
+
+        if(phone.length() > 0) {
+            List<String> mimeTypes = new ArrayList<>();
+            mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
+            FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(context, null, null, null, mimeTypes, phone);
+            boolean alreadyHasPhone = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
+
+            if(!alreadyHasPhone) {
+                if (rawId <= 0) {
+                    op = ContentProviderOperation
+                            .newInsert(ContactsContract.Data.CONTENT_URI)
+                            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
+                } else {
+                    op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                            .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawId);
+                }
+                ops.add(op.withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+                        .withValue(ContactsContract.Data.DATA1, phone).build());
+            }
+        }
+
+        try {
+            ContentProviderResult[] res = context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
+            if(res.length < ops.size()) {
+                throw new RuntimeException("Not all operations were performed while trying to insert contact: Total Ops = " + ops.size() + "; Performed = " + res.length);
+            }
+
+            bundle.putString(KEY_NAME, name);
+            bundle.putString(KEY_VIA, email.length() > 0 ? email : phone);
+            bundle.putString(KEY_MAIL, email);
+            bundle.putString(KEY_PHONE, phone);
+        } catch (Throwable e) {
+            bundle.putInt(KEY_ERROR, ERR_UNABLE_TO_ADD);
+            Log.d(NewRecipientFragment.class.getSimpleName(), "Unable to add contact", e);
+            Crashlytics.logException(e);
+        }
+
+        return bundle;
+    }
 
     private PepperMintPreferences mPreferences;
     private CustomActionBarActivity mActivity;
@@ -153,8 +279,6 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
 
     @Override
     public void onClick(View v) {
-        // TODO save to specific account
-
         long rawId = 0;
         if(getArguments() != null) {
             rawId = getArguments().getLong(KEY_RAW_ID, 0);
@@ -164,117 +288,36 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         String phone = mTxtPhone.getText().toString().trim();
         String email = mTxtMail.getText().toString().trim();
 
-        // validate display name
-        if(name.length() <= 0) {
-            Toast.makeText(mActivity, R.string.msg_message_invalid_contactname, Toast.LENGTH_LONG).show();
-            return;
-        }
+        Bundle bundle = insertRecipientContact(mActivity, rawId, name, phone, email);
 
-        // validate one of email or phone
-        if(email.length() <= 0 && phone.length() <= 0) {
-            Toast.makeText(mActivity, R.string.msg_message_invalid_contactvia, Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        // validate email
-        if(email.length() > 0 && !Utils.isValidEmail(email)) {
-            Toast.makeText(mActivity, R.string.msg_message_invalid_contactmail, Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        if(phone.length() > 0 && !Utils.isValidPhoneNumber(phone)) {
-            Toast.makeText(mActivity, R.string.msg_message_invalid_contactphone, Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
-
-        // create raw contact
-        if(rawId <= 0) {
-            ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
-                    .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
-                    .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null).build());
-        }
-
-        // add display name data
-        ContentProviderOperation.Builder op = null;
-        if(rawId <= 0) {
-            op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
-        } else {
-            ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
-                    .withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=? AND " + ContactsContract.Data.MIMETYPE + "=?",
-                            new String[]{String.valueOf(rawId), ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE})
-                    .build());
-
-            op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                    .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawId);
-        }
-        ops.add(op.withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
-                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name).build());
-
-
-        // add email data
-        if(email.length() > 0) {
-            List<String> mimeTypes = new ArrayList<>();
-            mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
-            FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, null, null, mimeTypes, email);
-            boolean alreadyHasEmail = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
-
-            if(!alreadyHasEmail) {
-                if (rawId <= 0) {
-                    op = ContentProviderOperation
-                            .newInsert(ContactsContract.Data.CONTENT_URI)
-                            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
-                } else {
-                    op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                            .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawId);
-                }
-                ops.add(op.withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
-                        .withValue(ContactsContract.Data.DATA1, email).build());
+        if(bundle.containsKey(KEY_ERROR)) {
+            switch(bundle.getInt(KEY_ERROR)) {
+                case ERR_INVALID_EMAIL:
+                    Toast.makeText(mActivity, R.string.msg_message_invalid_contactmail, Toast.LENGTH_LONG).show();
+                    return;
+                case ERR_INVALID_NAME:
+                    Toast.makeText(mActivity, R.string.msg_message_invalid_contactname, Toast.LENGTH_LONG).show();
+                    return;
+                case ERR_INVALID_PHONE:
+                    Toast.makeText(mActivity, R.string.msg_message_invalid_contactphone, Toast.LENGTH_LONG).show();
+                    return;
+                case ERR_INVALID_VIA:
+                    Toast.makeText(mActivity, R.string.msg_message_invalid_contactvia, Toast.LENGTH_LONG).show();
+                    return;
+                case ERR_UNABLE_TO_ADD:
+                    Toast.makeText(mActivity, R.string.msg_message_unable_addcontact, Toast.LENGTH_LONG).show();
+                    return;
             }
+
+            return;
         }
 
-        if(phone.length() > 0) {
-            List<String> mimeTypes = new ArrayList<>();
-            mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-            FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, null, null, mimeTypes, phone);
-            boolean alreadyHasPhone = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
+        Toast.makeText(mActivity, R.string.msg_message_contact_added, Toast.LENGTH_LONG).show();
+        Intent intent = new Intent();
+        intent.putExtras(bundle);
 
-            if(!alreadyHasPhone) {
-                if (rawId <= 0) {
-                    op = ContentProviderOperation
-                            .newInsert(ContactsContract.Data.CONTENT_URI)
-                            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
-                } else {
-                    op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                            .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawId);
-                }
-                ops.add(op.withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
-                        .withValue(ContactsContract.Data.DATA1, phone).build());
-            }
-        }
-
-        try {
-            ContentProviderResult[] res = mActivity.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
-            if(res.length < ops.size()) {
-                throw new RuntimeException("Not all operations were performed while trying to insert contact: Total Ops = " + ops.size() + "; Performed = " + res.length);
-            }
-            Toast.makeText(mActivity, R.string.msg_message_contact_added, Toast.LENGTH_LONG).show();
-
-            Intent intent = new Intent();
-            intent.putExtra(KEY_NAME, name);
-            intent.putExtra(KEY_VIA, email.length() > 0 ? email : phone);
-            intent.putExtra(KEY_MAIL, email);
-            intent.putExtra(KEY_PHONE, phone);
-
-            mActivity.setResult(Activity.RESULT_OK, intent);
-            mActivity.finish();
-        } catch (Throwable e) {
-            Toast.makeText(mActivity, R.string.msg_message_unable_addcontact, Toast.LENGTH_LONG).show();
-            Log.d(NewRecipientFragment.class.getSimpleName(), "Unable to add contact", e);
-            Crashlytics.logException(e);
-        }
+        mActivity.setResult(Activity.RESULT_OK, intent);
+        mActivity.finish();
     }
 
 }

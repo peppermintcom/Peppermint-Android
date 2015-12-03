@@ -450,9 +450,33 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         setListShownNoAnimation(false);
 
         if(getArguments() != null && (getArguments().containsKey(FAST_REPLY_NAME_PARAM) || getArguments().containsKey(FAST_REPLY_MAIL_PARAM))) {
-            String name = getArguments().getString(FAST_REPLY_NAME_PARAM, null);
-            String mail = getArguments().getString(FAST_REPLY_MAIL_PARAM, null);
-            mSearchListBarView.setSearchText(name + " <" + mail + ">");
+            String name = getArguments().getString(FAST_REPLY_NAME_PARAM, "");
+            String mail = getArguments().getString(FAST_REPLY_MAIL_PARAM, "");
+
+            if(mail.length() <= 0) {
+                // if the email was not supplied, just search for the name
+                mSearchListBarView.setSearchText(name);
+            } else {
+                // if mail is supplied, check if the contact exists
+                List<String> mimeTypes = new ArrayList<>();
+                mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
+                mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
+                FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, null, null, mimeTypes, mail);
+                boolean alreadyHasEmail = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
+
+                // if not, add the contact
+                if(!alreadyHasEmail) {
+                    Bundle bundle = NewRecipientFragment.insertRecipientContact(mActivity, 0, name, null, mail);
+                    // will fail if there's no name or if the email is invalid
+                    if(!bundle.containsKey(NewRecipientFragment.KEY_ERROR)) {
+                        alreadyHasEmail = true;
+                    }
+                }
+
+                // if it fails, add complete name+email search text to allow adding the full contact
+                // otherwise, just search by email
+                mSearchListBarView.setSearchText(alreadyHasEmail || name.length() <= 0 ? mail : name + " <" + mail + ">");
+            }
         }
 
         return v;
