@@ -30,7 +30,7 @@ import android.widget.TextView;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.ui.views.CustomActionBarView;
-import com.peppermint.app.ui.views.DrawerListAdapter;
+import com.peppermint.app.ui.views.NavigationListAdapter;
 import com.peppermint.app.ui.views.NavigationItem;
 import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.PepperMintPreferences;
@@ -159,12 +159,13 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
             getCustomActionBar().getMenuButton().setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    Utils.hideKeyboard(CustomActionBarActivity.this);
                     finish();
                 }
             });
         } else {
             mLstDrawer = (ListView) findViewById(R.id.list);
-            DrawerListAdapter adapter = new DrawerListAdapter(this, mNavigationItemList, app.getFontSemibold());
+            NavigationListAdapter adapter = new NavigationListAdapter(this, mNavigationItemList, app.getFontSemibold());
             mLstDrawer.setAdapter(adapter);
 
             // Drawer Item click listeners

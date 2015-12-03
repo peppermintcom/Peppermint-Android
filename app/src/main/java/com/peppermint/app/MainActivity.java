@@ -33,7 +33,7 @@ public class MainActivity extends CustomActionBarActivity {
         Manifest.permission.WRITE_CONTACTS,
         "android.permission.READ_PROFILE",
         Manifest.permission.RECORD_AUDIO,
-        /*Manifest.permission.WRITE_EXTERNAL_STORAGE,*/
+        Manifest.permission.WRITE_EXTERNAL_STORAGE,
         Manifest.permission.INTERNET,
         Manifest.permission.ACCESS_NETWORK_STATE,
 

@@ -165,4 +165,9 @@
     <string name="msg_gmail_disabled">Please enable in-app Gmail before picking a Gmail account</string>
     <string name="msg_message_sms_disabled_add_contact">Sending via SMS is not possible in your device. Would you like to add an email contact?</string>
     <string name="ok">OK</string>
+    <string name="take_photo">Take photo</string>
+    <string name="choose_photo">Choose photo</string>
+    <string name="msg_message_no_camera_app">Your device doesn\'t have a camera app installed</string>
+    <string name="msg_message_external_storage_error">Unable to create photo file in external storage</string>
+    <string name="new_contact_photo">New Contact Photo</string>
 </resources>

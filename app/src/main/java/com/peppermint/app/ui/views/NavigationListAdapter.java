@@ -11,7 +11,6 @@ import android.widget.TextView;
 
 import com.peppermint.app.R;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,14 +18,14 @@ import java.util.List;
  *
  * List adapter for the drawer menu.
  */
-public class DrawerListAdapter extends BaseAdapter {
+public class NavigationListAdapter extends BaseAdapter {
 
     protected Context mContext;
     protected List<NavigationItem> mList;
     protected Typeface mFont;
     protected List<NavigationItem> mHiddenList;
 
-    public DrawerListAdapter(Context context, List<NavigationItem> list, Typeface font) {
+    public NavigationListAdapter(Context context, List<NavigationItem> list, Typeface font) {
         this.mContext = context;
         this.mList = list;
         this.mFont = font;
@@ -53,7 +52,7 @@ public class DrawerListAdapter extends BaseAdapter {
 
         if (convertView == null) {
             LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            view = inflater.inflate(R.layout.i_drawer_menu_item, null);
+            view = inflater.inflate(R.layout.i_navigation_layout, null);
         }
         else {
             view = convertView;
