@@ -85,7 +85,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     public static Bundle insertRecipientContact(Context context, long rawId, String name, String phone, String email, String photoUrl) {
         Bundle bundle = new Bundle();
 
-        name = name == null ? "" : name.trim();
+        name = name == null ? "" : Utils.capitalizeFully(name.trim());
         phone = phone == null ? "" : phone.trim();
         email = email == null ? "" : email.trim();
 
@@ -429,6 +429,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
             mAvatarUrl = args.getString(KEY_PHOTO_URL, null);
 
             if(name != null) {
+                name = Utils.capitalizeFully(name);
                 String[] names = name.split("\\s+");
 
                 if(names.length > 1) {

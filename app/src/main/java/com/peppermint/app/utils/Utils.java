@@ -588,6 +588,34 @@ public class Utils {
     }
 
     /**
+     * Fully capitalize the words in the supplied string.<br />
+     * The string is also trimmed.<br />
+     * E.g. "fOO bAR" or "foo bar" become "Foo Bar".
+     *
+     * @param s the string
+     * @return the fully capitalized string
+     */
+    public static String capitalizeFully(String s) {
+        if(s == null || s.length() <= 0) {
+            return s;
+        }
+
+        StringBuilder builder = new StringBuilder();
+        String[] words = s.split("\\s+");
+        for(int i=0; i<words.length; i++) {
+            if(words[i].length() > 0) {
+                if (i > 0) {
+                    builder.append(" ");
+                }
+                builder.append(words[i].substring(0, 1).toUpperCase());
+                builder.append(words[i].substring(1).toLowerCase());
+            }
+        }
+
+        return builder.toString();
+    }
+
+    /**
      * Hide the keyboard
      * @param context the activity
      */
