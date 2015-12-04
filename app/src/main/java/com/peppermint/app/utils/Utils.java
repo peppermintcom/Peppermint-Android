@@ -15,6 +15,7 @@ import android.graphics.drawable.Drawable;
 import android.media.ExifInterface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.ContactsContract;
 import android.support.v4.content.ContextCompat;
@@ -391,6 +392,23 @@ public class Utils {
         return BitmapFactory.decodeStream(fis, null, o2);
     }
 
+    public static Bitmap getScaledBitmap(Context context, Uri contentUri, int width, int height) {
+        Bitmap bitmap = null;
+        try {
+            InputStream fis = context.getContentResolver().openInputStream(contentUri);
+            int scale = Math.round(getBitmapRequiredScale(fis, width, height));
+            fis.close();
+
+            fis = context.getContentResolver().openInputStream(contentUri);
+            bitmap = getScaledBitmap(fis, scale);
+            fis.close();
+        } catch (IOException e) {
+            Log.e(TAG, "Unable to scale bitmap", e);
+            Crashlytics.logException(e);
+        }
+        return bitmap;
+    }
+
     /**
      * Read and load the bitmap in the provided image file and scale it
      * using the {@link android.graphics.BitmapFactory.Options#inSampleSize} option.<br />
@@ -402,7 +420,7 @@ public class Utils {
      * @return
      */
     public static Bitmap getScaledBitmap(String filePath, int width, int height) {
-        Bitmap bitmap;
+        Bitmap bitmap = null;
         try {
             InputStream fis = new FileInputStream(filePath);
             int scale = Math.round(getBitmapRequiredScale(fis, width, height));
@@ -412,7 +430,8 @@ public class Utils {
             bitmap = getScaledBitmap(fis, scale);
             fis.close();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            Log.e(TAG, "Unable to scale bitmap", e);
+            Crashlytics.logException(e);
         }
         return bitmap;
     }
@@ -429,7 +448,7 @@ public class Utils {
      * @return the scaled image bitmap
      */
     public static Bitmap getScaledBitmap(Context context, int resId, int width, int height) {
-        Bitmap bitmap;
+        Bitmap bitmap = null;
         try {
             InputStream fis = context.getResources().openRawResource(resId);
             int scale = Math.round(getBitmapRequiredScale(fis, width, height));
@@ -439,7 +458,8 @@ public class Utils {
             bitmap = getScaledBitmap(fis, scale);
             fis.close();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            Log.e(TAG, "Unable to scale bitmap", e);
+            Crashlytics.logException(e);
         }
         return bitmap;
     }
@@ -447,7 +467,7 @@ public class Utils {
     public static Bitmap getScaledResizedBitmap(String filePath, int width, int height, boolean keepAspectRatio) {
         Bitmap bitmap = getScaledBitmap(filePath, width, height);
 
-        if(!keepAspectRatio) {
+        if(bitmap != null && !keepAspectRatio) {
             Bitmap resized = Bitmap.createScaledBitmap(bitmap, width, height, true);
             bitmap.recycle();
             bitmap = resized;
@@ -460,7 +480,7 @@ public class Utils {
     public static Bitmap getScaledResizedBitmap(Context context, int resId, int width, int height, boolean keepAspectRatio) {
         Bitmap bitmap = getScaledBitmap(context, resId, width, height);
 
-        if(!keepAspectRatio) {
+        if(bitmap != null && !keepAspectRatio) {
             Bitmap resized = Bitmap.createScaledBitmap(bitmap, width, height, true);
             bitmap.recycle();
             bitmap = resized;

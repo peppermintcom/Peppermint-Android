@@ -2,4 +2,6 @@
 <ListView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/list"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content" />
+    android:layout_height="wrap_content"
+    android:choiceMode="singleChoice"
+    android:listSelector="@drawable/background_transparent_to_solid_pressed_sel"/>

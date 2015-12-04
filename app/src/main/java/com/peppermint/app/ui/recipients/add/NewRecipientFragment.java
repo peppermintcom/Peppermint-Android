@@ -181,30 +181,38 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         }
 
         if(photoUrl != null && photoUrl.length() > 0) {
-            if(rawId <= 0) {
-                op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                        .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
-            } else {
-                ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
-                        .withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=? AND " + ContactsContract.Data.MIMETYPE + "=?",
-                                new String[]{String.valueOf(rawId), ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE})
-                        .build());
-
-                op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
-                        .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawId);
-            }
 
             int dp200 = Utils.dpToPx(context, 200);
             int dp100 = Utils.dpToPx(context, 100);
-            Bitmap realImage = Utils.getScaledBitmap(photoUrl, dp200, dp200);
-            Bitmap rotatedImage = Utils.getRotatedBitmapFromFileAttributes(realImage, photoUrl);
-            rotatedImage = ThumbnailUtils.extractThumbnail(rotatedImage, dp100, dp100, ThumbnailUtils.OPTIONS_RECYCLE_INPUT);
+            // scale image to 200dp to save memory
+            Bitmap realImage = photoUrl.startsWith(FILE_SCHEME) ? Utils.getScaledBitmap(photoUrl.substring(6), dp200, dp200)
+                    : Utils.getScaledBitmap(context, Uri.parse(photoUrl), dp200, dp200);
 
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            rotatedImage.compress(Bitmap.CompressFormat.PNG, 100, baos);
+            if(realImage != null) {
+                // rotate image according to the photo params
+                Bitmap rotatedImage = Utils.getRotatedBitmapFromFileAttributes(realImage, photoUrl.startsWith(FILE_SCHEME) ? photoUrl.substring(6) : photoUrl);
+                // cut a square thumbnail
+                rotatedImage = ThumbnailUtils.extractThumbnail(rotatedImage, dp100, dp100, ThumbnailUtils.OPTIONS_RECYCLE_INPUT);
 
-            ops.add(op.withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE)
-                    .withValue(ContactsContract.CommonDataKinds.Photo.PHOTO, baos.toByteArray()).build());
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                rotatedImage.compress(Bitmap.CompressFormat.PNG, 100, baos);
+
+                if (rawId <= 0) {
+                    op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                            .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
+                } else {
+                    ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
+                            .withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=? AND " + ContactsContract.Data.MIMETYPE + "=?",
+                                    new String[]{String.valueOf(rawId), ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE})
+                            .build());
+
+                    op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                            .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawId);
+                }
+
+                ops.add(op.withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE)
+                        .withValue(ContactsContract.CommonDataKinds.Photo.PHOTO, baos.toByteArray()).build());
+            }
         }
 
         try {
@@ -226,6 +234,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         return bundle;
     }
 
+    private static final String FILE_SCHEME = "file:/";
     private static final String SAVED_DIALOG_STATE_KEY = TAG + "_NewAvatarDialogState";
     private static final String SAVED_AVATAR_URL_KEY = TAG + "_AvatarUrl";
     private static final String SAVED_AVATAR_INPROGRESS_URL_KEY = TAG + "_AvatarInProgressUrl";
@@ -317,7 +326,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         switch (requestCode) {
             case TAKE_PHOTO_CODE:
                 if(resultCode == Activity.RESULT_OK) {
-                    setAvatarUrl(mAvatarInProgressUrl);
+                    setAvatarUrl(FILE_SCHEME + mAvatarInProgressUrl);
                 } else {
                     File file = new File(mAvatarInProgressUrl);
                     if(file.exists()) {
@@ -332,7 +341,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                     Cursor cursor = mActivity.getContentResolver().query(selectedImage, filePathColumn, null, null, null);
                     if (cursor.moveToFirst()) {
                         int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-                        setAvatarUrl(cursor.getString(columnIndex));
+                        setAvatarUrl(FILE_SCHEME + cursor.getString(columnIndex));
                     }
                     cursor.close();
                 }
@@ -370,12 +379,12 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         mPopup = new Popup(mActivity);
 
         mAvatarOptions = new ArrayList<>();
-        mAvatarOptions.add(new NavigationItem(getString(R.string.take_photo), R.drawable.ic_search_36dp, null, true));
-        mAvatarOptions.add(new NavigationItem(getString(R.string.choose_photo), R.drawable.ic_account_search_36dp, null, true));
+        mAvatarOptions.add(new NavigationItem(getString(R.string.take_photo), R.drawable.ic_drawer_camera, null, true));
+        mAvatarOptions.add(new NavigationItem(getString(R.string.choose_photo), R.drawable.ic_drawer_collections, null, true));
 
         mNewAvatarDialog = new CustomListDialog(mActivity);
         mNewAvatarDialog.setCancelable(true);
-        mNewAvatarDialog.setTitleText(R.string.new_contact_photo);
+        mNewAvatarDialog.setTitleText(R.string.change_photo);
         mNewAvatarDialog.setListOnItemClickListener(this);
         mAvatarAdapter = new NavigationListAdapter(mActivity, mAvatarOptions, app.getFontSemibold());
         mNewAvatarDialog.setListAdapter(mAvatarAdapter);
@@ -539,14 +548,21 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     }
 
     public void setAvatarUrl(String url) {
+        String prevUrl = this.mAvatarUrl;
         this.mAvatarUrl = url;
+
         if(mAvatarUrl != null) {
             int dp70 = Utils.dpToPx(mActivity, 70);
             int dp150 = Utils.dpToPx(mActivity, 150);
-            Bitmap realImage = Utils.getScaledBitmap(mAvatarUrl, dp150, dp150);
-            Bitmap rotatedImage = Utils.getRotatedBitmapFromFileAttributes(realImage, mAvatarUrl);
-            rotatedImage = ThumbnailUtils.extractThumbnail(rotatedImage, dp70, dp70, ThumbnailUtils.OPTIONS_RECYCLE_INPUT);
-            mBtnAddAvatar.setImageBitmap(rotatedImage);
+            Bitmap realImage = mAvatarUrl.startsWith(FILE_SCHEME) ? Utils.getScaledBitmap(mAvatarUrl.substring(6), dp150, dp150)
+                    : Utils.getScaledBitmap(mActivity, Uri.parse(mAvatarUrl), dp150, dp150);
+            if(realImage != null) {
+                Bitmap rotatedImage = Utils.getRotatedBitmapFromFileAttributes(realImage, mAvatarUrl.startsWith(FILE_SCHEME) ? mAvatarUrl.substring(6) : mAvatarUrl);
+                rotatedImage = ThumbnailUtils.extractThumbnail(rotatedImage, dp70, dp70, ThumbnailUtils.OPTIONS_RECYCLE_INPUT);
+                mBtnAddAvatar.setImageBitmap(rotatedImage);
+            } else {
+                this.mAvatarUrl = prevUrl;
+            }
         }
     }
 

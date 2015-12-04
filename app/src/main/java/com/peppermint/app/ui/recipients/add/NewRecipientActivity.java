@@ -47,7 +47,7 @@ public class NewRecipientActivity extends CustomActionBarActivity {
         getCustomActionBar().setContents(v, false);
 
         // cancel new contact icon
-        getCustomActionBar().getMenuButton().setImageResource(R.drawable.ic_cancel_21dp);
+        getCustomActionBar().getMenuButton().setImageResource(R.drawable.ic_cancel_14dp);
     }
 
     @Override

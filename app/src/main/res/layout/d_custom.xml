@@ -61,7 +61,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:padding="20dp"
+        android:padding="15dp"
         android:gravity="center"
         custom:textFont="@string/font_semibold"
         android:textSize="18dp"
@@ -70,6 +70,7 @@
 
     <FrameLayout android:id="@+id/container"
         android:layout_below="@id/title"
+        android:layout_marginBottom="10dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
     </FrameLayout>

@@ -169,5 +169,5 @@
     <string name="choose_photo">Choose photo</string>
     <string name="msg_message_no_camera_app">Your device doesn\'t have a camera app installed</string>
     <string name="msg_message_external_storage_error">Unable to create photo file in external storage</string>
-    <string name="new_contact_photo">New Contact Photo</string>
+    <string name="change_photo">Change Photo</string>
 </resources>
