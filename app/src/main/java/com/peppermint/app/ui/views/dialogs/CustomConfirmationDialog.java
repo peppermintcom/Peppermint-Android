@@ -24,6 +24,13 @@ public class CustomConfirmationDialog extends CustomDialog {
     private CustomFontTextView mTxtMessage;
     private CustomFontButton mBtnCheck;
 
+    private final View.OnClickListener mCheckClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            mBtnCheck.setSelected(!mBtnCheck.isSelected());
+        }
+    };
+
     public CustomConfirmationDialog(Context context) {
         super(context);
         setLayout(R.layout.d_custom_confirmation);
@@ -51,6 +58,7 @@ public class CustomConfirmationDialog extends CustomDialog {
         }
 
         mBtnCheck.setSelected(mChecked);
+        mBtnCheck.setOnClickListener(mCheckClickListener);
 
         if(mCheckText != null) {
             mBtnCheck.setText(mCheckText);

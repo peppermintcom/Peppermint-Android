@@ -73,9 +73,9 @@
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content">
 
-            <ListView
+            <com.peppermint.app.ui.views.simple.CustomHeightListView
                 android:id="@id/android:list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
