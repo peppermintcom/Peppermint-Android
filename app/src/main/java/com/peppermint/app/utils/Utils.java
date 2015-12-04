@@ -8,11 +8,14 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.media.ExifInterface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.ContactsContract;
 import android.support.v4.content.ContextCompat;
@@ -26,6 +29,9 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 
+import com.crashlytics.android.Crashlytics;
+
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -202,7 +208,7 @@ public class Utils {
         } catch (UnsupportedEncodingException e1) {
             throw new RuntimeException(e1);
         }
-        return Base64.encodeToString(decodedBytes, Base64.URL_SAFE|Base64.NO_WRAP);
+        return Base64.encodeToString(decodedBytes, Base64.URL_SAFE | Base64.NO_WRAP);
     }
 
     /**
@@ -300,8 +306,140 @@ public class Utils {
     }
 
     /**
-     * Returns a scaled bitmap from the supplied resource id. The scaled image keeps the aspect ratio,
-     * with either or both height and width set to the supplied value.
+     * Use {@link ExifInterface} to extract image file attributes in order to assess the required
+     * rotation in degrees (depends on orientation mode when taking the picture). <br/>
+     * Rotate the bitmap accordingly.
+     *
+     * @param realImage the bitmap to rotate
+     * @param filePath the image file path of the bitmap
+     * @return the rotated bitmap
+     */
+    public static Bitmap getRotatedBitmapFromFileAttributes(Bitmap realImage, String filePath) {
+        Bitmap rotatedImage = realImage;
+
+        try {
+            ExifInterface exif = new ExifInterface(filePath);
+
+            String tagOrientation = exif.getAttribute(ExifInterface.TAG_ORIENTATION);
+            if (tagOrientation.equalsIgnoreCase("6")) {
+                rotatedImage = Utils.getRotatedBitmap(realImage, 90);
+                realImage.recycle();
+            } else if (tagOrientation.equalsIgnoreCase("8")) {
+                rotatedImage = Utils.getRotatedBitmap(realImage, 270);
+                realImage.recycle();
+            } else if (tagOrientation.equalsIgnoreCase("3")) {
+                rotatedImage = Utils.getRotatedBitmap(realImage, 180);
+                realImage.recycle();
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Unable to adjust bitmap rotation", e);
+            Crashlytics.logException(e);
+        }
+
+        return rotatedImage;
+    }
+
+    /**
+     * Rotate the supplied bitmap by the supplied degrees.
+     * @param bitmap the original bitmap
+     * @param degrees the rotation degress
+     * @return the new rotated bitmap
+     */
+    public static Bitmap getRotatedBitmap(Bitmap bitmap, int degrees) {
+        int w = bitmap.getWidth();
+        int h = bitmap.getHeight();
+
+        Matrix mtx = new Matrix();
+        mtx.setRotate(degrees);
+
+        return Bitmap.createBitmap(bitmap, 0, 0, w, h, mtx, true);
+    }
+
+    private static float getBitmapRequiredScale(InputStream fis, int width, int height) {
+        BitmapFactory.Options o = new BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+
+        BitmapFactory.decodeStream(fis, null, o);
+
+        return getBitmapRequiredScale(o, width, height);
+    }
+
+    private static float getBitmapRequiredScale(BitmapFactory.Options o, int width, int height) {
+        float scale = 1;
+        //if image height is greater than width
+        if (o.outHeight > o.outWidth) {
+            scale = (float) o.outWidth / (float) width;
+        }
+        //if image width is greater than height
+        else {
+            scale = (float) o.outHeight / (float) height;
+        }
+
+        return scale;
+    }
+
+    /**
+     * Read and load the bitmap in the provided {@link InputStream} and scale it
+     * using the {@link android.graphics.BitmapFactory.Options#inSampleSize} option.
+     * @param fis the bitmap input stream
+     * @param scale the scale value
+     * @return the loaded and scaled bitmap
+     */
+    private static Bitmap getScaledBitmap(InputStream fis, int scale) {
+        // decode with inSampleSize
+        BitmapFactory.Options o2 = new BitmapFactory.Options();
+        o2.inSampleSize = scale;
+        return BitmapFactory.decodeStream(fis, null, o2);
+    }
+
+    public static Bitmap getScaledBitmap(Context context, Uri contentUri, int width, int height) {
+        Bitmap bitmap = null;
+        try {
+            InputStream fis = context.getContentResolver().openInputStream(contentUri);
+            int scale = Math.round(getBitmapRequiredScale(fis, width, height));
+            fis.close();
+
+            fis = context.getContentResolver().openInputStream(contentUri);
+            bitmap = getScaledBitmap(fis, scale);
+            fis.close();
+        } catch (IOException e) {
+            Log.e(TAG, "Unable to scale bitmap", e);
+            Crashlytics.logException(e);
+        }
+        return bitmap;
+    }
+
+    /**
+     * Read and load the bitmap in the provided image file and scale it
+     * using the {@link android.graphics.BitmapFactory.Options#inSampleSize} option.<br />
+     * <b>Aspect ratio is kept. See {@link #getScaledResizedBitmap(String, int, int, boolean)} for a strict resize.</b>
+     *
+     * @param filePath the image file path
+     * @param width the new desired width
+     * @param height the new desired height
+     * @return
+     */
+    public static Bitmap getScaledBitmap(String filePath, int width, int height) {
+        Bitmap bitmap = null;
+        try {
+            InputStream fis = new FileInputStream(filePath);
+            int scale = Math.round(getBitmapRequiredScale(fis, width, height));
+            fis.close();
+
+            fis = new FileInputStream(filePath);
+            bitmap = getScaledBitmap(fis, scale);
+            fis.close();
+        } catch (IOException e) {
+            Log.e(TAG, "Unable to scale bitmap", e);
+            Crashlytics.logException(e);
+        }
+        return bitmap;
+    }
+
+    /**
+     * Read and load the bitmap in the provided image resource and scale it
+     * using the {@link android.graphics.BitmapFactory.Options#inSampleSize} option.<br />
+     * <b>Aspect ratio is kept. See {@link #getScaledResizedBitmap(Context, int, int, int, boolean)} for a strict resize.</b>
      *
      * @param context the context
      * @param resId the resource id (image/drawable id)
@@ -310,39 +448,45 @@ public class Utils {
      * @return the scaled image bitmap
      */
     public static Bitmap getScaledBitmap(Context context, int resId, int width, int height) {
-        Bitmap b;
+        Bitmap bitmap = null;
         try {
-            BitmapFactory.Options o = new BitmapFactory.Options();
-            o.inJustDecodeBounds = true;
-
             InputStream fis = context.getResources().openRawResource(resId);
-            BitmapFactory.decodeStream(fis, null, o);
+            int scale = Math.round(getBitmapRequiredScale(fis, width, height));
             fis.close();
 
-            int scale = 1;
-            //if image height is greater than width
-            if (o.outHeight > o.outWidth) {
-                scale = Math.round((float) o.outWidth / (float) width);
-            }
-            //if image width is greater than height
-            else {
-                scale = Math.round((float) o.outHeight / (float) height);
-            }
-
-            // decode with inSampleSize
-            BitmapFactory.Options o2 = new BitmapFactory.Options();
-            o2.inSampleSize = scale;
             fis = context.getResources().openRawResource(resId);
-            b = BitmapFactory.decodeStream(fis, null, o2);
+            bitmap = getScaledBitmap(fis, scale);
             fis.close();
-
-            Bitmap scaled = Bitmap.createScaledBitmap(b, width, height, true);
-            b.recycle();
-            b = scaled;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            Log.e(TAG, "Unable to scale bitmap", e);
+            Crashlytics.logException(e);
         }
-        return b;
+        return bitmap;
+    }
+
+    public static Bitmap getScaledResizedBitmap(String filePath, int width, int height, boolean keepAspectRatio) {
+        Bitmap bitmap = getScaledBitmap(filePath, width, height);
+
+        if(bitmap != null && !keepAspectRatio) {
+            Bitmap resized = Bitmap.createScaledBitmap(bitmap, width, height, true);
+            bitmap.recycle();
+            bitmap = resized;
+        }
+
+        return bitmap;
+    }
+
+
+    public static Bitmap getScaledResizedBitmap(Context context, int resId, int width, int height, boolean keepAspectRatio) {
+        Bitmap bitmap = getScaledBitmap(context, resId, width, height);
+
+        if(bitmap != null && !keepAspectRatio) {
+            Bitmap resized = Bitmap.createScaledBitmap(bitmap, width, height, true);
+            bitmap.recycle();
+            bitmap = resized;
+        }
+
+        return bitmap;
     }
 
     /**
@@ -441,6 +585,34 @@ public class Utils {
      */
     public static Date parseTimestamp(String ts) throws ParseException {
         return DATETIME_FORMAT.parse(ts);
+    }
+
+    /**
+     * Fully capitalize the words in the supplied string.<br />
+     * The string is also trimmed.<br />
+     * E.g. "fOO bAR" or "foo bar" become "Foo Bar".
+     *
+     * @param s the string
+     * @return the fully capitalized string
+     */
+    public static String capitalizeFully(String s) {
+        if(s == null || s.length() <= 0) {
+            return s;
+        }
+
+        StringBuilder builder = new StringBuilder();
+        String[] words = s.split("\\s+");
+        for(int i=0; i<words.length; i++) {
+            if(words[i].length() > 0) {
+                if (i > 0) {
+                    builder.append(" ");
+                }
+                builder.append(words[i].substring(0, 1).toUpperCase());
+                builder.append(words[i].substring(1).toLowerCase());
+            }
+        }
+
+        return builder.toString();
     }
 
     /**

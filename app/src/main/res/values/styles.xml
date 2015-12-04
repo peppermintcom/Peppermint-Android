@@ -72,7 +72,7 @@
 
     <style name="Peppermint.CustomActionBar" parent="Widget.AppCompat.ActionBar">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">50dp</item>
+        <item name="android:layout_height">55dp</item>
         <item name="android:background">@drawable/background_actionbar</item>
         <item name="android:paddingLeft">6dp</item>
         <item name="android:paddingRight">6dp</item>
@@ -109,7 +109,7 @@
         <item name="android:windowTitleStyle">@null</item>
         <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
         <item name="android:windowSoftInputMode">stateUnspecified|adjustPan</item>
-        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:backgroundDimEnabled">true</item>
         <item name="android:background">@android:color/transparent</item>
     </style>
 

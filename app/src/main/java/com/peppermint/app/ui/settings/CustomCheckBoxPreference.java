@@ -56,6 +56,8 @@ public class CustomCheckBoxPreference extends CheckBoxPreference {
     protected void onBindView(View view) {
         super.onBindView(view);
 
+        mTxtContent = (TextView) view.findViewById(R.id.content);
+
         TextView txtTitle = (TextView) view.findViewById(android.R.id.title);
         TextView txtSummary = (TextView) view.findViewById(android.R.id.summary);
         TextView txtContent = (TextView) view.findViewById(R.id.content);

@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.views;
+package com.peppermint.app.ui.views.simple;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -14,6 +14,7 @@ import java.util.WeakHashMap;
 
 /**
  * Created by Nuno Luz on 10-11-2015.
+ * {@link TextView} with the custom textFont attribute.
  */
 public class CustomFontTextView extends TextView {
 

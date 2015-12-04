@@ -150,7 +150,7 @@
     <string name="when_you_send_via_sms">When you send via SMS it may cost you money for each message you send (depending on your phone plan). Do you want to continue?</string>
     <string name="do_not_show_this_again">Do not ask this again and always send the message</string>
     <string name="_continue">Continue</string>
-    <string name="add_account">Add account</string>
+    <string name="add_account">Add Account</string>
     <string name="your_name_">Your name:</string>
     <string name="msg_insert_name">You must insert a valid name</string>
     <string name="new_contact">New contact</string>
@@ -163,4 +163,12 @@
     <string name="add_contact">Add Contact</string>
     <string name="msg_message_invalid_contactmail">Please input a valid email address</string>
     <string name="msg_message_invalid_contactphone">Please input a valid phone number</string>
+    <string name="msg_gmail_disabled">Please enable in-app Gmail before picking a Gmail account</string>
+    <string name="msg_message_sms_disabled_add_contact">Sending via SMS is not possible in your device. Would you like to add an email contact?</string>
+    <string name="ok">OK</string>
+    <string name="take_photo">Take photo</string>
+    <string name="choose_photo">Choose photo</string>
+    <string name="msg_message_no_camera_app">Your device doesn\'t have a camera app installed</string>
+    <string name="msg_message_external_storage_error">Unable to create photo file in external storage</string>
+    <string name="change_photo">Change Photo</string>
 </resources>

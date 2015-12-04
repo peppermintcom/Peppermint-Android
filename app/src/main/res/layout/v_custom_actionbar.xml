@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:id="@+id/customActionBar"
     android:layout_alignParentTop="true"
     android:orientation="vertical"
@@ -18,8 +19,8 @@
 
         <ImageButton
             android:id="@+id/btnMenu"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
             android:layout_alignParentLeft="true"
             android:layout_centerVertical="true"
             android:padding="10dp"
@@ -36,12 +37,13 @@
             android:layout_marginLeft="10dp"
             android:layout_toRightOf="@id/btnMenu">
 
-            <TextView
+            <com.peppermint.app.ui.views.simple.CustomFontTextView
                 android:id="@+id/txtTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:textSize="16dp"
+                custom:textFont="@string/font_semibold"
+                android:textSize="20dp"
                 android:textColor="@color/white"
                 android:text="My Title"/>
 

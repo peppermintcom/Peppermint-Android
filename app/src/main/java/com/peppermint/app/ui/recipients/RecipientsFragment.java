@@ -5,6 +5,7 @@ import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.app.Activity;
 import android.app.ListFragment;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -45,11 +46,11 @@ import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.canvas.progress.LoadingView;
 import com.peppermint.app.ui.recipients.add.NewRecipientActivity;
 import com.peppermint.app.ui.recipients.add.NewRecipientFragment;
-import com.peppermint.app.ui.views.CustomConfirmationDialog;
-import com.peppermint.app.ui.views.CustomToast;
 import com.peppermint.app.ui.views.RecordingOverlayView;
 import com.peppermint.app.ui.views.SearchListBarAdapter;
 import com.peppermint.app.ui.views.SearchListBarView;
+import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
+import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.NoMicDataIOException;
@@ -71,10 +72,9 @@ import java.util.regex.Pattern;
 public class RecipientsFragment extends ListFragment implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener, View.OnTouchListener,
         SearchListBarView.OnSearchListener, RecordServiceManager.Listener {
 
-    public static final int REQUEST_RECORD = 1;
-    public static final int REQUEST_NEWCONTACT = 2;
-    
-    // recording overlay
+    public static final int REQUEST_RECORD = 111;
+    public static final int REQUEST_NEWCONTACT = 222;
+
     private static final String RECORDING_OVERLAY_TAG = "RECORDING";
     private static final int RECORDING_OVERLAY_HIDE_DELAY = 1000;
     private static final long MAX_DURATION_MILLIS = 600000; // 10min
@@ -83,8 +83,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public static final String FAST_REPLY_MAIL_PARAM = "mail";
 
     // keys to save the instance state
-    private static final String RECIPIENT_TYPE_POS_KEY = "RecipientsFragment_RecipientTypePosition";
-    private static final String RECIPIENT_TYPE_SEARCH_KEY = "RecipientsFragment_RecipientTypeSearch";
+    private static final String RECIPIENT_TAPPED_KEY = "RecipientsFragment_RecipientTapped";
+    private static final String SAVED_DIALOG_STATE_KEY = "RecipientsFragment_SmsDialogState";
     private static final String RECORDING_FINAL_EVENT_KEY = "RecipientsFragment_RecordingFinalEvent";
     private static final String SMS_CONFIRMATION_STATE_KEY = "RecipientsFragment_SmsConfirmationState";
 
@@ -136,6 +136,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     // bottom bar
     private SenderServiceManager mSenderServiceManager;
     private SenderControlLayout mLytSenderControl;
+    private CustomConfirmationDialog mSmsAddContactDialog;
+    private Recipient mTappedRecipient;
 
     // search
     private final Object mLock = new Object();
@@ -171,38 +173,42 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 if (mActivity != null && ContextCompat.checkSelfPermission(mActivity,
                         Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
 
-                    List<Long> recentList = mPreferences.getRecentContactUris();
+                    if (_recipientType.isStarred() != null && _recipientType.isStarred()) {
+                        List<Long> recentList = mPreferences.getRecentContactUris();
+                        if(recentList == null) {
+                            // empty list to show no contacts
+                            recentList = new ArrayList<>();
+                        }
 
-                    if (recentList != null && recentList.size() > 0 && _recipientType.isStarred() != null && _recipientType.isStarred()) {
                         // get recent contact list
                         Map<Long, Recipient> recipientMap = new HashMap<>();
 
-                        Cursor cursor = RecipientAdapterUtils.getRecipientsCursor(mActivity, recentList, null, null, null, null);
-                        Set<Long> allowedSet = new HashSet<>();
-                        while(cursor.moveToNext()) {
-                            Recipient recipient = RecipientAdapterUtils.getRecipient(cursor);
-                            // this if removes deleted/invalid contacts from the list
-                            if(recipient.getVia() != null && recipient.getVia().trim().length() > 0) {
-                                recipientMap.put(recipient.getContactId(), recipient);
-                                allowedSet.add(recipient.getContactId());
-                            }
-                        }
-                        cursor.close();
-
-                        // remove invalid contacts from recent list
-                        if(recentList.size() != allowedSet.size()) {
-                            Iterator<Long> it = recentList.iterator();
-                            while (it.hasNext()) {
-                                if (!allowedSet.contains(it.next())) {
-                                    it.remove();
+                        if(recentList.size() > 0) {
+                            Cursor cursor = RecipientAdapterUtils.getRecipientsCursor(mActivity, recentList, null, null, null, null);
+                            Set<Long> allowedSet = new HashSet<>();
+                            while (cursor.moveToNext()) {
+                                Recipient recipient = RecipientAdapterUtils.getRecipient(cursor);
+                                // this if removes deleted/invalid contacts from the list
+                                if (recipient.getVia() != null && recipient.getVia().trim().length() > 0) {
+                                    recipientMap.put(recipient.getContactId(), recipient);
+                                    allowedSet.add(recipient.getContactId());
                                 }
                             }
-                            mPreferences.setRecentContactUris(recentList);
+                            cursor.close();
+
+                            // remove invalid contacts from recent list
+                            if (recentList.size() != allowedSet.size()) {
+                                Iterator<Long> it = recentList.iterator();
+                                while (it.hasNext()) {
+                                    if (!allowedSet.contains(it.next())) {
+                                        it.remove();
+                                    }
+                                }
+                                mPreferences.setRecentContactUris(recentList);
+                            }
                         }
 
-                        if(recentList.size() > 0) {
-                            return new RecipientArrayAdapter((PeppermintApp) mActivity.getApplication(), mActivity, recipientMap, recentList);
-                        }
+                        return new RecipientArrayAdapter((PeppermintApp) mActivity.getApplication(), mActivity, recipientMap, recentList);
                     }
 
                     // get normal full, email or phone contact list
@@ -377,23 +383,29 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         PeppermintApp app = (PeppermintApp) mActivity.getApplication();
 
         mSmsConfirmationDialog = new CustomConfirmationDialog(mActivity);
-        mSmsConfirmationDialog.setTitle(getString(R.string.sending_via_sms));
-        mSmsConfirmationDialog.setText(getString(R.string.when_you_send_via_sms));
-        mSmsConfirmationDialog.setTitleTypeface(app.getFontSemibold());
-        mSmsConfirmationDialog.setTextTypeface(app.getFontRegular());
-        mSmsConfirmationDialog.setButtonTypeface(app.getFontRegular());
-        mSmsConfirmationDialog.setNoClickListener(new View.OnClickListener() {
+        mSmsConfirmationDialog.setTitleText(R.string.sending_via_sms);
+        mSmsConfirmationDialog.setMessageText(R.string.when_you_send_via_sms);
+        mSmsConfirmationDialog.setCheckText(R.string.do_not_show_this_again);
+        mSmsConfirmationDialog.setNegativeButtonListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mFinalEvent = null;
                 mSmsConfirmationDialog.dismiss();
             }
         });
-        mSmsConfirmationDialog.setYesClickListener(new View.OnClickListener() {
+        mSmsConfirmationDialog.setPositiveButtonListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 sendMessage();
                 mSmsConfirmationDialog.dismiss();
+            }
+        });
+        mSmsConfirmationDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+            if (mSmsConfirmationDialog.isChecked()) {
+                mPreferences.setShownSmsConfirmation(true);
+            }
             }
         });
 
@@ -424,10 +436,36 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
                     mSearchListBarView.removeSearchTextFocus(event);
+                    getView().requestFocus();
                 }
                 dismissPopup();
                 mLastTouchPoint.set((int) event.getX(), (int) event.getY());
                 return false;
+            }
+        });
+
+        // dialog for unsupported SMS
+        mSmsAddContactDialog = new CustomConfirmationDialog(mActivity);
+        mSmsAddContactDialog.setTitleText(R.string.sending_via_sms);
+        mSmsAddContactDialog.setMessageText(R.string.msg_message_sms_disabled_add_contact);
+        mSmsAddContactDialog.setPositiveButtonListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(mActivity, NewRecipientActivity.class);
+                if (mTappedRecipient != null) {
+                    intent.putExtra(NewRecipientFragment.KEY_VIA, mTappedRecipient.getVia());
+                    intent.putExtra(NewRecipientFragment.KEY_NAME, mTappedRecipient.getName());
+                    intent.putExtra(NewRecipientFragment.KEY_RAW_ID, mTappedRecipient.getRawId());
+                    intent.putExtra(NewRecipientFragment.KEY_PHOTO_URL, mTappedRecipient.getPhotoUri());
+                }
+                startActivityForResult(intent, REQUEST_NEWCONTACT);
+                mSmsAddContactDialog.dismiss();
+            }
+        });
+        mSmsAddContactDialog.setNegativeButtonListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mSmsAddContactDialog.dismiss();
             }
         });
 
@@ -437,24 +475,31 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mSearchListBarView.setListAdapter(mRecipientTypeAdapter);
         mSearchListBarView.setTypeface(app.getFontRegular());
 
-        // default view is all contacts
-        int selectedItemPosition = 1;
         if (savedInstanceState != null) {
             if(savedInstanceState.containsKey(RECORDING_FINAL_EVENT_KEY)) {
                 mFinalEvent = (RecordService.Event) savedInstanceState.getSerializable(RECORDING_FINAL_EVENT_KEY);
             }
 
-            Bundle dialogState = savedInstanceState.getBundle(SMS_CONFIRMATION_STATE_KEY);
-            mSmsConfirmationDialog.onRestoreInstanceState(dialogState);
-
-            selectedItemPosition = savedInstanceState.getInt(RECIPIENT_TYPE_POS_KEY, 1);
-            String searchText = savedInstanceState.getString(RECIPIENT_TYPE_SEARCH_KEY, null);
-            if(searchText != null) {
-                mSearchListBarView.setSearchText(searchText);
+            Bundle smsDialogState = savedInstanceState.getBundle(SMS_CONFIRMATION_STATE_KEY);
+            if(smsDialogState != null) {
+                mSmsConfirmationDialog.onRestoreInstanceState(smsDialogState);
             }
+            
+            mTappedRecipient = (Recipient) savedInstanceState.getSerializable(RECIPIENT_TAPPED_KEY);
+
+            Bundle dialogState = savedInstanceState.getBundle(SAVED_DIALOG_STATE_KEY);
+            if (dialogState != null) {
+                mSmsAddContactDialog.onRestoreInstanceState(dialogState);
+            }
+        } else {
+            // default view is all contacts
+            int selectedItemPosition = 0;
+            if(!hasRecents()) {
+                // select "all contacts" in case there are not fav/recent contacts
+                selectedItemPosition = 1;
+            }
+            mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
         }
-        mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
-        //mSearchListBarView.setOnSearchListener(this);
 
         mActivity.getCustomActionBar().setContents(mSearchListBarView, false);
 
@@ -508,9 +553,33 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         setListShownNoAnimation(false);
 
         if(getArguments() != null && (getArguments().containsKey(FAST_REPLY_NAME_PARAM) || getArguments().containsKey(FAST_REPLY_MAIL_PARAM))) {
-            String name = getArguments().getString(FAST_REPLY_NAME_PARAM, null);
-            String mail = getArguments().getString(FAST_REPLY_MAIL_PARAM, null);
-            mSearchListBarView.setSearchText(name + " <" + mail + ">");
+            String name = getArguments().getString(FAST_REPLY_NAME_PARAM, "");
+            String mail = getArguments().getString(FAST_REPLY_MAIL_PARAM, "");
+
+            if(mail.length() <= 0) {
+                // if the email was not supplied, just search for the name
+                mSearchListBarView.setSearchText(name);
+            } else {
+                // if mail is supplied, check if the contact exists
+                List<String> mimeTypes = new ArrayList<>();
+                mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
+                mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
+                FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, null, null, mimeTypes, mail);
+                boolean alreadyHasEmail = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
+
+                // if not, add the contact
+                if(!alreadyHasEmail) {
+                    Bundle bundle = NewRecipientFragment.insertRecipientContact(mActivity, 0, name, null, mail, null);
+                    // will fail if there's no name or if the email is invalid
+                    if(!bundle.containsKey(NewRecipientFragment.KEY_ERROR)) {
+                        alreadyHasEmail = true;
+                    }
+                }
+
+                // if it fails, add complete name+email search text to allow adding the full contact
+                // otherwise, just search by email
+                mSearchListBarView.setSearchText(alreadyHasEmail || name.length() <= 0 ? mail : name + " <" + mail + ">");
+            }
         }
 
         return v;
@@ -532,12 +601,19 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        outState.putInt(RECIPIENT_TYPE_POS_KEY, mSearchListBarView.getSelectedItemPosition());
-        outState.putString(RECIPIENT_TYPE_SEARCH_KEY, mSearchListBarView.getSearchText());
+        // save tapped recipient in case add contact dialog is showing
+        outState.putSerializable(RECIPIENT_TAPPED_KEY, mTappedRecipient);
+        // save add contact dialog state as well
+        Bundle dialogState = mSmsAddContactDialog.onSaveInstanceState();
+        if (dialogState != null) {
+            outState.putBundle(SAVED_DIALOG_STATE_KEY, dialogState);
+        }
+
         if(mFinalEvent != null) {
             outState.putSerializable(RECORDING_FINAL_EVENT_KEY, mFinalEvent);
         }
         outState.putBundle(SMS_CONFIRMATION_STATE_KEY, mSmsConfirmationDialog.onSaveInstanceState());
+
         super.onSaveInstanceState(outState);
     }
 
@@ -551,6 +627,15 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mRecordManager.bind();
 
         mHandler.postDelayed(mAnimationRunnable, FIXED_AVATAR_ANIMATION_INTERVAL_MS + mRandom.nextInt(VARIABLE_AVATAR_ANIMATION_INTERVAL_MS));
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // avoid cursor focus and keyboard when opening
+        // if it is on onStart(), it doesn't work for screen rotations
+        mSearchListBarView.removeSearchTextFocus(null);
+        getView().requestFocus();
     }
 
     @Override
@@ -605,9 +690,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 // discarding the recording, then clear the search filter
                 mSearchListBarView.clearSearch(0);
             }
-        } else if (requestCode == REQUEST_NEWCONTACT) {
-            if (resultCode == Activity.RESULT_OK) {
-                mSearchListBarView.setSearchText(data.getStringExtra(NewRecipientFragment.KEY_NAME) + " <" + data.getStringExtra(NewRecipientFragment.KEY_VIA) + ">");
+        } else if(requestCode == REQUEST_NEWCONTACT) {
+            if(resultCode == Activity.RESULT_OK) {
+                mSearchListBarView.setSearchText(data.getStringExtra(NewRecipientFragment.KEY_NAME));
             } else {
                 mSearchListBarView.clearSearch(0);
             }
@@ -622,6 +707,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public boolean hideRecordingOverlay(boolean animated) {
         //mRecordingViewOverlay.blinkLeft();
         //mRecordingViewOverlay.stop();
+        mSearchListBarView.removeSearchTextFocus(null);
+        getView().requestFocus();
+
         return mActivity.hideOverlay(RECORDING_OVERLAY_TAG, RECORDING_OVERLAY_HIDE_DELAY, animated);   // FIXME animated hide is buggy
     }
 
@@ -684,14 +772,22 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             mRecordSoundPlayer.seekTo(0);
             mRecordSoundPlayer.start();
 
-            Recipient recipient = mRecipientAdapter instanceof RecipientCursorAdapter ?
+            mTappedRecipient = mRecipientAdapter instanceof RecipientCursorAdapter ?
                     ((RecipientCursorAdapter) mRecipientAdapter).getRecipient(position) :
                     ((RecipientArrayAdapter) mRecipientAdapter).getItem(position);
 
-            mRecordingViewOverlay.setName(recipient.getName());
-            mRecordingViewOverlay.setVia(recipient.getVia());
+            if (mTappedRecipient.getMimeType().compareTo(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE) == 0 &&
+                    !Utils.isSimAvailable(mActivity)) {
+                if(!mSmsAddContactDialog.isShowing()) {
+                    mSmsAddContactDialog.show();
+                }
+                return true;
+            }
+            
+            mRecordingViewOverlay.setName(mTappedRecipient.getName());
+            mRecordingViewOverlay.setVia(mTappedRecipient.getVia());
             String filename = getString(R.string.filename_message_from) + Utils.normalizeAndCleanString(mPreferences.getDisplayName());
-            mRecordManager.startRecording(filename, recipient, MAX_DURATION_MILLIS);
+            mRecordManager.startRecording(filename, mTappedRecipient, MAX_DURATION_MILLIS);
         }
         return true;
     }
@@ -759,19 +855,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mGetRecipientsTask.execute();
     }
 
-    private boolean hasRecentsOrFavourites() {
-        if (ContextCompat.checkSelfPermission(mActivity,
-                Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
-            return false;
-        }
-
+    private boolean hasRecents() {
         List<Long> recentList = mPreferences.getRecentContactUris();
         if(recentList != null && recentList.size() > 0) {
             return true;
         }
 
-        FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, null, true, mRecipientTypeAdapter.getItem(0).getMimeTypes(), null);
-        return cursor != null && cursor.getOriginalCursor() != null && cursor.getOriginalCursor().moveToFirst();
+        return false;
     }
 
     private void dismissPopup() {

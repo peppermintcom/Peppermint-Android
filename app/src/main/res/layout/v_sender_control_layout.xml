@@ -11,7 +11,7 @@
         android:id="@+id/imgStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_check_grey"
+        android:src="@drawable/ic_check_tutorial_grey_20dp"
         android:tint="@color/grey_text" />
 
     <TextView

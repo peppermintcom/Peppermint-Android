@@ -140,6 +140,7 @@ public class Recipient implements Serializable {
 
     private long mContactId;
     private long mId;
+    private long mRawId;
     private boolean mStarred;
     private String mMimeType;
     private String mPhotoUri;
@@ -150,8 +151,9 @@ public class Recipient implements Serializable {
     public Recipient() {
     }
 
-    public Recipient(long contactId, boolean starred, String mimeType, String name, String type, String photo, String via) {
+    public Recipient(long contactId, long rawId, boolean starred, String mimeType, String name, String type, String photo, String via) {
         this.mContactId = contactId;
+        this.mRawId = rawId;
         this.mStarred = starred;
         this.mMimeType = mimeType;
         this.mName = name;
@@ -224,4 +226,11 @@ public class Recipient implements Serializable {
         this.mVia = mVia;
     }
 
+    public long getRawId() {
+        return mRawId;
+    }
+
+    public void setRawId(long mRawId) {
+        this.mRawId = mRawId;
+    }
 }

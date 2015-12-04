@@ -86,7 +86,7 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
         if(mBitmapSequence != null && mBitmapSequence.length > frame) {
             bitmap = mBitmapSequence[frame];
         } else if(mBitmapSequenceRes.length > frame) {
-            bitmap = Utils.getScaledBitmap(getContext(), mBitmapSequenceRes[frame], getBounds().width() - mBorderWidth, getBounds().height() - mBorderWidth);
+            bitmap = Utils.getScaledResizedBitmap(getContext(), mBitmapSequenceRes[frame], getBounds().width() - mBorderWidth, getBounds().height() - mBorderWidth, false);
             if(mLastBitmap != null) {
                 mLastBitmap.recycle();
                 mLastBitmap = bitmap;

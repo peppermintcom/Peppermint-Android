@@ -171,14 +171,16 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
     @Override
     public void onClick(View v) {
         if(v.equals(mBtnAddAccount)) {
-            startActivity(new Intent(Settings.ACTION_ADD_ACCOUNT));
+            Intent intent = new Intent(Settings.ACTION_ADD_ACCOUNT);
+            intent.putExtra(Settings.EXTRA_ACCOUNT_TYPES, new String[] {"com.google"});
+            startActivity(intent);
             return;
         }
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        if(mTxtName.getText().toString().trim().length() <= 0) {
+        if(mTxtName.getText().toString().trim().length() <= 0 || Utils.isValidPhoneNumber(mTxtName.getText().toString().trim())) {
             showPopup(mActivity, mTxtName);
             return;
         }

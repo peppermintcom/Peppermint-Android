@@ -25,17 +25,17 @@
             android:listSelector="@drawable/background_white_to_solid_pressed"
             android:drawSelectorOnTop="false" />
 
-        <RelativeLayout
+        <LinearLayout
             android:id="@id/android:empty"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:padding="20dp"
-            android:gravity="center_horizontal|top"
+            android:gravity="center"
+            android:orientation="vertical"
             android:fitsSystemWindows="true">
 
             <TextView
                 android:id="@+id/txtEmpty1"
-                android:layout_alignParentTop="true"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="30dp"
@@ -45,30 +45,28 @@
                 android:textColor="@color/grey_text"
                 android:text="@string/msg_no_contacts" />
 
-            <ImageView
+            <com.peppermint.app.ui.views.simple.CustomMinHeightImageView
                 android:id="@+id/imgNoContacts"
-                android:layout_below="@id/txtEmpty1"
-                android:layout_above="@+id/btnAddAccount"
-                android:layout_centerHorizontal="true"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="20dp"
-                android:src="@drawable/img_no_contacts" />
+                android:src="@drawable/img_no_contacts"
+                custom:minVisibilityHeight="50dp" />
 
             <!-- To add new contact/recipient -->
-            <Button
+            <com.peppermint.app.ui.views.simple.CustomFontButton
                 android:id="@+id/btnAddContact"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_alignParentBottom="true"
                 android:layout_marginLeft="10dp"
                 android:layout_marginRight="10dp"
                 android:paddingTop="5dp"
                 android:paddingLeft="30dp"
                 android:paddingRight="30dp"
                 android:paddingBottom="8dp"
+                custom:textFont="@string/font_semibold"
                 android:textSize="16dp"
                 android:text="@string/add_contact"
                 android:textAllCaps="false"
@@ -78,7 +76,7 @@
                 android:drawablePadding="10dp"
                 style="?android:attr/borderlessButtonStyle" />
 
-        </RelativeLayout>
+        </LinearLayout>
     </FrameLayout>
 
     <LinearLayout android:id="@+id/progressContainer"

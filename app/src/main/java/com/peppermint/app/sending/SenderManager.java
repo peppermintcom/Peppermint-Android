@@ -468,8 +468,11 @@ public class SenderManager implements SenderListener {
                     Log.e(TAG, "Error deleting sending request " + sendingRequest.getId() + ". May not exist and that's ok.", e);
                 }
 
-                Crashlytics.log("Exception message - " + previousSendingTask.getError().getMessage());
-                Crashlytics.logException(previousSendingTask.getError());
+                if(error != null) {
+                    Crashlytics.log("Exception message - " + error.getMessage());
+                    Crashlytics.logException(error);
+                }
+
                 if (mEventBus != null) {
                     mEventBus.post(new SenderEvent(previousSendingTask, error));
                 }

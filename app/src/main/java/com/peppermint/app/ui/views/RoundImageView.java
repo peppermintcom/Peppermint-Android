@@ -32,6 +32,8 @@ public class RoundImageView extends ImageView {
     private Paint mPaint, mBorderPaint;
     private int mWidth, mHeight;
 
+    private boolean mKeepAspectRatio = false;
+
     public RoundImageView(final Context context) {
         this(context, null);
     }
@@ -57,6 +59,7 @@ public class RoundImageView extends ImageView {
                     0, 0);
 
             try {
+                mKeepAspectRatio = a.getBoolean(R.styleable.PeppermintView_keepAspectRatio, mKeepAspectRatio);
                 mBorderWidth = a.getDimensionPixelSize(R.styleable.PeppermintView_borderWidth, Utils.dpToPx(getContext(), DEF_BORDER_WIDTH_DP));
                 mCornerRadius = a.getDimensionPixelSize(R.styleable.PeppermintView_cornerRadius, Utils.dpToPx(getContext(), DEF_CORNER_RADIUS_DP));
                 mBorderPaint.setColor(a.getColor(R.styleable.PeppermintView_borderColor, Color.parseColor(DEF_BORDER_COLOR)));
@@ -78,11 +81,32 @@ public class RoundImageView extends ImageView {
                 mCanvasSize = mHeight;
             }
 
-            BitmapShader shader = new BitmapShader(Bitmap.createScaledBitmap(mImage, mCanvasSize, mCanvasSize, false), Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+            int bitmapWidth = mCanvasSize;
+            int bitmapHeight = mCanvasSize;
+
+            if(isKeepAspectRatio()) {
+                float scale = mImage.getHeight() > mImage.getWidth()
+                        ? (float) mCanvasSize / (float) mImage.getHeight() : (float) mCanvasSize / (float) mImage.getWidth();
+                bitmapWidth = Math.round((float) mImage.getWidth() * scale);
+                bitmapHeight = Math.round((float) mImage.getHeight() * scale);
+            }
+
+            Bitmap bitmap = Bitmap.createScaledBitmap(mImage, bitmapWidth, bitmapHeight, true);
+            BitmapShader shader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
             mPaint.setShader(shader);
 
-            canvas.drawRoundRect(new RectF(0, 0, mCanvasSize, mCanvasSize), mCornerRadius, mCornerRadius, mBorderPaint);
-            canvas.drawRoundRect(new RectF(mBorderWidth, mBorderWidth, mCanvasSize-mBorderWidth, mCanvasSize-mBorderWidth), mCornerRadius-mBorderWidth, mCornerRadius-mBorderWidth, mPaint);
+            int xOffset = 0;
+            int yOffset = 0;
+
+            if(isKeepAspectRatio()) {
+                xOffset = (int) (((float) mWidth - (float) bitmap.getWidth()) / 2f);
+                yOffset = (int) (((float) mHeight - (float) bitmap.getHeight()) / 2f);
+            }
+
+            canvas.drawRoundRect(new RectF(xOffset, yOffset, bitmap.getWidth(), bitmap.getHeight()), mCornerRadius, mCornerRadius, mBorderPaint);
+            canvas.drawRoundRect(new RectF(xOffset + mBorderWidth, yOffset + mBorderWidth, bitmap.getWidth() - mBorderWidth, bitmap.getHeight() - mBorderWidth), mCornerRadius - mBorderWidth, mCornerRadius - mBorderWidth, mPaint);
+
+            //bitmap.recycle();
         }
     }
 
@@ -107,5 +131,13 @@ public class RoundImageView extends ImageView {
         drawable.draw(canvas);
 
         return bitmap;
+    }
+
+    public boolean isKeepAspectRatio() {
+        return mKeepAspectRatio;
+    }
+
+    public void setKeepAspectRatio(boolean mKeepAspectRatio) {
+        this.mKeepAspectRatio = mKeepAspectRatio;
     }
 }
