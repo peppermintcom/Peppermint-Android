@@ -67,8 +67,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public static final String FAST_REPLY_MAIL_PARAM = "mail";
 
     // keys to save the instance state
-    private static final String RECIPIENT_TYPE_POS_KEY = "RecipientsFragment_RecipientTypePosition";
-    private static final String RECIPIENT_TYPE_SEARCH_KEY = "RecipientsFragment_RecipientTypeSearch";
     private static final String RECIPIENT_TAPPED_KEY = "RecipientsFragment_RecipientTapped";
     private static final String SAVED_DIALOG_STATE_KEY = "RecipientsFragment_SmsDialogState";
 
@@ -375,14 +373,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mSearchListBarView.setListAdapter(mRecipientTypeAdapter);
         mSearchListBarView.setTypeface(app.getFontRegular());
 
-        // default view is all contacts
-        int selectedItemPosition = 0;
         if (savedInstanceState != null) {
-            selectedItemPosition = savedInstanceState.getInt(RECIPIENT_TYPE_POS_KEY, 0);
-            String searchText = savedInstanceState.getString(RECIPIENT_TYPE_SEARCH_KEY, null);
-            if(searchText != null) {
-                mSearchListBarView.setSearchText(searchText);
-            }
             mTappedRecipient = (Recipient) savedInstanceState.getSerializable(RECIPIENT_TAPPED_KEY);
 
             Bundle dialogState = savedInstanceState.getBundle(SAVED_DIALOG_STATE_KEY);
@@ -390,13 +381,14 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 mSmsAddContactDialog.onRestoreInstanceState(dialogState);
             }
         } else {
+            // default view is all contacts
+            int selectedItemPosition = 0;
             if(!hasRecents()) {
                 // select "all contacts" in case there are not fav/recent contacts
                 selectedItemPosition = 1;
             }
+            mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
         }
-        mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
-        //mSearchListBarView.setOnSearchListener(this);
 
         mActivity.getCustomActionBar().setContents(mSearchListBarView, false);
 
@@ -495,9 +487,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        outState.putInt(RECIPIENT_TYPE_POS_KEY, mSearchListBarView.getSelectedItemPosition());
-        outState.putString(RECIPIENT_TYPE_SEARCH_KEY, mSearchListBarView.getSearchText());
+        // save tapped recipient in case add contact dialog is showing
         outState.putSerializable(RECIPIENT_TAPPED_KEY, mTappedRecipient);
+        // save add contact dialog state as well
         Bundle dialogState = mSmsAddContactDialog.onSaveInstanceState();
         if (dialogState != null) {
             outState.putBundle(SAVED_DIALOG_STATE_KEY, dialogState);

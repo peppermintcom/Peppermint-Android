@@ -6,6 +6,8 @@ import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Build;
+import android.os.Bundle;
+import android.os.Parcelable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
@@ -33,6 +35,13 @@ import com.peppermint.app.utils.Utils;
  */
 public class SearchListBarView extends FrameLayout implements AdapterView.OnItemClickListener {
 
+    private static final String TAG = SearchListBarView.class.getSimpleName();
+
+    private static final String SELECTED_POSITION_BEFORE_SEARCH_KEY = TAG + "_SelectedPositionBeforeSearch";
+    private static final String SELECTED_POSITION_KEY = TAG + "_SelectedPosition";
+    private static final String SEARCH_TEXT_KEY = TAG + "_SearchText";
+    private static final String SUPER_STATE_KEY = TAG + "_SuperState";
+
     private static final int MIN_SEARCH_CHARACTERS = 1;
 
     public interface OnSearchListener {
@@ -54,13 +63,12 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
 
     private SearchListBarAdapter mAdapter;
     private int mMinSearchCharacters = MIN_SEARCH_CHARACTERS;
-    private int mSelectedItemPosition = 0;
-
-    /*private Handler mHandler = new Handler();*/
+    private int mSelectedItemPosition = 0, mSelectedItemPositionBeforeSearch = 0;
 
     private TextWatcher mTextWatcher = new TextWatcher() {
         private int _startVia = -1;
         private int _endVia = -1;
+
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             _endVia = -1;
@@ -68,6 +76,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
                 _endVia = start;
             }
         }
+
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
             _startVia = -1;
@@ -75,6 +84,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
                 _startVia = start;
             }
         }
+
         @Override
         public void afterTextChanged(Editable s) {
             /*mHandler.removeCallbacks(mSearchRunnable);
@@ -101,7 +111,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
 
             // go back to recent/fav contacts if the search field was emptied
             if(searchText == null) {
-                innerSetSelectedItemPosition(0);
+                innerSetSelectedItemPosition(mSelectedItemPositionBeforeSearch);
             } else {
                 // otherwise, if the current pos doesn't allow searching - move to next
                 // position until one that allows searching is found
@@ -280,6 +290,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
     }
 
     public void setSelectedItemPosition(int position) {
+        mSelectedItemPositionBeforeSearch = position;
         innerSetSelectedItemPosition(position);
         innerTriggerSearch();
     }
@@ -361,5 +372,25 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         if(mListPopupWindow.isShowing()) {
             mListPopupWindow.dismiss();
         }
+    }
+
+    @Override
+    public Parcelable onSaveInstanceState() {
+        Bundle bundle = new Bundle();
+        bundle.putCharSequence(SEARCH_TEXT_KEY, mTxtSearch.getText());
+        bundle.putInt(SELECTED_POSITION_KEY, mSelectedItemPosition);
+        bundle.putInt(SELECTED_POSITION_BEFORE_SEARCH_KEY, mSelectedItemPositionBeforeSearch);
+        bundle.putParcelable(SUPER_STATE_KEY, super.onSaveInstanceState());
+        return bundle;
+    }
+
+    @Override
+    public void onRestoreInstanceState(Parcelable state) {
+        Bundle bundle = (Bundle) state;
+        super.onRestoreInstanceState(bundle.getParcelable(SUPER_STATE_KEY));
+        mTxtSearch.setText(bundle.getCharSequence(SEARCH_TEXT_KEY));
+        mSelectedItemPositionBeforeSearch = bundle.getInt(SELECTED_POSITION_BEFORE_SEARCH_KEY, 0);
+        innerSetSelectedItemPosition(bundle.getInt(SELECTED_POSITION_KEY, 0));
+        innerTriggerSearch();
     }
 }
