@@ -1,100 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:layout_height="match_parent"
-    android:layout_width="match_parent"
-    android:orientation="vertical"
-    android:isScrollContainer="false">
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent">
 
     <LinearLayout
-        android:id="@+id/lytTop"
-        android:layout_alignParentTop="true"
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="15dp"
+        android:layout_width="match_parent"
         android:orientation="vertical">
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView
+        <LinearLayout
+            android:id="@+id/lytTop"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
-            android:gravity="center_vertical"
-            custom:textFont="@string/font_semibold"
-            android:textColor="@color/black"
-            android:textSize="16dp"
-            android:text="@string/your_name_" />
+            android:layout_margin="15dp"
+            android:orientation="vertical">
 
-        <com.peppermint.app.ui.views.simple.CustomFontEditText
-            android:id="@+id/txtDisplayName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
-            android:gravity="center_vertical"
-            custom:textFont="@string/font_semibold"
-            android:textColor="@color/black"
-            android:textSize="16dp"
-            android:maxLength="40"
-            android:singleLine="true"
-            android:textCursorDrawable="@drawable/ic_cursor"
-            style="@style/Peppermint.CustomEditText"/>
+            <com.peppermint.app.ui.views.simple.CustomFontTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:gravity="center_vertical"
+                custom:textFont="@string/font_semibold"
+                android:textColor="@color/black"
+                android:textSize="16dp"
+                android:text="@string/your_name_" />
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:gravity="center_vertical"
-            custom:textFont="@string/font_regular"
-            android:textColor="@color/grey_text"
-            android:textSize="14dp"
-            android:text="@string/pref_summary_displayname" />
+            <com.peppermint.app.ui.views.simple.CustomFontEditText
+                android:id="@+id/txtDisplayName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:gravity="center_vertical"
+                custom:textFont="@string/font_semibold"
+                android:textColor="@color/black"
+                android:textSize="16dp"
+                android:maxLength="40"
+                android:singleLine="true"
+                android:textCursorDrawable="@drawable/ic_cursor"
+                style="@style/Peppermint.CustomEditText"/>
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
-            android:gravity="center_vertical"
-            custom:textFont="@string/font_semibold"
-            android:textColor="@color/black"
-            android:textSize="16dp"
-            android:text="@string/pick_account" />
+            <com.peppermint.app.ui.views.simple.CustomFontTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:gravity="center_vertical"
+                custom:textFont="@string/font_regular"
+                android:textColor="@color/grey_text"
+                android:textSize="14dp"
+                android:text="@string/pref_summary_displayname" />
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            custom:textFont="@string/font_regular"
-            android:textColor="@color/grey_text"
-            android:textSize="14dp"
-            android:text="@string/this_account_will_be_used" />
+            <com.peppermint.app.ui.views.simple.CustomFontTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:gravity="center_vertical"
+                custom:textFont="@string/font_semibold"
+                android:textColor="@color/black"
+                android:textSize="16dp"
+                android:text="@string/pick_account" />
 
-    </LinearLayout>
+            <com.peppermint.app.ui.views.simple.CustomFontTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                custom:textFont="@string/font_regular"
+                android:textColor="@color/grey_text"
+                android:textSize="14dp"
+                android:text="@string/this_account_will_be_used" />
 
-    <Button
-        android:id="@+id/btnAddAccount"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:paddingTop="8dp"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
-        android:paddingBottom="11dp"
-        android:textSize="16dp"
-        android:text="@string/add_account"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
-        android:background="@drawable/background_btn_alt"
-        style="?android:attr/borderlessButtonStyle"
-         />
-
-    <ScrollView
-        android:id="@+id/lytScroll"
-        android:layout_below="@id/lytTop"
-        android:layout_above="@id/btnAddAccount"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
+        </LinearLayout>
 
         <FrameLayout
             android:layout_width="match_parent"
@@ -103,7 +78,9 @@
             <ListView
                 android:id="@id/android:list"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"
+                android:scrollbars="none"
+                android:isScrollContainer="false" />
 
             <LinearLayout
                 android:id="@id/android:empty"
@@ -136,6 +113,26 @@
 
         </FrameLayout>
 
-    </ScrollView>
+        <com.peppermint.app.ui.views.simple.CustomFontButton
+            android:id="@+id/btnAddAccount"
+            android:layout_gravity="center_horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            android:paddingTop="5dp"
+            android:paddingLeft="30dp"
+            android:paddingRight="30dp"
+            android:paddingBottom="8dp"
+            custom:textFont="@string/font_semibold"
+            android:textSize="16dp"
+            android:text="@string/add_account"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:background="@drawable/background_btn_alt"
+            android:drawableLeft="@drawable/ic_plus_14dp"
+            android:drawablePadding="10dp"
+            style="?android:attr/borderlessButtonStyle" />
 
-</RelativeLayout>
+    </LinearLayout>
+
+</ScrollView>

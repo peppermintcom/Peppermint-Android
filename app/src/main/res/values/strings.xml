@@ -149,7 +149,7 @@
     <string name="when_you_send_via_sms">When you send via SMS it may cost you money for each message you send (depending on your phone plan). Do you want to continue?</string>
     <string name="do_not_show_this_again">Do not ask this again and always send the message</string>
     <string name="_continue">Continue</string>
-    <string name="add_account">Add account</string>
+    <string name="add_account">Add Account</string>
     <string name="your_name_">Your name:</string>
     <string name="msg_insert_name">You must insert a valid name</string>
     <string name="new_contact">New contact</string>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_height="match_parent"
     android:layout_width="match_parent">
 
@@ -17,7 +18,7 @@
         android:background="@drawable/background_ripple"
         style="?android:attr/borderlessButtonStyle"/>
 
-    <TextView
+    <com.peppermint.app.ui.views.simple.CustomFontTextView
         android:id="@+id/txtTitle"
         android:layout_toLeftOf="@id/btnSave"
         android:layout_width="match_parent"
@@ -25,9 +26,10 @@
         android:layout_marginLeft="30dp"
         android:layout_marginRight="10dp"
         android:gravity="center"
+        custom:textFont="@string/font_semibold"
         android:textSize="20dp"
         android:textColor="@color/white"
         android:text="@string/new_contact">
-    </TextView>
+    </com.peppermint.app.ui.views.simple.CustomFontTextView>
 
 </RelativeLayout>
