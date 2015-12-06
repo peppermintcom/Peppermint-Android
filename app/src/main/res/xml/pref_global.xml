@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <com.peppermint.app.ui.settings.CustomEditTextPreference android:key="displayName"
+    <com.peppermint.app.ui.settings.CustomNamePreference android:key="displayName"
         android:title="@string/pref_title_displayname"
         android:summary="@string/pref_summary_displayname"
-        android:defaultValue=""
-        android:maxLength="40"
-        android:singleLine="true"
-        android:textCursorDrawable="@drawable/ic_cursor" />
+        android:defaultValue="" />
 
     <com.peppermint.app.ui.settings.CustomPreferenceCategory
         android:title="@string/pref_title_emailcategory">
