@@ -22,7 +22,7 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CursorAdapter;
-import android.widget.FrameLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
@@ -83,6 +83,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private LoadingView mRecipientLoadingView;
     private boolean mRecipientListShown;
     private BaseAdapter mRecipientAdapter;
+    private Button mBtnAddContact;
 
     // the custom action bar (with recipient type filter and recipient search)
     private SearchListBarView mSearchListBarView;
@@ -221,12 +222,22 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 mRecipientAdapter.notifyDataSetChanged();
             }
 
+            handleAddContactButtonVisibility();
             setListShown(true);
         }
 
         @Override
         protected void onCancelled(Object o) {
+            handleAddContactButtonVisibility();
             setListShown(true);
+        }
+
+        private void handleAddContactButtonVisibility() {
+            if(mSearchListBarView.getSearchText() != null) {
+                mBtnAddContact.setVisibility(View.VISIBLE);
+            } else {
+                mBtnAddContact.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -396,9 +407,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         View v = inflater.inflate(R.layout.f_recipients_layout, container, false);
 
         // init no recipients view
-        Button btnAddContact = (Button) v.findViewById(R.id.btnAddContact);
-        btnAddContact.setTypeface(app.getFontSemibold());
-        btnAddContact.setOnClickListener(new View.OnClickListener() {
+        mBtnAddContact = (Button) v.findViewById(R.id.btnAddContact);
+        mBtnAddContact.setTypeface(app.getFontSemibold());
+        mBtnAddContact.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(mActivity, NewRecipientActivity.class);
@@ -419,8 +430,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         // bo: adjust status bar height (only do it for API 21 onwards since overlay is not working for older versions)
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             int statusBarHeight = Utils.getStatusBarHeight(mActivity);
-            FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) v.findViewById(android.R.id.empty).getLayoutParams();
-            layoutParams.bottomMargin += statusBarHeight;
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) v.findViewById(R.id.listContainer).getLayoutParams();
+            layoutParams.topMargin -= statusBarHeight;
         }
         // eo: adjust status bar height
 
@@ -593,10 +604,12 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             mLoadingAnimatorListener.onAnimationEnd(null);
         }
     }
+
     @Override
     public void setListShown(boolean shown){
         setListShown(shown, true);
     }
+
     @Override
     public void setListShownNoAnimation(boolean shown) {
         setListShown(shown, false);
