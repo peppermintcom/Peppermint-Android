@@ -209,7 +209,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                         ((CursorAdapter) mRecipientAdapter).changeCursor((Cursor) data);
                     } else {
                         mRecipientAdapter = new RecipientCursorAdapter((PeppermintApp) mActivity.getApplication(), mActivity, (Cursor) data);
-                        getListView().setAdapter(mRecipientAdapter);
+                        // sync. trying to avoid detachFromGLContext errors
+                        synchronized(mAnimationRunnable) {
+                            getListView().setAdapter(mRecipientAdapter);
+                        }
                     }
                 } else {
                     // use new adapter
@@ -217,7 +220,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                         ((CursorAdapter) mRecipientAdapter).changeCursor(null);
                     }
                     mRecipientAdapter = (BaseAdapter) data;
-                    getListView().setAdapter(mRecipientAdapter);
+                    // sync. trying to avoid detachFromGLContext errors
+                    synchronized(mAnimationRunnable) {
+                        getListView().setAdapter(mRecipientAdapter);
+                    }
                 }
                 mRecipientAdapter.notifyDataSetChanged();
             }
@@ -247,28 +253,32 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private final Runnable mAnimationRunnable = new Runnable() {
         @Override
         public void run() {
-            List<AnimatedAvatarView> possibleAnimationsList = new ArrayList<>();
+            // sync. trying to avoid detachFromGLContext errors
+            synchronized (this) {
 
-            // get all anonymous avatar instances
-            for(int i=0; i<getListView().getChildCount(); i++) {
-                AnimatedAvatarView v = (AnimatedAvatarView) getListView().getChildAt(i).findViewById(R.id.imgPhoto);
-                if(!v.isShowStaticAvatar()) {
-                    possibleAnimationsList.add(v);
+                List<AnimatedAvatarView> possibleAnimationsList = new ArrayList<>();
+
+                // get all anonymous avatar instances
+                for (int i = 0; i < getListView().getChildCount(); i++) {
+                    AnimatedAvatarView v = (AnimatedAvatarView) getListView().getChildAt(i).findViewById(R.id.imgPhoto);
+                    if (!v.isShowStaticAvatar()) {
+                        possibleAnimationsList.add(v);
+                    }
                 }
-            }
 
-            // randomly pick one
-            int index = possibleAnimationsList.size() > 0 ? mRandom.nextInt(possibleAnimationsList.size()) : 0;
+                // randomly pick one
+                int index = possibleAnimationsList.size() > 0 ? mRandom.nextInt(possibleAnimationsList.size()) : 0;
 
-            // start the animation for the picked avatar and stop all others (avoids unnecessary drawing threads)
-            for(int i=0; i<possibleAnimationsList.size(); i++) {
-                AnimatedAvatarView v = possibleAnimationsList.get(i);
-                if(i == index) {
-                    v.startDrawingThread();
-                    v.resetAnimations();
-                    v.startAnimations();
-                } else {
-                    v.stopDrawingThread();
+                // start the animation for the picked avatar and stop all others (avoids unnecessary drawing threads)
+                for (int i = 0; i < possibleAnimationsList.size(); i++) {
+                    AnimatedAvatarView v = possibleAnimationsList.get(i);
+                    if (i == index) {
+                        v.startDrawingThread();
+                        v.resetAnimations();
+                        v.startAnimations();
+                    } else {
+                        v.stopDrawingThread();
+                    }
                 }
             }
 
