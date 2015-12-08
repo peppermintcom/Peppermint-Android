@@ -764,6 +764,18 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
         setRecordDuration(0);
 
+        mTappedRecipient = mRecipientAdapter instanceof RecipientCursorAdapter ?
+                ((RecipientCursorAdapter) mRecipientAdapter).getRecipient(position) :
+                ((RecipientArrayAdapter) mRecipientAdapter).getItem(position);
+
+        if (mTappedRecipient.getMimeType().compareTo(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE) == 0 &&
+                !Utils.isSimAvailable(mActivity)) {
+            if(!mSmsAddContactDialog.isShowing()) {
+                mSmsAddContactDialog.show();
+            }
+            return true;
+        }
+
         // start recording
         if(showRecordingOverlay()) {
             if(mRecordSoundPlayer.isPlaying()) {
@@ -772,18 +784,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             mRecordSoundPlayer.seekTo(0);
             mRecordSoundPlayer.start();
 
-            mTappedRecipient = mRecipientAdapter instanceof RecipientCursorAdapter ?
-                    ((RecipientCursorAdapter) mRecipientAdapter).getRecipient(position) :
-                    ((RecipientArrayAdapter) mRecipientAdapter).getItem(position);
-
-            if (mTappedRecipient.getMimeType().compareTo(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE) == 0 &&
-                    !Utils.isSimAvailable(mActivity)) {
-                if(!mSmsAddContactDialog.isShowing()) {
-                    mSmsAddContactDialog.show();
-                }
-                return true;
-            }
-            
             mRecordingViewOverlay.setName(mTappedRecipient.getName());
             mRecordingViewOverlay.setVia(mTappedRecipient.getVia());
             String filename = getString(R.string.filename_message_from) + Utils.normalizeAndCleanString(mPreferences.getDisplayName());
