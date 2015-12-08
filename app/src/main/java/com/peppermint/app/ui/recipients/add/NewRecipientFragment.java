@@ -387,7 +387,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
 
         mNewAvatarDialog = new CustomListDialog(mActivity);
         mNewAvatarDialog.setCancelable(true);
-        mNewAvatarDialog.setTitleText(R.string.change_photo);
+        mNewAvatarDialog.setTitleText(R.string.select_photo);
         mNewAvatarDialog.setListOnItemClickListener(this);
         mAvatarAdapter = new NavigationListAdapter(mActivity, mAvatarOptions, app.getFontSemibold());
         mNewAvatarDialog.setListAdapter(mAvatarAdapter);
