@@ -14,7 +14,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -85,6 +84,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private boolean mRecipientListShown;
     private BaseAdapter mRecipientAdapter;
     private Button mBtnAddContact;
+    private boolean mNoRecentsAtStartAndDidntPick = false;
 
     // the custom action bar (with recipient type filter and recipient search)
     private SearchListBarView mSearchListBarView;
@@ -408,16 +408,24 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             if(!hasRecents()) {
                 // select "all contacts" in case there are not fav/recent contacts
                 selectedItemPosition = 1;
+                mNoRecentsAtStartAndDidntPick = true;
             }
             mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
-            // still go back to recent contacts after sending a message
-            mSearchListBarView.setSelectedItemPositionBeforeSearch(0);
         }
 
         mActivity.getCustomActionBar().setContents(mSearchListBarView, false);
 
         // inflate the view
         View v = inflater.inflate(R.layout.f_recipients_layout, container, false);
+
+        /*// bo: adjust status bar height (only do it for API 21 onwards since overlay is not working for older versions)
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            int statusBarHeight = Utils.getStatusBarHeight(mActivity);
+            View listContainer = v.findViewById(R.id.listContainer);
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) listContainer.getLayoutParams();
+            layoutParams.topMargin -= statusBarHeight;
+        }
+        // eo: adjust status bar height*/
 
         // init no recipients view
         mBtnAddContact = (Button) v.findViewById(R.id.btnAddContact);
@@ -439,15 +447,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         TextView txtEmpty1 = (TextView) v.findViewById(R.id.txtEmpty1);
         txtEmpty1.setTypeface(app.getFontSemibold());
-
-        // bo: adjust status bar height (only do it for API 21 onwards since overlay is not working for older versions)
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            int statusBarHeight = Utils.getStatusBarHeight(mActivity);
-            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) v.findViewById(R.id.listContainer).getLayoutParams();
-            Log.d(RecipientsFragment.class.getSimpleName(), "TOP_MARGIN = " + layoutParams.topMargin);
-            layoutParams.topMargin -= statusBarHeight;
-        }
-        // eo: adjust status bar height
 
         // init loading recipients view
         mRecipientListShown = true;
@@ -572,6 +571,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == REQUEST_RECORD) {
             if(resultCode == Activity.RESULT_OK) {
+                if(mNoRecentsAtStartAndDidntPick) {
+                    // still go back to recent contacts after sending a message
+                    mSearchListBarView.setSelectedItemPositionBeforeSearch(0);
+                }
+
                 // if the user has gone through the sending process without
                 // discarding the recording, then clear the search filter
                 mSearchListBarView.clearSearch(0);
@@ -651,6 +655,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onSearch(String filter) {
+        if(mSearchListBarView.getSelectedItemPositionBeforeSearch() != 1 && mNoRecentsAtStartAndDidntPick) {
+            mNoRecentsAtStartAndDidntPick = false;
+        }
+
         if(mGetRecipientsTask != null && !mGetRecipientsTask.isCancelled() && mGetRecipientsTask.getStatus() != AsyncTask.Status.FINISHED) {
             mGetRecipientsTask.cancel(true);
         }

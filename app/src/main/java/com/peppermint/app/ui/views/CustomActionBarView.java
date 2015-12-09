@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -86,7 +87,7 @@ public class CustomActionBarView extends RelativeLayout {
             int statusBarHeight = Utils.getStatusBarHeight(getContext());
             findViewById(R.id.customActionBarTopSpace).getLayoutParams().height = statusBarHeight;
             View lytActionBar = findViewById(R.id.customActionBar);
-            lytActionBar.getLayoutParams().height = lytActionBar.getLayoutParams().height + statusBarHeight;
+            lytActionBar.getLayoutParams().height += statusBarHeight;
         }
         // eo: adjust status bar height
     }
