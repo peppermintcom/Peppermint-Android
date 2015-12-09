@@ -16,6 +16,7 @@ import com.peppermint.app.R;
 import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.sending.SenderEvent;
 import com.peppermint.app.sending.mail.nativemail.IntentMailSenderTask;
+import com.peppermint.app.sending.nativesms.IntentSMSSenderTask;
 import com.peppermint.app.utils.AnimatorBuilder;
 
 /**
@@ -23,10 +24,14 @@ import com.peppermint.app.utils.AnimatorBuilder;
  */
 public class SenderControlLayout extends FrameLayout implements View.OnClickListener, SenderServiceManager.Listener {
 
+    private static final int DURATION = 4000;
+
     private TextView mTxtStatus, mTxtTapToCancel;
     private ImageView mImgStatus;
     private SenderServiceManager mSenderServiceManager;
     private AnimatorBuilder mAnimatorBuilder;
+
+    private Animator mShowAnimation, mHideAnimation;
 
     public SenderControlLayout(Context context) {
         super(context);
@@ -75,45 +80,56 @@ public class SenderControlLayout extends FrameLayout implements View.OnClickList
 
     protected void hide(int delay) {
         if(getVisibility() == View.VISIBLE) {
-            Animator anim = mAnimatorBuilder.buildSlideOutBottomAnimator(delay, this, 0);
-            anim.addListener(new Animator.AnimatorListener() {
+            if(mHideAnimation != null && mHideAnimation.isStarted()) {
+                mHideAnimation.cancel();
+            }
+
+            mHideAnimation = mAnimatorBuilder.buildSlideOutBottomAnimator(delay, this, 0);
+            mHideAnimation.addListener(new Animator.AnimatorListener() {
+                private boolean isCancelled = false;
                 @Override
                 public void onAnimationStart(Animator animation) { }
                 @Override /* finally completely hide the view */
-                public void onAnimationEnd(Animator animation) { setVisibility(View.GONE); }
+                public void onAnimationEnd(Animator animation) { if(!isCancelled) { setVisibility(View.GONE); } mHideAnimation = null; }
                 @Override
-                public void onAnimationCancel(Animator animation) { }
+                public void onAnimationCancel(Animator animation) { isCancelled = true; mHideAnimation = null; }
                 @Override
                 public void onAnimationRepeat(Animator animation) { }
             });
-            anim.start();
+            mHideAnimation.start();
         }
     }
 
     protected void show() {
         if(getVisibility() == View.GONE) {
-            Animator anim = mAnimatorBuilder.buildFadeSlideInBottomAnimator(this);
-            anim.start();
+            if(mShowAnimation == null || !mShowAnimation.isRunning()) {
+                mShowAnimation = mAnimatorBuilder.buildFadeSlideInBottomAnimator(this);
+                mShowAnimation.start();
+            }
         }
         setVisibility(View.VISIBLE);
     }
 
     protected void showAndHide() {
         if(getVisibility() != View.GONE) {
-            hide(5000); // hide only after 5 secs.
+            hide(DURATION); // hide only after 4 secs.
         } else {
-            Animator anim = mAnimatorBuilder.buildFadeSlideInBottomAnimator(this);
-            anim.addListener(new Animator.AnimatorListener() {
+            if(mShowAnimation != null && mShowAnimation.isRunning()) {
+                return;
+            }
+
+            mShowAnimation = mAnimatorBuilder.buildFadeSlideInBottomAnimator(this);
+            mShowAnimation.addListener(new Animator.AnimatorListener() {
                 @Override
                 public void onAnimationStart(Animator animation) { }
                 @Override
-                public void onAnimationEnd(Animator animation) { hide(5000); }
+                public void onAnimationEnd(Animator animation) { hide(DURATION); mShowAnimation = null; }
                 @Override
-                public void onAnimationCancel(Animator animation) {}
+                public void onAnimationCancel(Animator animation) { mShowAnimation = null; }
                 @Override
                 public void onAnimationRepeat(Animator animation) { }
             });
-            anim.start();
+            mShowAnimation.start();
             setVisibility(View.VISIBLE);
         }
     }
@@ -128,32 +144,25 @@ public class SenderControlLayout extends FrameLayout implements View.OnClickList
 
     private void onBoundSendService(SenderEvent event) {
         if(mSenderServiceManager.isSending()) {
-            // do not show message for IntentMailSender
-            if(event != null && event.getSenderTask() instanceof IntentMailSenderTask) {
-                return;
-            }
-
             mTxtStatus.setText(getContext().getString(R.string.uploading));
             mTxtTapToCancel.setVisibility(View.VISIBLE);
             mImgStatus.setVisibility(View.GONE);
-            show();
-        } else {
-            hide(500);
+            showAndHide();
         }
     }
 
     @Override
     public void onSendFinished(SenderEvent event) {
         if(!mSenderServiceManager.isSending()) {
-            // do not show message for IntentMailSender
-            if(event != null && event.getSenderTask() instanceof IntentMailSenderTask) {
+            // do not show message for IntentMailSender and IntentSMSSender
+            if(event != null && (event.getSenderTask() instanceof IntentMailSenderTask || event.getSenderTask() instanceof IntentSMSSenderTask)) {
                 hide(0);
                 return;
             }
-            showAndHide();
             mTxtStatus.setText(getContext().getString(R.string.sent));
             mTxtTapToCancel.setVisibility(View.GONE);
             mImgStatus.setVisibility(View.VISIBLE);
+            showAndHide();
         }
     }
 
@@ -169,12 +178,22 @@ public class SenderControlLayout extends FrameLayout implements View.OnClickList
 
     @Override
     public void onSendCancelled(SenderEvent event) {
-        onBoundSendService(event);
+        if(!mSenderServiceManager.isSending()) {
+            mTxtStatus.setText(getContext().getString(R.string.cancelled));
+            mTxtTapToCancel.setVisibility(View.GONE);
+            mImgStatus.setVisibility(View.GONE);
+            showAndHide();
+        }
     }
 
     @Override
     public void onSendError(SenderEvent event) {
-        onBoundSendService(event);
+        if(!mSenderServiceManager.isSending()) {
+            mTxtStatus.setText(getContext().getString(R.string.not_sent));
+            mTxtTapToCancel.setVisibility(View.GONE);
+            mImgStatus.setVisibility(View.GONE);
+            showAndHide();
+        }
     }
 
     @Override
@@ -182,6 +201,11 @@ public class SenderControlLayout extends FrameLayout implements View.OnClickList
 
     @Override
     public void onSendQueued(SenderEvent event) {
-        onBoundSendService(event);
+        if(!mSenderServiceManager.isSending()) {
+            mTxtStatus.setText(getContext().getString(R.string.queued));
+            mTxtTapToCancel.setVisibility(View.GONE);
+            mImgStatus.setVisibility(View.GONE);
+            showAndHide();
+        }
     }
 }

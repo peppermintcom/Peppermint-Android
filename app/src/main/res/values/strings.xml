@@ -170,4 +170,7 @@
     <string name="msg_message_no_camera_app">Your device doesn\'t have a camera app installed</string>
     <string name="msg_message_external_storage_error">Unable to create photo file in external storage</string>
     <string name="select_photo">Select Photo</string>
+    <string name="cancelled">Cancelled</string>
+    <string name="not_sent">Not Sent</string>
+    <string name="queued">Queued</string>
 </resources>
