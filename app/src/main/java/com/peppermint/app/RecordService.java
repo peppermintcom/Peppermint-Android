@@ -161,13 +161,17 @@ public class RecordService extends Service {
     }
 
     private float getLoudnessFromAmplitude(float amplitude) {
-        while((mMaxAmplitude - amplitude) < 500f) {
-            mMaxAmplitude += 1000f;
+        while((amplitude / mMaxAmplitude) > 0.9f) {
+            mMaxAmplitude += 200f;
         }
 
         // gradually adapt the max amplitude to allow useful loudness range values
-        if(mMaxAmplitude > 4000f) {
-            mMaxAmplitude -= 500f;
+        while(mMaxAmplitude > 300f && (amplitude / mMaxAmplitude) < 0.1f) {
+            mMaxAmplitude -= 300f;
+        }
+
+        if(mMaxAmplitude < 300) {
+            mMaxAmplitude = 300;
         }
 
         return Math.min(1, amplitude / mMaxAmplitude);
@@ -358,7 +362,7 @@ public class RecordService extends Service {
         }
 
         mRecipient = recipient;
-        mMaxAmplitude = 16000f;
+        mMaxAmplitude = 1500f;
 
         if(filePrefix == null) {
             mRecorder = new ExtendedAudioRecorder(RecordService.this);
