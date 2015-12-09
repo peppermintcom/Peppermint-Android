@@ -195,8 +195,8 @@ public class CustomNamePreference extends CustomDialogPreference {
     public void setFullName(String firstName, String lastName) {
         final boolean wasBlocking = shouldDisableDependents();
 
-        mFirstName = firstName.trim();
-        mLastName = lastName.trim();
+        mFirstName = firstName == null ? "" : firstName.trim();
+        mLastName = lastName == null ? "" : lastName.trim();
 
         persistString(Utils.capitalizeFully(mFirstName + " " + mLastName).trim());
 
@@ -263,7 +263,15 @@ public class CustomNamePreference extends CustomDialogPreference {
 
     @Override
     protected void onSetInitialValue(boolean restoreValue, Object defaultValue) {
-        setFullName(restoreValue ? getPersistedFirstName(getFirstName()) : (String) defaultValue, restoreValue ? getPersistedLastName(getLastName()) : (String) defaultValue);
+        String[] names = Utils.getFirstAndLastNames(getPersistedString(getFullName()));
+        String firstName = getPersistedFirstName(getFirstName());
+        String lastName = getPersistedLastName(getLastName());
+        if((firstName == null || firstName.trim().length() <= 0) && (lastName == null || lastName.trim().length() <= 0)) {
+            firstName = names[0];
+            lastName = names[1];
+        }
+
+        setFullName(restoreValue ? firstName : (String) defaultValue, restoreValue ? lastName : (String) defaultValue);
     }
 
     @Override

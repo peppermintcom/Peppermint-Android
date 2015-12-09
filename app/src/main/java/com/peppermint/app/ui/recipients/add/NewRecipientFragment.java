@@ -71,7 +71,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     public static final int ERR_UNABLE_TO_ADD = 5;
 
     public static Bundle insertRecipientContact(Context context, long rawId, String fullName, String phone, String email, String photoUrl) {
-        String[] names = getFirstAndLastNames(fullName);
+        String[] names = Utils.getFirstAndLastNames(fullName);
         return insertRecipientContact(context, rawId, names[0], names[1], phone, email, photoUrl);
     }
 
@@ -249,26 +249,6 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         }
 
         return bundle;
-    }
-
-    private static String[] getFirstAndLastNames(String fullName) {
-        String[] names = new String[]{"", ""};
-
-        if(fullName == null || fullName.length() <= 0) {
-            return names;
-        }
-
-        fullName = Utils.capitalizeFully(fullName);
-        String[] tmpNames = fullName.split("\\s+");
-
-        if(tmpNames.length > 1) {
-            names[1] = tmpNames[tmpNames.length - 1];
-            names[0] = fullName.substring(0, fullName.length() - tmpNames[tmpNames.length - 1].length()).trim();
-        } else {
-            names[0] = fullName;
-        }
-
-        return names;
     }
 
     private static final String FILE_SCHEME = "file:/";
@@ -466,7 +446,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
             mAvatarUrl = args.getString(KEY_PHOTO_URL, null);
 
             if(name != null) {
-                String[] names = getFirstAndLastNames(name);
+                String[] names = Utils.getFirstAndLastNames(name);
 
                 mTxtFirstName.setText(names[0]);
                 mTxtFirstName.setSelection(names[0].length());

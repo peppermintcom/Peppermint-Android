@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -443,6 +444,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             int statusBarHeight = Utils.getStatusBarHeight(mActivity);
             RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) v.findViewById(R.id.listContainer).getLayoutParams();
+            Log.d(RecipientsFragment.class.getSimpleName(), "TOP_MARGIN = " + layoutParams.topMargin);
             layoutParams.topMargin -= statusBarHeight;
         }
         // eo: adjust status bar height
