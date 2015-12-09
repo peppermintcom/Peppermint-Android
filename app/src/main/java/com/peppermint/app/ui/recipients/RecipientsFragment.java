@@ -409,6 +409,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 selectedItemPosition = 1;
             }
             mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
+            // still go back to recent contacts after sending a message
+            mSearchListBarView.setSelectedItemPositionBeforeSearch(0);
         }
 
         mActivity.getCustomActionBar().setContents(mSearchListBarView, false);

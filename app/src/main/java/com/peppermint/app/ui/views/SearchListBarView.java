@@ -295,6 +295,14 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         innerTriggerSearch();
     }
 
+    public void setSelectedItemPositionBeforeSearch(int position) {
+        mSelectedItemPositionBeforeSearch = position;
+    }
+
+    public int getSelectedItemPositionBeforeSearch() {
+        return mSelectedItemPositionBeforeSearch;
+    }
+
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         setSelectedItemPosition(position);
@@ -330,6 +338,8 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
             removeSearchTextFocus(null);
             return true;
         }
+
+        mTxtSearch.setText("");
         return false;
     }
 
