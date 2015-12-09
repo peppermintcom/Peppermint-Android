@@ -209,7 +209,26 @@ public class SenderManager implements SenderListener {
             mMaintenanceFuture.cancel(true);
         }
         mContext.unregisterReceiver(mConnectivityChangeReceiver);
+
+        // save tasks that were not cancelled and are being executed
+        // these will be re-executed once the service restarts
+        DatabaseHelper dbHelper = new DatabaseHelper(mContext);
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        for(UUID uuid : mTaskMap.keySet()) {
+            SenderTask task = mTaskMap.get(uuid);
+            if(!task.isCancelled() && !task.getSendingRequest().isSent()) {
+                task.cancel(true);
+                try {
+                    SendingRequest.insertOrUpdate(db, task.getSendingRequest());
+                } catch (SQLException e) {
+                    Crashlytics.logException(e);
+                }
+            }
+        }
+        db.close();
+
         cancel();
+
         for(Sender sender : mSenderMap.values()) {
             while(sender != null) {
                 sender.deinit();
