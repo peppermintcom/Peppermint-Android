@@ -149,10 +149,16 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
 
         // add email data
         if(email.length() > 0) {
-            List<String> mimeTypes = new ArrayList<>();
-            mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
-            FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(context, null, null, null, mimeTypes, email);
-            boolean alreadyHasEmail = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
+            boolean alreadyHasEmail = false;
+
+            if(rawId > 0) {
+                List<Long> rawIds = new ArrayList<>();
+                List<String> mimeTypes = new ArrayList<>();
+                rawIds.add(rawId);
+                mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
+                FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(context, rawIds, mimeTypes, email);
+                alreadyHasEmail = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
+            }
 
             if(!alreadyHasEmail) {
                 if (rawId <= 0) {

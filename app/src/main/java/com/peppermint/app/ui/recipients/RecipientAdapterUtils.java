@@ -65,6 +65,17 @@ public class RecipientAdapterUtils {
         return new Recipient(id, rawId, starred, mime, name, accountType, photoUri, via);
     }
 
+    public static Cursor getRecipientsCursor(Context context, List<Long> allowedRawIds, List<String> allowedMimeTypes, String viaSearch) {
+        List<String> args = new ArrayList<>();
+        String condViaSearch = (viaSearch == null ? "" : " AND (LOWER(REPLACE(" + ContactsContract.Data.DATA1 + ", ' ', '')) LIKE " + DatabaseUtils.sqlEscapeString(/*"%" + */viaSearch + "%") + ")");
+        String condMimeTypes = getConditions(ContactsContract.Data.MIMETYPE, allowedMimeTypes, args, false);
+        String condIds = getConditions(ContactsContract.Data.RAW_CONTACT_ID, allowedRawIds, null, false);
+
+        return context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, PROJECTION,
+                "1" + condViaSearch + " AND (" + condMimeTypes + ")" + " AND (" + condIds + ")",
+                args.toArray(new String[args.size()]), DISPLAY_NAME + " COLLATE NOCASE");
+    }
+
     /**
      * Obtains a list of all recipients found in the Android contacts database according to
      * the given restrictions.
@@ -98,7 +109,7 @@ public class RecipientAdapterUtils {
             @Override
             public boolean isValid(Cursor cursor) {
                 // removes duplicate contacts
-                String via = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1)).trim().toLowerCase();
+                String via = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1)).trim().toLowerCase() + cursor.getString(cursor.getColumnIndex(DISPLAY_NAME)).replaceAll("\\s+", "").toLowerCase();
                 if (!mViaSet.contains(via)) {
                     mViaSet.add(via);
                     return true;
