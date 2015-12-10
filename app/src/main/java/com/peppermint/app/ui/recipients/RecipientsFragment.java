@@ -982,6 +982,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         mFinalEvent = null;
 
+        if(mNoRecentsAtStartAndDidntPick) {
+            // still go back to recent contacts after sending a message
+            mSearchListBarView.setSelectedItemPositionBeforeSearch(0);
+        }
+
         // if the user has gone through the sending process without
         // discarding the recording, then clear the search filter
         if(!mSearchListBarView.clearSearch(0)) {
