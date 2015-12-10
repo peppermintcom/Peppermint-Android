@@ -70,6 +70,11 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     public static final int ERR_INVALID_PHONE = 4;
     public static final int ERR_UNABLE_TO_ADD = 5;
 
+    public static Bundle insertRecipientContact(Context context, long rawId, String fullName, String phone, String email, String photoUrl) {
+        String[] names = Utils.getFirstAndLastNames(fullName);
+        return insertRecipientContact(context, rawId, names[0], names[1], phone, email, photoUrl);
+    }
+
     /**
      * Inserts a new contact using the global contacts content provider.<br />
      * If rawId is supplied, will update the contact with the supplied information.<br />
@@ -77,20 +82,22 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
      *
      * @param context the context
      * @param rawId the already existent rawId (0 for a new contact)
-     * @param name the contact name (mandatory)
+     * @param firstName the contact given name (mandatory one of firstName or lastName)
+     * @param lastName the contact family name
      * @param phone the phone number
      * @param email the email address
      * @return a {@link Bundle} with results (can be passed on to an {@link Intent}
      */
-    public static Bundle insertRecipientContact(Context context, long rawId, String name, String phone, String email, String photoUrl) {
+    public static Bundle insertRecipientContact(Context context, long rawId, String firstName, String lastName, String phone, String email, String photoUrl) {
         Bundle bundle = new Bundle();
 
-        name = name == null ? "" : Utils.capitalizeFully(name.trim());
+        firstName = firstName == null ? "" : Utils.capitalizeFully(firstName.trim());
+        lastName = lastName == null ? "" : Utils.capitalizeFully(lastName.trim());
         phone = phone == null ? "" : phone.trim();
         email = email == null ? "" : email.trim();
 
         // validate display name
-        if(name.length() <= 0) {
+        if(firstName.length() <= 0 && lastName.length() <= 0) {
             bundle.putInt(KEY_ERROR, ERR_INVALID_NAME);
             return bundle;
         }
@@ -136,15 +143,22 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                     .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawId);
         }
         ops.add(op.withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
-                .withValue(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name).build());
+                .withValue(ContactsContract.CommonDataKinds.StructuredName.GIVEN_NAME, firstName)
+                .withValue(ContactsContract.CommonDataKinds.StructuredName.FAMILY_NAME, lastName).build());
 
 
         // add email data
         if(email.length() > 0) {
-            List<String> mimeTypes = new ArrayList<>();
-            mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
-            FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(context, null, null, null, mimeTypes, email);
-            boolean alreadyHasEmail = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
+            boolean alreadyHasEmail = false;
+
+            if(rawId > 0) {
+                List<Long> rawIds = new ArrayList<>();
+                List<String> mimeTypes = new ArrayList<>();
+                rawIds.add(rawId);
+                mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
+                FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(context, rawIds, mimeTypes, email);
+                alreadyHasEmail = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
+            }
 
             if(!alreadyHasEmail) {
                 if (rawId <= 0) {
@@ -175,7 +189,10 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                     op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
                             .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawId);
                 }
-                ops.add(op.withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+
+                // not including phone type will crash on HTC devices
+                ops.add(op.withValue(ContactsContract.CommonDataKinds.Phone.TYPE, ContactsContract.CommonDataKinds.Phone.TYPE_OTHER)
+                        .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
                         .withValue(ContactsContract.Data.DATA1, phone).build());
             }
         }
@@ -221,7 +238,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                 throw new RuntimeException("Not all operations were performed while trying to insert contact: Total Ops = " + ops.size() + "; Performed = " + res.length);
             }
 
-            bundle.putString(KEY_NAME, name);
+            bundle.putString(KEY_NAME, firstName + " " + lastName);
             bundle.putString(KEY_VIA, email.length() > 0 ? email : phone);
             bundle.putString(KEY_MAIL, email);
             bundle.putString(KEY_PHONE, phone);
@@ -384,7 +401,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
 
         mNewAvatarDialog = new CustomListDialog(mActivity);
         mNewAvatarDialog.setCancelable(true);
-        mNewAvatarDialog.setTitleText(R.string.change_photo);
+        mNewAvatarDialog.setTitleText(R.string.select_photo);
         mNewAvatarDialog.setListOnItemClickListener(this);
         mAvatarAdapter = new NavigationListAdapter(mActivity, mAvatarOptions, app.getFontSemibold());
         mNewAvatarDialog.setListAdapter(mAvatarAdapter);
@@ -429,21 +446,13 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
             mAvatarUrl = args.getString(KEY_PHOTO_URL, null);
 
             if(name != null) {
-                name = Utils.capitalizeFully(name);
-                String[] names = name.split("\\s+");
+                String[] names = Utils.getFirstAndLastNames(name);
 
-                if(names.length > 1) {
-                    String lastName = names[names.length - 1];
-                    mTxtLastName.setText(lastName);
-                    mTxtLastName.setSelection(lastName.length());
+                mTxtFirstName.setText(names[0]);
+                mTxtFirstName.setSelection(names[0].length());
 
-                    String firstName = name.substring(0, name.length() - names[names.length - 1].length()).trim();
-                    mTxtFirstName.setText(firstName);
-                    mTxtFirstName.setSelection(firstName.length());
-                } else {
-                    mTxtFirstName.setText(name);
-                    mTxtFirstName.setSelection(name.length());
-                }
+                mTxtLastName.setText(names[1]);
+                mTxtLastName.setSelection(names[1].length());
             }
 
             if(via != null) {
@@ -512,11 +521,12 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
             rawId = getArguments().getLong(KEY_RAW_ID, 0);
         }
 
-        String name = (mTxtFirstName.getText().toString().trim() + " " + mTxtLastName.getText().toString().trim()).trim();
+        String firstName = mTxtFirstName.getText().toString();
+        String lastName = mTxtLastName.getText().toString();
         String phone = mTxtPhone.getText().toString().trim();
         String email = mTxtMail.getText().toString().trim();
 
-        Bundle bundle = insertRecipientContact(mActivity, rawId, name, phone, email, mAvatarUrl);
+        Bundle bundle = insertRecipientContact(mActivity, rawId, firstName, lastName, phone, email, mAvatarUrl);
 
         if(bundle.containsKey(KEY_ERROR)) {
             switch(bundle.getInt(KEY_ERROR)) {

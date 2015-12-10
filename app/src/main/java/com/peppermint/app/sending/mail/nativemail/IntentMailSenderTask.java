@@ -13,6 +13,7 @@ import com.peppermint.app.sending.SenderTask;
 import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
 import com.peppermint.app.sending.mail.MailSenderPreferences;
 import com.peppermint.app.sending.server.ServerSenderTask;
+import com.peppermint.app.utils.Utils;
 
 import java.io.File;
 import java.net.URLEncoder;
@@ -53,11 +54,9 @@ public class IntentMailSenderTask extends SenderTask {
         // build the email body
         String url = (String) getSendingRequest().getParameter(ServerSenderTask.PARAM_SHORT_URL);
         StringBuilder bodyBuilder = new StringBuilder();
-        bodyBuilder.append("<p>");
-        bodyBuilder.append(String.format(getSender().getContext().getString(R.string.default_mail_body_url), url,
-                (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO)));
-        bodyBuilder.append("</p><br />");
-        bodyBuilder.append(String.format(getSender().getContext().getString(R.string.default_mail_body_reply),
+        bodyBuilder.append(String.format(getSender().getContext().getString(R.string.default_mail_body), url,
+                Utils.getFriendlyDuration(getSendingRequest().getRecording().getDurationMillis()),
+                (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO),
                 displayName == null ? "" : URLEncoder.encode(displayName, "UTF-8"),
                 URLEncoder.encode(preferredAccountName, "UTF-8")));
         getSendingRequest().setBody(bodyBuilder.toString());

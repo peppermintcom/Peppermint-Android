@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <com.peppermint.app.ui.views.simple.CustomFontEditText
+        android:id="@+id/text1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:gravity="left|center_vertical"
+        android:singleLine="true"
+        android:maxLength="40"
+        android:textCursorDrawable="@drawable/ic_cursor"
+        custom:textFont="@string/font_regular"
+        android:textSize="16dp"
+        android:textColor="@color/black"
+        android:hint="@string/first_name"
+        style="@style/Peppermint.CustomEditText" />
+
+    <com.peppermint.app.ui.views.simple.CustomFontEditText
+        android:id="@+id/text2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:gravity="left|center_vertical"
+        android:singleLine="true"
+        android:maxLength="40"
+        android:textCursorDrawable="@drawable/ic_cursor"
+        custom:textFont="@string/font_regular"
+        android:textSize="16dp"
+        android:textColor="@color/black"
+        android:hint="@string/last_name"
+        style="@style/Peppermint.CustomEditText" />
+
+</LinearLayout>

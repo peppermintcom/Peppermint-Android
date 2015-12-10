@@ -5,6 +5,7 @@ import android.graphics.Typeface;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.ndk.CrashlyticsNdk;
 
 import io.fabric.sdk.android.Fabric;
 
@@ -20,7 +21,7 @@ public class PeppermintApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        Fabric.with(this, new Crashlytics());
+        Fabric.with(this, new Crashlytics(), new CrashlyticsNdk());
 
         mFontSemibold = Typeface.createFromAsset(getAssets(), "fonts/OpenSans-Semibold.ttf");
         mFontBold = Typeface.createFromAsset(getAssets(), "fonts/OpenSans-Bold.ttf");

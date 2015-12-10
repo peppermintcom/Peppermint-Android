@@ -57,6 +57,35 @@ public class Utils {
     private static final String TAG = Utils.class.getSimpleName();
     private static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd' 'HH-mm-ss");
 
+    public static String getFriendlyDuration(long millis) {
+        long totalSecs = millis / 1000;
+
+        long mins = totalSecs / 60;
+        long secs = totalSecs % 60;
+
+        return String.format("%02d:%02d", mins, secs);
+    }
+
+    public static String[] getFirstAndLastNames(String fullName) {
+        String[] names = new String[]{"", ""};
+
+        if(fullName == null || fullName.length() <= 0) {
+            return names;
+        }
+
+        fullName = Utils.capitalizeFully(fullName);
+        String[] tmpNames = fullName.split("\\s+");
+
+        if(tmpNames.length > 1) {
+            names[1] = tmpNames[tmpNames.length - 1];
+            names[0] = fullName.substring(0, fullName.length() - tmpNames[tmpNames.length - 1].length()).trim();
+        } else {
+            names[0] = fullName;
+        }
+
+        return names;
+    }
+
     /**
      * Obtains the screen size in pixels.
      * @param context application context

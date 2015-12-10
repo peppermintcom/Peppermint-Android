@@ -23,7 +23,7 @@ android {
         minSdkVersion 15
         targetSdkVersion 23
         versionCode 1
-        versionName "1.0.17"
+        versionName "1.0.18"
     }
     buildTypes {
         release {
@@ -42,7 +42,7 @@ android {
 crashlytics {
     enableNdk true
     androidNdkOut 'obj'
-    androidNdkLibsOut 'libs'
+    androidNdkLibsOut 'native-libs'
 }
 
 dependencies {
@@ -55,10 +55,13 @@ dependencies {
     compile 'com.google.api-client:google-api-client-android:1.20.0'
     compile 'com.google.api-client:google-api-client-gson:1.20.0'
     compile 'com.google.apis:google-api-services-gmail:v1-rev29-1.20.0'
-    compile('com.crashlytics.sdk.android:crashlytics:2.5.2@aar') {
+    compile('com.crashlytics.sdk.android:crashlytics:2.5.5@aar') {
         transitive = true;
     }
-    compile('com.crashlytics.sdk.android:crashlytics-ndk:1.1.2@aar')
+    // NDK Kit
+    compile('com.crashlytics.sdk.android:crashlytics-ndk:1.1.2@aar') {
+        transitive = true
+    }
 }
 
 configurations {

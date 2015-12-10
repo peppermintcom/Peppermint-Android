@@ -14,11 +14,13 @@ import android.graphics.SurfaceTexture;
 import android.os.Build;
 import android.os.SystemClock;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.TextureView;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 
+import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
@@ -550,5 +552,16 @@ public class AnimatedView extends TextureView {
 
     public boolean isExplosionEnabled() {
         return mExplosionEnabled;
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        try {
+            stopDrawingThread();
+            super.onDetachedFromWindow();
+        } catch (Throwable e) {
+            Log.e(TAG, "Error on detaching view!", e);
+            Crashlytics.logException(e);
+        }
     }
 }

@@ -116,6 +116,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private LoadingView mRecipientLoadingView;
     private boolean mRecipientListShown;
     private BaseAdapter mRecipientAdapter;
+    private Button mBtnAddContact;
+    private boolean mNoRecentsAtStartAndDidntPick = false;
 
     private PopupWindow mHoldPopup;
     private Point mLastTouchPoint = new Point();
@@ -253,7 +255,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                         ((CursorAdapter) mRecipientAdapter).changeCursor((Cursor) data);
                     } else {
                         mRecipientAdapter = new RecipientCursorAdapter((PeppermintApp) mActivity.getApplication(), mActivity, (Cursor) data);
-                        getListView().setAdapter(mRecipientAdapter);
+                        // sync. trying to avoid detachFromGLContext errors
+                        synchronized(mAnimationRunnable) {
+                            getListView().setAdapter(mRecipientAdapter);
+                        }
                     }
                 } else {
                     // use new adapter
@@ -261,17 +266,30 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                         ((CursorAdapter) mRecipientAdapter).changeCursor(null);
                     }
                     mRecipientAdapter = (BaseAdapter) data;
-                    getListView().setAdapter(mRecipientAdapter);
+                    // sync. trying to avoid detachFromGLContext errors
+                    synchronized(mAnimationRunnable) {
+                        getListView().setAdapter(mRecipientAdapter);
+                    }
                 }
                 mRecipientAdapter.notifyDataSetChanged();
             }
 
+            handleAddContactButtonVisibility();
             setListShown(true);
         }
 
         @Override
         protected void onCancelled(Object o) {
+            handleAddContactButtonVisibility();
             setListShown(true);
+        }
+
+        private void handleAddContactButtonVisibility() {
+            if(mSearchListBarView.getSearchText() != null) {
+                mBtnAddContact.setVisibility(View.VISIBLE);
+            } else {
+                mBtnAddContact.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -281,28 +299,32 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private final Runnable mAnimationRunnable = new Runnable() {
         @Override
         public void run() {
-            List<AnimatedAvatarView> possibleAnimationsList = new ArrayList<>();
+            // sync. trying to avoid detachFromGLContext errors
+            synchronized (this) {
 
-            // get all anonymous avatar instances
-            for(int i=0; i<getListView().getChildCount(); i++) {
-                AnimatedAvatarView v = (AnimatedAvatarView) getListView().getChildAt(i).findViewById(R.id.imgPhoto);
-                if(!v.isShowStaticAvatar()) {
-                    possibleAnimationsList.add(v);
+                List<AnimatedAvatarView> possibleAnimationsList = new ArrayList<>();
+
+                // get all anonymous avatar instances
+                for (int i = 0; i < getListView().getChildCount(); i++) {
+                    AnimatedAvatarView v = (AnimatedAvatarView) getListView().getChildAt(i).findViewById(R.id.imgPhoto);
+                    if (!v.isShowStaticAvatar()) {
+                        possibleAnimationsList.add(v);
+                    }
                 }
-            }
 
-            // randomly pick one
-            int index = possibleAnimationsList.size() > 0 ? mRandom.nextInt(possibleAnimationsList.size()) : 0;
+                // randomly pick one
+                int index = possibleAnimationsList.size() > 0 ? mRandom.nextInt(possibleAnimationsList.size()) : 0;
 
-            // start the animation for the picked avatar and stop all others (avoids unnecessary drawing threads)
-            for(int i=0; i<possibleAnimationsList.size(); i++) {
-                AnimatedAvatarView v = possibleAnimationsList.get(i);
-                if(i == index) {
-                    v.startDrawingThread();
-                    v.resetAnimations();
-                    v.startAnimations();
-                } else {
-                    v.stopDrawingThread();
+                // start the animation for the picked avatar and stop all others (avoids unnecessary drawing threads)
+                for (int i = 0; i < possibleAnimationsList.size(); i++) {
+                    AnimatedAvatarView v = possibleAnimationsList.get(i);
+                    if (i == index) {
+                        v.startDrawingThread();
+                        v.resetAnimations();
+                        v.startAnimations();
+                    } else {
+                        v.stopDrawingThread();
+                    }
                 }
             }
 
@@ -497,6 +519,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             if(!hasRecents()) {
                 // select "all contacts" in case there are not fav/recent contacts
                 selectedItemPosition = 1;
+                mNoRecentsAtStartAndDidntPick = true;
             }
             mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
         }
@@ -506,10 +529,19 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         // inflate the view
         View v = inflater.inflate(R.layout.f_recipients_layout, container, false);
 
+        /*// bo: adjust status bar height (only do it for API 21 onwards since overlay is not working for older versions)
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            int statusBarHeight = Utils.getStatusBarHeight(mActivity);
+            View listContainer = v.findViewById(R.id.listContainer);
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) listContainer.getLayoutParams();
+            layoutParams.topMargin -= statusBarHeight;
+        }
+        // eo: adjust status bar height*/
+
         // init no recipients view
-        Button btnAddContact = (Button) v.findViewById(R.id.btnAddContact);
-        btnAddContact.setTypeface(app.getFontSemibold());
-        btnAddContact.setOnClickListener(new View.OnClickListener() {
+        mBtnAddContact = (Button) v.findViewById(R.id.btnAddContact);
+        mBtnAddContact.setTypeface(app.getFontSemibold());
+        mBtnAddContact.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(mActivity, NewRecipientActivity.class);
@@ -526,14 +558,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         TextView txtEmpty1 = (TextView) v.findViewById(R.id.txtEmpty1);
         txtEmpty1.setTypeface(app.getFontSemibold());
-
-        // bo: adjust status bar height (only do it for API 21 onwards since overlay is not working for older versions)
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            int statusBarHeight = Utils.getStatusBarHeight(mActivity);
-            FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) v.findViewById(android.R.id.empty).getLayoutParams();
-            layoutParams.bottomMargin += statusBarHeight;
-        }
-        // eo: adjust status bar height
 
         // init loading recipients view
         mRecipientListShown = true;
@@ -684,8 +708,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_RECORD) {
-            if (resultCode == Activity.RESULT_OK) {
+        if(requestCode == REQUEST_RECORD) {
+            if(resultCode == Activity.RESULT_OK) {
+                if(mNoRecentsAtStartAndDidntPick) {
+                    // still go back to recent contacts after sending a message
+                    mSearchListBarView.setSelectedItemPositionBeforeSearch(0);
+                }
+
                 // if the user has gone through the sending process without
                 // discarding the recording, then clear the search filter
                 mSearchListBarView.clearSearch(0);
@@ -746,10 +775,12 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             mLoadingAnimatorListener.onAnimationEnd(null);
         }
     }
+
     @Override
     public void setListShown(boolean shown){
         setListShown(shown, true);
     }
+
     @Override
     public void setListShownNoAnimation(boolean shown) {
         setListShown(shown, false);
@@ -847,6 +878,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onSearch(String filter) {
+        if(mSearchListBarView.getSelectedItemPositionBeforeSearch() != 1 && mNoRecentsAtStartAndDidntPick) {
+            mNoRecentsAtStartAndDidntPick = false;
+        }
+
         if(mGetRecipientsTask != null && !mGetRecipientsTask.isCancelled() && mGetRecipientsTask.getStatus() != AsyncTask.Status.FINISHED) {
             mGetRecipientsTask.cancel(true);
         }

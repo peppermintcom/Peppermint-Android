@@ -11,6 +11,7 @@ import android.os.Parcelable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -90,6 +91,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
             /*mHandler.removeCallbacks(mSearchRunnable);
             mHandler.postDelayed(mSearchRunnable, 10);*/
             if(_startVia < 0 && _endVia < 0) {
+                Log.d(TAG, "Text = " + s.toString());
                 mSearchRunnable.run();
             } else {
                 if(_startVia >= 0) {
@@ -111,6 +113,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
 
             // go back to recent/fav contacts if the search field was emptied
             if(searchText == null) {
+                Log.d(TAG, "innerSetSelectedItemPosition1 - " + mSelectedItemPositionBeforeSearch);
                 innerSetSelectedItemPosition(mSelectedItemPositionBeforeSearch);
             } else {
                 // otherwise, if the current pos doesn't allow searching - move to next
@@ -124,6 +127,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
                         }
                     }
                     if(searchableItemPos >= 0) {
+                        Log.d(TAG, "innerSetSelectedItemPosition2 - " + searchableItemPos);
                         innerSetSelectedItemPosition(searchableItemPos);
                     }
                 }
@@ -282,7 +286,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         mBtnList.setImageResource(item.getDrawableResource());
 
         // reset text if not searchable
-        if(!item.isSearchable()) {
+        if(!item.isSearchable() && getSearchText() != null) {
             mTxtSearch.removeTextChangedListener(mTextWatcher);
             mTxtSearch.setText("");
             mTxtSearch.addTextChangedListener(mTextWatcher);
@@ -293,6 +297,14 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         mSelectedItemPositionBeforeSearch = position;
         innerSetSelectedItemPosition(position);
         innerTriggerSearch();
+    }
+
+    public void setSelectedItemPositionBeforeSearch(int position) {
+        mSelectedItemPositionBeforeSearch = position;
+    }
+
+    public int getSelectedItemPositionBeforeSearch() {
+        return mSelectedItemPositionBeforeSearch;
     }
 
     @Override
@@ -330,6 +342,8 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
             removeSearchTextFocus(null);
             return true;
         }
+
+        mTxtSearch.setText("");
         return false;
     }
 
