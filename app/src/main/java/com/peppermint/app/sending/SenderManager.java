@@ -296,6 +296,9 @@ public class SenderManager implements SenderListener {
         }
 
         SenderTask task = sender.newTask(sendingRequest);
+        if(mTaskMap.containsKey(task.getId())) {
+            task.setRecovering(true);
+        }
         mTaskMap.put(task.getId(), task);
         task.executeOnExecutor(mExecutor);
         return sendingRequest.getId();

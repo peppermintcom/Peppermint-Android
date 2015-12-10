@@ -31,6 +31,7 @@ public abstract class SenderTask extends HttpAsyncTask implements Cloneable {
     private SenderListener mListener;
 
     private SendingRequest mSendingRequest;
+    private boolean mRecovering = false;
 
     public SenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
         super(sender.getContext());
@@ -70,7 +71,7 @@ public abstract class SenderTask extends HttpAsyncTask implements Cloneable {
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        if(mListener != null) {
+        if(mListener != null && !mRecovering) {
             mListener.onSendingTaskStarted(this);
         }
     }
@@ -137,5 +138,13 @@ public abstract class SenderTask extends HttpAsyncTask implements Cloneable {
 
     public void setSendingRequest(SendingRequest mSendingRequest) {
         this.mSendingRequest = mSendingRequest;
+    }
+
+    public boolean isRecovering() {
+        return mRecovering;
+    }
+
+    public void setRecovering(boolean mRecovering) {
+        this.mRecovering = mRecovering;
     }
 }
