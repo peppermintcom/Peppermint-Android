@@ -93,7 +93,6 @@ public class IntentMailSenderErrorHandler extends SenderErrorHandler {
             return;
         }
 
-        // just try again for MAX_RETRIES times tops
-        doRecover(failedSendingTask);
+        doNotRecover(failedSendingTask);
     }
 }

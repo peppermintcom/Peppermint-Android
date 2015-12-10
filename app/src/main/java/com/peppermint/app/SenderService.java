@@ -209,7 +209,7 @@ public class SenderService extends Service {
 
     private SendingRequest send(Recipient recipient, Recording recording) {
         // default body if no url is supplied (each sender is currently responsible for building its own message body)
-        String body = "<p>" + getString(R.string.default_mail_body_listen) + "</p><br />" + getString(R.string.default_mail_body_reply);
+        String body = getString(R.string.default_message);
         SendingRequest sendingRequest = new SendingRequest(recording, recipient, mPreferences.getMailSubject(), body);
 
         mSenderManager.send(sendingRequest);

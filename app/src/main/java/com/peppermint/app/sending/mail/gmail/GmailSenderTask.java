@@ -106,11 +106,9 @@ public class GmailSenderTask extends SenderTask {
         // build the email body
         String url = (String) getSendingRequest().getParameter(ServerSenderTask.PARAM_SHORT_URL);
         StringBuilder bodyBuilder = new StringBuilder();
-        bodyBuilder.append("<p>");
-        bodyBuilder.append(String.format(getSender().getContext().getString(R.string.default_mail_body_url), url,
-                (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO)));
-        bodyBuilder.append("</p><br />");
-        bodyBuilder.append(String.format(getSender().getContext().getString(R.string.default_mail_body_reply),
+        bodyBuilder.append(String.format(getSender().getContext().getString(R.string.default_mail_body), url,
+                Utils.getFriendlyDuration(getSendingRequest().getRecording().getDurationMillis()),
+                (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO),
                 displayName == null ? "" : URLEncoder.encode(displayName, "UTF-8"),
                 URLEncoder.encode(preferredAccountName, "UTF-8")));
         getSendingRequest().setBody(bodyBuilder.toString());
@@ -187,5 +185,7 @@ public class GmailSenderTask extends SenderTask {
             throw new NoInternetConnectionException(getSender().getContext().getString(R.string.msg_no_internet), e);
         }
     }
+
+
 
 }
