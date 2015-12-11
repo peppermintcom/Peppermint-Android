@@ -42,6 +42,7 @@
                     android:textColorHint="@color/black_50percent"
                     android:background="@drawable/background_border_bottom"
                     android:maxLength="100"
+                    android:inputType="textCapWords"
                     android:singleLine="true"
                     android:textCursorDrawable="@drawable/ic_cursor"/>
 
@@ -56,6 +57,7 @@
                     android:hint="@string/last_name"
                     android:textColorHint="@color/black_50percent"
                     android:maxLength="100"
+                    android:inputType="textCapWords"
                     android:singleLine="true"
                     android:textCursorDrawable="@drawable/ic_cursor"/>
 

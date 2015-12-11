@@ -36,6 +36,7 @@
                 android:textColor="@color/black"
                 android:textSize="16dp"
                 android:maxLength="40"
+                android:inputType="textCapWords"
                 android:singleLine="true"
                 android:textCursorDrawable="@drawable/ic_cursor"
                 style="@style/Peppermint.CustomEditText"/>
