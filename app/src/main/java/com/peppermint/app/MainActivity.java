@@ -143,7 +143,7 @@ public class MainActivity extends CustomActionBarActivity {
                     finish();
                 } else {
                     // easy way to refresh (not optimized)
-                    refreshFragment();
+                    refreshFragment(null);
                 }
             } else {
                 Toast.makeText(this, R.string.must_supply_mandatory_permissions, Toast.LENGTH_LONG).show();

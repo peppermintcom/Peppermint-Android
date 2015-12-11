@@ -1,11 +1,14 @@
 package com.peppermint.app.utils;
 
+import android.content.Context;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import android.content.Context;
-
+/**
+ * Utility class to read SQL instructions from a raw .SQL file.
+ */
 public class ScriptFileReader {
 
 	private Context c;
