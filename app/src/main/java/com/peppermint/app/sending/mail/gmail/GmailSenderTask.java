@@ -23,6 +23,7 @@ import com.peppermint.app.sending.exceptions.ElectableForQueueingException;
 import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
 import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
 import com.peppermint.app.sending.mail.MailSenderPreferences;
+import com.peppermint.app.sending.mail.MailUtils;
 import com.peppermint.app.sending.server.ServerSenderTask;
 import com.peppermint.app.utils.Utils;
 
@@ -33,7 +34,6 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -102,13 +102,10 @@ public class GmailSenderTask extends SenderTask {
 
         // build the email body
         String url = (String) getSendingRequest().getParameter(ServerSenderTask.PARAM_SHORT_URL);
-        StringBuilder bodyBuilder = new StringBuilder();
-        bodyBuilder.append(String.format(getSender().getContext().getString(R.string.default_mail_body), url,
-                Utils.getFriendlyDuration(getSendingRequest().getRecording().getDurationMillis()),
+        getSendingRequest().setBody(MailUtils.buildEmailFromTemplate(getContext(), url,
+                getSendingRequest().getRecording().getDurationMillis(),
                 getSendingRequest().getRecording().getContentType(),
-                displayName == null ? "" : URLEncoder.encode(displayName, "UTF-8"),
-                URLEncoder.encode(preferredAccountName, "UTF-8")));
-        getSendingRequest().setBody(bodyBuilder.toString());
+                displayName, preferredAccountName));
 
         try {
             Draft draft = null;
