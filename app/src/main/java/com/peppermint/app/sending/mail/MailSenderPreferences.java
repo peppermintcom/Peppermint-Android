@@ -14,7 +14,7 @@ import com.peppermint.app.utils.Utils;
 public class MailSenderPreferences extends SenderPreferences {
 
     // GmailSenderTask shared preference keys
-    public static final String PREF_ACCOUNT_NAME_KEY = "prefAccountName";
+    public static final String ACCOUNT_NAME_KEY = "prefAccountName";
     public static final String DISPLAY_NAME_KEY = "displayName";
 
     public MailSenderPreferences(Context context) {
@@ -27,12 +27,12 @@ public class MailSenderPreferences extends SenderPreferences {
 
     public void setPreferredAccountName(String accountName) {
         SharedPreferences.Editor editor = getSharedPreferences().edit();
-        editor.putString(PREF_ACCOUNT_NAME_KEY, accountName);
+        editor.putString(ACCOUNT_NAME_KEY, accountName);
         editor.commit();
     }
 
     public String getPreferredAccountName() {
-        return getSharedPreferences().getString(PREF_ACCOUNT_NAME_KEY, null);
+        return getSharedPreferences().getString(ACCOUNT_NAME_KEY, null);
     }
 
     public void setDisplayName(String name) {

@@ -24,9 +24,10 @@ import java.util.Calendar;
 /**
  * Created by Nuno Luz on 14-09-2015.
  *
- * Extended MediaRecorder that allows to pause/resume audio recordings.
- * Uses an external library in C through NDK + isoparser/mp4parser to merge encode the final mp4/aac file.
- * It also employs a progressive gain algorithm to increase the recorded sound volume.
+ * Extended {@link MediaRecorder} that allows to pause/resume audio recordings ({@link MediaRecorder} only allows start/stop).<br />
+ * Uses an external library in C through NDK + the isoparser/mp4parser library to merge and encode the final mp4/aac file.<br />
+ * It also employs a progressive gain algorithm to increase the recorded sound volume. This increases the volume for devices that
+ * have low gain values for their microphones.
  */
 public class ExtendedAudioRecorder {
 
@@ -96,9 +97,10 @@ public class ExtendedAudioRecorder {
             }
         }
     };
+
     public Object[] findAudioRecord() {
         // 44100 increases the record size significantly; to remove or not to remove?
-        int[] rates = new int[] {44100, 22050, 16000, 11025, 8000};
+        int[] rates = new int[] {16000, 44100, 22050, 11025, 8000};
         for (int rate : rates) {  // add the rates you wish to check against
             try {
                 int minBufferSize = AudioRecord.getMinBufferSize(rate, RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING);
@@ -123,6 +125,7 @@ public class ExtendedAudioRecorder {
 
         return null;
     }
+
     private Runnable mRecorderRunnable = new Runnable() {
         public void run() {
             AudioRecord recorder = null;
@@ -344,34 +347,23 @@ public class ExtendedAudioRecorder {
             totalMax += bufferData[1];
             totalRead += numRead;
 
-            /*StringBuilder b = new StringBuilder();
-            b.append("[ ");
-            for(int i=0; i<numRead; i++) {
-                b.append(sData[i] + ", ");
-            }
-            b.append("]");
-            Log.d(TAG, b.toString());*/
-
             mAmplitude = (int) bufferData[0];
             float gain = (float) bufferData[2];
 
             //Log.d(TAG, "Amplitude = " + mAmplitude + "; Max = " + maxAbs + "; Gain = " + gainNew + "; NumRead = " + numRead);
             for (int i = 0; i < numRead; i++) {
-                //float gain = gainOld + ((gainNew - gainOld) * (1f - (float) Math.cos(Math.PI / 2f * ((float) i / (float) numRead))));
                 sData[i] = (short) Math.min((int) (sData[i] * gain), (int) Short.MAX_VALUE);
 
                 // filter discontinuity if new gain is lower than the old one
                 float prevData = i > 0 ? sData[i - 1] : (dataOld != 1 ? dataOld : sData[i]);
                 sData[i] = (short) (prevData + (.25f * (sData[i] - prevData)));
             }
-            //gainOld = gain;
+
             if(numRead > 0 && bufferData[1] > 0) {
                 dataOld = sData[numRead - 1];
             } else {
                 emptyIts++;
             }
-
-            //decOld = (short) (dataOld - sData[numRead-2]);
 
             // encode in AAC using the native encoder
             Utils.short2Byte(sData, bData);
@@ -440,9 +432,6 @@ public class ExtendedAudioRecorder {
         fc.close();
 
         discardTemp();
-
-        /*File f = new File(mTempFilePath);
-        f.renameTo(new File(mFilePath));*/
     }
 
     public boolean isRecording() {

@@ -35,9 +35,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.URL;
 import java.text.Normalizer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -57,6 +59,11 @@ public class Utils {
     private static final String TAG = Utils.class.getSimpleName();
     private static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd' 'HH-mm-ss");
 
+    /**
+     * Get a presentation friendly string with the supplied duration in the format MM:SS
+     * @param millis the duration in milliseconds
+     * @return the friendly string
+     */
     public static String getFriendlyDuration(long millis) {
         long totalSecs = millis / 1000;
 
@@ -66,6 +73,16 @@ public class Utils {
         return String.format("%02d:%02d", mins, secs);
     }
 
+    /**
+     * Parse the supplied full name and return an array with two strings.<br />
+     * The full name is split by spaces. The very last word becomes the last name.
+     * The remaining words are the first name.<br/>
+     *
+     * At position 0 is the first name. At position 1 is the last name.
+     *
+     * @param fullName the full name
+     * @return the two strings containing the first and last names
+     */
     public static String[] getFirstAndLastNames(String fullName) {
         String[] names = new String[]{"", ""};
 
@@ -196,8 +213,9 @@ public class Utils {
     }
 
     /**
-     * Checks if internet connection is available.
-     * Requires the permission "android.permission.ACCESS_NETWORK_STATE".
+     * Checks if internet connection is available.<br />
+     * Requires the permission "android.permission.ACCESS_NETWORK_STATE".<br />
+     * Doesn't check if the connection works! Just if the device is connected to some network.
      * @param context the app or activity context
      * @return true if the internet connection is available; false otherwise
      */
@@ -208,19 +226,24 @@ public class Utils {
         return (netInfo != null && netInfo.isConnected());
     }
 
+    /**
+     * Actually checks if there's internet connectivity by connecting to the Peppermint web server.<br />
+     * Times out after 2500 ms. <strong>Must be invoked from a secondary thread.</strong>
+     * @param context the app or activity context
+     * @return true if there's connectivity; false otherwise
+     */
     public static boolean isInternetActive(Context context) {
-        /*try {
-            HttpURLConnection urlc = (HttpURLConnection) (new URL("http://www.google.com").openConnection());
+        try {
+            HttpURLConnection urlc = (HttpURLConnection) (new URL("http://peppermint.com").openConnection());
             urlc.setRequestProperty("User-Agent", "Test");
             urlc.setRequestProperty("Connection", "close");
-            urlc.setConnectTimeout(1500);
+            urlc.setConnectTimeout(2500);
             urlc.connect();
             return (urlc.getResponseCode() == 200);
         } catch (IOException e) {
             Log.e(Utils.class.getSimpleName(), "Error checking internet connection", e);
             return false;
-        }*/
-        return true;
+        }
     }
 
     /**
@@ -393,13 +416,22 @@ public class Utils {
         return getBitmapRequiredScale(o, width, height);
     }
 
+    /**
+     * Returns the multiplier necessary to adjust the scale of the bitmap image to
+     * the supplied width and height. The multiplier is obtained from the smallest height/width length value.
+     * This keeps aspect ratio.
+     * @param o the bitmap image options
+     * @param width the desired width
+     * @param height the desired height
+     * @return the scale/multiplier
+     */
     private static float getBitmapRequiredScale(BitmapFactory.Options o, int width, int height) {
         float scale = 1;
-        //if image height is greater than width
+        // if image height is greater than width
         if (o.outHeight > o.outWidth) {
             scale = (float) o.outWidth / (float) width;
         }
-        //if image width is greater than height
+        // if image width is greater than height
         else {
             scale = (float) o.outHeight / (float) height;
         }
@@ -407,13 +439,6 @@ public class Utils {
         return scale;
     }
 
-    /**
-     * Read and load the bitmap in the provided {@link InputStream} and scale it
-     * using the {@link android.graphics.BitmapFactory.Options#inSampleSize} option.
-     * @param fis the bitmap input stream
-     * @param scale the scale value
-     * @return the loaded and scaled bitmap
-     */
     private static Bitmap getScaledBitmap(InputStream fis, int scale) {
         // decode with inSampleSize
         BitmapFactory.Options o2 = new BitmapFactory.Options();
@@ -421,6 +446,18 @@ public class Utils {
         return BitmapFactory.decodeStream(fis, null, o2);
     }
 
+    /**
+     * Read and load the bitmap in the provided {@link Uri} and scale it
+     * using the {@link android.graphics.BitmapFactory.Options#inSampleSize} option.<br />
+     * The scale multiplier is obtained using {@link #getBitmapRequiredScale(InputStream, int, int)}.<br />
+     * <b>Aspect ratio is kept. See {@link #getScaledResizedBitmap(String, int, int, boolean)} for a strict resize.</b>
+     *
+     * @param context the app or activity context
+     * @param contentUri the location of the bitmap image
+     * @param width the new desired width
+     * @param height the new desired height
+     * @return the loaded and scaled bitmap
+     */
     public static Bitmap getScaledBitmap(Context context, Uri contentUri, int width, int height) {
         Bitmap bitmap = null;
         try {
@@ -441,12 +478,13 @@ public class Utils {
     /**
      * Read and load the bitmap in the provided image file and scale it
      * using the {@link android.graphics.BitmapFactory.Options#inSampleSize} option.<br />
+     * The scale multiplier is obtained using {@link #getBitmapRequiredScale(InputStream, int, int)}.<br />
      * <b>Aspect ratio is kept. See {@link #getScaledResizedBitmap(String, int, int, boolean)} for a strict resize.</b>
      *
      * @param filePath the image file path
      * @param width the new desired width
      * @param height the new desired height
-     * @return
+     * @return the loaded and scaled bitmap
      */
     public static Bitmap getScaledBitmap(String filePath, int width, int height) {
         Bitmap bitmap = null;
@@ -468,6 +506,7 @@ public class Utils {
     /**
      * Read and load the bitmap in the provided image resource and scale it
      * using the {@link android.graphics.BitmapFactory.Options#inSampleSize} option.<br />
+     * The scale multiplier is obtained using {@link #getBitmapRequiredScale(InputStream, int, int)}.<br />
      * <b>Aspect ratio is kept. See {@link #getScaledResizedBitmap(Context, int, int, int, boolean)} for a strict resize.</b>
      *
      * @param context the context
@@ -493,6 +532,16 @@ public class Utils {
         return bitmap;
     }
 
+    /**
+     * Read and load the bitmap in the provided image file and scale it to the provided width and height values.<br />
+     * If the aspect ratio is to be kept, it is the same as using {@link #getScaledBitmap(String, int, int)}.
+     *
+     * @param filePath the image file path
+     * @param width the new desired width
+     * @param height the new desired height
+     * @param keepAspectRatio true to keep aspect ratio; false otherwise
+     * @return the new scaled/resized bitmap
+     */
     public static Bitmap getScaledResizedBitmap(String filePath, int width, int height, boolean keepAspectRatio) {
         Bitmap bitmap = getScaledBitmap(filePath, width, height);
 
@@ -505,7 +554,17 @@ public class Utils {
         return bitmap;
     }
 
-
+    /**
+     * Read and load the bitmap in the provided image resource and scale it to the provided width and height values.<br />
+     * If the aspect ratio is to be kept, it is the same as using {@link #getScaledBitmap(Context, Uri, int, int)}.
+     *
+     * @param context the context
+     * @param resId the resource id (image/drawable id)
+     * @param width the new desired width
+     * @param height the new desired height
+     * @param keepAspectRatio true to keep aspect ratio; false otherwise
+     * @return the new scaled/resized bitmap
+     */
     public static Bitmap getScaledResizedBitmap(Context context, int resId, int width, int height, boolean keepAspectRatio) {
         Bitmap bitmap = getScaledBitmap(context, resId, width, height);
 

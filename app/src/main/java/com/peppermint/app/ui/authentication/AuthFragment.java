@@ -19,6 +19,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.PopupWindow;
 
+import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.SenderServiceManager;
@@ -39,6 +40,7 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
         if(displayName != null && displayName.length() > 0 && !Utils.isValidPhoneNumber(displayName)) {
             // check if there's already a preferred account
             if (prefs.getGmailPreferences().getPreferredAccountName() != null) {
+                Crashlytics.setUserEmail(prefs.getGmailPreferences().getPreferredAccountName());
                 return false;
             }
 

@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.text.Html;
 
-import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderListener;
@@ -12,11 +11,10 @@ import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.sending.SenderTask;
 import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
 import com.peppermint.app.sending.mail.MailSenderPreferences;
+import com.peppermint.app.sending.mail.MailUtils;
 import com.peppermint.app.sending.server.ServerSenderTask;
-import com.peppermint.app.utils.Utils;
 
 import java.io.File;
-import java.net.URLEncoder;
 import java.util.Map;
 
 /**
@@ -25,10 +23,6 @@ import java.util.Map;
  * SenderTask that launches a native app to send the audio/video recording through email.
  */
 public class IntentMailSenderTask extends SenderTask {
-
-    // FIXME the content type value should be stored in the Recording instance to avoid redundancy
-    private static final String CONTENT_TYPE_AUDIO = "audio/mp4";
-    private static final String CONTENT_TYPE_VIDEO = "video/mp4";
 
     public IntentMailSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
         super(sender, sendingRequest, listener);
@@ -53,13 +47,10 @@ public class IntentMailSenderTask extends SenderTask {
 
         // build the email body
         String url = (String) getSendingRequest().getParameter(ServerSenderTask.PARAM_SHORT_URL);
-        StringBuilder bodyBuilder = new StringBuilder();
-        bodyBuilder.append(String.format(getSender().getContext().getString(R.string.default_mail_body), url,
-                Utils.getFriendlyDuration(getSendingRequest().getRecording().getDurationMillis()),
-                (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO),
-                displayName == null ? "" : URLEncoder.encode(displayName, "UTF-8"),
-                URLEncoder.encode(preferredAccountName, "UTF-8")));
-        getSendingRequest().setBody(bodyBuilder.toString());
+        getSendingRequest().setBody(MailUtils.buildEmailFromTemplate(getContext(), url,
+                getSendingRequest().getRecording().getDurationMillis(),
+                getSendingRequest().getRecording().getContentType(),
+                displayName, preferredAccountName));
 
         File file = getSendingRequest().getRecording().getValidatedFile();
 
@@ -73,7 +64,7 @@ public class IntentMailSenderTask extends SenderTask {
         try {
             getSender().getContext().startActivity(i);
         } catch (android.content.ActivityNotFoundException ex) {
-            throw new RuntimeException("There are no email clients installed!");
+            throw new RuntimeException("There are no email clients installed!", ex);
         }
     }
 }

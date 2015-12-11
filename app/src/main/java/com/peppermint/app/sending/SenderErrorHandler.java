@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.peppermint.app.data.SendingRequest;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -36,9 +38,15 @@ public abstract class SenderErrorHandler {
     private Map<String, Object> mParameters;
     private SenderPreferences mSenderPreferences;
 
-    /** this broadcast receiver gets results from {@link GetResultActivity} **/
-    // it allows any SenderErrorHandler to recover from an error by triggering activities
-    // this is useful for using APIs that request permissions, such as the Gmail API
+    // allow the sender task to be executed up to MAX_RETRIES+1 times
+    private static final int MAX_RETRIES = 9;
+    protected Map<UUID, Integer> mRetryMap;
+
+    /**
+     * This broadcast receiver gets results from {@link GetResultActivity}<br />
+     * It allows any SenderErrorHandler to recover from an error by triggering activities.<br />
+     * This is useful for using APIs that request permissions through another Activity, such as the Gmail API
+     **/
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -58,12 +66,14 @@ public abstract class SenderErrorHandler {
         this.mSenderListener = senderListener;
         this.mParameters = new HashMap<>();
         this.mRecoveringTaskMap = new HashMap<>();
+        this.mRetryMap = new HashMap<>();
     }
 
     public SenderErrorHandler(Context context, SenderListener senderListener, Map<String, Object> parameters) {
         this.mContext = context;
         this.mSenderListener = senderListener;
         this.mRecoveringTaskMap = new HashMap<>();
+        this.mRetryMap = new HashMap<>();
         if(parameters != null) {
             this.mParameters = new HashMap<>(parameters);
         }
@@ -74,6 +84,7 @@ public abstract class SenderErrorHandler {
         this.mSenderListener = senderListener;
         this.mSenderPreferences = preferences;
         this.mRecoveringTaskMap = new HashMap<>();
+        this.mRetryMap = new HashMap<>();
         if(parameters != null) {
             this.mParameters = new HashMap<>(parameters);
         }
@@ -147,6 +158,26 @@ public abstract class SenderErrorHandler {
         if(mSenderListener != null) {
             mSenderListener.onSendingRequestRecovered(recoveringTask);
         }
+    }
+
+    protected void checkRetries(SenderTask failedSendingTask) {
+        SendingRequest request = failedSendingTask.getSendingRequest();
+
+        if(!mRetryMap.containsKey(request.getId())) {
+            mRetryMap.put(request.getId(), 1);
+        } else {
+            mRetryMap.put(request.getId(), mRetryMap.get(request.getId()) + 1);
+        }
+
+        // if it has failed MAX_RETRIES times, do not try it anymore
+        if(mRetryMap.get(request.getId()) > MAX_RETRIES) {
+            mRetryMap.remove(request.getId());
+            doNotRecover(failedSendingTask);
+            return;
+        }
+
+        // just try again for MAX_RETRIES times tops
+        doRecover(failedSendingTask);
     }
 
     public Context getContext() {

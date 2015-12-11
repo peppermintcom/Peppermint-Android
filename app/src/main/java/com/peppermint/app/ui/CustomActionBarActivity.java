@@ -30,8 +30,8 @@ import android.widget.TextView;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.ui.views.CustomActionBarView;
-import com.peppermint.app.ui.views.NavigationListAdapter;
 import com.peppermint.app.ui.views.NavigationItem;
+import com.peppermint.app.ui.views.NavigationListAdapter;
 import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
@@ -248,16 +248,17 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        /*setFragmentArgumentsFromIntent(getCurrentFragment(), intent);*/
+        refreshFragment(intent);
     }
 
-    protected void refreshFragment() {
+    protected void refreshFragment(Intent intent) {
         Fragment fragment = getFragmentManager().findFragmentById(R.id.container);
         if(fragment == null) {
             return;
         }
         try {
             fragment = fragment.getClass().newInstance();
+            setFragmentArgumentsFromIntent(fragment, intent == null ? getIntent() : intent);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -267,6 +268,8 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        // set the drawer profile data
         String[] data = Utils.getUserData(this);
         if(data[1] != null) {
             mImgUserAvatar.setImageURI(Uri.parse(data[1]));

@@ -2,6 +2,7 @@ package com.peppermint.app.utils;
 
 import android.app.Activity;
 import android.graphics.Rect;
+import android.os.Build;
 import android.os.Handler;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -14,6 +15,8 @@ import com.peppermint.app.R;
 
 /**
  * Created by Nuno Luz on 26-11-2015.
+ *
+ * Creates and handles a {@link PopupWindow} that shows alerts/messages in the UI.
  */
 public class Popup {
 
@@ -64,7 +67,12 @@ public class Popup {
     }
 
     public void dismiss() {
-        if (mPopup.isShowing() && !mActivity.isDestroyed()) {
+        boolean isDestroyed = false;
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            isDestroyed = mActivity.isDestroyed();
+        }
+
+        if (mPopup.isShowing() && !isDestroyed) {
             mPopup.dismiss();
             mHandler.removeCallbacks(mDismissPopupRunnable);
         }

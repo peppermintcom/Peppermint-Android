@@ -6,8 +6,12 @@ import android.preference.PreferenceManager;
 
 /**
  * Created by Nuno Luz on 02-10-2015.
- *
+ * <p>
  * Android SharedPreferences available to a Sender.
+ * </p>
+ * All have the isEnabled and isAuthorized preferences.<br />
+ * The isEnabled allows you to completely disable the sender (it remains in the workflow, though).<br />
+ * The isAuthorized can be used by senders that require external API authorization, such as the Gmail API.
  */
 public class SenderPreferences {
 

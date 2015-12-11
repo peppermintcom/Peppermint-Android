@@ -60,7 +60,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         addPreferencesFromResource(R.xml.pref_global);
 
         String preferredAccountName = mPreferences.getGmailPreferences().getPreferredAccountName();
-        mPrefGmailAccount = (CustomPreference) findPreference(MailSenderPreferences.PREF_ACCOUNT_NAME_KEY);
+        mPrefGmailAccount = (CustomPreference) findPreference(MailSenderPreferences.ACCOUNT_NAME_KEY);
         mPrefGmailAccount.setContent(preferredAccountName);
         mPrefGmailAccount.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
@@ -110,7 +110,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                 if (!mPrefGmailAccount.isEnabled()) {
 
                     ViewGroup root = (ViewGroup) view.findViewById(android.R.id.list);
-                    ArrayList<View> list = new ArrayList<View>();
+                    ArrayList<View> list = new ArrayList<>();
                     root.findViewsWithText(list, getString(R.string.pref_title_gmailaccount), View.FIND_VIEWS_WITH_TEXT);
 
                     if(list.size() > 0) {

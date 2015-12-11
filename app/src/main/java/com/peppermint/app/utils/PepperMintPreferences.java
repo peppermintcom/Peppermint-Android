@@ -22,13 +22,9 @@ public class PepperMintPreferences {
     public static final String RECENT_CONTACT_URIS_KEY = "recentContactUris";
     public static final String SHOWN_SMS_CONFIRMATION_KEY = "shownSmsConfirmation";
 
-    public static final String HIDE_NONMAIN_CONTACTS_KEY = "hideNonMainContacts";
-    protected static final boolean HIDE_NONMAIN_CONTACTS_DEFAULT = false;
-
     public static final String IS_FIRST_RUN_KEY = "isFirstRun";
 
     public static final String MAIL_SUBJECT_KEY = "mailSubject";
-    public static final String MAIL_BODY_KEY = "mailBody";
     public static final String DISPLAY_NAME_KEY = "displayName";
 
     protected static final int RECENT_CONTACTS_LIST_LIMIT = 50;
@@ -125,16 +121,6 @@ public class PepperMintPreferences {
         return recentContactUris;
     }
 
-    public void setHideNonMainContacts(boolean hide) {
-        edit();
-        mEditor.putBoolean(HIDE_NONMAIN_CONTACTS_KEY, hide);
-        commit();
-    }
-
-    public boolean isHideNonMainContacts() {
-        return mSettings.getBoolean(HIDE_NONMAIN_CONTACTS_KEY, HIDE_NONMAIN_CONTACTS_DEFAULT);
-    }
-
     public void setShownSmsConfirmation(boolean shown) {
         edit();
         mEditor.putBoolean(SHOWN_SMS_CONFIRMATION_KEY, shown);
@@ -153,16 +139,6 @@ public class PepperMintPreferences {
 
     public String getMailSubject() {
         return mSettings.getString(MAIL_SUBJECT_KEY, mContext.getString(R.string.default_mail_subject));
-    }
-
-    public void setMailBody(String body) {
-        edit();
-        mEditor.putString(MAIL_BODY_KEY, body);
-        commit();
-    }
-
-    public String getMailBody() {
-        return mSettings.getString(MAIL_BODY_KEY, "");
     }
 
     public void setDisplayName(String name) {

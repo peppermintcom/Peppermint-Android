@@ -3,6 +3,7 @@ package com.peppermint.app.sending.server;
 import android.content.Context;
 
 import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.rest.HttpAsyncTask;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderErrorHandler;
 import com.peppermint.app.sending.SenderListener;
@@ -13,7 +14,7 @@ import com.peppermint.app.sending.mail.MailSenderPreferences;
 /**
  * Created by Nuno Luz on 01-10-2015.
  *
- * Sender that uses the GMail API to send audio messages through email.
+ * Sender that interacts with Peppermint's backend.
  */
 public class ServerSender extends Sender {
 
@@ -31,12 +32,12 @@ public class ServerSender extends Sender {
 
     @Override
     public void init() {
-        // initialize the Gmail API objects and pass them as parameters to the error handler
-        // and to all associated sending tasks
+        // initialize the ServerClientManager
         mManager = new ServerClientManager(getContext());
         mManager.start();
 
         setParameter(PARAM_MANAGER, mManager);
+        setParameter(HttpAsyncTask.PARAM_HTTP_CLIENT_MANAGER, mManager);
 
         mErrorHandler = new ServerSenderErrorHandler(getContext(), getSenderListener(), getParameters(), getSenderPreferences());
 

@@ -5,6 +5,7 @@ import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -20,10 +21,9 @@ import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.sending.SenderTask;
 import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
+import com.peppermint.app.sending.server.InvalidAccessTokenException;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
@@ -37,15 +37,20 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
     private static final int REQUEST_AUTHORIZATION = 998;
     private static final int REQUEST_ACCOUNT_PICKER = 999;
 
-    private static final int MAX_RETRIES = 3;
-
-    // retry map, which allows trying to send the email up to MAX_RETRIES times if it fails
-    // this allows us to ask for new access tokens upon failure and retry
-    protected Map<UUID, Integer> mRetryMap;
+    private class GetTokenAsyncTask extends AsyncTask<GoogleAccountCredential, Void, Throwable> {
+        @Override
+        protected Throwable doInBackground(GoogleAccountCredential... params) {
+            try {
+                GoogleAuthUtil.clearToken(getContext(), params[0].getToken());
+                return null;
+            } catch(Throwable e) {
+                return e;
+            }
+        }
+    }
 
     public GmailSenderErrorHandler(Context context, SenderListener senderListener, Map<String, Object> parameters, SenderPreferences preferences) {
         super(context, senderListener, parameters, preferences);
-        mRetryMap = new HashMap<>();
     }
 
     @Override
@@ -92,14 +97,9 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
         Throwable e = failedSendingTask.getError();
         GoogleAccountCredential credential = (GoogleAccountCredential) getParameter(GmailSender.PARAM_GMAIL_CREDENTIAL);
         GmailSenderPreferences preferences = (GmailSenderPreferences) getSenderPreferences();
-        /*SendingRequest request = failedSendingTask.getSendingRequest();*/
 
         // in this case just ask for permissions
         if(e instanceof UserRecoverableAuthIOException || e instanceof UserRecoverableAuthException) {
-/*            if(preferences.getSkipIfPermissionRequired()) {
-                doNotRecover(failedSendingTask);
-                return;
-            }*/
             Intent intent = e instanceof UserRecoverableAuthIOException ? ((UserRecoverableAuthIOException) e).getIntent() : ((UserRecoverableAuthException) e).getIntent();
             startActivityForResult(failedSendingTask.getId(), REQUEST_AUTHORIZATION, intent);
             return;
@@ -128,11 +128,18 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
         }
 
         // in this case, try to ask for another access token
-        if(e instanceof GoogleJsonResponseException || e instanceof GmailResponseException) {
+        if(e instanceof GoogleJsonResponseException || e instanceof GmailResponseException || e instanceof InvalidAccessTokenException) {
             try {
-                GoogleAuthUtil.invalidateToken(getContext(), credential.getToken());
-                doRecover(failedSendingTask);
-            } catch (Exception ex) {
+                Throwable obj = new GetTokenAsyncTask().execute(credential).get();
+                if(obj == null) {
+                    doRecover(failedSendingTask);
+                } else if(obj instanceof UserRecoverableAuthIOException || obj instanceof UserRecoverableAuthException) {
+                    Intent intent = obj instanceof UserRecoverableAuthIOException ? ((UserRecoverableAuthIOException) obj).getIntent() : ((UserRecoverableAuthException) obj).getIntent();
+                    startActivityForResult(failedSendingTask.getId(), REQUEST_AUTHORIZATION, intent);
+                } else {
+                    throw obj;
+                }
+            } catch (Throwable ex) {
                 Log.e(TAG, "Error invalidating Gmail API token!", ex);
                 Crashlytics.logException(ex);
                 doNotRecover(failedSendingTask);
@@ -140,27 +147,8 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
             return;
         }
 
-        // this might include small connection issues, even if there's internet connection
-        // so allow the retries
-        /*if(e instanceof NoInternetConnectionException) {
-            doNotRecover(failedSendingTask);
-            return;
-        }*/
-
-        if(!mRetryMap.containsKey(failedSendingTask.getId())) {
-            mRetryMap.put(failedSendingTask.getId(), 1);
-        } else {
-            mRetryMap.put(failedSendingTask.getId(), mRetryMap.get(failedSendingTask.getId()) + 1);
-        }
-
-        // if it has failed MAX_RETRIES times, do not try it anymore
-        if(mRetryMap.get(failedSendingTask.getId()) > MAX_RETRIES) {
-            mRetryMap.remove(failedSendingTask.getId());
-            doNotRecover(failedSendingTask);
-            return;
-        }
-
-        // just try again for MAX_RETRIES times tops
-        doRecover(failedSendingTask);
+        // NoInternetConnectionException might include small connection issues
+        // even if there's internet connection, so allow the retries
+        checkRetries(failedSendingTask);
     }
 }
