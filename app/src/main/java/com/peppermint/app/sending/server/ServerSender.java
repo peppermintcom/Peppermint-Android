@@ -3,6 +3,7 @@ package com.peppermint.app.sending.server;
 import android.content.Context;
 
 import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.rest.HttpAsyncTask;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderErrorHandler;
 import com.peppermint.app.sending.SenderListener;
@@ -36,6 +37,7 @@ public class ServerSender extends Sender {
         mManager.start();
 
         setParameter(PARAM_MANAGER, mManager);
+        setParameter(HttpAsyncTask.PARAM_HTTP_CLIENT_MANAGER, mManager);
 
         mErrorHandler = new ServerSenderErrorHandler(getContext(), getSenderListener(), getParameters(), getSenderPreferences());
 
