@@ -15,6 +15,9 @@ import java.sql.SQLException;
  */
 public class Recording implements Serializable {
 
+    public static final String CONTENT_TYPE_AUDIO = "audio/mp4";
+    public static final String CONTENT_TYPE_VIDEO = "video/mp4";
+
     /**
      * Gets the recording data inside the Cursor's current position and puts it in an instance
      * of the Recording structure.
@@ -26,6 +29,7 @@ public class Recording implements Serializable {
         Recording recording = new Recording();
         recording.setId(cursor.getLong(cursor.getColumnIndex("recording_id")));
         recording.setFilePath(cursor.getString(cursor.getColumnIndex("file_path")));
+        recording.setContentType(cursor.getString(cursor.getColumnIndex("content_type")));
         recording.setDurationMillis(cursor.getLong(cursor.getColumnIndex("duration_millis")));
         recording.setSizeKb(cursor.getFloat(cursor.getColumnIndex("size_kb")));
         recording.setHasVideo(cursor.getInt(cursor.getColumnIndex("has_video")) > 0);
@@ -47,6 +51,7 @@ public class Recording implements Serializable {
         cv.put("size_kb", recording.getSizeKb());
         cv.put("has_video", recording.hasVideo() ? 1 : 0);
         cv.put("recorded_ts", recording.getRecordedTimestamp());
+        cv.put("content_type", recording.getContentType());
 
         long id = db.insert("tbl_sending_request_recording", null, cv);
         if(id < 0) {
@@ -71,6 +76,7 @@ public class Recording implements Serializable {
         cv.put("size_kb", recording.getSizeKb());
         cv.put("has_video", recording.hasVideo() ? 1 : 0);
         cv.put("recorded_ts", recording.getRecordedTimestamp());
+        cv.put("content_type", recording.getContentType());
 
         long id = db.update("tbl_sending_request_recording", cv, "recording_id = " + recording.getId(), null);
         if(id < 0) {
@@ -126,6 +132,7 @@ public class Recording implements Serializable {
 
     private long mId;
     private String mFilePath;
+    private String mContentType = CONTENT_TYPE_AUDIO;
     private long mDurationMillis;
     private float mSizeKb;
     private String mRecordedTimestamp;
@@ -151,6 +158,14 @@ public class Recording implements Serializable {
         this.mHasVideo = hasVideo;
     }
 
+    public Recording(String filePath, long durationMillis, float sizeKb, boolean hasVideo, String contentType) {
+        this.mFilePath = filePath;
+        this.mDurationMillis = durationMillis;
+        this.mSizeKb = sizeKb;
+        this.mHasVideo = hasVideo;
+        this.mContentType = contentType;
+    }
+
     public File getFile() {
         return new File(mFilePath);
     }
@@ -169,6 +184,14 @@ public class Recording implements Serializable {
 
     public void setId(long mId) {
         this.mId = mId;
+    }
+
+    public String getContentType() {
+        return mContentType;
+    }
+
+    public void setContentType(String mContentType) {
+        this.mContentType = mContentType;
     }
 
     public String getFilePath() {

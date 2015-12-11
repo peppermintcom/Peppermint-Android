@@ -34,22 +34,27 @@ public class SMSSenderTask extends SenderTask {
             switch (getResultCode()) {
                 case Activity.RESULT_OK:
                     mSent = true;
-                    if(mRunner != null) {
-                        mRunner.interrupt();
-                    }
+                    mException = null;
                     break;
                 case SmsManager.RESULT_ERROR_NO_SERVICE:
+                    mException = new SMSNotSentException("No Service");
+                    break;
                 case SmsManager.RESULT_ERROR_RADIO_OFF:
+                    mException = new SMSNotSentException("Radio Off");
                     break;
                 default:
-                    // TODO handle these
-                    // error
+                    mException = new SMSNotSentException("Error: " + getResultCode());
+            }
+
+            if(mRunner != null) {
+                mRunner.interrupt();
             }
         }
     };
     private final IntentFilter mIntentFilter = new IntentFilter(SMS_SENT);
     private Thread mRunner;
     private boolean mSent = false;
+    private SMSNotSentException mException;
 
     public SMSSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
         super(sender, sendingRequest, listener);
@@ -82,26 +87,17 @@ public class SMSSenderTask extends SenderTask {
             smsManager.sendTextMessage(getSendingRequest().getRecipient().getVia(), null, getSendingRequest().getBody(), sentPI, null);
 
             try {
+                // wait for SMS to be sent
                 Thread.sleep(SMS_REQUEST_TIMEOUT);
-            } catch(InterruptedException e) {
-                // nothing to do here
+            } catch(InterruptedException e) { /* nothing to do here */ }
+
+            if(mException != null) {
+                throw mException;
             }
 
             if(!mSent) {
-                throw new SMSNotSentException();
+                throw new SMSNotSentException("Timeout");
             }
-
-            // the following code does not seem to be necessary (at least for Android 6)
-            // it adds the SMS to the content provider so that it shows up on the native SMS app
-            /*ContentValues values = new ContentValues();
-            values.put("address", getSendingRequest().getRecipient().getVia()); // phone number to send
-            values.put("date", String.valueOf(System.currentTimeMillis()));
-            values.put("read", "1"); // if you want to mark is as unread set to 0
-            values.put("type", "2"); // 2 means sent message
-            values.put("body", getSendingRequest().getBody());
-
-            Uri uri = Uri.parse("content://sms/");
-            getSender().getContext().getContentResolver().insert(uri, values);*/
         } finally {
             getSender().getContext().unregisterReceiver(mReceiver);
             mRunner = null;

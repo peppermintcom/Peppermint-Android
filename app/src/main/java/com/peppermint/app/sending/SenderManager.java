@@ -44,7 +44,7 @@ import de.greenrobot.event.EventBus;
  *     Each {@link Sender} is associated with one or more contact mime types
  *     (e.g. "vnd.android.cursor.dir/phone_v2" or "vnd.android.cursor.item/email_v2").<br />
  *     When sending, the manager searches for a {@link Sender} that handles the mime type of
- *     the recipient, and uses it to execute a sending request.
+ *     the recipient contact, and uses it to execute a sending request.
  *</p>
  *
  * For instance, there's a sender for:
@@ -52,14 +52,12 @@ import de.greenrobot.event.EventBus;
  *     <li>Emails through the Gmail API</li>
  *     <li>Emails through the native Android email app</li>
  *     <li>SMS/text messages through the native Android API</li>
+ *     <li>SMS/text messages through the native SMS app</li>
  * </ul>
  */
 public class SenderManager implements SenderListener {
 
     private static final String TAG = SenderManager.class.getSimpleName();
-
-    // setup a private thread pool to avoid hanging up other AsyncTasks
-    // private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
 
     private Context mContext;
     private EventBus mEventBus;                                 // event bus (listener)
@@ -68,10 +66,10 @@ public class SenderManager implements SenderListener {
 
     private Map<String, Sender> mSenderMap;                     // map of senders <mime type, sender>
 
-    private Map<UUID, SenderTask> mTaskMap;                    // map of sending tasks under execution
+    private Map<UUID, SenderTask> mTaskMap;                     // map of sending tasks under execution
     private DatabaseHelper mDatabaseHelper;                     // database helper
 
-    // broadcast receiver that handles connectivity status changes
+    // broadcast receiver that handles internet connectivity status changes
     private BroadcastReceiver mConnectivityChangeReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -130,6 +128,7 @@ public class SenderManager implements SenderListener {
         this.mDatabaseHelper = new DatabaseHelper(mContext);
 
         // private thread pool to avoid hanging up other AsyncTasks
+        // only one thread so that messages are sent one at a time (allows better control when cancelling)
         this.mExecutor = new ThreadPoolExecutor(/*CPU_COUNT + 1, CPU_COUNT * 2 + 2*/1, 1,
                 60, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>());
@@ -147,7 +146,9 @@ public class SenderManager implements SenderListener {
         IntentMailSender intentMailSender = new IntentMailSender(mContext, this);
         intentMailSender.getParameters().putAll(defaultSenderParameters);
 
+        // if the upload is successful, sends the email through gmail sender
         gmailServerSender.setSuccessChainSender(gmailSender);
+        // if sending the email through gmail sender fails, try through intent mail sender
         gmailSender.setFailureChainSender(intentMailSender);
 
         mSenderMap.put(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, gmailServerSender);
@@ -159,11 +160,13 @@ public class SenderManager implements SenderListener {
         SMSSender smsSender = new SMSSender(mContext, this);
         smsSender.getParameters().putAll(defaultSenderParameters);
 
+        // if the upload is successful, sends the SMS through SMS sender
         smsServerSender.setSuccessChainSender(smsSender);
 
         IntentSMSSender intentSmsSender = new IntentSMSSender(mContext, this);
         intentSmsSender.getParameters().putAll(defaultSenderParameters);
 
+        // if sending the email through SMS sender fails, try through intent SMS sender
         smsSender.setFailureChainSender(intentSmsSender);
 
         mSenderMap.put(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, smsServerSender);
@@ -200,7 +203,7 @@ public class SenderManager implements SenderListener {
      * <ol>
      *     <li>Cancels the queued sending request maintenance task</li>
      *     <li>Unregisters the manager to stop listening for internet connectivity status changes</li>
-     *     <li>Cancels all running sending tasks</li>
+     *     <li>Cancels all running sending tasks and saves them for later re-sending</li>
      *     <li>De-initializes all {@link Sender}s</li>
      * </ol>
      */
@@ -243,6 +246,9 @@ public class SenderManager implements SenderListener {
         }
     }
 
+    /**
+     * Requests authorization for senders that require it.
+     */
     public void authorize() {
         for(Sender sender : mSenderMap.values()) {
             while(sender != null) {
@@ -362,6 +368,7 @@ public class SenderManager implements SenderListener {
     @Override
     public void onSendingTaskStarted(SenderTask sendingTask) {
         if(sendingTask instanceof SenderAuthorizationTask) {
+            // ignore SenderAuthorizationTasks; just report events for sending requests
             return;
         }
 
@@ -373,6 +380,7 @@ public class SenderManager implements SenderListener {
     @Override
     public void onSendingTaskCancelled(SenderTask sendingTask) {
         if(sendingTask instanceof SenderAuthorizationTask) {
+            // ignore SenderAuthorizationTasks; just report events for sending requests
             return;
         }
 
@@ -385,9 +393,11 @@ public class SenderManager implements SenderListener {
     @Override
     public void onSendingTaskFinished(SenderTask sendingTask) {
         if(sendingTask instanceof SenderAuthorizationTask) {
+            // ignore SenderAuthorizationTasks; just report events for sending requests
             return;
         }
 
+        // move to the following sender in the success chain
         Sender nextSender = sendingTask.getSender().getSuccessChainSender();
         if(nextSender != null) {
             if(mEventBus != null) {
@@ -403,6 +413,7 @@ public class SenderManager implements SenderListener {
             return;
         }
 
+        // sending request has finished, so update the saved data and mark as sent
         SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
         try {
             sendingTask.getSendingRequest().setSent(true);
@@ -432,6 +443,7 @@ public class SenderManager implements SenderListener {
     @Override
     public void onSendingTaskProgress(SenderTask sendingTask, float progressValue) {
         if(sendingTask instanceof SenderAuthorizationTask) {
+            // ignore SenderAuthorizationTasks; just report events for sending requests
             return;
         }
 
@@ -443,6 +455,7 @@ public class SenderManager implements SenderListener {
     @Override
     public void onSendingRequestRecovered(SenderTask previousSendingTask) {
         if(previousSendingTask instanceof SenderAuthorizationTask) {
+            // ignore SenderAuthorizationTasks; just report events for sending requests
             return;
         }
 
@@ -452,14 +465,18 @@ public class SenderManager implements SenderListener {
 
     @Override
     public void onSendingRequestNotRecovered(SenderTask previousSendingTask, Throwable error) {
-        if(previousSendingTask instanceof  SenderAuthorizationTask) {
-            Crashlytics.logException(error);
+        if(previousSendingTask instanceof SenderAuthorizationTask) {
+            if(error != null) {
+                if(error.getMessage() != null) {
+                    Crashlytics.log(error.getMessage());
+                }
+                Crashlytics.logException(error);
+            }
             Log.e(TAG, "Unable to recover from error while requesting authorization", error);
             return;
         }
 
         SendingRequest sendingRequest = previousSendingTask.getSendingRequest();
-        //Throwable error = previousSendingTask.getError();
         Sender nextSender = previousSendingTask.getSender().getFailureChainSender();
         if(nextSender == null || error instanceof ElectableForQueueingException) {
             mTaskMap.remove(previousSendingTask.getId());
@@ -491,7 +508,9 @@ public class SenderManager implements SenderListener {
                 }
 
                 if(error != null) {
-                    Crashlytics.log("Exception message - " + error.getMessage());
+                    if(error.getMessage() != null) {
+                        Crashlytics.log(error.getMessage());
+                    }
                     Crashlytics.logException(error);
                 }
 

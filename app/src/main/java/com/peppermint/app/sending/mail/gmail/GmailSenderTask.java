@@ -47,10 +47,6 @@ public class GmailSenderTask extends SenderTask {
 
     private static final String TAG = GmailSenderTask.class.getSimpleName();
 
-    // FIXME the content type value should be stored in the Recording instance to avoid redundancy
-    private static final String CONTENT_TYPE_AUDIO = "audio/mp4";
-    private static final String CONTENT_TYPE_VIDEO = "video/mp4";
-
     public GmailSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
         super(sender, sendingRequest, listener);
     }
@@ -94,6 +90,7 @@ public class GmailSenderTask extends SenderTask {
             throw new NoInternetConnectionException(getSender().getContext().getString(R.string.msg_no_internet));
         }
 
+        // get the email account
         String preferredAccountName = ((MailSenderPreferences) getSenderPreferences()).getPreferredAccountName();
         if(preferredAccountName == null) {
             throw new MailPreferredAccountNotSetException();
@@ -108,7 +105,7 @@ public class GmailSenderTask extends SenderTask {
         StringBuilder bodyBuilder = new StringBuilder();
         bodyBuilder.append(String.format(getSender().getContext().getString(R.string.default_mail_body), url,
                 Utils.getFriendlyDuration(getSendingRequest().getRecording().getDurationMillis()),
-                (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO),
+                getSendingRequest().getRecording().getContentType(),
                 displayName == null ? "" : URLEncoder.encode(displayName, "UTF-8"),
                 URLEncoder.encode(preferredAccountName, "UTF-8")));
         getSendingRequest().setBody(bodyBuilder.toString());
@@ -119,7 +116,7 @@ public class GmailSenderTask extends SenderTask {
             try {
                 // custom, performance optimized code to create the draft
                 GmailAttachmentRequest request = new GmailAttachmentRequest(file, preferredAccountName, displayName, getSendingRequest().getRecipient().getVia(),
-                        getSendingRequest().getSubject(), getSendingRequest().getBody(), (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO),
+                        getSendingRequest().getSubject(), getSendingRequest().getBody(), getSendingRequest().getRecording().getContentType(),
                         Utils.parseTimestamp(getSendingRequest().getRegistrationTimestamp()));
                 request.setHeaderParam("Authorization", "Bearer " + ((GoogleAccountCredential) getParameter(GmailSender.PARAM_GMAIL_CREDENTIAL)).getToken());
                 request.setHeaderParam("Content-Type", "application/json; charset=UTF-8");
@@ -132,22 +129,9 @@ public class GmailSenderTask extends SenderTask {
             } catch (InterruptedIOException e) {
                 Log.d(TAG, "Interrupted creating draft! Likely user cancelled.", e);
                 if(!isCancelled()) {
-                    Crashlytics.logException(e);
                     throw e;
                 }
             }
-
-            /*// make the sending process last at least 5 secs
-            if(!isCancelled()) {
-                long duration = android.os.SystemClock.uptimeMillis() - now;
-                if (duration < MIN_SEND_TIME) {
-                    try {
-                        Thread.sleep(MIN_SEND_TIME - duration);
-                    } catch (InterruptedException e) {
-                        // do nothing here; just skip
-                    }
-                }
-            }*/
 
             if(!isCancelled()) {
                 try {
@@ -156,7 +140,6 @@ public class GmailSenderTask extends SenderTask {
                 } catch (InterruptedIOException e) {
                     Log.d(TAG, "Interrupted sending draft! Likely user cancelled.", e);
                     if(!isCancelled()) {
-                        Crashlytics.logException(e);
                         // try to delete the draft if something goes wrong
                         ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().drafts().delete("me", draft.getId());
                         throw e;
@@ -185,7 +168,5 @@ public class GmailSenderTask extends SenderTask {
             throw new NoInternetConnectionException(getSender().getContext().getString(R.string.msg_no_internet), e);
         }
     }
-
-
 
 }

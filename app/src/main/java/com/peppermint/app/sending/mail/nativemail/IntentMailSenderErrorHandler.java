@@ -13,18 +13,15 @@ import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.sending.SenderTask;
 import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
-import com.peppermint.app.sending.mail.gmail.GmailSender;
 
 import java.util.Map;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
  *
- * Error handler for the {@link GmailSender}.
+ * Error handler for the {@link IntentMailSender}.
  */
 public class IntentMailSenderErrorHandler extends SenderErrorHandler {
-
-    private static final String TAG = IntentMailSenderErrorHandler.class.getSimpleName();
 
     private static final int REQUEST_ACCOUNT_PICKER = 999;
 

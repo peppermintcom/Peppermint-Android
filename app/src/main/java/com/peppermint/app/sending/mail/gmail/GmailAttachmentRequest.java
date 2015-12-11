@@ -25,7 +25,7 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
 /**
- * Created by Nuno Luz (nluz@mobaton.com) on 02-07-2015.
+ * Created by Nuno Luz on 02-07-2015.
  *
  * <p>
  *     Represents an HttpRequest that sends a file in the request body.
@@ -33,8 +33,7 @@ import javax.mail.internet.MimeMultipart;
  */
 public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
 
-    private static final String TAG = GmailAttachmentRequest.class.getSimpleName();
-
+    // the Gmail API endpoint for creating a draft with an attached file
     private static final String ENDPOINT = "https://www.googleapis.com/gmail/v1/users/me/drafts";
 
     protected File mFile;
@@ -146,9 +145,13 @@ public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
             throw new IOException(e);
         }
 
+        // this really improves performance since we skip all the Gson parsing
+        // of the Gmail API implementation
         outStream.write("{\"message\":{\"raw\":\"".getBytes("UTF-8"));
         outStream.flush();
 
+        // especially when we write the file directly to the outputstream instead of
+        // generating a full string beforehand
         try {
             Base64OutputStream base64OutStream = new Base64OutputStream(outStream, Base64.NO_WRAP|Base64.NO_PADDING|Base64.URL_SAFE);
             email.writeTo(base64OutStream);

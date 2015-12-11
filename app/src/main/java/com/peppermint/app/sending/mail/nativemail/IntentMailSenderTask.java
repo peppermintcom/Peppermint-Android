@@ -26,10 +26,6 @@ import java.util.Map;
  */
 public class IntentMailSenderTask extends SenderTask {
 
-    // FIXME the content type value should be stored in the Recording instance to avoid redundancy
-    private static final String CONTENT_TYPE_AUDIO = "audio/mp4";
-    private static final String CONTENT_TYPE_VIDEO = "video/mp4";
-
     public IntentMailSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
         super(sender, sendingRequest, listener);
     }
@@ -56,7 +52,7 @@ public class IntentMailSenderTask extends SenderTask {
         StringBuilder bodyBuilder = new StringBuilder();
         bodyBuilder.append(String.format(getSender().getContext().getString(R.string.default_mail_body), url,
                 Utils.getFriendlyDuration(getSendingRequest().getRecording().getDurationMillis()),
-                (getSendingRequest().getRecording().hasVideo() ? CONTENT_TYPE_VIDEO : CONTENT_TYPE_AUDIO),
+                getSendingRequest().getRecording().getContentType(),
                 displayName == null ? "" : URLEncoder.encode(displayName, "UTF-8"),
                 URLEncoder.encode(preferredAccountName, "UTF-8")));
         getSendingRequest().setBody(bodyBuilder.toString());
@@ -73,7 +69,7 @@ public class IntentMailSenderTask extends SenderTask {
         try {
             getSender().getContext().startActivity(i);
         } catch (android.content.ActivityNotFoundException ex) {
-            throw new RuntimeException("There are no email clients installed!");
+            throw new RuntimeException("There are no email clients installed!", ex);
         }
     }
 }

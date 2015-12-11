@@ -66,7 +66,7 @@ public class HttpClientThread extends Thread {
             } else {
                 throw new NullPointerException("HttpURLConnection is null. Skipping...");
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Log.e(TAG, "Error while performing HttpURLConnection!", e);
             mResponse.setException(e);
         }

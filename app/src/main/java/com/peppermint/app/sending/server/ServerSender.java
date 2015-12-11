@@ -13,7 +13,7 @@ import com.peppermint.app.sending.mail.MailSenderPreferences;
 /**
  * Created by Nuno Luz on 01-10-2015.
  *
- * Sender that uses the GMail API to send audio messages through email.
+ * Sender that interacts with Peppermint's backend.
  */
 public class ServerSender extends Sender {
 
@@ -31,8 +31,7 @@ public class ServerSender extends Sender {
 
     @Override
     public void init() {
-        // initialize the Gmail API objects and pass them as parameters to the error handler
-        // and to all associated sending tasks
+        // initialize the ServerClientManager
         mManager = new ServerClientManager(getContext());
         mManager.start();
 

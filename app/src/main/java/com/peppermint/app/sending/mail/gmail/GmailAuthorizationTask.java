@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * Created by Nuno Luz on 08-09-2015.
  *
- * SenderTask for emails using the Gmail API.
+ * Authorization task for the Gmail API.
  */
 public class GmailAuthorizationTask extends SenderAuthorizationTask {
 
@@ -44,6 +44,7 @@ public class GmailAuthorizationTask extends SenderAuthorizationTask {
             throw new MailPreferredAccountNotSetException();
         }
 
+        // just get the access token
         ((GoogleAccountCredential) getParameter(GmailSender.PARAM_GMAIL_CREDENTIAL)).getToken();
     }
 

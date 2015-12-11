@@ -15,6 +15,10 @@ import java.util.UUID;
 
 /**
  * Created by Nuno Luz on 25-11-2015.
+ *
+ * Abstract implementation with the capability to execute and monitor asynchronous HTTP requests
+ * through an {@link HttpClientManager} passed on as a parameter.
+ *
  */
 public abstract class HttpAsyncTask extends AsyncTask<Void, Float, Void> implements Cloneable, HttpRequestListener {
 
@@ -23,9 +27,12 @@ public abstract class HttpAsyncTask extends AsyncTask<Void, Float, Void> impleme
     public static final String PARAM_HTTP_CLIENT_MANAGER = "HttpAsyncTask_ParamHttpClientManager";
     public static final String PARAM_HTTP_REQUEST_TIMEOUT = "HttpAsyncTask_ParamHttpRequestTimeout";
 
+    // default request timeout values (for connection + data transfer)
     private static final int SIMPLE_REQUEST_TIMEOUT = 60000;
 
     private UUID mId = UUID.randomUUID();
+
+    // error thrown while executing the async task's doInBackground
     private Throwable mError;
 
     private Context mContext;
@@ -57,7 +64,7 @@ public abstract class HttpAsyncTask extends AsyncTask<Void, Float, Void> impleme
     }
 
     /**
-     * Actually sends the audio/video file to a {@link com.peppermint.app.data.Recipient}
+     * Actual async task implementation
      * @throws Throwable
      */
     protected abstract void send() throws Throwable;
@@ -138,6 +145,29 @@ public abstract class HttpAsyncTask extends AsyncTask<Void, Float, Void> impleme
         mHttpRequestId = request.getUUID();
         mHttpRequestUrl = request.getEndpoint();
         return getHttpClientManager().performRequest(request, response);
+    }
+
+    protected UUID executeHttpRequest(HttpRequest request) {
+        mHttpRequestId = request.getUUID();
+        mHttpRequestUrl = request.getEndpoint();
+        return getHttpClientManager().performRequest(request);
+    }
+
+    protected UUID executeHttpRequest(String endpoint, int requestMethod, String body, String headerContentType, String headerAuth) {
+        HttpRequest request = new HttpRequest(endpoint, requestMethod);
+        if(headerContentType != null) {
+            request.setHeaderParam("Content-Type", headerContentType);
+        }
+        if(headerAuth != null) {
+            request.setHeaderParam("Authorization", headerAuth);
+        }
+        if(body != null) {
+            request.setBody(body);
+        }
+
+        mHttpRequestId = request.getUUID();
+        mHttpRequestUrl = request.getEndpoint();
+        return getHttpClientManager().performRequest(request);
     }
 
     private long getHttpRequestTimeout() {

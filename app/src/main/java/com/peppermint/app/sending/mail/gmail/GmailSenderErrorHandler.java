@@ -21,9 +21,7 @@ import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.sending.SenderTask;
 import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
@@ -37,15 +35,8 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
     private static final int REQUEST_AUTHORIZATION = 998;
     private static final int REQUEST_ACCOUNT_PICKER = 999;
 
-    private static final int MAX_RETRIES = 3;
-
-    // retry map, which allows trying to send the email up to MAX_RETRIES times if it fails
-    // this allows us to ask for new access tokens upon failure and retry
-    protected Map<UUID, Integer> mRetryMap;
-
     public GmailSenderErrorHandler(Context context, SenderListener senderListener, Map<String, Object> parameters, SenderPreferences preferences) {
         super(context, senderListener, parameters, preferences);
-        mRetryMap = new HashMap<>();
     }
 
     @Override
@@ -92,7 +83,6 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
         Throwable e = failedSendingTask.getError();
         GoogleAccountCredential credential = (GoogleAccountCredential) getParameter(GmailSender.PARAM_GMAIL_CREDENTIAL);
         GmailSenderPreferences preferences = (GmailSenderPreferences) getSenderPreferences();
-        /*SendingRequest request = failedSendingTask.getSendingRequest();*/
 
         // in this case just ask for permissions
         if(e instanceof UserRecoverableAuthIOException || e instanceof UserRecoverableAuthException) {
@@ -140,27 +130,8 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
             return;
         }
 
-        // this might include small connection issues, even if there's internet connection
-        // so allow the retries
-        /*if(e instanceof NoInternetConnectionException) {
-            doNotRecover(failedSendingTask);
-            return;
-        }*/
-
-        if(!mRetryMap.containsKey(failedSendingTask.getId())) {
-            mRetryMap.put(failedSendingTask.getId(), 1);
-        } else {
-            mRetryMap.put(failedSendingTask.getId(), mRetryMap.get(failedSendingTask.getId()) + 1);
-        }
-
-        // if it has failed MAX_RETRIES times, do not try it anymore
-        if(mRetryMap.get(failedSendingTask.getId()) > MAX_RETRIES) {
-            mRetryMap.remove(failedSendingTask.getId());
-            doNotRecover(failedSendingTask);
-            return;
-        }
-
-        // just try again for MAX_RETRIES times tops
-        doRecover(failedSendingTask);
+        // NoInternetConnectionException might include small connection issues
+        // even if there's internet connection, so allow the retries
+        checkRetries(failedSendingTask);
     }
 }
