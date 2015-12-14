@@ -36,7 +36,6 @@ import com.peppermint.app.ui.views.NavigationItem;
 import com.peppermint.app.ui.views.NavigationListAdapter;
 import com.peppermint.app.ui.views.dialogs.CustomListDialog;
 import com.peppermint.app.ui.views.simple.CustomToast;
-import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.Popup;
 import com.peppermint.app.utils.Utils;
 
@@ -156,8 +155,8 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                 List<String> mimeTypes = new ArrayList<>();
                 rawIds.add(rawId);
                 mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
-                FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(context, rawIds, mimeTypes, email);
-                alreadyHasEmail = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
+                Cursor checkCursor = RecipientAdapterUtils.getRecipientsCursor(context, rawIds, mimeTypes, email);
+                alreadyHasEmail = checkCursor != null && checkCursor.getCount() > 0;
             }
 
             if(!alreadyHasEmail) {
@@ -175,10 +174,16 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         }
 
         if(phone.length() > 0) {
-            List<String> mimeTypes = new ArrayList<>();
-            mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-            FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(context, null, null, null, mimeTypes, phone);
-            boolean alreadyHasPhone = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
+            boolean alreadyHasPhone = false;
+
+            if(rawId > 0) {
+                List<Long> rawIds = new ArrayList<>();
+                rawIds.add(rawId);
+                List<String> mimeTypes = new ArrayList<>();
+                mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
+                Cursor checkCursor = RecipientAdapterUtils.getRecipientsCursor(context, rawIds, mimeTypes, phone);
+                alreadyHasPhone = checkCursor != null && checkCursor.getCount() > 0;
+            }
 
             if(!alreadyHasPhone) {
                 if (rawId <= 0) {
@@ -409,7 +414,6 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         mBtnSave = (Button) mActivity.getCustomActionBar().findViewById(R.id.btnSave);
         mBtnSave.setOnClickListener(this);
 
-        // global touch interceptor to hide keyboard
         mActivity.getTouchInterceptor().setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -504,6 +508,13 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     @Override
     public void onResume() {
         super.onResume();
+        Utils.showKeyboard(mActivity);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        Utils.hideKeyboard(mActivity);
     }
 
     @Override
