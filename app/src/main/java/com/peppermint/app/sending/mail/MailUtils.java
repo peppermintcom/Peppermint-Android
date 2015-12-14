@@ -16,7 +16,7 @@ import java.net.URLEncoder;
  */
 public class MailUtils {
 
-    public static String buildEmailFromTemplate(Context context, String playUrl, long durationInMillis, String contentType, String replyName, String replyEmail)
+    public static String buildEmailFromTemplate(Context context, int templateResId, String playUrl, long durationInMillis, String contentType, String replyName, String replyEmail)
             throws UnsupportedEncodingException {
 
         StringBuilder bodyBuilder = new StringBuilder();
@@ -27,7 +27,7 @@ public class MailUtils {
                 replyName == null ? "" : URLEncoder.encode(replyName, "UTF-8"),
                 URLEncoder.encode(replyEmail, "UTF-8")));*/
 
-        ScriptFileReader templateReader = new ScriptFileReader(context, R.raw.email_template);
+        ScriptFileReader templateReader = new ScriptFileReader(context, templateResId);
         templateReader.open();
 
         try {

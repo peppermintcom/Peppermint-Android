@@ -102,7 +102,7 @@ public class GmailSenderTask extends SenderTask {
 
         // build the email body
         String url = (String) getSendingRequest().getParameter(ServerSenderTask.PARAM_SHORT_URL);
-        getSendingRequest().setBody(MailUtils.buildEmailFromTemplate(getContext(), url,
+        getSendingRequest().setBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template, url,
                 getSendingRequest().getRecording().getDurationMillis(),
                 getSendingRequest().getRecording().getContentType(),
                 displayName, preferredAccountName));

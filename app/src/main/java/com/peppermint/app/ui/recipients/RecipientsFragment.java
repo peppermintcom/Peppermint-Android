@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
@@ -22,7 +21,6 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CursorAdapter;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
@@ -130,6 +128,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 if (mActivity != null && ContextCompat.checkSelfPermission(mActivity,
                         Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
 
+                    PeppermintApp app = (PeppermintApp) mActivity.getApplication();
+
                     if (_recipientType.isStarred() != null && _recipientType.isStarred()) {
                         List<Long> recentList = mPreferences.getRecentContactUris();
                         if(recentList == null) {
@@ -165,7 +165,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                             }
                         }
 
-                        return new RecipientArrayAdapter((PeppermintApp) mActivity.getApplication(), mActivity, recipientMap, recentList);
+                        return new RecipientArrayAdapter(app, mActivity, recipientMap, recentList);
                     }
 
                     // get normal full, email or phone contact list
@@ -204,12 +204,14 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         protected void onPostExecute(Object data) {
             // check if data is valid and activity has not been destroyed by the main thread
             if(data != null && mActivity != null && mCreated) {
+                PeppermintApp app = (PeppermintApp) mActivity.getApplication();
+
                 if (data instanceof Cursor) {
                     // re-use adapter and replace cursor
                     if (mRecipientAdapter != null && mRecipientAdapter instanceof CursorAdapter) {
                         ((CursorAdapter) mRecipientAdapter).changeCursor((Cursor) data);
                     } else {
-                        mRecipientAdapter = new RecipientCursorAdapter((PeppermintApp) mActivity.getApplication(), mActivity, (Cursor) data);
+                        mRecipientAdapter = new RecipientCursorAdapter(app, mActivity, (Cursor) data);
                         // sync. trying to avoid detachFromGLContext errors
                         synchronized(mAnimationRunnable) {
                             getListView().setAdapter(mRecipientAdapter);
