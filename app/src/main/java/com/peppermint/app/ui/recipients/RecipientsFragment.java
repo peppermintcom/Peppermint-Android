@@ -8,6 +8,7 @@ import android.app.ListFragment;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -318,6 +319,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         public void onAnimationRepeat(Animator animation) { }
     };
 
+    final Rect mBtnAddContactHitRect = new Rect();
+
     public RecipientsFragment() {
     }
 
@@ -359,8 +362,14 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    mSearchListBarView.removeSearchTextFocus(event);
-                    getView().requestFocus();
+                    // do not do it if the add contact button was pressed
+                    // since this might be causing the tap event to not work
+                    // the onClick event already has instructions to do this
+                    mBtnAddContact.getHitRect(mBtnAddContactHitRect);
+                    if(!mBtnAddContactHitRect.contains((int) event.getX(), (int) event.getY())) {
+                        mSearchListBarView.removeSearchTextFocus(event);
+                        getView().requestFocus();
+                    }
                 }
                 return false;
             }
@@ -444,6 +453,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                     intent.putExtra(NewRecipientFragment.KEY_NAME, viaName[1]);
                 }
                 startActivityForResult(intent, REQUEST_NEWCONTACT);
+
+                mSearchListBarView.removeSearchTextFocus(null);
+                getView().requestFocus();
             }
         });
 
