@@ -476,7 +476,12 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 if(filter != null) {
                     String[] viaName = getSearchData(filter);
                     intent.putExtra(NewRecipientFragment.KEY_VIA, viaName[0]);
-                    intent.putExtra(NewRecipientFragment.KEY_NAME, viaName[1]);
+
+                    if(viaName[0] == null && (Utils.isValidPhoneNumber(viaName[1]) || Utils.isValidEmail(viaName[1]))) {
+                        intent.putExtra(NewRecipientFragment.KEY_VIA, viaName[1]);
+                    } else {
+                        intent.putExtra(NewRecipientFragment.KEY_NAME, viaName[1]);
+                    }
                 }
                 startActivityForResult(intent, REQUEST_NEWCONTACT);
 
