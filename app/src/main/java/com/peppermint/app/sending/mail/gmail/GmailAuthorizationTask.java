@@ -1,5 +1,6 @@
 package com.peppermint.app.sending.mail.gmail;
 
+import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.peppermint.app.R;
 import com.peppermint.app.sending.Sender;
@@ -45,7 +46,7 @@ public class GmailAuthorizationTask extends SenderAuthorizationTask {
         }
 
         // just get the access token
-        ((GoogleAccountCredential) getParameter(GmailSender.PARAM_GMAIL_CREDENTIAL)).getToken();
+        GoogleAuthUtil.clearToken(getContext(), ((GoogleAccountCredential) getParameter(GmailSender.PARAM_GMAIL_CREDENTIAL)).getToken());
     }
 
 }

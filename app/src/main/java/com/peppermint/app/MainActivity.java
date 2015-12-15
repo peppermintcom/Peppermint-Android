@@ -45,6 +45,7 @@ public class MainActivity extends CustomActionBarActivity {
     private static final String SUPPORT_BODY = "\n\n\n\nNote regarding this feedback. Was provided by %1$s running %2$s with Peppermint v" + BuildConfig.VERSION_NAME;
 
     private List<String> mPermissionsToAsk;
+    private boolean mNeedsToAuthorize = true;
 
     @Override
     protected List<NavigationItem> getNavigationItems() {
@@ -116,8 +117,10 @@ public class MainActivity extends CustomActionBarActivity {
                     PERMISSION_REQUEST);
         } else {
             // afterwards, request authentication
-            AuthFragment.startAuthentication(this, AUTHENTICATION_REQUEST);
+            AuthFragment.startAuthentication(this, AUTHENTICATION_REQUEST, mNeedsToAuthorize);
         }
+
+        mNeedsToAuthorize = false;
 
         /*if(mPreferences.isFirstRun()) {
             mPreferences.setFirstRun(false);

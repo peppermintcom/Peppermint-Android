@@ -48,7 +48,9 @@ public class GmailSender extends Sender {
     private SharedPreferences.OnSharedPreferenceChangeListener mSharedPreferenceListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            if(key.compareTo(MailSenderPreferences.ACCOUNT_NAME_KEY) == 0) {
+            if((key.compareTo(MailSenderPreferences.ACCOUNT_NAME_KEY) == 0 ||
+                    key.compareTo(GmailSenderPreferences.getEnabledPreferenceKey(GmailSenderPreferences.class)) == 0)
+                    && mPreferences.isEnabled()) {
                 setupCredentials();
             }
         }
