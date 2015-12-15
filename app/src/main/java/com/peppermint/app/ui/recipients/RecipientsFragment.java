@@ -87,6 +87,12 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private Button mBtnAddContact;
     private boolean mNoRecentsAtStartAndDidntPick = false;
     private PopupDialog mTipPopup;
+    private final Runnable mShowLoadingRunnable = new Runnable() {
+        @Override
+        public void run() {
+            setListShown(false);
+        }
+    };
 
     // the custom action bar (with recipient type filter and recipient search)
     private SearchListBarView mSearchListBarView;
@@ -114,7 +120,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         @Override
         protected void onPreExecute() {
-            setListShown(false);
+            mHandler.postDelayed(mShowLoadingRunnable, 250);
             _recipientType = (RecipientType) mSearchListBarView.getSelectedItem();
 
             if(_filter == null) {
@@ -236,12 +242,14 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             }
 
             handleAddContactButtonVisibility();
+            mHandler.removeCallbacks(mShowLoadingRunnable);
             setListShown(true);
         }
 
         @Override
         protected void onCancelled(Object o) {
             handleAddContactButtonVisibility();
+            mHandler.removeCallbacks(mShowLoadingRunnable);
             setListShown(true);
         }
 
