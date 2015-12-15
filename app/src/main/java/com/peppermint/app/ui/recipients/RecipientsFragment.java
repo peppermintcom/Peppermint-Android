@@ -246,7 +246,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         }
 
         private void handleAddContactButtonVisibility() {
-            if(mSearchListBarView.getSearchText() != null) {
+            if(mSearchListBarView.getSearchText() != null || mRecipientAdapter.getCount() <= 0) {
                 mBtnAddContact.setVisibility(View.VISIBLE);
             } else {
                 mBtnAddContact.setVisibility(View.GONE);
