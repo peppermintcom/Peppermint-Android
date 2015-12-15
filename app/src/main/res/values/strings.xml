@@ -152,4 +152,6 @@
     <string name="cancelled">Cancelled</string>
     <string name="not_sent">Not Sent</string>
     <string name="queued">Queued</string>
+    <string name="search_here_for_your_friend">Search here for your friend.</string>
+    <string name="then_tap_and_hold_to_send">Then tap and hold\nto send them an audio message.</string>
 </resources>

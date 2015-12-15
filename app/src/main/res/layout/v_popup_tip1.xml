@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/lytRoot"
+    android:orientation="vertical"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal"
+    android:background="@drawable/img_popup_tip">
+
+    <com.peppermint.app.ui.views.simple.CustomFontTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="5dp"
+        custom:textFont="@string/font_semibold"
+        android:textColor="@color/black"
+        android:textSize="16dp"
+        android:text="@string/search_here_for_your_friend" />
+
+    <com.peppermint.app.ui.views.simple.CustomFontTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="5dp"
+        custom:textFont="@string/font_semibold"
+        android:textColor="@color/black"
+        android:textSize="16dp"
+        android:text="@string/then_tap_and_hold_to_send" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:src="@drawable/img_tip1" />
+
+</LinearLayout>
+
+

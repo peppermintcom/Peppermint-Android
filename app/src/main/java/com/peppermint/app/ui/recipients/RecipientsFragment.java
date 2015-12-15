@@ -5,6 +5,7 @@ import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.app.Activity;
 import android.app.ListFragment;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -40,6 +41,7 @@ import com.peppermint.app.ui.recording.RecordingFragment;
 import com.peppermint.app.ui.views.SearchListBarAdapter;
 import com.peppermint.app.ui.views.SearchListBarView;
 import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
+import com.peppermint.app.ui.views.dialogs.PopupDialog;
 import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.PepperMintPreferences;
@@ -84,6 +86,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private BaseAdapter mRecipientAdapter;
     private Button mBtnAddContact;
     private boolean mNoRecentsAtStartAndDidntPick = false;
+    private PopupDialog mTipPopup;
 
     // the custom action bar (with recipient type filter and recipient search)
     private SearchListBarView mSearchListBarView;
@@ -319,7 +322,20 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         public void onAnimationRepeat(Animator animation) { }
     };
 
-    final Rect mBtnAddContactHitRect = new Rect();
+    private final Rect mBtnAddContactHitRect = new Rect();
+
+    private final Runnable mTipRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!mTipPopup.isShowing() && !isRemoving() && !mActivity.isFinishing()) {
+                if(mActivity.getCustomActionBar().getHeight() <= 0) {
+                    mHandler.postDelayed(mTipRunnable, 100);
+                } else {
+                    mTipPopup.show(mActivity.getCustomActionBar());
+                }
+            }
+        }
+    };
 
     public RecipientsFragment() {
     }
@@ -357,6 +373,15 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         mSenderServiceManager.start();
 
+        mTipPopup = new PopupDialog(mActivity);
+        mTipPopup.setLayoutResource(R.layout.v_popup_tip1);
+        mTipPopup.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                mPreferences.setFirstRun(false);
+            }
+        });
+
         // global touch interceptor to hide keyboard
         mActivity.getTouchInterceptor().setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -371,6 +396,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                         getView().requestFocus();
                     }
                 }
+                mTipPopup.dismiss();
                 return false;
             }
         });
@@ -553,6 +579,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         // if it is on onStart(), it doesn't work for screen rotations
         mSearchListBarView.removeSearchTextFocus(null);
         getView().requestFocus();
+
+        if(mPreferences.isFirstRun()) {
+            mHandler.postDelayed(mTipRunnable, 100);
+        }
     }
 
     @Override
@@ -576,6 +606,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             // this closes the cursor inside the adapter
             ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(null);
         }
+        mTipPopup.setOnDismissListener(null);
+        mTipPopup.dismiss();
         mActivity = null;
         super.onDestroy();
     }
