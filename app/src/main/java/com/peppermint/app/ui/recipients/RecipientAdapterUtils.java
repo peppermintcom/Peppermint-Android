@@ -6,7 +6,6 @@ import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.ContactsContract;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -125,11 +124,6 @@ public class RecipientAdapterUtils {
             public boolean isValid(Cursor cursor) {
                 // removes duplicate contacts
                 String via = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1)).trim().toLowerCase() + cursor.getString(cursor.getColumnIndex(DISPLAY_NAME)).replaceAll("\\s+", "").toLowerCase();
-                Log.d(RecipientAdapterUtils.class.getSimpleName(), via + " ### " + cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_NAME)));
-
-                for(int i=0; i<cursor.getColumnCount(); i++) {
-                    Log.d(RecipientAdapterUtils.class.getSimpleName(), "       %% " + cursor.getColumnName(i) + " = " + cursor.getString(i));
-                }
 
                 if (!mViaSet.contains(via)) {
                     mViaSet.add(via);

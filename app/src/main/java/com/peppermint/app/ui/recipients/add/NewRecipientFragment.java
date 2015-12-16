@@ -36,6 +36,7 @@ import com.peppermint.app.ui.views.NavigationItem;
 import com.peppermint.app.ui.views.NavigationListAdapter;
 import com.peppermint.app.ui.views.dialogs.CustomListDialog;
 import com.peppermint.app.ui.views.simple.CustomToast;
+import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Popup;
 import com.peppermint.app.utils.Utils;
 
@@ -69,9 +70,9 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     public static final int ERR_INVALID_PHONE = 4;
     public static final int ERR_UNABLE_TO_ADD = 5;
 
-    public static Bundle insertRecipientContact(Context context, long rawId, String fullName, String phone, String email, String photoUrl) {
+    public static Bundle insertRecipientContact(Context context, long rawId, String fullName, String phone, String email, String photoUrl, String googleAccountName) {
         String[] names = Utils.getFirstAndLastNames(fullName);
-        return insertRecipientContact(context, rawId, names[0], names[1], phone, email, photoUrl);
+        return insertRecipientContact(context, rawId, names[0], names[1], phone, email, photoUrl, googleAccountName);
     }
 
     /**
@@ -87,7 +88,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
      * @param email the email address
      * @return a {@link Bundle} with results (can be passed on to an {@link Intent}
      */
-    public static Bundle insertRecipientContact(Context context, long rawId, String firstName, String lastName, String phone, String email, String photoUrl) {
+    public static Bundle insertRecipientContact(Context context, long rawId, String firstName, String lastName, String phone, String email, String photoUrl, String googleAccountName) {
         Bundle bundle = new Bundle();
 
         firstName = firstName == null ? "" : Utils.capitalizeFully(firstName.trim());
@@ -123,8 +124,8 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         // create raw contact
         if(rawId <= 0) {
             ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
-                    .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
-                    .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null).build());
+                    .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, "com.google")
+                    .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, googleAccountName).build());
         }
 
         // add display name data
@@ -264,6 +265,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     private static final int CHOOSE_PHOTO_CODE = 124;
 
     private CustomActionBarActivity mActivity;
+    private PepperMintPreferences mPreferences;
 
     private ImageView mBtnAddAvatar;
     private EditText mTxtFirstName, mTxtLastName, mTxtPhone, mTxtMail;
@@ -376,6 +378,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     public void onAttach(Activity context) {
         super.onAttach(context);
         mActivity = (CustomActionBarActivity) context;
+        mPreferences = new PepperMintPreferences(context);
     }
 
     private boolean isValid() {
@@ -537,7 +540,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         String phone = mTxtPhone.getText().toString().trim();
         String email = mTxtMail.getText().toString().trim();
 
-        Bundle bundle = insertRecipientContact(mActivity, rawId, firstName, lastName, phone, email, mAvatarUrl);
+        Bundle bundle = insertRecipientContact(mActivity, rawId, firstName, lastName, phone, email, mAvatarUrl, mPreferences.getGmailPreferences().getPreferredAccountName());
 
         if(bundle.containsKey(KEY_ERROR)) {
             switch(bundle.getInt(KEY_ERROR)) {

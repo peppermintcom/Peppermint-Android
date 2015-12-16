@@ -535,7 +535,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
                 // if not, add the contact
                 if(!alreadyHasEmail) {
-                    Bundle bundle = NewRecipientFragment.insertRecipientContact(mActivity, 0, name, null, mail, null);
+                    Bundle bundle = NewRecipientFragment.insertRecipientContact(mActivity, 0, name, null, mail, null, mPreferences.getGmailPreferences().getPreferredAccountName());
                     // will fail if there's no name or if the email is invalid
                     if(!bundle.containsKey(NewRecipientFragment.KEY_ERROR)) {
                         alreadyHasEmail = true;
