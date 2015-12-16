@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.R;
 
 import java.util.UUID;
@@ -43,6 +44,13 @@ public class GetResultActivity extends Activity {
         mRequestCode = getIntent().getIntExtra(INTENT_REQUESTCODE, -1);
 
         Intent i = getIntent().getParcelableExtra(INTENT_DATA);
+
+        if(i == null) {
+            onActivityResult(mRequestCode, -2, null);
+            Crashlytics.log("Intent data is null on GetResultActivity! ReqCode=" + mRequestCode + " BroadcastType=" + mBroadcastType + " UUID=" + mUuid);
+            return;
+        }
+
         startActivityForResult(i, mRequestCode);
     }
 

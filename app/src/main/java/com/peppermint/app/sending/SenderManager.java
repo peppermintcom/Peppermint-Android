@@ -544,7 +544,7 @@ public class SenderManager implements SenderListener {
             }
             db.close();
         } else {
-            Crashlytics.log(Log.WARN, TAG, "Chain sender required due to error... " + error.toString());
+            Crashlytics.log("Chain sender required due to error... " + error);
             send(sendingRequest, nextSender);
         }
     }

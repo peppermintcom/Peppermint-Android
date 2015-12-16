@@ -161,7 +161,7 @@ public class GmailSenderTask extends SenderTask {
             // recover by requesting permission to access the api
             throw e;
         } catch(IOException e) {
-            Crashlytics.log(Log.ERROR, TAG, "Throwing NoInternetConnectionException: " + e.getMessage());
+            Crashlytics.log("Throwing NoInternetConnectionException: " + e);
             throw new NoInternetConnectionException(getSender().getContext().getString(R.string.msg_no_internet), e);
         }
     }
