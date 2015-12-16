@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
 
+import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.data.SendingRequest;
 
 import java.util.HashMap;
@@ -170,11 +171,14 @@ public abstract class SenderErrorHandler {
         }
 
         // if it has failed MAX_RETRIES times, do not try it anymore
-        if(mRetryMap.get(request.getId()) > MAX_RETRIES) {
+        int retryNum = mRetryMap.get(request.getId());
+        if(retryNum > MAX_RETRIES) {
             mRetryMap.remove(request.getId());
             doNotRecover(failedSendingTask);
             return;
         }
+
+        Crashlytics.log("Retry #" + retryNum + " due to " + failedSendingTask.getError());
 
         // just try again for MAX_RETRIES times tops
         doRecover(failedSendingTask);

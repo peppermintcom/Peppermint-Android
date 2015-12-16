@@ -17,7 +17,6 @@ import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.authentication.AuthFragment;
 import com.peppermint.app.ui.recipients.RecipientsFragment;
 import com.peppermint.app.ui.settings.SettingsActivity;
-import com.peppermint.app.ui.tutorial.TutorialActivity;
 import com.peppermint.app.ui.views.NavigationItem;
 import com.peppermint.app.utils.Utils;
 
@@ -46,6 +45,7 @@ public class MainActivity extends CustomActionBarActivity {
     private static final String SUPPORT_BODY = "\n\n\n\nNote regarding this feedback. Was provided by %1$s running %2$s with Peppermint v" + BuildConfig.VERSION_NAME;
 
     private List<String> mPermissionsToAsk;
+    private boolean mNeedsToAuthorize = true;
 
     @Override
     protected List<NavigationItem> getNavigationItems() {
@@ -58,13 +58,13 @@ public class MainActivity extends CustomActionBarActivity {
                 startActivity(intent);
             }
         }, true));
-        navItems.add(new NavigationItem(getString(R.string.menu_tutorial), R.drawable.ic_drawer_help, new Runnable() {
+        /*navItems.add(new NavigationItem(getString(R.string.menu_tutorial), R.drawable.ic_drawer_help, new Runnable() {
             @Override
             public void run() {
                 Intent intent = new Intent(MainActivity.this, TutorialActivity.class);
                 startActivity(intent);
             }
-        }, true));
+        }, true));*/
         navItems.add(new NavigationItem(getString(R.string.menu_help_feedback), R.drawable.ic_drawer_feedback, new Runnable() {
             @Override
             public void run() {
@@ -82,11 +82,11 @@ public class MainActivity extends CustomActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if(mPreferences.isFirstRun()) {
+        /*if(mPreferences.isFirstRun()) {
             // launch tutorial
             Intent tutorialIntent = new Intent(this, TutorialActivity.class);
             startActivity(tutorialIntent);
-        }
+        }*/
     }
 
     @Override
@@ -94,37 +94,37 @@ public class MainActivity extends CustomActionBarActivity {
         super.onResume();
         Log.d("TAG", "onResume");
 
-        // only verify permissions and authentication after the tutorial is presented
-        // i.e. after second onResume()
-        if(!mPreferences.isFirstRun()) {
-            mPermissionsToAsk = new ArrayList<>();
-            for (String permission : PERMISSIONS) {
-                if (ContextCompat.checkSelfPermission(this,
-                        permission) != PackageManager.PERMISSION_GRANTED) {
-                    mPermissionsToAsk.add(permission);
-                }
+        mPermissionsToAsk = new ArrayList<>();
+        for (String permission : PERMISSIONS) {
+            if (ContextCompat.checkSelfPermission(this,
+                    permission) != PackageManager.PERMISSION_GRANTED) {
+                mPermissionsToAsk.add(permission);
             }
-
-            // extra conditional permission SMS_SEND
-            if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-                if (ContextCompat.checkSelfPermission(this,
-                        Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
-                    mPermissionsToAsk.add(Manifest.permission.SEND_SMS);
-                }
-            }
-
-            // first request all permissions
-            if (mPermissionsToAsk.size() > 0) {
-                ActivityCompat.requestPermissions(this,
-                        mPermissionsToAsk.toArray(new String[mPermissionsToAsk.size()]),
-                        PERMISSION_REQUEST);
-            } else {
-                // afterwards, request authentication
-                AuthFragment.startAuthentication(this, AUTHENTICATION_REQUEST);
-            }
-        } else {
-            mPreferences.setFirstRun(false);
         }
+
+        // extra conditional permission SMS_SEND
+        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            if (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+                mPermissionsToAsk.add(Manifest.permission.SEND_SMS);
+            }
+        }
+
+        // first request all permissions
+        if (mPermissionsToAsk.size() > 0) {
+            ActivityCompat.requestPermissions(this,
+                    mPermissionsToAsk.toArray(new String[mPermissionsToAsk.size()]),
+                    PERMISSION_REQUEST);
+        } else {
+            // afterwards, request authentication
+            AuthFragment.startAuthentication(this, AUTHENTICATION_REQUEST, mNeedsToAuthorize);
+        }
+
+        mNeedsToAuthorize = false;
+
+        /*if(mPreferences.isFirstRun()) {
+            mPreferences.setFirstRun(false);
+        }*/
     }
 
     @Override

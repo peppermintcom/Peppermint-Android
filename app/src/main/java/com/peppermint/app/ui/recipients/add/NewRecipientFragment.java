@@ -36,7 +36,7 @@ import com.peppermint.app.ui.views.NavigationItem;
 import com.peppermint.app.ui.views.NavigationListAdapter;
 import com.peppermint.app.ui.views.dialogs.CustomListDialog;
 import com.peppermint.app.ui.views.simple.CustomToast;
-import com.peppermint.app.utils.FilteredCursor;
+import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Popup;
 import com.peppermint.app.utils.Utils;
 
@@ -70,9 +70,9 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     public static final int ERR_INVALID_PHONE = 4;
     public static final int ERR_UNABLE_TO_ADD = 5;
 
-    public static Bundle insertRecipientContact(Context context, long rawId, String fullName, String phone, String email, String photoUrl) {
+    public static Bundle insertRecipientContact(Context context, long rawId, String fullName, String phone, String email, String photoUrl, String googleAccountName) {
         String[] names = Utils.getFirstAndLastNames(fullName);
-        return insertRecipientContact(context, rawId, names[0], names[1], phone, email, photoUrl);
+        return insertRecipientContact(context, rawId, names[0], names[1], phone, email, photoUrl, googleAccountName);
     }
 
     /**
@@ -88,7 +88,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
      * @param email the email address
      * @return a {@link Bundle} with results (can be passed on to an {@link Intent}
      */
-    public static Bundle insertRecipientContact(Context context, long rawId, String firstName, String lastName, String phone, String email, String photoUrl) {
+    public static Bundle insertRecipientContact(Context context, long rawId, String firstName, String lastName, String phone, String email, String photoUrl, String googleAccountName) {
         Bundle bundle = new Bundle();
 
         firstName = firstName == null ? "" : Utils.capitalizeFully(firstName.trim());
@@ -124,8 +124,8 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         // create raw contact
         if(rawId <= 0) {
             ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
-                    .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, null)
-                    .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, null).build());
+                    .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, "com.google")
+                    .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, googleAccountName).build());
         }
 
         // add display name data
@@ -156,8 +156,8 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                 List<String> mimeTypes = new ArrayList<>();
                 rawIds.add(rawId);
                 mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
-                FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(context, rawIds, mimeTypes, email);
-                alreadyHasEmail = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
+                Cursor checkCursor = RecipientAdapterUtils.getRecipientsCursor(context, rawIds, mimeTypes, email);
+                alreadyHasEmail = checkCursor != null && checkCursor.getCount() > 0;
             }
 
             if(!alreadyHasEmail) {
@@ -175,10 +175,16 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         }
 
         if(phone.length() > 0) {
-            List<String> mimeTypes = new ArrayList<>();
-            mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-            FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(context, null, null, null, mimeTypes, phone);
-            boolean alreadyHasPhone = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
+            boolean alreadyHasPhone = false;
+
+            if(rawId > 0) {
+                List<Long> rawIds = new ArrayList<>();
+                rawIds.add(rawId);
+                List<String> mimeTypes = new ArrayList<>();
+                mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
+                Cursor checkCursor = RecipientAdapterUtils.getRecipientsCursor(context, rawIds, mimeTypes, phone);
+                alreadyHasPhone = checkCursor != null && checkCursor.getCount() > 0;
+            }
 
             if(!alreadyHasPhone) {
                 if (rawId <= 0) {
@@ -259,6 +265,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     private static final int CHOOSE_PHOTO_CODE = 124;
 
     private CustomActionBarActivity mActivity;
+    private PepperMintPreferences mPreferences;
 
     private ImageView mBtnAddAvatar;
     private EditText mTxtFirstName, mTxtLastName, mTxtPhone, mTxtMail;
@@ -371,6 +378,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     public void onAttach(Activity context) {
         super.onAttach(context);
         mActivity = (CustomActionBarActivity) context;
+        mPreferences = new PepperMintPreferences(context);
     }
 
     private boolean isValid() {
@@ -409,7 +417,6 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         mBtnSave = (Button) mActivity.getCustomActionBar().findViewById(R.id.btnSave);
         mBtnSave.setOnClickListener(this);
 
-        // global touch interceptor to hide keyboard
         mActivity.getTouchInterceptor().setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -504,6 +511,13 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     @Override
     public void onResume() {
         super.onResume();
+        Utils.showKeyboard(mActivity);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        Utils.hideKeyboard(mActivity);
     }
 
     @Override
@@ -526,7 +540,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         String phone = mTxtPhone.getText().toString().trim();
         String email = mTxtMail.getText().toString().trim();
 
-        Bundle bundle = insertRecipientContact(mActivity, rawId, firstName, lastName, phone, email, mAvatarUrl);
+        Bundle bundle = insertRecipientContact(mActivity, rawId, firstName, lastName, phone, email, mAvatarUrl, mPreferences.getGmailPreferences().getPreferredAccountName());
 
         if(bundle.containsKey(KEY_ERROR)) {
             switch(bundle.getInt(KEY_ERROR)) {

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.text.Html;
 
+import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderListener;
@@ -47,7 +48,7 @@ public class IntentMailSenderTask extends SenderTask {
 
         // build the email body
         String url = (String) getSendingRequest().getParameter(ServerSenderTask.PARAM_SHORT_URL);
-        getSendingRequest().setBody(MailUtils.buildEmailFromTemplate(getContext(), url,
+        getSendingRequest().setBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_simple, url,
                 getSendingRequest().getRecording().getDurationMillis(),
                 getSendingRequest().getRecording().getContentType(),
                 displayName, preferredAccountName));

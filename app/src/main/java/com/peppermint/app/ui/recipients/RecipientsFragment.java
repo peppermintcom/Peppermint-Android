@@ -11,8 +11,8 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Point;
 import android.media.MediaPlayer;
+import android.graphics.Rect;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
@@ -51,6 +51,7 @@ import com.peppermint.app.ui.views.SearchListBarAdapter;
 import com.peppermint.app.ui.views.SearchListBarView;
 import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.ui.views.simple.CustomToast;
+import com.peppermint.app.ui.views.dialogs.PopupDialog;
 import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.NoMicDataIOException;
@@ -118,6 +119,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private BaseAdapter mRecipientAdapter;
     private Button mBtnAddContact;
     private boolean mNoRecentsAtStartAndDidntPick = false;
+    private PopupDialog mTipPopup;
+    private final Runnable mShowLoadingRunnable = new Runnable() {
+        @Override
+        public void run() {
+            setListShown(false);
+        }
+    };
 
     private PopupWindow mHoldPopup;
     private Point mLastTouchPoint = new Point();
@@ -157,7 +165,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         @Override
         protected void onPreExecute() {
-            setListShown(false);
+            mHandler.postDelayed(mShowLoadingRunnable, 250);
             _recipientType = (RecipientType) mSearchListBarView.getSelectedItem();
 
             if(_filter == null) {
@@ -174,6 +182,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             try {
                 if (mActivity != null && ContextCompat.checkSelfPermission(mActivity,
                         Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+
+                    PeppermintApp app = (PeppermintApp) mActivity.getApplication();
 
                     if (_recipientType.isStarred() != null && _recipientType.isStarred()) {
                         List<Long> recentList = mPreferences.getRecentContactUris();
@@ -210,7 +220,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                             }
                         }
 
-                        return new RecipientArrayAdapter((PeppermintApp) mActivity.getApplication(), mActivity, recipientMap, recentList);
+                        return new RecipientArrayAdapter(app, mActivity, recipientMap, recentList);
                     }
 
                     // get normal full, email or phone contact list
@@ -249,12 +259,14 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         protected void onPostExecute(Object data) {
             // check if data is valid and activity has not been destroyed by the main thread
             if(data != null && mActivity != null && mCreated) {
+                PeppermintApp app = (PeppermintApp) mActivity.getApplication();
+
                 if (data instanceof Cursor) {
                     // re-use adapter and replace cursor
                     if (mRecipientAdapter != null && mRecipientAdapter instanceof CursorAdapter) {
                         ((CursorAdapter) mRecipientAdapter).changeCursor((Cursor) data);
                     } else {
-                        mRecipientAdapter = new RecipientCursorAdapter((PeppermintApp) mActivity.getApplication(), mActivity, (Cursor) data);
+                        mRecipientAdapter = new RecipientCursorAdapter(app, mActivity, (Cursor) data);
                         // sync. trying to avoid detachFromGLContext errors
                         synchronized(mAnimationRunnable) {
                             getListView().setAdapter(mRecipientAdapter);
@@ -275,17 +287,19 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             }
 
             handleAddContactButtonVisibility();
+            mHandler.removeCallbacks(mShowLoadingRunnable);
             setListShown(true);
         }
 
         @Override
         protected void onCancelled(Object o) {
             handleAddContactButtonVisibility();
+            mHandler.removeCallbacks(mShowLoadingRunnable);
             setListShown(true);
         }
 
         private void handleAddContactButtonVisibility() {
-            if(mSearchListBarView.getSearchText() != null) {
+            if(mSearchListBarView.getSearchText() != null || mRecipientAdapter == null || mRecipientAdapter.getCount() <= 0) {
                 mBtnAddContact.setVisibility(View.VISIBLE);
             } else {
                 mBtnAddContact.setVisibility(View.GONE);
@@ -359,6 +373,21 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         public void onAnimationCancel(Animator animation) { }
         @Override
         public void onAnimationRepeat(Animator animation) { }
+    };
+
+    private final Rect mBtnAddContactHitRect = new Rect();
+
+    private final Runnable mTipRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!mTipPopup.isShowing() && !isRemoving() && !mActivity.isFinishing()) {
+                if(mActivity.getCustomActionBar().getHeight() <= 0) {
+                    mHandler.postDelayed(mTipRunnable, 100);
+                } else {
+                    mTipPopup.show(mActivity.getCustomActionBar());
+                }
+            }
+        }
     };
 
     public RecipientsFragment() {
@@ -452,16 +481,32 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mHoldPopup.setFocusable(false);
         mHoldPopup.setTouchable(false);
 
+        mTipPopup = new PopupDialog(mActivity);
+        mTipPopup.setLayoutResource(R.layout.v_popup_tip1);
+        mTipPopup.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                mPreferences.setFirstRun(false);
+            }
+        });
+
         // global touch interceptor to hide keyboard
         mActivity.getTouchInterceptor().setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    mSearchListBarView.removeSearchTextFocus(event);
-                    getView().requestFocus();
+                    // do not do it if the add contact button was pressed
+                    // since this might be causing the tap event to not work
+                    // the onClick event already has instructions to do this
+                    mBtnAddContact.getHitRect(mBtnAddContactHitRect);
+                    if(!mBtnAddContactHitRect.contains((int) event.getX(), (int) event.getY())) {
+                        mSearchListBarView.removeSearchTextFocus(event);
+                        getView().requestFocus();
+                    }
                 }
                 dismissPopup();
                 mLastTouchPoint.set((int) event.getX(), (int) event.getY());
+                mTipPopup.dismiss();
                 return false;
             }
         });
@@ -550,9 +595,17 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 if(filter != null) {
                     String[] viaName = getSearchData(filter);
                     intent.putExtra(NewRecipientFragment.KEY_VIA, viaName[0]);
-                    intent.putExtra(NewRecipientFragment.KEY_NAME, viaName[1]);
+
+                    if(viaName[0] == null && (Utils.isValidPhoneNumber(viaName[1]) || Utils.isValidEmail(viaName[1]))) {
+                        intent.putExtra(NewRecipientFragment.KEY_VIA, viaName[1]);
+                    } else {
+                        intent.putExtra(NewRecipientFragment.KEY_NAME, viaName[1]);
+                    }
                 }
                 startActivityForResult(intent, REQUEST_NEWCONTACT);
+
+                mSearchListBarView.removeSearchTextFocus(null);
+                getView().requestFocus();
             }
         });
 
@@ -593,7 +646,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
                 // if not, add the contact
                 if(!alreadyHasEmail) {
-                    Bundle bundle = NewRecipientFragment.insertRecipientContact(mActivity, 0, name, null, mail, null);
+                    Bundle bundle = NewRecipientFragment.insertRecipientContact(mActivity, 0, name, null, mail, null, mPreferences.getGmailPreferences().getPreferredAccountName());
                     // will fail if there's no name or if the email is invalid
                     if(!bundle.containsKey(NewRecipientFragment.KEY_ERROR)) {
                         alreadyHasEmail = true;
@@ -660,6 +713,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         // if it is on onStart(), it doesn't work for screen rotations
         mSearchListBarView.removeSearchTextFocus(null);
         getView().requestFocus();
+
+        if(mPreferences.isFirstRun()) {
+            mHandler.postDelayed(mTipRunnable, 100);
+        }
     }
 
     @Override
@@ -700,6 +757,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             // this closes the cursor inside the adapter
             ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(null);
         }
+        mTipPopup.setOnDismissListener(null);
+        mTipPopup.dismiss();
         mDestroyed = true;
         mActivity = null;
         super.onDestroy();

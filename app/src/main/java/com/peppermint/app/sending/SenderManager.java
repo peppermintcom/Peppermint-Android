@@ -4,8 +4,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
+import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
 import android.util.Log;
 import android.widget.Toast;
@@ -15,6 +17,7 @@ import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.exceptions.ElectableForQueueingException;
 import com.peppermint.app.sending.mail.gmail.GmailSender;
+import com.peppermint.app.sending.mail.gmail.GmailSenderPreferences;
 import com.peppermint.app.sending.mail.nativemail.IntentMailSender;
 import com.peppermint.app.sending.nativesms.IntentSMSSender;
 import com.peppermint.app.sending.server.ServerSender;
@@ -65,9 +68,11 @@ public class SenderManager implements SenderListener {
     private ScheduledThreadPoolExecutor mScheduledExecutor;     // a thread pool that sends queued requests
 
     private Map<String, Sender> mSenderMap;                     // map of senders <mime type, sender>
+    private Map<String, Sender> mSenderAuthPrefMap;
 
     private Map<UUID, SenderTask> mTaskMap;                     // map of sending tasks under execution
     private DatabaseHelper mDatabaseHelper;                     // database helper
+    private SharedPreferences mPreferences;
 
     // broadcast receiver that handles internet connectivity status changes
     private BroadcastReceiver mConnectivityChangeReceiver = new BroadcastReceiver() {
@@ -119,11 +124,26 @@ public class SenderManager implements SenderListener {
         mMaintenanceFuture = mScheduledExecutor.scheduleAtFixedRate(mMaintenanceRunnable, 5, 3600, TimeUnit.SECONDS);
     }
 
+    private SharedPreferences.OnSharedPreferenceChangeListener mAuthorizationListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+            if(mSenderAuthPrefMap.containsKey(key)) {
+                Sender sender = mSenderAuthPrefMap.get(key);
+                SenderTask authorizationTask = sender.newAuthorizationTask();
+                if(authorizationTask != null && sender.getSenderPreferences().isEnabled()) {
+                    authorizationTask.executeOnExecutor(mExecutor);
+                }
+            }
+        }
+    };
+
     public SenderManager(Context context, EventBus eventBus, Map<String, Object> defaultSenderParameters) {
         this.mContext = context;
         this.mEventBus = eventBus;
         this.mTaskMap = new HashMap<>();
         this.mSenderMap = new HashMap<>();
+        this.mSenderAuthPrefMap = new HashMap<>();
+        this.mPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 
         this.mDatabaseHelper = new DatabaseHelper(mContext);
 
@@ -151,6 +171,8 @@ public class SenderManager implements SenderListener {
         // if sending the email through gmail sender fails, try through intent mail sender
         gmailSender.setFailureChainSender(intentMailSender);
 
+        mSenderAuthPrefMap.put(GmailSenderPreferences.ACCOUNT_NAME_KEY, gmailSender);
+        mSenderAuthPrefMap.put(GmailSenderPreferences.getEnabledPreferenceKey(GmailSenderPreferences.class), gmailSender);
         mSenderMap.put(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, gmailServerSender);
 
         //sms/text message sender
@@ -195,6 +217,7 @@ public class SenderManager implements SenderListener {
             }
         }
         mContext.registerReceiver(mConnectivityChangeReceiver, mConnectivityChangeFilter);
+        mPreferences.registerOnSharedPreferenceChangeListener(mAuthorizationListener);
         rescheduleMaintenance();
     }
 
@@ -211,6 +234,7 @@ public class SenderManager implements SenderListener {
         if(mMaintenanceFuture != null) {
             mMaintenanceFuture.cancel(true);
         }
+        mPreferences.unregisterOnSharedPreferenceChangeListener(mAuthorizationListener);
         mContext.unregisterReceiver(mConnectivityChangeReceiver);
 
         // save tasks that were not cancelled and are being executed
@@ -253,7 +277,7 @@ public class SenderManager implements SenderListener {
         for(Sender sender : mSenderMap.values()) {
             while(sender != null) {
                 SenderTask authorizationTask = sender.newAuthorizationTask();
-                if(authorizationTask != null) {
+                if(authorizationTask != null && sender.getSenderPreferences().isEnabled()) {
                     authorizationTask.executeOnExecutor(mExecutor);
                 }
                 sender = sender.getFailureChainSender();
@@ -262,7 +286,7 @@ public class SenderManager implements SenderListener {
         for(Sender sender : mSenderMap.values()) {
             while(sender != null) {
                 SenderTask authorizationTask = sender.newAuthorizationTask();
-                if(authorizationTask != null) {
+                if(authorizationTask != null && sender.getSenderPreferences().isEnabled()) {
                     authorizationTask.executeOnExecutor(mExecutor);
                 }
                 sender = sender.getSuccessChainSender();
@@ -520,7 +544,7 @@ public class SenderManager implements SenderListener {
             }
             db.close();
         } else {
-            Crashlytics.log(Log.WARN, TAG, "Chain sender required due to error... " + error.toString());
+            Crashlytics.log("Chain sender required due to error... " + error);
             send(sendingRequest, nextSender);
         }
     }

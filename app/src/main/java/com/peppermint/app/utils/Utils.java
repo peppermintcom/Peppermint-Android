@@ -720,6 +720,21 @@ public class Utils {
     }
 
     /**
+     * Show the keyboard
+     * @param context the activity
+     */
+    public static void showKeyboard(Activity context) {
+        context.getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE
+        );
+        View view = context.getWindow().getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
+        }
+    }
+
+    /**
      * Converts an array of shorts into an array of bytes (double the length).
      * @param sData the short array
      * @return the byte array

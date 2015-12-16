@@ -32,7 +32,7 @@ import com.peppermint.app.utils.Utils;
  */
 public class AuthFragment extends ListFragment implements View.OnClickListener, AdapterView.OnItemClickListener {
 
-    public static boolean startAuthentication(Activity callerActivity, int requestCode) {
+    public static boolean startAuthentication(Activity callerActivity, int requestCode, boolean authorize) {
         PepperMintPreferences prefs = new PepperMintPreferences(callerActivity);
         String displayName = prefs.getDisplayName().trim();
 
@@ -41,6 +41,13 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
             // check if there's already a preferred account
             if (prefs.getGmailPreferences().getPreferredAccountName() != null) {
                 Crashlytics.setUserEmail(prefs.getGmailPreferences().getPreferredAccountName());
+
+                if(authorize) {
+                    // authorize the Gmail API and all other necessary apis
+                    SenderServiceManager senderManager = new SenderServiceManager(callerActivity.getApplicationContext());
+                    senderManager.startAndAuthorize();
+                }
+
                 return false;
             }
 
@@ -189,9 +196,6 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
 
         mPreferences.setDisplayName(mTxtName.getText().toString().trim());
         mPreferences.getGmailPreferences().setPreferredAccountName(mAccounts[position].name);
-
-        SenderServiceManager senderManager = new SenderServiceManager(mActivity.getApplicationContext());
-        senderManager.startAndAuthorize();
 
         mActivity.setResult(Activity.RESULT_OK);
         mActivity.finish();

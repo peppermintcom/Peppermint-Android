@@ -45,6 +45,11 @@ public class RecipientAdapterUtils {
             ContactsContract.RawContacts.ACCOUNT_TYPE
     };
 
+    private static final String[] PROJECTION_DUP = {
+            ContactsContract.RawContacts._ID,
+            ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY
+    };
+
     /**
      * Loads the recipient data from the cursor's current positions and places it in a
      * new {@link Recipient} object.
@@ -72,7 +77,7 @@ public class RecipientAdapterUtils {
         String condIds = getConditions(ContactsContract.Data.RAW_CONTACT_ID, allowedRawIds, null, false);
 
         return context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, PROJECTION,
-                "1" + condViaSearch + " AND (" + condMimeTypes + ")" + " AND (" + condIds + ")",
+                "1" + condViaSearch + " AND (" + condMimeTypes + ")" + " AND (" + condIds + ")" + " AND " + ContactsContract.Contacts.IN_VISIBLE_GROUP + ">0",
                 args.toArray(new String[args.size()]), DISPLAY_NAME + " COLLATE NOCASE");
     }
 
@@ -87,7 +92,7 @@ public class RecipientAdapterUtils {
      * @param allowedMimeTypes the allowed mime types
      * @return the result cursor
      */
-    public static Cursor getRecipientsCursor(Context context, List<Long> allowedIds, String freeTextSearch, Boolean areStarred, List<String> allowedMimeTypes, String enforcedViaSearch) {
+    public static Cursor getRecipientsCursor(final Context context, List<Long> allowedIds, String freeTextSearch, Boolean areStarred, List<String> allowedMimeTypes, String enforcedViaSearch) {
         List<String> args = new ArrayList<>();
         String condStarred = (areStarred == null ? "" : " AND " + ContactsContract.Contacts.STARRED + "=" + (areStarred ? "1" : "0"));
         String condFreeSearch = (freeTextSearch == null ? "" : " AND (LOWER(" + DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString(freeTextSearch + "%") + " OR LOWER(" + DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString("% " + freeTextSearch + "%") + " OR LOWER(REPLACE(" + ContactsContract.Data.DATA1 + ", ' ', '')) LIKE " + DatabaseUtils.sqlEscapeString(/*"%" + */freeTextSearch + "%") + ")");
@@ -95,8 +100,17 @@ public class RecipientAdapterUtils {
         String condMimeTypes = getConditions(ContactsContract.Data.MIMETYPE, allowedMimeTypes, args, false);
         String condIds = getConditions(ContactsContract.Data._ID, allowedIds, null, false);
 
-        Cursor rootCursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, PROJECTION,
-                "1" + condStarred + condFreeSearch + condViaSearch + " AND (" + condMimeTypes + ")" + " AND (" + condIds + ")",
+        /*Cursor tmp = context.getContentResolver().query(ContactsContract.RawContacts.CONTENT_URI, null,
+                "1=1", null, null);
+        while(tmp != null && tmp.moveToNext()) {
+            for(int i=0; i<tmp.getColumnCount(); i++) {
+                Log.d(RecipientAdapterUtils.class.getSimpleName(), "       %%|| " + tmp.getColumnName(i) + " = " + tmp.getString(i));
+            }
+        }
+        tmp.close();*/
+
+        Cursor rootCursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, null,
+                "1" + condStarred + condFreeSearch + condViaSearch + " AND (" + condMimeTypes + ")" + " AND (" + condIds + ")" + " AND " + ContactsContract.Contacts.IN_VISIBLE_GROUP + ">0",
                 args.toArray(new String[args.size()]), DISPLAY_NAME + " COLLATE NOCASE");
 
         if(allowedIds != null) {
@@ -110,10 +124,26 @@ public class RecipientAdapterUtils {
             public boolean isValid(Cursor cursor) {
                 // removes duplicate contacts
                 String via = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1)).trim().toLowerCase() + cursor.getString(cursor.getColumnIndex(DISPLAY_NAME)).replaceAll("\\s+", "").toLowerCase();
+
                 if (!mViaSet.contains(via)) {
                     mViaSet.add(via);
                     return true;
                 }
+
+                /*// check again but with raw contact display name
+                long rawId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data.RAW_CONTACT_ID));
+                Cursor dupCursor = context.getContentResolver().query(ContactsContract.RawContacts.CONTENT_URI, PROJECTION_DUP,
+                        ContactsContract.RawContacts._ID + "=" + rawId, null, null);
+                if(dupCursor != null && dupCursor.moveToNext()) {
+                    via = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1)).trim().toLowerCase() + dupCursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY)).replaceAll("\\s+", "").toLowerCase();
+                }
+                dupCursor.close();
+
+                if (!mViaSet.contains(via)) {
+                    mViaSet.add(via);
+                    return true;
+                }*/
+
                 return false;
             }
         });

@@ -6,16 +6,9 @@
     android:descendantFocusability="beforeDescendants"
     android:focusableInTouchMode="true">
 
-    <com.peppermint.app.ui.recipients.SenderControlLayout
-        android:id="@+id/lytStatus"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true" />
-
     <RelativeLayout
         android:id="@+id/listContainer"
         android:layout_alignParentTop="true"
-        android:layout_above="@id/lytStatus"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true">
@@ -112,5 +105,11 @@
             custom:text="@string/loading_contacts" />
 
     </LinearLayout>
+
+    <com.peppermint.app.ui.recipients.SenderControlLayout
+        android:id="@+id/lytStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true" />
 
 </RelativeLayout>
