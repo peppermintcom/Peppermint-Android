@@ -19,10 +19,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.PopupWindow;
 
-import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.SenderServiceManager;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
@@ -40,7 +40,7 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
         if(displayName != null && displayName.length() > 0 && !Utils.isValidPhoneNumber(displayName)) {
             // check if there's already a preferred account
             if (prefs.getGmailPreferences().getPreferredAccountName() != null) {
-                Crashlytics.setUserEmail(prefs.getGmailPreferences().getPreferredAccountName());
+                TrackerManager.getInstance(callerActivity.getApplicationContext()).setUserEmail(prefs.getGmailPreferences().getPreferredAccountName());
 
                 if(authorize) {
                     // authorize the Gmail API and all other necessary apis
@@ -66,6 +66,8 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
     }
 
     private static final String KEY_NAME = "AuthFragment_Name";
+
+    private static final String SCREEN_ID = "Authentication";
 
     private Runnable mDismissPopupRunnable = new Runnable() {
         @Override
@@ -168,6 +170,8 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
             mDontSetNameFromPrefs = true;
         }
         mTxtName.setSelection(mTxtName.getText().length());
+
+        TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
     }
 
     @Override

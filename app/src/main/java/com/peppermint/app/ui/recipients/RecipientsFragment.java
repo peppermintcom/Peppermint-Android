@@ -25,12 +25,12 @@ import android.widget.Button;
 import android.widget.CursorAdapter;
 import android.widget.TextView;
 
-import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientType;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.canvas.progress.LoadingView;
@@ -73,6 +73,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     private static final int FIXED_AVATAR_ANIMATION_INTERVAL_MS = 15000;
     private static final int VARIABLE_AVATAR_ANIMATION_INTERVAL_MS = 15000;
+
+    private static final String SCREEN_ID = "Contacts";
 
     private PepperMintPreferences mPreferences;
     private CustomActionBarActivity mActivity;
@@ -202,7 +204,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 }
             } catch(Throwable e) {
                 if(!(e instanceof InterruptedIOException)) {
-                    Crashlytics.logException(e);
+                    TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
                 }
             }
 
@@ -586,6 +588,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public void onResume() {
         super.onResume();
+
+        TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
+
         // avoid cursor focus and keyboard when opening
         // if it is on onStart(), it doesn't work for screen rotations
         mSearchListBarView.removeSearchTextFocus(null);

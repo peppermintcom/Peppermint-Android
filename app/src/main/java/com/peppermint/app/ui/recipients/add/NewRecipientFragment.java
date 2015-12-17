@@ -27,9 +27,9 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
 import com.peppermint.app.ui.views.NavigationItem;
@@ -55,6 +55,8 @@ import java.util.Locale;
 public class NewRecipientFragment extends Fragment implements View.OnClickListener, AdapterView.OnItemClickListener {
 
     private static final String TAG = NewRecipientFragment.class.getSimpleName();
+
+    private static final String SCREEN_ID = "NewContact";
 
     public static final String KEY_VIA = TAG + "_Via";
     public static final String KEY_NAME = TAG + "_Name";
@@ -251,7 +253,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         } catch (Throwable e) {
             bundle.putInt(KEY_ERROR, ERR_UNABLE_TO_ADD);
             Log.d(NewRecipientFragment.class.getSimpleName(), "Unable to add contact", e);
-            Crashlytics.logException(e);
+            TrackerManager.getInstance(context.getApplicationContext()).logException(e);
         }
 
         return bundle;
@@ -323,7 +325,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                         photoFile = File.createTempFile(imageFileName, ".jpg", storageDir);
                         mAvatarInProgressUrl = photoFile.getAbsolutePath();
                     } catch (IOException ex) {
-                        Crashlytics.logException(ex);
+                        TrackerManager.getInstance(mActivity.getApplicationContext()).logException(ex);
                         Log.e(TAG, "Unable to create image file!", ex);
                         CustomToast.makeText(mActivity, R.string.msg_message_external_storage_error, Toast.LENGTH_LONG).show();
                     }
@@ -512,6 +514,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     public void onResume() {
         super.onResume();
         Utils.showKeyboard(mActivity);
+        TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
     }
 
     @Override

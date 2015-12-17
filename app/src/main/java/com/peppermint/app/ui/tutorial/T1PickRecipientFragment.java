@@ -6,15 +6,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.views.RoundImageView;
 import com.peppermint.app.utils.Utils;
 
 public class T1PickRecipientFragment extends TutorialActivity.TutorialFragment {
+
+    private static final String SCREEN_ID = "Tutorial-S1-PickContact";
 
     public T1PickRecipientFragment() {
     }
@@ -76,4 +78,9 @@ public class T1PickRecipientFragment extends TutorialActivity.TutorialFragment {
         return v;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
+    }
 }

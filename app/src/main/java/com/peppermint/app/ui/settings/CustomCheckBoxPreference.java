@@ -10,9 +10,9 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.TextView;
 
-import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.Utils;
 
 /**
@@ -72,21 +72,21 @@ public class CustomCheckBoxPreference extends CheckBoxPreference {
         try {
             txtTitle.setTextColor(ContextCompat.getColorStateList(getContext(), R.color.color_black_to_darkgrey_disabled));
         } catch (Exception e) {
-            Crashlytics.logException(e);
+            TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
             txtTitle.setTextColor(Utils.getColor(getContext(), R.color.black));
         }
 
         try {
             txtContent.setTextColor(ContextCompat.getColorStateList(getContext(), R.color.color_black_to_darkgrey_disabled));
         } catch (Exception e) {
-            Crashlytics.logException(e);
+            TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
             txtContent.setTextColor(Utils.getColor(getContext(), R.color.black));
         }
 
         try {
             txtSummary.setTextColor(ContextCompat.getColorStateList(getContext(), R.color.color_darkgrey_to_grey_disabled));
         } catch (Exception e) {
-            Crashlytics.logException(e);
+            TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
             txtSummary.setTextColor(Utils.getColor(getContext(), R.color.dark_grey_text));
         }
     }

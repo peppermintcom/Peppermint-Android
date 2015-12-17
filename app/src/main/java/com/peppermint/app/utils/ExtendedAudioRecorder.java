@@ -7,11 +7,11 @@ import android.media.MediaRecorder;
 import android.util.Log;
 
 import com.coremedia.iso.boxes.Container;
-import com.crashlytics.android.Crashlytics;
 import com.googlecode.mp4parser.FileDataSourceImpl;
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
 import com.googlecode.mp4parser.authoring.tracks.AACTrackImpl;
+import com.peppermint.app.tracking.TrackerManager;
 import com.todoroo.aacenc.AACEncoder;
 
 import java.io.File;
@@ -118,7 +118,7 @@ public class ExtendedAudioRecorder {
                     }
                 }
             } catch(Throwable t) {
-                Crashlytics.logException(t);
+                TrackerManager.getInstance(mContext.getApplicationContext()).logException(t);
                 Log.w(TAG, "Error obtaining AudioRecord instance!", t);
             }
         }
@@ -174,7 +174,7 @@ public class ExtendedAudioRecorder {
                 if (mListener != null) {
                     if (error != null) {
                         if(!(error instanceof NoMicDataIOException)) {
-                            Crashlytics.logException(error);
+                            TrackerManager.getInstance(mContext.getApplicationContext()).logException(error);
                         }
                         mListener.onError(mFilePath, mFullDuration, mFullSize, mAmplitude, error);
                     } else {

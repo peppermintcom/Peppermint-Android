@@ -18,7 +18,6 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.RecordService;
@@ -26,9 +25,10 @@ import com.peppermint.app.RecordServiceManager;
 import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.canvas.old.PeppermintRecordView;
-import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
+import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.utils.NoMicDataIOException;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
@@ -36,6 +36,7 @@ import com.peppermint.app.utils.Utils;
 public class RecordingFragment extends Fragment implements RecordServiceManager.Listener {
 
     private static final String TAG = RecordingFragment.class.getSimpleName();
+    private static final String SCREEN_ID = "Recording";
 
     private static final String DEFAULT_FILENAME = "Peppermint";
 
@@ -48,6 +49,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     private static final String SAVED_DIALOG_STATE_TAG = "Peppermint_SmsDialogState";
 
     private PepperMintPreferences mPreferences;
+    private Activity mActivity;
 
     private RecordServiceManager mRecordManager;
     private PeppermintRecordView mRecordView;
@@ -76,6 +78,8 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+
+        mActivity = activity;
 
         mRecordManager = new RecordServiceManager(activity);
         mRecordManager.setListener(this);
@@ -156,7 +160,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
                     }
                 } catch (RuntimeException e) {
                     mBtnPauseResume.setEnabled(true);
-                    Crashlytics.logException(e);
+                    TrackerManager.getInstance(mActivity.getApplicationContext()).logException(e);
                     Log.e(TAG, e.getMessage(), e);
                 }
             }
@@ -186,7 +190,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
         Bundle args = getArguments();
         if(args == null || getRecipient() == null) {
             Toast.makeText(getActivity(), R.string.msg_message_norecipient_error, Toast.LENGTH_LONG).show();
-            Crashlytics.log(Log.ERROR, TAG, "Recipient received by fragment is null or non-existent! Unexpected access to RecordingActivity/Fragment.");
+            TrackerManager.getInstance(mActivity.getApplicationContext()).log("Recipient received by fragment is null or non-existent! Unexpected access to RecordingActivity/Fragment.");
             getActivity().finish();
             return v;
         }
@@ -211,6 +215,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
         mPressedSend = false;
         mRecordManager.setListener(this);
         mRecordManager.bind();
+        TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
     }
 
     @Override

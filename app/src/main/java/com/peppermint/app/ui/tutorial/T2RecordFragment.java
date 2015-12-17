@@ -15,12 +15,15 @@ import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.canvas.AnimatedLayer;
 import com.peppermint.app.ui.canvas.AnimatedLayerListener;
 import com.peppermint.app.ui.canvas.progress.RecordProgressView;
 import com.peppermint.app.utils.AnimatorBuilder;
 
 public class T2RecordFragment extends TutorialActivity.TutorialFragment implements AnimatedLayerListener {
+
+    private static final String SCREEN_ID = "Tutorial-S2-RecordMessage";
 
     private RecordProgressView mRecordView;
     private ImageView mImgSentCheck;
@@ -85,6 +88,12 @@ public class T2RecordFragment extends TutorialActivity.TutorialFragment implemen
         if (!mRecordView.isDrawingThreadRunning()) {
             mRecordView.startDrawingThread();
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
     }
 
     @Override
