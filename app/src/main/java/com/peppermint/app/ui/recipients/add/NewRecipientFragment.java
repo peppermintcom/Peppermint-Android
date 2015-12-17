@@ -287,9 +287,9 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         @Override
         public void afterTextChanged(Editable s) {
             if(isValid()) {
-                mBtnSave.setVisibility(View.VISIBLE);
+                mBtnSave.setEnabled(true);
             } else {
-                mBtnSave.setVisibility(View.INVISIBLE);
+                mBtnSave.setEnabled(false);
             }
         }
     };
