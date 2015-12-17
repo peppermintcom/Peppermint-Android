@@ -9,6 +9,7 @@ import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.sending.SenderTask;
 import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
+import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
 
 import org.json.JSONObject;
@@ -50,9 +51,14 @@ public class ServerSenderTask extends SenderTask {
             throw new InvalidAccessTokenException();
         }
 
+        PepperMintPreferences globalPrefs = new PepperMintPreferences(getContext());
+        String senderName = globalPrefs.getDisplayName();
+        String senderEmail = globalPrefs.getGmailPreferences().getPreferredAccountName();
+
         // UPLOADS ENDPOINT INVOCATION
         // get AWS signed URL to upload the file
-        executeHttpRequest(ServerClientManager.UPLOADS_ENDPOINT, HttpRequest.METHOD_POST, "{\"content_type\":\"" + getSendingRequest().getRecording().getContentType() + "\"}", null, "Bearer " + manager.getAccessToken());
+        executeHttpRequest(ServerClientManager.UPLOADS_ENDPOINT, HttpRequest.METHOD_POST, "{\"content_type\":\"" + getSendingRequest().getRecording().getContentType() + "\", \"sender_name\":\"" + senderName + "\", \"sender_email\":\"" + senderEmail + "\"}",
+                null, "Bearer " + manager.getAccessToken());
         JSONObject response = new JSONObject(waitForHttpResponse());
         String signedUrl = response.getString("signed_url");
 
