@@ -118,7 +118,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private boolean mRecipientListShown;
     private BaseAdapter mRecipientAdapter;
     private Button mBtnAddContact;
-    private boolean mNoRecentsAtStartAndDidntPick = false;
     private PopupDialog mTipPopup;
     private final Runnable mShowLoadingRunnable = new Runnable() {
         @Override
@@ -564,7 +563,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             if(!hasRecents()) {
                 // select "all contacts" in case there are not fav/recent contacts
                 selectedItemPosition = 1;
-                mNoRecentsAtStartAndDidntPick = true;
             }
             mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
         }
@@ -767,18 +765,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == REQUEST_RECORD) {
-            if(resultCode == Activity.RESULT_OK) {
-                if(mNoRecentsAtStartAndDidntPick) {
-                    // still go back to recent contacts after sending a message
-                    mSearchListBarView.setSelectedItemPositionBeforeSearch(0);
-                }
-
-                // if the user has gone through the sending process without
-                // discarding the recording, then clear the search filter
-                mSearchListBarView.clearSearch(0);
-            }
-        } else if(requestCode == REQUEST_NEWCONTACT) {
+        if(requestCode == REQUEST_NEWCONTACT) {
             if(resultCode == Activity.RESULT_OK) {
                 mSearchListBarView.setSearchText(data.getStringExtra(NewRecipientFragment.KEY_NAME));
             } else {
@@ -937,10 +924,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onSearch(String filter) {
-        if(mSearchListBarView.getSelectedItemPositionBeforeSearch() != 1 && mNoRecentsAtStartAndDidntPick) {
-            mNoRecentsAtStartAndDidntPick = false;
-        }
-
         if(mGetRecipientsTask != null && !mGetRecipientsTask.isCancelled() && mGetRecipientsTask.getStatus() != AsyncTask.Status.FINISHED) {
             mGetRecipientsTask.cancel(true);
         }
@@ -1041,10 +1024,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         mFinalEvent = null;
 
-        if(mNoRecentsAtStartAndDidntPick) {
-            // still go back to recent contacts after sending a message
-            mSearchListBarView.setSelectedItemPositionBeforeSearch(0);
-        }
+        // go back to recent contacts after sending a message
+        mSearchListBarView.setSelectedItemPositionBeforeSearch(0);
 
         // if the user has gone through the sending process without
         // discarding the recording, then clear the search filter
