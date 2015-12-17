@@ -2,7 +2,6 @@ package com.peppermint.app.sending.mail.gmail;
 
 import android.util.Log;
 
-import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.auth.GooglePlayServicesAvailabilityException;
 import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
@@ -25,6 +24,7 @@ import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
 import com.peppermint.app.sending.mail.MailSenderPreferences;
 import com.peppermint.app.sending.mail.MailUtils;
 import com.peppermint.app.sending.server.ServerSenderTask;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.Utils;
 
 import org.json.JSONArray;
@@ -161,7 +161,7 @@ public class GmailSenderTask extends SenderTask {
             // recover by requesting permission to access the api
             throw e;
         } catch(IOException e) {
-            Crashlytics.log("Throwing NoInternetConnectionException: " + e);
+            TrackerManager.getInstance(getContext().getApplicationContext()).log("Throwing NoInternetConnectionException: " + e);
             throw new NoInternetConnectionException(getSender().getContext().getString(R.string.msg_no_internet), e);
         }
     }

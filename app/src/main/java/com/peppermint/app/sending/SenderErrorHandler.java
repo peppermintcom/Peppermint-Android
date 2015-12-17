@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.crashlytics.android.Crashlytics;
+import com.peppermint.app.tracking.TrackerManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -176,7 +176,7 @@ public abstract class SenderErrorHandler {
             return;
         }
 
-        Crashlytics.log("Retry #" + retryNum + " due to " + failedSendingTask.getError());
+        TrackerManager.getInstance(getContext().getApplicationContext()).log("Retry #" + retryNum + " due to " + failedSendingTask.getError());
 
         // just try again for MAX_RETRIES times tops
         doRecover(failedSendingTask);

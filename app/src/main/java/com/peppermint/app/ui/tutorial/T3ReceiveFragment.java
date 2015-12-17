@@ -9,8 +9,11 @@ import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
+import com.peppermint.app.tracking.TrackerManager;
 
 public class T3ReceiveFragment extends TutorialActivity.TutorialFragment {
+
+    private static final String SCREEN_ID = "Tutorial-S3-ReceiveMessage";
 
     public T3ReceiveFragment() {
     }
@@ -30,5 +33,11 @@ public class T3ReceiveFragment extends TutorialActivity.TutorialFragment {
         txtYourFriendDoesntNeedPeppermint.setTypeface(app.getFontSemibold());
 
         return v;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
     }
 }

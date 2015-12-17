@@ -12,7 +12,6 @@ import android.provider.ContactsContract;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.exceptions.ElectableForQueueingException;
@@ -22,6 +21,7 @@ import com.peppermint.app.sending.mail.nativemail.IntentMailSender;
 import com.peppermint.app.sending.nativesms.IntentSMSSender;
 import com.peppermint.app.sending.server.ServerSender;
 import com.peppermint.app.sending.sms.SMSSender;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.Utils;
 
 import java.sql.SQLException;
@@ -107,7 +107,7 @@ public class SenderManager implements SenderListener {
                     }
                 } catch(Throwable e) {
                     Log.e(TAG, "Error on maintenance thread!", e);
-                    Crashlytics.logException(e);
+                    TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
                 }
             }
         }
@@ -248,7 +248,7 @@ public class SenderManager implements SenderListener {
                 try {
                     SendingRequest.insertOrUpdate(db, task.getSendingRequest());
                 } catch (SQLException e) {
-                    Crashlytics.logException(e);
+                    TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
                 }
             }
         }
@@ -443,7 +443,7 @@ public class SenderManager implements SenderListener {
             sendingTask.getSendingRequest().setSent(true);
             SendingRequest.insertOrUpdate(db, sendingTask.getSendingRequest());
         } catch (SQLException e) {
-            Crashlytics.logException(e);
+            TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
         }
         db.close();
 
@@ -492,9 +492,9 @@ public class SenderManager implements SenderListener {
         if(previousSendingTask instanceof SenderAuthorizationTask) {
             if(error != null) {
                 if(error.getMessage() != null) {
-                    Crashlytics.log(error.getMessage());
+                    TrackerManager.getInstance(getContext().getApplicationContext()).log(error.getMessage());
                 }
-                Crashlytics.logException(error);
+                TrackerManager.getInstance(getContext().getApplicationContext()).logException(error);
             }
             Log.e(TAG, "Unable to recover from error while requesting authorization", error);
             return;
@@ -518,7 +518,7 @@ public class SenderManager implements SenderListener {
                         mEventBus.post(new SenderEvent(previousSendingTask, SenderEvent.EVENT_QUEUED, error));
                     }
                 } catch (SQLException e) {
-                    Crashlytics.logException(e);
+                    TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
                     if (mEventBus != null) {
                         mEventBus.post(new SenderEvent(previousSendingTask, e));
                     }
@@ -533,9 +533,9 @@ public class SenderManager implements SenderListener {
 
                 if(error != null) {
                     if(error.getMessage() != null) {
-                        Crashlytics.log(error.getMessage());
+                        TrackerManager.getInstance(getContext().getApplicationContext()).log(error.getMessage());
                     }
-                    Crashlytics.logException(error);
+                    TrackerManager.getInstance(getContext().getApplicationContext()).logException(error);
                 }
 
                 if (mEventBus != null) {
@@ -544,7 +544,7 @@ public class SenderManager implements SenderListener {
             }
             db.close();
         } else {
-            Crashlytics.log("Chain sender required due to error... " + error);
+            TrackerManager.getInstance(getContext().getApplicationContext()).log("Chain sender required due to error... " + error);
             send(sendingRequest, nextSender);
         }
     }

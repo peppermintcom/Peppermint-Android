@@ -4,10 +4,7 @@ import android.app.Application;
 import android.graphics.Typeface;
 import android.util.Log;
 
-import com.crashlytics.android.Crashlytics;
-import com.crashlytics.android.ndk.CrashlyticsNdk;
-
-import io.fabric.sdk.android.Fabric;
+import com.peppermint.app.tracking.TrackerManager;
 
 /**
  * Created by Nuno Luz on 15-09-2015.
@@ -21,7 +18,8 @@ public class PeppermintApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        Fabric.with(this, new Crashlytics(), new CrashlyticsNdk());
+
+        TrackerManager.getInstance(this);
 
         mFontSemibold = Typeface.createFromAsset(getAssets(), "fonts/OpenSans-Semibold.ttf");
         mFontBold = Typeface.createFromAsset(getAssets(), "fonts/OpenSans-Bold.ttf");
@@ -41,4 +39,5 @@ public class PeppermintApp extends Application {
     public Typeface getFontRegular() {
         return mFontRegular;
     }
+
 }

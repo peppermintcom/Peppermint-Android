@@ -21,6 +21,7 @@ import com.peppermint.app.R;
 import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.sending.mail.MailSenderPreferences;
 import com.peppermint.app.sending.mail.gmail.GmailSender;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.utils.PepperMintPreferences;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 public class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static final String TAG = SettingsFragment.class.getSimpleName();
+    private static final String SCREEN_ID = "Settings";
 
     private static final String PREF_DISPLAY_NAME_KEY = "displayName";
     // private static final String PREF_SUBJECT_KEY = "mailSubject";
@@ -134,6 +136,12 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         TextView actionBarView = (TextView) LayoutInflater.from(mActivity).inflate(R.layout.v_settings_actionbar, null, false);
         actionBarView.setTypeface(app.getFontSemibold());
         mActivity.getCustomActionBar().setContents(actionBarView, false);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
     }
 
     @Override

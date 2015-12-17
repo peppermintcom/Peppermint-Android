@@ -30,6 +30,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 
 import com.crashlytics.android.Crashlytics;
+import com.peppermint.app.tracking.TrackerManager;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -470,7 +471,7 @@ public class Utils {
             fis.close();
         } catch (IOException e) {
             Log.e(TAG, "Unable to scale bitmap", e);
-            Crashlytics.logException(e);
+            TrackerManager.getInstance(context.getApplicationContext()).logException(e);
         }
         return bitmap;
     }
@@ -527,7 +528,7 @@ public class Utils {
             fis.close();
         } catch (IOException e) {
             Log.e(TAG, "Unable to scale bitmap", e);
-            Crashlytics.logException(e);
+            TrackerManager.getInstance(context.getApplicationContext()).logException(e);
         }
         return bitmap;
     }

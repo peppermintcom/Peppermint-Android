@@ -9,7 +9,6 @@ import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
@@ -22,6 +21,7 @@ import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.sending.SenderTask;
 import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
 import com.peppermint.app.sending.server.InvalidAccessTokenException;
+import com.peppermint.app.tracking.TrackerManager;
 
 import java.util.Map;
 
@@ -141,7 +141,7 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
                 }
             } catch (Throwable ex) {
                 Log.e(TAG, "Error invalidating Gmail API token!", ex);
-                Crashlytics.logException(ex);
+                TrackerManager.getInstance(getContext().getApplicationContext()).logException(ex);
                 doNotRecover(failedSendingTask);
             }
             return;

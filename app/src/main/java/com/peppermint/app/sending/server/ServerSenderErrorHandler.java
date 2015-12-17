@@ -4,7 +4,6 @@ import android.content.Context;
 import android.os.Build;
 import android.telephony.TelephonyManager;
 
-import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.rest.HttpRequest;
 import com.peppermint.app.rest.HttpRequestListener;
 import com.peppermint.app.rest.HttpResponse;
@@ -12,6 +11,7 @@ import com.peppermint.app.sending.SenderErrorHandler;
 import com.peppermint.app.sending.SenderListener;
 import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.sending.SenderTask;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.Utils;
 
 import org.json.JSONException;
@@ -95,8 +95,8 @@ public class ServerSenderErrorHandler extends SenderErrorHandler implements Http
             JSONObject obj = new JSONObject(response.getBody().toString());
             mManager.setAccessToken(obj.getString("at"));
         } catch (JSONException e) {
-            Crashlytics.log(String.valueOf(response.getBody()));
-            Crashlytics.logException(e);
+            TrackerManager.getInstance(getContext().getApplicationContext()).log(String.valueOf(response.getBody()));
+            TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
             checkRetries(failedSendingTask);
             return;
         }
@@ -123,9 +123,9 @@ public class ServerSenderErrorHandler extends SenderErrorHandler implements Http
 
         if(response.getException() != null) {
             if(response.getException().getMessage() != null) {
-                Crashlytics.log(response.getException().getMessage());
+                TrackerManager.getInstance(getContext().getApplicationContext()).log(response.getException().getMessage());
             }
-            Crashlytics.logException(response.getException());
+            TrackerManager.getInstance(getContext().getApplicationContext()).logException(response.getException());
         }
 
         checkRetries(failedSendingTask);

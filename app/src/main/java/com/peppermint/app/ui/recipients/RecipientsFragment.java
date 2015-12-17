@@ -10,8 +10,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Point;
-import android.media.MediaPlayer;
 import android.graphics.Rect;
+import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -27,7 +27,6 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CursorAdapter;
-import android.widget.FrameLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -41,6 +40,7 @@ import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientType;
 import com.peppermint.app.data.Recording;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.canvas.progress.LoadingView;
@@ -50,8 +50,8 @@ import com.peppermint.app.ui.views.RecordingOverlayView;
 import com.peppermint.app.ui.views.SearchListBarAdapter;
 import com.peppermint.app.ui.views.SearchListBarView;
 import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
-import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.ui.views.dialogs.PopupDialog;
+import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.NoMicDataIOException;
@@ -73,7 +73,9 @@ import java.util.regex.Pattern;
 public class RecipientsFragment extends ListFragment implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener, View.OnTouchListener,
         SearchListBarView.OnSearchListener, RecordServiceManager.Listener {
 
-    public static final int REQUEST_RECORD = 111;
+    private static final String SCREEN_ID = "Contacts";
+    private static final String SCREEN_RECORDING_ID = "Recording";
+
     public static final int REQUEST_NEWCONTACT = 222;
 
     private static final String RECORDING_OVERLAY_TAG = "RECORDING";
@@ -715,6 +717,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         if(mPreferences.isFirstRun()) {
             mHandler.postDelayed(mTipRunnable, 100);
         }
+
+        TrackerManager.getInstance(mActivity.getApplicationContext()).trackScreenView(SCREEN_ID);
     }
 
     @Override
@@ -776,7 +780,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     
     public boolean showRecordingOverlay() {
         mRecordingViewOverlay.start();
-        return mActivity.showOverlay(RECORDING_OVERLAY_TAG, true, null);
+        boolean shown = mActivity.showOverlay(RECORDING_OVERLAY_TAG, true, null);
+
+        if(shown) {
+            TrackerManager.getInstance(mActivity.getApplicationContext()).trackScreenView(SCREEN_RECORDING_ID);
+        }
+
+        return shown;
     }
 
     public boolean hideRecordingOverlay(boolean animated) {
@@ -785,7 +795,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mSearchListBarView.removeSearchTextFocus(null);
         getView().requestFocus();
 
-        return mActivity.hideOverlay(RECORDING_OVERLAY_TAG, RECORDING_OVERLAY_HIDE_DELAY, animated);   // FIXME animated hide is buggy
+        boolean hidden = mActivity.hideOverlay(RECORDING_OVERLAY_TAG, RECORDING_OVERLAY_HIDE_DELAY, animated);   // FIXME animated hide is buggy
+
+        if(hidden) {
+            TrackerManager.getInstance(mActivity.getApplicationContext()).trackScreenView(SCREEN_ID);
+        }
+
+        return hidden;
     }
 
     public int clearFilters() {

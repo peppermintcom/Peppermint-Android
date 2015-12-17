@@ -5,8 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.R;
+import com.peppermint.app.tracking.TrackerManager;
 
 import java.util.UUID;
 
@@ -22,6 +22,8 @@ import java.util.UUID;
  * This activity sends all data back to the service through the {@link LocalBroadcastManager}.
  */
 public class GetResultActivity extends Activity {
+
+    private static final String SCREEN_ID = "Service-GetResult-";
 
     public static final String INTENT_ID = "GetResultActivity_Id";
     public static final String INTENT_BROADCAST_TYPE = "GetResultActivity_BroadcastType";
@@ -47,9 +49,12 @@ public class GetResultActivity extends Activity {
 
         if(i == null) {
             onActivityResult(mRequestCode, -2, null);
-            Crashlytics.log("Intent data is null on GetResultActivity! ReqCode=" + mRequestCode + " BroadcastType=" + mBroadcastType + " UUID=" + mUuid);
+            TrackerManager.getInstance(getApplicationContext())
+                    .log("Intent data is null on GetResultActivity! ReqCode=" + mRequestCode + " BroadcastType=" + mBroadcastType + " UUID=" + mUuid);
             return;
         }
+
+        TrackerManager.getInstance(getApplicationContext()).trackScreenView(SCREEN_ID + i.getAction());
 
         startActivityForResult(i, mRequestCode);
     }
