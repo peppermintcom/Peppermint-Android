@@ -67,7 +67,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -81,7 +80,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     private static final String RECORDING_OVERLAY_TAG = "RECORDING";
     private static final int RECORDING_OVERLAY_HIDE_DELAY = 1000;
-    private static final long MAX_DURATION_MILLIS = 600000; // 10min
+    private static final long MAX_DURATION_MILLIS = 300000; // 5min
 
     public static final String FAST_REPLY_NAME_PARAM = "name";
     public static final String FAST_REPLY_MAIL_PARAM = "mail";
@@ -240,9 +239,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                             try {
                                 i++;
                                 mLock.wait(1000);
-                            } catch (InterruptedException e) {
-                                // nothing to do here
-                            } catch (TimeoutException e) {
+                            } catch (Exception e) {
                                 // nothing to do here
                             }
                         }
