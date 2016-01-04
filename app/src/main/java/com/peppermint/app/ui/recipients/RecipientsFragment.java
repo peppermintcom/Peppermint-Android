@@ -336,7 +336,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private final Runnable mTipRunnable = new Runnable() {
         @Override
         public void run() {
-            if (!mTipPopup.isShowing() && !isRemoving() && !mActivity.isFinishing()) {
+            if (mTipPopup != null && mActivity != null && !mTipPopup.isShowing() && !isRemoving() && !mActivity.isFinishing()) {
                 if(mActivity.getCustomActionBar().getHeight() <= 0) {
                     mHandler.postDelayed(mTipRunnable, 100);
                 } else {
