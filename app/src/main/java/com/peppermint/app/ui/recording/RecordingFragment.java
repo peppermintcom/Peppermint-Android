@@ -45,7 +45,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
     // intent key containing a flag indicating if the sending of the recorded file was requested or not
     public static final String INTENT_RESULT_SENDING_EXTRA = "PepperMint_ResultSendingExtra";
 
-    private static final long MAX_DURATION_MILLIS = 600000; // 10min
+    private static final long MAX_DURATION_MILLIS = 300000; // 5min
     private static final String SAVED_DIALOG_STATE_TAG = "Peppermint_SmsDialogState";
 
     private PepperMintPreferences mPreferences;
