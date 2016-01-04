@@ -85,7 +85,7 @@ public class RecordingFragment extends Fragment implements RecordServiceManager.
         mRecordManager.setListener(this);
 
         mPreferences = new PepperMintPreferences(activity);
-        mFilename = getString(R.string.filename_message_from) + Utils.normalizeAndCleanString(mPreferences.getDisplayName());
+        mFilename = getString(R.string.filename_message_from) + Utils.normalizeAndCleanString(mPreferences.getFullName());
     }
 
     @Override

@@ -27,16 +27,35 @@
                 android:text="@string/your_name_" />
 
             <com.peppermint.app.ui.views.simple.CustomFontEditText
-                android:id="@+id/txtDisplayName"
+                android:id="@+id/txtFirstName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="5dp"
-                android:gravity="center_vertical"
-                custom:textFont="@string/font_semibold"
-                android:textColor="@color/black"
+                android:padding="10dp"
                 android:textSize="16dp"
+                android:textColor="@color/black"
+                android:hint="@string/first_name"
+                android:textColorHint="@color/black_50percent"
                 android:maxLength="40"
                 android:inputType="textCapWords"
+                custom:textFont="@string/font_semibold"
+                android:singleLine="true"
+                android:textCursorDrawable="@drawable/ic_cursor"
+                style="@style/Peppermint.CustomEditText"/>
+
+            <com.peppermint.app.ui.views.simple.CustomFontEditText
+                android:id="@+id/txtLastName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:padding="10dp"
+                android:textSize="16dp"
+                android:textColor="@color/black"
+                android:hint="@string/last_name"
+                android:textColorHint="@color/black_50percent"
+                android:maxLength="40"
+                android:inputType="textCapWords"
+                custom:textFont="@string/font_semibold"
                 android:singleLine="true"
                 android:textCursorDrawable="@drawable/ic_cursor"
                 style="@style/Peppermint.CustomEditText"/>

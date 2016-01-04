@@ -44,7 +44,7 @@ public class IntentMailSenderTask extends SenderTask {
             throw new MailPreferredAccountNotSetException();
         }
 
-        String displayName = ((MailSenderPreferences) getSenderPreferences()).getDisplayName();
+        String displayName = ((MailSenderPreferences) getSenderPreferences()).getFullName();
 
         // build the email body
         String url = (String) getSendingRequest().getParameter(ServerSenderTask.PARAM_SHORT_URL);

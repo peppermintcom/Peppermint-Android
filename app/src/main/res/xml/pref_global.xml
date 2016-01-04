@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto">
     <com.peppermint.app.ui.settings.CustomNamePreference android:key="displayName"
+        custom:keyFirstName="firstName"
+        custom:keyLastName="lastName"
         android:title="@string/pref_title_displayname"
         android:summary="@string/pref_summary_displayname"
         android:defaultValue="" />

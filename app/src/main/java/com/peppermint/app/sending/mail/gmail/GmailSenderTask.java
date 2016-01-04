@@ -98,7 +98,7 @@ public class GmailSenderTask extends SenderTask {
 
         long now = android.os.SystemClock.uptimeMillis();
 
-        String displayName = ((MailSenderPreferences) getSenderPreferences()).getDisplayName();
+        String displayName = ((MailSenderPreferences) getSenderPreferences()).getFullName();
 
         // build the email body
         String url = (String) getSendingRequest().getParameter(ServerSenderTask.PARAM_SHORT_URL);

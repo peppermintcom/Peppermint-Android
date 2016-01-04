@@ -32,9 +32,11 @@ import com.peppermint.app.utils.Utils;
  */
 public class AuthFragment extends ListFragment implements View.OnClickListener, AdapterView.OnItemClickListener {
 
+    private static final String TAG = AuthFragment.class.getSimpleName();
+
     public static boolean startAuthentication(Activity callerActivity, int requestCode, boolean authorize) {
         PepperMintPreferences prefs = new PepperMintPreferences(callerActivity);
-        String displayName = prefs.getDisplayName().trim();
+        String displayName = Utils.capitalizeFully(prefs.getFullName());
 
         // if the display name is not valid, no need to check anything else
         if(displayName != null && displayName.length() > 0 && !Utils.isValidPhoneNumber(displayName)) {
@@ -65,7 +67,8 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
         return true;
     }
 
-    private static final String KEY_NAME = "AuthFragment_Name";
+    private static final String KEY_FIRST_NAME = TAG + "_FirstName";
+    private static final String KEY_LAST_NAME = TAG + "_LastName";
 
     private static final String SCREEN_ID = "Authentication";
 
@@ -78,7 +81,7 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
     private final Handler mHandler = new Handler();
     private boolean mDestroyed = false;
 
-    private EditText mTxtName;
+    private EditText mTxtFirstName, mTxtLastName;
     private Button mBtnAddAccount;
     private AuthArrayAdapter mAdapter;
     private Account[] mAccounts;
@@ -117,9 +120,11 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    Rect outRect = new Rect();
-                    mTxtName.getGlobalVisibleRect(outRect);
-                    if (!outRect.contains((int) event.getRawX(), (int) event.getRawY())) {
+                    Rect outRectFirst = new Rect();
+                    Rect outRectLast = new Rect();
+                    mTxtFirstName.getGlobalVisibleRect(outRectFirst);
+                    mTxtLastName.getGlobalVisibleRect(outRectLast);
+                    if (!outRectFirst.contains((int) event.getRawX(), (int) event.getRawY()) && !outRectLast.contains((int) event.getRawX(), (int) event.getRawY())) {
                         Utils.hideKeyboard(mActivity);
                     }
                 }
@@ -134,8 +139,8 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
         mBtnAddAccount = (Button) v.findViewById(R.id.btnAddAccount);
         mBtnAddAccount.setOnClickListener(this);
 
-        mTxtName = (EditText) v.findViewById(R.id.txtDisplayName);
-        mTxtName.setTypeface(app.getFontSemibold());
+        mTxtFirstName = (EditText) v.findViewById(R.id.txtFirstName);
+        mTxtLastName = (EditText) v.findViewById(R.id.txtLastName);
 
         return v;
     }
@@ -145,8 +150,16 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
         super.onViewCreated(view, savedInstanceState);
         getListView().setOnItemClickListener(this);
 
-        if(savedInstanceState != null && savedInstanceState.containsKey(KEY_NAME) && savedInstanceState.getString(KEY_NAME) != null) {
-            mTxtName.setText(savedInstanceState.getString(KEY_NAME));
+        String firstName = savedInstanceState != null && savedInstanceState.containsKey(KEY_FIRST_NAME) ? savedInstanceState.getString(KEY_FIRST_NAME) : null;
+        String lastName = savedInstanceState != null && savedInstanceState.containsKey(KEY_LAST_NAME) ? savedInstanceState.getString(KEY_LAST_NAME) : null;
+
+        if(firstName != null || lastName != null) {
+            if(firstName != null) {
+                mTxtFirstName.setText(firstName);
+            }
+            if(lastName != null) {
+                mTxtLastName.setText(lastName);
+            }
             mDontSetNameFromPrefs = true;
         } else {
             mDontSetNameFromPrefs = false;
@@ -155,7 +168,8 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        outState.putString(KEY_NAME, mTxtName.getText().toString());
+        outState.putString(KEY_FIRST_NAME, mTxtFirstName.getText().toString());
+        outState.putString(KEY_LAST_NAME, mTxtLastName.getText().toString());
         super.onSaveInstanceState(outState);
     }
 
@@ -166,10 +180,12 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
         mAdapter = new AuthArrayAdapter(mActivity, mAccounts);
         getListView().setAdapter(mAdapter);
         if(!mDontSetNameFromPrefs) {
-            mTxtName.setText(mPreferences.getDisplayName());
+            mTxtFirstName.setText(mPreferences.getFirstName());
+            mTxtLastName.setText(mPreferences.getLastName());
             mDontSetNameFromPrefs = true;
         }
-        mTxtName.setSelection(mTxtName.getText().length());
+        mTxtFirstName.setSelection(mTxtFirstName.getText().length());
+        mTxtLastName.setSelection(mTxtLastName.getText().length());
 
         TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
     }
@@ -192,12 +208,18 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        if(mTxtName.getText().toString().trim().length() <= 0 || Utils.isValidPhoneNumber(mTxtName.getText().toString().trim())) {
-            showPopup(mActivity, mTxtName);
+        if(mTxtFirstName.getText().toString().trim().length() <= 0 || Utils.isValidPhoneNumber(mTxtFirstName.getText().toString().trim())) {
+            showPopup(mActivity, mTxtFirstName);
             return;
         }
 
-        mPreferences.setDisplayName(mTxtName.getText().toString().trim());
+        if(Utils.isValidPhoneNumber(mTxtLastName.getText().toString().trim())) {
+            showPopup(mActivity, mTxtLastName);
+            return;
+        }
+
+        mPreferences.setFirstName(Utils.capitalizeFully(mTxtFirstName.getText().toString()));
+        mPreferences.setLastName(Utils.capitalizeFully(mTxtLastName.getText().toString()));
         mPreferences.getGmailPreferences().setPreferredAccountName(mAccounts[position].name);
 
         mActivity.setResult(Activity.RESULT_OK);
@@ -214,7 +236,7 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
     // the method that displays the img_popup.
     private void showPopup(final Activity context, View parent) {
         Rect outRect = new Rect();
-        mTxtName.getGlobalVisibleRect(outRect);
+        parent.getGlobalVisibleRect(outRect);
 
         dismissPopup();
         mNamePopup.showAtLocation(parent, Gravity.NO_GRAVITY, Utils.dpToPx(mActivity, 40), outRect.centerY());
