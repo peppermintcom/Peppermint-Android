@@ -27,6 +27,31 @@ public class TrackerManager extends TrackerApi {
         mTrackers = new HashSet<>();
         mTrackers.add(new GoogleAnalyticsTracker(applicationContext));
         mTrackers.add(new FabricTracker(applicationContext));
+        mTrackers.add(new FlurryTracker(applicationContext));
+    }
+
+    public void startSession() {
+        for(TrackerApi tracker : mTrackers) {
+            tracker.startSession();
+        }
+    }
+
+    public void endSession() {
+        for(TrackerApi tracker : mTrackers) {
+            tracker.endSession();
+        }
+    }
+
+    public void startTrack(int type, String log, String category) {
+        for(TrackerApi tracker : mTrackers) {
+            tracker.startTrack(type, log, category);
+        }
+    }
+
+    public void endTrack(String name) {
+        for(TrackerApi tracker : mTrackers) {
+            tracker.endTrack(name);
+        }
     }
 
     @Override

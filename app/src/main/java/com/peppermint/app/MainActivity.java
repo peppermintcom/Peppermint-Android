@@ -13,6 +13,7 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.authentication.AuthFragment;
 import com.peppermint.app.ui.recipients.RecipientsFragment;
@@ -82,11 +83,19 @@ public class MainActivity extends CustomActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        /*TrackerManager.getInstance(getApplicationContext()).startSession();*/
+
         /*if(mPreferences.isFirstRun()) {
             // launch tutorial
             Intent tutorialIntent = new Intent(this, TutorialActivity.class);
             startActivity(tutorialIntent);
         }*/
+    }
+
+    @Override
+    protected void onDestroy() {
+        /*TrackerManager.getInstance(getApplicationContext()).endSession();*/
+        super.onDestroy();
     }
 
     @Override
