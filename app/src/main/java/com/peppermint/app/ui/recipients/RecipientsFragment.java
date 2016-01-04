@@ -92,8 +92,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private static final String SMS_CONFIRMATION_STATE_KEY = "RecipientsFragment_SmsConfirmationState";
 
     // avatar animation frequency
-    private static final int FIXED_AVATAR_ANIMATION_INTERVAL_MS = 15000;
-    private static final int VARIABLE_AVATAR_ANIMATION_INTERVAL_MS = 15000;
+    private static final int FIXED_AVATAR_ANIMATION_INTERVAL_MS = 7500;
+    private static final int VARIABLE_AVATAR_ANIMATION_INTERVAL_MS = 7500;
 
     private PepperMintPreferences mPreferences;
     private CustomActionBarActivity mActivity;
