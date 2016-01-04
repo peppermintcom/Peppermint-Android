@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -194,7 +195,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                             try {
                                 i++;
                                 mLock.wait(1000);
-                            } catch (InterruptedException e) {
+                            } catch (Exception e) {
                                 // nothing to do here
                             }
                         }
