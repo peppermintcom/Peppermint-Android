@@ -3,12 +3,14 @@ package com.peppermint.app.ui.authentication;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
-import android.app.ListFragment;
+import android.app.Fragment;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -18,19 +20,20 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.PopupWindow;
+import android.widget.TextView;
 
-import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
+import com.peppermint.app.ui.views.simple.CustomNoScrollListView;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
 
 /**
  * Created by Nuno Luz on 10-11-2015.
  */
-public class AuthFragment extends ListFragment implements View.OnClickListener, AdapterView.OnItemClickListener {
+public class AuthFragment extends Fragment implements View.OnClickListener, AdapterView.OnItemClickListener {
 
     private static final String TAG = AuthFragment.class.getSimpleName();
     private static final int NEW_ACCOUNT_CODE = 1234;
@@ -70,6 +73,7 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
 
     private static final String KEY_FIRST_NAME = TAG + "_FirstName";
     private static final String KEY_LAST_NAME = TAG + "_LastName";
+    private static final String KEY_SEL_ACCOUNT = TAG + "_SelectedAccount";
 
     private static final String SCREEN_ID = "Authentication";
 
@@ -82,15 +86,34 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
     private final Handler mHandler = new Handler();
     private boolean mDestroyed = false;
 
+    private ViewGroup mLytEmpty;
     private EditText mTxtFirstName, mTxtLastName;
-    private Button mBtnAddAccount;
+    private Button mBtnNext, mBtnAddAccount;
     private AuthArrayAdapter mAdapter;
+    private CustomNoScrollListView mListView;
     private Account[] mAccounts;
+    private String mSelectedAccount;
     private PepperMintPreferences mPreferences;
     private CustomActionBarActivity mActivity;
     private boolean mDontSetNameFromPrefs = false;
 
     private PopupWindow mNamePopup;
+    private TextView mTxtPopup;
+
+    private TextWatcher mTextWatcher = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            validateData();
+        }
+    };
 
     @SuppressWarnings("deprecation")
     @Override
@@ -102,11 +125,10 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        PeppermintApp app = (PeppermintApp) mActivity.getApplication();
-
         // hold popup
+        mTxtPopup = (TextView) inflater.inflate(R.layout.v_name_popup, null);
         mNamePopup = new PopupWindow(mActivity);
-        mNamePopup.setContentView(inflater.inflate(R.layout.v_name_popup, null));
+        mNamePopup.setContentView(mTxtPopup);
         //noinspection deprecation
         // although this is deprecated, it is required for versions  < 22/23, otherwise the popup doesn't show up
         mNamePopup.setWindowLayoutMode(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -137,11 +159,19 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
         // inflate the view
         View v = inflater.inflate(R.layout.f_authentication, container, false);
 
+        mBtnNext = (Button) v.findViewById(R.id.btnNext);
+        mBtnNext.setOnClickListener(this);
+
         mBtnAddAccount = (Button) v.findViewById(R.id.btnAddAccount);
         mBtnAddAccount.setOnClickListener(this);
 
         mTxtFirstName = (EditText) v.findViewById(R.id.txtFirstName);
+        mTxtFirstName.addTextChangedListener(mTextWatcher);
         mTxtLastName = (EditText) v.findViewById(R.id.txtLastName);
+        mTxtLastName.addTextChangedListener(mTextWatcher);
+
+        mListView = (CustomNoScrollListView) v.findViewById(android.R.id.list);
+        mLytEmpty = (ViewGroup) v.findViewById(android.R.id.empty);
 
         return v;
     }
@@ -149,10 +179,11 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        getListView().setOnItemClickListener(this);
+        mListView.setOnItemClickListener(this);
 
         String firstName = savedInstanceState != null && savedInstanceState.containsKey(KEY_FIRST_NAME) ? savedInstanceState.getString(KEY_FIRST_NAME) : null;
         String lastName = savedInstanceState != null && savedInstanceState.containsKey(KEY_LAST_NAME) ? savedInstanceState.getString(KEY_LAST_NAME) : null;
+        mSelectedAccount = savedInstanceState != null && savedInstanceState.containsKey(KEY_SEL_ACCOUNT) ? savedInstanceState.getString(KEY_SEL_ACCOUNT) : null;
 
         if(firstName != null || lastName != null) {
             if(firstName != null) {
@@ -171,7 +202,40 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
     public void onSaveInstanceState(Bundle outState) {
         outState.putString(KEY_FIRST_NAME, mTxtFirstName.getText().toString());
         outState.putString(KEY_LAST_NAME, mTxtLastName.getText().toString());
+        if(mSelectedAccount != null) {
+            outState.putString(KEY_SEL_ACCOUNT, mSelectedAccount);
+        }
         super.onSaveInstanceState(outState);
+    }
+
+    private void refreshAccountList() {
+        mAccounts = AccountManager.get(mActivity).getAccountsByType("com.google");
+        mAdapter = new AuthArrayAdapter(mActivity, mAccounts);
+        mListView.setAdapter(mAdapter);
+
+        if(mAccounts != null && mAccounts.length > 0) {
+            mListView.setVisibility(View.VISIBLE);
+            mLytEmpty.setVisibility(View.GONE);
+            int pos = 0;
+
+            if(mSelectedAccount != null) {
+                pos = -1;
+                for(int i=0; i<mAccounts.length && pos < 0; i++) {
+                    if(mAccounts[i].name.compareTo(mSelectedAccount) == 0) {
+                        pos = i;
+                    }
+                }
+                if(pos < 0) {
+                    pos = 0;
+                }
+            }
+
+            mSelectedAccount = mAccounts[pos].name;
+            mListView.setItemChecked(pos, true);
+        } else {
+            mListView.setVisibility(View.GONE);
+            mLytEmpty.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -181,9 +245,7 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
         // although this code is also at onResume() and is executed
         // only after adding it here the list is properly refreshed with the new account
         if(requestCode == NEW_ACCOUNT_CODE && resultCode == Activity.RESULT_OK) {
-            mAccounts = AccountManager.get(mActivity).getAccountsByType("com.google");
-            mAdapter = new AuthArrayAdapter(mActivity, mAccounts);
-            getListView().setAdapter(mAdapter);
+            refreshAccountList();
         }
     }
 
@@ -191,9 +253,7 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
     public void onResume() {
         super.onResume();
 
-        mAccounts = AccountManager.get(mActivity).getAccountsByType("com.google");
-        mAdapter = new AuthArrayAdapter(mActivity, mAccounts);
-        getListView().setAdapter(mAdapter);
+        refreshAccountList();
 
         if(!mDontSetNameFromPrefs) {
             mTxtFirstName.setText(mPreferences.getFirstName());
@@ -212,6 +272,26 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
         super.onDestroy();
     }
 
+    private int validateData() {
+        if(mTxtFirstName.getText().toString().trim().length() <= 0 || Utils.isValidPhoneNumber(mTxtFirstName.getText().toString().trim())) {
+            mBtnNext.setEnabled(false);
+            return 1;
+        }
+
+        if(Utils.isValidPhoneNumber(mTxtLastName.getText().toString().trim())) {
+            mBtnNext.setEnabled(false);
+            return 2;
+        }
+
+        if(mAccounts == null || mAccounts.length <= 0 || mListView.getCheckedItemPosition() < 0) {
+            mBtnNext.setEnabled(false);
+            return 3;
+        }
+
+        mBtnNext.setEnabled(true);
+        return 0;
+    }
+
     @Override
     public void onClick(View v) {
         if(v.equals(mBtnAddAccount)) {
@@ -220,26 +300,30 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
             startActivityForResult(intent, NEW_ACCOUNT_CODE);
             return;
         }
-    }
 
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        if(mTxtFirstName.getText().toString().trim().length() <= 0 || Utils.isValidPhoneNumber(mTxtFirstName.getText().toString().trim())) {
-            showPopup(mActivity, mTxtFirstName);
-            return;
+        if(v.equals(mBtnNext)) {
+            final int validatedDataRes = validateData();
+
+            switch(validatedDataRes) {
+                case 1:
+                    showPopup(mActivity, mTxtFirstName, R.string.msg_insert_name);
+                    return;
+                case 2:
+                    showPopup(mActivity, mTxtLastName, R.string.msg_insert_name);
+                    return;
+                case 3:
+                    showPopup(mActivity, mBtnAddAccount, R.string.msg_insert_account);
+                    return;
+                default:
+            }
+
+            mPreferences.setFirstName(Utils.capitalizeFully(mTxtFirstName.getText().toString()));
+            mPreferences.setLastName(Utils.capitalizeFully(mTxtLastName.getText().toString()));
+            mPreferences.getGmailPreferences().setPreferredAccountName(mAccounts[mListView.getCheckedItemPosition()].name);
+
+            mActivity.setResult(Activity.RESULT_OK);
+            mActivity.finish();
         }
-
-        if(Utils.isValidPhoneNumber(mTxtLastName.getText().toString().trim())) {
-            showPopup(mActivity, mTxtLastName);
-            return;
-        }
-
-        mPreferences.setFirstName(Utils.capitalizeFully(mTxtFirstName.getText().toString()));
-        mPreferences.setLastName(Utils.capitalizeFully(mTxtLastName.getText().toString()));
-        mPreferences.getGmailPreferences().setPreferredAccountName(mAccounts[position].name);
-
-        mActivity.setResult(Activity.RESULT_OK);
-        mActivity.finish();
     }
 
     private void dismissPopup() {
@@ -250,12 +334,20 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
     }
 
     // the method that displays the img_popup.
-    private void showPopup(final Activity context, View parent) {
+    private void showPopup(final Activity context, View parent, int strResId) {
         Rect outRect = new Rect();
         parent.getGlobalVisibleRect(outRect);
 
         dismissPopup();
-        mNamePopup.showAtLocation(parent, Gravity.NO_GRAVITY, Utils.dpToPx(mActivity, 40), outRect.centerY());
+        mTxtPopup.setText(strResId);
+        mNamePopup.showAtLocation(parent, Gravity.NO_GRAVITY, Utils.dpToPx(mActivity, 40), outRect.bottom);
         mHandler.postDelayed(mDismissPopupRunnable, 6000);
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        mSelectedAccount = mAccounts[position].name;
+        mListView.setItemChecked(position, true);
+        validateData();
     }
 }
