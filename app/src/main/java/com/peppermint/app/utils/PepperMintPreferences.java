@@ -23,6 +23,7 @@ public class PepperMintPreferences {
     public static final String SHOWN_SMS_CONFIRMATION_KEY = "shownSmsConfirmation";
 
     public static final String IS_FIRST_RUN_KEY = "isFirstRun";
+    public static final String HAS_SENT_KEY = "hasSentMessage";
 
     public static final String MAIL_SUBJECT_KEY = "mailSubject";
     public static final String FIRST_NAME_KEY = "firstName";
@@ -195,6 +196,16 @@ public class PepperMintPreferences {
     public void setFirstRun(boolean val) {
         edit();
         mEditor.putBoolean(IS_FIRST_RUN_KEY, val);
+        commit();
+    }
+
+    public boolean hasSentMessage() {
+        return mSettings.getBoolean(HAS_SENT_KEY, false);
+    }
+
+    public void setHasSentMessage(boolean val) {
+        edit();
+        mEditor.putBoolean(HAS_SENT_KEY, val);
         commit();
     }
 

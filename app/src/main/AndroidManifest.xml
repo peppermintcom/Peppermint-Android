@@ -140,8 +140,13 @@
             android:name=".SplashActivity"
             android:label="@string/app_name"
             android:theme="@style/Peppermint.Theme.Fullscreen" >
-
         </activity>
+
+        <receiver android:name="com.peppermint.app.InstallReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.vending.INSTALL_REFERRER" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
