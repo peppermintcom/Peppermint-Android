@@ -33,6 +33,7 @@ import com.peppermint.app.utils.Utils;
 public class AuthFragment extends ListFragment implements View.OnClickListener, AdapterView.OnItemClickListener {
 
     private static final String TAG = AuthFragment.class.getSimpleName();
+    private static final int NEW_ACCOUNT_CODE = 1234;
 
     public static boolean startAuthentication(Activity callerActivity, int requestCode, boolean authorize) {
         PepperMintPreferences prefs = new PepperMintPreferences(callerActivity);
@@ -174,11 +175,26 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
     }
 
     @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // although this code is also at onResume() and is executed
+        // only after adding it here the list is properly refreshed with the new account
+        if(requestCode == NEW_ACCOUNT_CODE && resultCode == Activity.RESULT_OK) {
+            mAccounts = AccountManager.get(mActivity).getAccountsByType("com.google");
+            mAdapter = new AuthArrayAdapter(mActivity, mAccounts);
+            getListView().setAdapter(mAdapter);
+        }
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
+
         mAccounts = AccountManager.get(mActivity).getAccountsByType("com.google");
         mAdapter = new AuthArrayAdapter(mActivity, mAccounts);
         getListView().setAdapter(mAdapter);
+
         if(!mDontSetNameFromPrefs) {
             mTxtFirstName.setText(mPreferences.getFirstName());
             mTxtLastName.setText(mPreferences.getLastName());
@@ -201,7 +217,7 @@ public class AuthFragment extends ListFragment implements View.OnClickListener, 
         if(v.equals(mBtnAddAccount)) {
             Intent intent = new Intent(Settings.ACTION_ADD_ACCOUNT);
             intent.putExtra(Settings.EXTRA_ACCOUNT_TYPES, new String[] {"com.google"});
-            startActivity(intent);
+            startActivityForResult(intent, NEW_ACCOUNT_CODE);
             return;
         }
     }
