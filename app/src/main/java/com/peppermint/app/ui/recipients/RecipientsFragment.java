@@ -499,7 +499,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                     // do not do it if the add contact button was pressed
                     // since this might be causing the tap event to not work
                     // the onClick event already has instructions to do this
-                    mBtnAddContact.getHitRect(mBtnAddContactHitRect);
+                    mBtnAddContact.getGlobalVisibleRect(mBtnAddContactHitRect);
                     if(!mBtnAddContactHitRect.contains((int) event.getX(), (int) event.getY())) {
                         mSearchListBarView.removeSearchTextFocus(event);
                         getView().requestFocus();
@@ -603,9 +603,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                     }
                 }
                 startActivityForResult(intent, REQUEST_NEWCONTACT);
-
-                mSearchListBarView.removeSearchTextFocus(null);
-                getView().requestFocus();
             }
         });
 
