@@ -51,7 +51,7 @@ public class IntentMailSenderTask extends SenderTask {
         getSendingRequest().setBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_simple, url,
                 getSendingRequest().getRecording().getDurationMillis(),
                 getSendingRequest().getRecording().getContentType(),
-                displayName, preferredAccountName));
+                displayName, preferredAccountName, false));
 
         File file = getSendingRequest().getRecording().getValidatedFile();
 

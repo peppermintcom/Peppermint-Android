@@ -105,7 +105,7 @@ public class GmailSenderTask extends SenderTask {
         getSendingRequest().setBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template, url,
                 getSendingRequest().getRecording().getDurationMillis(),
                 getSendingRequest().getRecording().getContentType(),
-                displayName, preferredAccountName));
+                displayName, preferredAccountName, true));
 
         try {
             Draft draft = null;
