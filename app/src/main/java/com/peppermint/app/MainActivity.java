@@ -13,8 +13,8 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
+import com.peppermint.app.ui.about.AboutActivity;
 import com.peppermint.app.ui.authentication.AuthFragment;
 import com.peppermint.app.ui.recipients.RecipientsFragment;
 import com.peppermint.app.ui.settings.SettingsActivity;
@@ -74,6 +74,13 @@ public class MainActivity extends CustomActionBarActivity {
                 i.putExtra(Intent.EXTRA_TEXT, String.format(SUPPORT_BODY, Utils.getDeviceName(), Utils.getAndroidVersion()));
                 i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(Intent.createChooser(i, getString(R.string.send_email)));
+            }
+        }, true));
+        navItems.add(new NavigationItem(getString(R.string.menu_about), R.drawable.ic_drawer_help, new Runnable() {
+            @Override
+            public void run() {
+                Intent intent = new Intent(MainActivity.this, AboutActivity.class);
+                startActivity(intent);
             }
         }, true));
         return navItems;
