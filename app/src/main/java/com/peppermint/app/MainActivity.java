@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.peppermint.app.ui.CustomActionBarActivity;
@@ -108,7 +107,6 @@ public class MainActivity extends CustomActionBarActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d("TAG", "onResume");
 
         mPermissionsToAsk = new ArrayList<>();
         for (String permission : PERMISSIONS) {

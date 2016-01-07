@@ -45,10 +45,10 @@ public class RecipientAdapterUtils {
             ContactsContract.RawContacts.ACCOUNT_TYPE
     };
 
-    private static final String[] PROJECTION_DUP = {
+    /*private static final String[] PROJECTION_DUP = {
             ContactsContract.RawContacts._ID,
             ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY
-    };
+    };*/
 
     /**
      * Loads the recipient data from the cursor's current positions and places it in a
