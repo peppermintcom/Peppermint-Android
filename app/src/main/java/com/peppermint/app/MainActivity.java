@@ -14,6 +14,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.peppermint.app.ui.CustomActionBarActivity;
+import com.peppermint.app.ui.about.AboutActivity;
 import com.peppermint.app.ui.authentication.AuthFragment;
 import com.peppermint.app.ui.recipients.RecipientsFragment;
 import com.peppermint.app.ui.settings.SettingsActivity;
@@ -75,6 +76,13 @@ public class MainActivity extends CustomActionBarActivity {
                 startActivity(Intent.createChooser(i, getString(R.string.send_email)));
             }
         }, true));
+        navItems.add(new NavigationItem(getString(R.string.menu_about), R.drawable.ic_drawer_help, new Runnable() {
+            @Override
+            public void run() {
+                Intent intent = new Intent(MainActivity.this, AboutActivity.class);
+                startActivity(intent);
+            }
+        }, true));
         return navItems;
     }
 
@@ -82,11 +90,19 @@ public class MainActivity extends CustomActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        /*TrackerManager.getInstance(getApplicationContext()).startSession();*/
+
         /*if(mPreferences.isFirstRun()) {
             // launch tutorial
             Intent tutorialIntent = new Intent(this, TutorialActivity.class);
             startActivity(tutorialIntent);
         }*/
+    }
+
+    @Override
+    protected void onDestroy() {
+        /*TrackerManager.getInstance(getApplicationContext()).endSession();*/
+        super.onDestroy();
     }
 
     @Override

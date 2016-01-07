@@ -712,7 +712,14 @@ public class Utils {
         context.getWindow().setSoftInputMode(
                 WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN
         );
+
         View view = context.getWindow().getCurrentFocus();
+
+        if(view == null) {
+            Log.d(TAG, "Null Focused View - Getting Root View...");
+            view = context.findViewById(android.R.id.content);
+        }
+
         if (view != null) {
             view.clearFocus();
             InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);

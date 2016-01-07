@@ -16,6 +16,13 @@ public abstract class TrackerApi {
         this.mApplicationContext = applicationContext;
     }
 
+    public void startSession() { }
+
+    public void endSession() { }
+
+    public void startTrack(int type, String name, String category) { }
+    public void endTrack(String name) { }
+
     public abstract void track(int type, String name, String category);
     public abstract void logException(Throwable t);
     public abstract void log(String log);
