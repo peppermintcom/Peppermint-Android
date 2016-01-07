@@ -876,7 +876,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
             mRecordingViewOverlay.setName(mTappedRecipient.getName());
             mRecordingViewOverlay.setVia(mTappedRecipient.getVia());
-            String filename = getString(R.string.filename_message_from) + Utils.normalizeAndCleanString(mPreferences.getDisplayName());
+            String filename = getString(R.string.filename_message_from) + Utils.normalizeAndCleanString(mPreferences.getFullName());
             mRecordManager.startRecording(filename, mTappedRecipient, MAX_DURATION_MILLIS);
         }
         return true;

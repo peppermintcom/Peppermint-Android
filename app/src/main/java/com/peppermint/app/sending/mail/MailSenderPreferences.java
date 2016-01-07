@@ -15,7 +15,8 @@ public class MailSenderPreferences extends SenderPreferences {
 
     // GmailSenderTask shared preference keys
     public static final String ACCOUNT_NAME_KEY = "prefAccountName";
-    public static final String DISPLAY_NAME_KEY = "displayName";
+    public static final String FIRST_NAME_KEY = "firstName";
+    public static final String LAST_NAME_KEY = "lastName";
 
     public MailSenderPreferences(Context context) {
         super(context);
@@ -35,21 +36,50 @@ public class MailSenderPreferences extends SenderPreferences {
         return getSharedPreferences().getString(ACCOUNT_NAME_KEY, null);
     }
 
-    public void setDisplayName(String name) {
+    public void setFirstName(String name) {
         SharedPreferences.Editor editor = getSharedPreferences().edit();
-        editor.putString(DISPLAY_NAME_KEY, name);
+        editor.putString(FIRST_NAME_KEY, name);
         editor.commit();
     }
 
-    public String getDisplayName() {
-        String name = getSharedPreferences().getString(DISPLAY_NAME_KEY, null);
-        if(name == null) {
+    public String getFirstName() {
+        return getSharedPreferences().getString(FIRST_NAME_KEY, null);
+    }
+
+    public void setLastName(String name) {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putString(LAST_NAME_KEY, name);
+        editor.commit();
+    }
+
+    public String getLastName() {
+        return getSharedPreferences().getString(LAST_NAME_KEY, null);
+    }
+
+    public void setFullName(String name) {
+        String[] names = Utils.getFirstAndLastNames(name);
+        setFirstName(names[0]);
+        if(names[1] != null) {
+            setLastName(names[1]);
+        }
+    }
+
+    public String getFullName() {
+        String firstName = getFirstName();
+        String lastName = getLastName();
+        String name = null;
+
+        if(firstName == null && lastName == null) {
             String[] data = Utils.getUserData(getContext());
             if(data[0] != null) {
                 name = data[0];
-                setDisplayName(data[0]);
+                setFullName(data[0]);
             }
+        } else {
+            name = ((firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "")).trim();
         }
+
         return name;
     }
+
 }

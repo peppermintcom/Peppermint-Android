@@ -52,7 +52,7 @@ public class ServerSenderTask extends SenderTask {
         }
 
         PepperMintPreferences globalPrefs = new PepperMintPreferences(getContext());
-        String senderName = globalPrefs.getDisplayName();
+        String senderName = globalPrefs.getFullName();
         String senderEmail = globalPrefs.getGmailPreferences().getPreferredAccountName();
 
         // UPLOADS ENDPOINT INVOCATION

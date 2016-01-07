@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
@@ -45,7 +44,7 @@ public class FitsSystemWindowsFrameLayout extends FrameLayout {
             newWindowInsets = new WindowInsets(insets);
         }
 
-        Log.d(TAG, "dispatchApplyWindowInsets: " + newWindowInsets.toString());
+        // Log.d(TAG, "dispatchApplyWindowInsets: " + newWindowInsets.toString());
 
         return super.dispatchApplyWindowInsets(newWindowInsets);
     }
@@ -58,7 +57,7 @@ public class FitsSystemWindowsFrameLayout extends FrameLayout {
 
         windowInsets.set(insets);
 
-        Log.d(TAG, "fitSystemWindows: " + windowInsets.toString());
+        // Log.d(TAG, "fitSystemWindows: " + windowInsets.toString());
 
         super.fitSystemWindows(insets);
         return false;

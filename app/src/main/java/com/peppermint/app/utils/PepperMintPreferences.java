@@ -23,9 +23,11 @@ public class PepperMintPreferences {
     public static final String SHOWN_SMS_CONFIRMATION_KEY = "shownSmsConfirmation";
 
     public static final String IS_FIRST_RUN_KEY = "isFirstRun";
+    public static final String HAS_SENT_KEY = "hasSentMessage";
 
     public static final String MAIL_SUBJECT_KEY = "mailSubject";
-    public static final String DISPLAY_NAME_KEY = "displayName";
+    public static final String FIRST_NAME_KEY = "firstName";
+    public static final String LAST_NAME_KEY = "lastName";
 
     protected static final int RECENT_CONTACTS_LIST_LIMIT = 50;
 
@@ -141,23 +143,49 @@ public class PepperMintPreferences {
         return mSettings.getString(MAIL_SUBJECT_KEY, mContext.getString(R.string.default_mail_subject));
     }
 
-    public void setDisplayName(String name) {
+    public void setFirstName(String name) {
         edit();
-        mEditor.putString(DISPLAY_NAME_KEY, name);
+        mEditor.putString(FIRST_NAME_KEY, name);
         commit();
     }
 
-    public String getDisplayName() {
-        String name = mSettings.getString(DISPLAY_NAME_KEY, null);
-        if(name == null) {
+    public String getFirstName() {
+        return mSettings.getString(FIRST_NAME_KEY, null);
+    }
+
+    public void setLastName(String name) {
+        edit();
+        mEditor.putString(LAST_NAME_KEY, name);
+        commit();
+    }
+
+    public String getLastName() {
+        return mSettings.getString(LAST_NAME_KEY, null);
+    }
+
+    public void setFullName(String name) {
+        String[] names = Utils.getFirstAndLastNames(name);
+        setFirstName(names[0]);
+        if(names[1] != null) {
+            setLastName(names[1]);
+        }
+    }
+
+    public String getFullName() {
+        String firstName = getFirstName();
+        String lastName = getLastName();
+        String name = "";
+
+        if(firstName == null && lastName == null) {
             String[] data = Utils.getUserData(mContext);
             if(data[0] != null) {
                 name = data[0];
-                setDisplayName(data[0]);
-            } else {
-                name = "";
+                setFullName(data[0]);
             }
+        } else {
+            name = ((firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "")).trim();
         }
+
         return name;
     }
 
@@ -168,6 +196,16 @@ public class PepperMintPreferences {
     public void setFirstRun(boolean val) {
         edit();
         mEditor.putBoolean(IS_FIRST_RUN_KEY, val);
+        commit();
+    }
+
+    public boolean hasSentMessage() {
+        return mSettings.getBoolean(HAS_SENT_KEY, false);
+    }
+
+    public void setHasSentMessage(boolean val) {
+        edit();
+        mEditor.putBoolean(HAS_SENT_KEY, val);
         commit();
     }
 

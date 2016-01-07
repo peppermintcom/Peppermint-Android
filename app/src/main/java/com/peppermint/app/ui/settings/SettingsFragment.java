@@ -75,7 +75,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
             }
         });
 
-        String displayName = mPreferences.getDisplayName();
+        String displayName = mPreferences.getFullName();
         final Preference mPrefDisplayName = findPreference(PREF_DISPLAY_NAME_KEY);
         if(displayName != null && displayName.length() >= 0) {
             mPrefDisplayName.setTitle(displayName);

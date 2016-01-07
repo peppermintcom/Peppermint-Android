@@ -35,8 +35,8 @@ import com.peppermint.app.utils.Utils;
 public class CustomNamePreference extends CustomDialogPreference {
 
     private static final String TAG = CustomNamePreference.class.getSimpleName();
-    public static final String FIRST_NAME_SUFFIX = "_FirstName";
-    public static final String LAST_NAME_SUFFIX = "_LastName";
+
+    private String mFirstNameKey, mLastNameKey;
 
     private String mContent;
     private TextView mTxtContent;
@@ -71,6 +71,20 @@ public class CustomNamePreference extends CustomDialogPreference {
 
     private void init(Context context, AttributeSet attrs) {
         setDialogLayoutResource(R.layout.d_custom_name);
+
+        if(attrs != null) {
+            TypedArray a = getContext().getTheme().obtainStyledAttributes(
+                    attrs,
+                    R.styleable.CustomNamePreference,
+                    0, 0);
+
+            try {
+                mFirstNameKey = a.getString(R.styleable.CustomNamePreference_keyFirstName);
+                mLastNameKey = a.getString(R.styleable.CustomNamePreference_keyLastName);
+            } finally {
+                a.recycle();
+            }
+        }
     }
 
     @Override
@@ -195,15 +209,15 @@ public class CustomNamePreference extends CustomDialogPreference {
     public void setFullName(String firstName, String lastName) {
         final boolean wasBlocking = shouldDisableDependents();
 
-        mFirstName = firstName == null ? "" : firstName.trim();
-        mLastName = lastName == null ? "" : lastName.trim();
+        mFirstName = firstName == null ? "" : Utils.capitalizeFully(firstName);
+        mLastName = lastName == null ? "" : Utils.capitalizeFully(lastName);
 
-        persistString(Utils.capitalizeFully(mFirstName + " " + mLastName).trim());
+        persistString(Utils.capitalizeFully(mFirstName + " " + mLastName));
 
         if (shouldPersist()) {
             SharedPreferences.Editor editor = getPreferenceManager().getSharedPreferences().edit();
-            editor.putString(getKey() + FIRST_NAME_SUFFIX, firstName);
-            editor.putString(getKey() + LAST_NAME_SUFFIX, lastName);
+            editor.putString(mFirstNameKey, mFirstName);
+            editor.putString(mLastNameKey, mLastName);
             editor.commit();
         }
 
@@ -235,7 +249,7 @@ public class CustomNamePreference extends CustomDialogPreference {
             return defaultReturnValue;
         }
 
-        return getPreferenceManager().getSharedPreferences().getString(getKey() + FIRST_NAME_SUFFIX, defaultReturnValue);
+        return getPreferenceManager().getSharedPreferences().getString(mFirstNameKey, defaultReturnValue);
     }
 
     protected String getPersistedLastName(String defaultReturnValue) {
@@ -243,7 +257,7 @@ public class CustomNamePreference extends CustomDialogPreference {
             return defaultReturnValue;
         }
 
-        return getPreferenceManager().getSharedPreferences().getString(getKey() + LAST_NAME_SUFFIX, defaultReturnValue);
+        return getPreferenceManager().getSharedPreferences().getString(mLastNameKey, defaultReturnValue);
     }
 
     /**
@@ -264,14 +278,14 @@ public class CustomNamePreference extends CustomDialogPreference {
     @Override
     protected void onSetInitialValue(boolean restoreValue, Object defaultValue) {
         String[] names = Utils.getFirstAndLastNames(getPersistedString(getFullName()));
-        String firstName = getPersistedFirstName(getFirstName());
-        String lastName = getPersistedLastName(getLastName());
-        if((firstName == null || firstName.trim().length() <= 0) && (lastName == null || lastName.trim().length() <= 0)) {
-            firstName = names[0];
-            lastName = names[1];
+        mFirstName = getPersistedFirstName(getFirstName());
+        mLastName = getPersistedLastName(getLastName());
+        if((mFirstName == null || mFirstName.trim().length() <= 0) && (mLastName == null || mLastName.trim().length() <= 0)) {
+            mFirstName = names[0];
+            mLastName = names[1];
         }
 
-        setFullName(restoreValue ? firstName : (String) defaultValue, restoreValue ? lastName : (String) defaultValue);
+        /*setFullName(restoreValue ? firstName : (String) defaultValue, restoreValue ? lastName : (String) defaultValue);*/
     }
 
     @Override

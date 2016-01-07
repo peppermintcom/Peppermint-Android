@@ -7,6 +7,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -17,7 +18,6 @@ import com.peppermint.app.data.Recording;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.SenderEvent;
 import com.peppermint.app.sending.SenderManager;
-import com.peppermint.app.sending.mail.gmail.GmailAuthorizationTask;
 import com.peppermint.app.utils.PepperMintPreferences;
 
 import java.util.HashMap;
@@ -111,16 +111,54 @@ public class SenderService extends Service {
         void authorize() { SenderService.this.authorize(); }
     }
 
+    private static final int FIRST_AUDIO_MESSAGE_NOTIFICATION_ID = 1;
+
     private PepperMintPreferences mPreferences;
     private EventBus mEventBus;
     private SenderManager mSenderManager;
 
-    private GmailAuthorizationTask mGmailAuthorizationTask;
-
     private boolean mIsInForegroundMode = false;
+    private Handler mHandler = new Handler();
+    private final Runnable mNotificationRunnable = new Runnable() {
+        @Override
+        public void run() {
+            showFirstAudioMessageNotification();
+        }
+    };
 
     public SenderService() {
         mEventBus = new EventBus();
+    }
+
+    private boolean showFirstAudioMessageNotification() {
+        if(!mPreferences.hasSentMessage()) {
+            NotificationManager notificationManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+            Intent notificationIntent = new Intent(SenderService.this, MainActivity.class);
+            PendingIntent pendingIntent = PendingIntent.getActivity(SenderService.this, 0, notificationIntent, 0);
+
+            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
+                    .setContentTitle(getString(R.string.you_have_installed_peppermint))
+                    .setContentText(getString(R.string.now_send_your_first_audio_message))
+                    .setSmallIcon(R.drawable.ic_notification_24dp)
+                    .setContentIntent(pendingIntent);
+
+            notificationManager.notify(FIRST_AUDIO_MESSAGE_NOTIFICATION_ID,
+                    notificationBuilder.build());
+
+            mPreferences.setHasSentMessage(true);
+            return true;
+        }
+
+        dismissFirstAudioMessageNotification();
+        return false;
+    }
+
+    private void dismissFirstAudioMessageNotification() {
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(FIRST_AUDIO_MESSAGE_NOTIFICATION_ID);
     }
 
     @Override
@@ -135,6 +173,8 @@ public class SenderService extends Service {
         // empty parameters
         mSenderManager = new SenderManager(this, mEventBus, senderParameters);
         mSenderManager.init();
+
+        mHandler.postDelayed(mNotificationRunnable, 180000); // after 3mins.
     }
 
     @Override
@@ -169,6 +209,8 @@ public class SenderService extends Service {
 
     @Override
     public void onDestroy() {
+        mHandler.removeCallbacks(mNotificationRunnable);
+
         if(mIsInForegroundMode) {
             stopForeground(true);
             mIsInForegroundMode = false;
@@ -193,6 +235,10 @@ public class SenderService extends Service {
             case SenderEvent.EVENT_QUEUED:
             case SenderEvent.EVENT_CANCELLED:
             case SenderEvent.EVENT_FINISHED:
+                mPreferences.setHasSentMessage(true);
+                mHandler.removeCallbacks(mNotificationRunnable);
+                dismissFirstAudioMessageNotification();
+
                 if (!mSenderManager.isSending()) {
                     stopForeground(true);
                     mIsInForegroundMode = false;
