@@ -43,7 +43,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
         String displayName = Utils.capitalizeFully(prefs.getFullName());
 
         // if the display name is not valid, no need to check anything else
-        if(displayName != null && displayName.length() > 0 && !Utils.isValidPhoneNumber(displayName)) {
+        if(displayName != null && displayName.length() > 0 && Utils.isValidName(displayName)) {
             // check if there's already a preferred account
             if (prefs.getGmailPreferences().getPreferredAccountName() != null) {
                 TrackerManager.getInstance(callerActivity.getApplicationContext()).setUserEmail(prefs.getGmailPreferences().getPreferredAccountName());
@@ -81,6 +81,12 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
         @Override
         public void run() {
             dismissPopup();
+        }
+    };
+    private Runnable mValidateDataRunnable = new Runnable() {
+        @Override
+        public void run() {
+            validateData();
         }
     };
     private final Handler mHandler = new Handler();
@@ -264,6 +270,8 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
         mTxtLastName.setSelection(mTxtLastName.getText().length());
 
         TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
+
+        mHandler.postDelayed(mValidateDataRunnable, 100);
     }
 
     @Override
@@ -273,18 +281,23 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
     }
 
     private int validateData() {
-        if(mTxtFirstName.getText().toString().trim().length() <= 0 || Utils.isValidPhoneNumber(mTxtFirstName.getText().toString().trim())) {
+        dismissPopup();
+
+        if(mTxtFirstName.getText().toString().trim().length() <= 0 || !Utils.isValidName(mTxtFirstName.getText().toString().trim())) {
             mBtnNext.setEnabled(false);
+            showPopup(mActivity, mTxtFirstName, R.string.msg_insert_name);
             return 1;
         }
 
-        if(Utils.isValidPhoneNumber(mTxtLastName.getText().toString().trim())) {
+        if(!Utils.isValidName(mTxtLastName.getText().toString().trim())) {
             mBtnNext.setEnabled(false);
+            showPopup(mActivity, mTxtLastName, R.string.msg_insert_name);
             return 2;
         }
 
         if(mAccounts == null || mAccounts.length <= 0 || mListView.getCheckedItemPosition() < 0) {
             mBtnNext.setEnabled(false);
+            showPopup(mActivity, mBtnAddAccount, R.string.msg_insert_account);
             return 3;
         }
 
@@ -302,19 +315,8 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
         }
 
         if(v.equals(mBtnNext)) {
-            final int validatedDataRes = validateData();
-
-            switch(validatedDataRes) {
-                case 1:
-                    showPopup(mActivity, mTxtFirstName, R.string.msg_insert_name);
-                    return;
-                case 2:
-                    showPopup(mActivity, mTxtLastName, R.string.msg_insert_name);
-                    return;
-                case 3:
-                    showPopup(mActivity, mBtnAddAccount, R.string.msg_insert_account);
-                    return;
-                default:
+            if(validateData() != 0) {
+                return;
             }
 
             mPreferences.setFirstName(Utils.capitalizeFully(mTxtFirstName.getText().toString()));
@@ -335,6 +337,10 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
 
     // the method that displays the img_popup.
     private void showPopup(final Activity context, View parent, int strResId) {
+        if(parent.getWindowToken() == null) {
+            return;
+        }
+
         Rect outRect = new Rect();
         parent.getGlobalVisibleRect(outRect);
 
