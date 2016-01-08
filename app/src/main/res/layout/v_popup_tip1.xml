@@ -6,7 +6,7 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:gravity="center_horizontal"
-    android:background="@drawable/img_popup_tip">
+    android:background="@drawable/img_popup_tip_top_left">
 
     <com.peppermint.app.ui.views.simple.CustomFontTextView
         android:layout_width="wrap_content"

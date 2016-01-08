@@ -103,6 +103,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private boolean mDestroyed = false;
 
     // swipe-related
+    private Rect mContactRect = new Rect();
     private float x1, x2, y1, y2;
     private long t1, t2;
     private int mMinSwipeDistance;
@@ -775,11 +776,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         }
     }
     
-    public boolean showRecordingOverlay() {
+    public boolean showRecordingOverlay(View contactContainer) {
         mRecordingViewOverlay.start();
         boolean shown = mActivity.showOverlay(RECORDING_OVERLAY_TAG, true, null);
 
         if(shown) {
+            contactContainer.getGlobalVisibleRect(mContactRect);
+            mRecordingViewOverlay.setContentPosition(mContactRect);
             TrackerManager.getInstance(mActivity.getApplicationContext()).trackScreenView(SCREEN_RECORDING_ID);
         }
 
@@ -867,7 +870,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         }
 
         // start recording
-        if(showRecordingOverlay()) {
+        if(showRecordingOverlay(view)) {
             if(mRecordSoundPlayer.isPlaying()) {
                 mRecordSoundPlayer.stop();
             }
@@ -903,11 +906,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
                     if ((Math.abs(deltaX) > mMinSwipeDistance || Math.abs(deltaY) > mMinSwipeDistance) && (t2 - t1) < MAX_SWIPE_DURATION) {
                         // swipe: cancel
-                        mRecordingViewOverlay.explode();
+                        mRecordingViewOverlay.stop();
+                        /*mRecordingViewOverlay.explode();*/
                         mRecordManager.stopRecording(true);
                     } else {
                         // release: send
-                        mRecordingViewOverlay.stop();
                         if (mRecordingViewOverlay.getMillis() < 2000) {
                             CustomToast.makeText(mActivity, R.string.msg_record_at_least, Toast.LENGTH_LONG).show();
                             mRecordManager.stopRecording(true);
@@ -1022,7 +1025,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             Toast.makeText(mActivity, getString(R.string.msg_message_record_error), Toast.LENGTH_LONG).show();
         }
 
-        mRecordingViewOverlay.explode();
+        /*mRecordingViewOverlay.explode();*/
         hideRecordingOverlay(true);
     }
 
