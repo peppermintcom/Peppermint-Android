@@ -4,9 +4,12 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
+import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
@@ -57,6 +60,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     private static final String TAG = NewRecipientFragment.class.getSimpleName();
 
     private static final String SCREEN_ID = "NewContact";
+    private static final String PEPPERMINT_GROUP_TITLE = "Peppermint";
 
     public static final String KEY_VIA = TAG + "_Via";
     public static final String KEY_NAME = TAG + "_Name";
@@ -128,6 +132,36 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
             ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
                     .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, "com.google")
                     .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, googleAccountName).build());
+
+            // check if Peppermint group exists; create it if not
+            // we could add to the default group "My Contacts" but it might not exist
+            // also, the default operation doesn't necessarily add the contact to a group
+            // causing the GROUP_VISIBLE flag to be 0
+            Long groupId = null;
+            Cursor groupCursor = context.getContentResolver().query(
+                    ContactsContract.Groups.CONTENT_URI,
+                    new String[]{ContactsContract.Groups._ID},
+                    ContactsContract.Groups.GROUP_VISIBLE + "=1 AND " + ContactsContract.Groups.ACCOUNT_NAME + "=" + DatabaseUtils.sqlEscapeString(googleAccountName) +
+                    " AND " + ContactsContract.Groups.TITLE + "=" + DatabaseUtils.sqlEscapeString(PEPPERMINT_GROUP_TITLE), null,
+                    null
+            );
+            if(groupCursor.moveToNext()) {
+                groupId = groupCursor.getLong(groupCursor.getColumnIndex(ContactsContract.Groups._ID));
+            } else {
+                ContentValues groupValues = new ContentValues();
+                groupValues.put(ContactsContract.Groups.TITLE, PEPPERMINT_GROUP_TITLE);
+                groupValues.put(ContactsContract.Groups.GROUP_VISIBLE, 1);
+                groupValues.put(ContactsContract.Groups.ACCOUNT_NAME, googleAccountName);
+                groupValues.put(ContactsContract.Groups.ACCOUNT_TYPE, "com.google");
+                Uri groupUri = context.getContentResolver().insert(ContactsContract.Groups.CONTENT_URI, groupValues);
+                groupId = ContentUris.parseId(groupUri);
+            }
+            groupCursor.close();
+
+            ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
+                    .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
+                    .withValue(ContactsContract.Data.DATA1, groupId)
+                    .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.GroupMembership.CONTENT_ITEM_TYPE).build());
         }
 
         // add display name data
@@ -252,7 +286,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
             bundle.putString(KEY_PHONE, phone);
         } catch (Throwable e) {
             bundle.putInt(KEY_ERROR, ERR_UNABLE_TO_ADD);
-            Log.d(NewRecipientFragment.class.getSimpleName(), "Unable to add contact", e);
+            Log.d(TAG, "Unable to add contact", e);
             TrackerManager.getInstance(context.getApplicationContext()).logException(e);
         }
 
@@ -411,6 +445,13 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
 
         mNewAvatarDialog = new CustomListDialog(mActivity);
         mNewAvatarDialog.setCancelable(true);
+        mNewAvatarDialog.setNegativeButtonText(R.string.cancel);
+        mNewAvatarDialog.setNegativeButtonListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mNewAvatarDialog.dismiss();
+            }
+        });
         mNewAvatarDialog.setTitleText(R.string.select_photo);
         mNewAvatarDialog.setListOnItemClickListener(this);
         mAvatarAdapter = new NavigationListAdapter(mActivity, mAvatarOptions, app.getFontSemibold());

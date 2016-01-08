@@ -207,15 +207,11 @@ public class ExtendedAudioRecorder {
             throw new RuntimeException("Already recording or paused. Use pause, resume or stop.");
         }
 
-        if(mContext.getExternalCacheDir() == null) {
-            throw new NullPointerException("No access to external cache directory!");
-        }
-
         synchronized (this) {
             Calendar now = Calendar.getInstance();
-            mFilePath = mContext.getExternalCacheDir().getAbsolutePath() + "/" + mFilePrefix + "_" +
+            mFilePath = mContext.getFilesDir().getAbsolutePath() + "/" + mFilePrefix + "_" +
                     DATETIME_FORMAT.format(now.getTime()) + ".m4a";
-            mTempFilePath = mContext.getExternalCacheDir().getAbsolutePath() + "/" + mFilePrefix + "_" +
+            mTempFilePath = mContext.getFilesDir().getAbsolutePath() + "/" + mFilePrefix + "_" +
                     DATETIME_FORMAT.format(now.getTime()) + ".aac";
             mPaused = false;
             mFullDuration = 0;

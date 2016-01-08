@@ -83,7 +83,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         mPrefDisplayName.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
-                if (newValue.toString().trim().length() > 0 && !Utils.isValidPhoneNumber(newValue.toString().trim())) {
+                if (newValue.toString().trim().length() > 0 && Utils.isValidName(newValue.toString().trim())) {
                     return true;
                 }
 

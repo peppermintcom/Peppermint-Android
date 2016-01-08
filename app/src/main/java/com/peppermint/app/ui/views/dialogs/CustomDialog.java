@@ -6,11 +6,15 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.FrameLayout;
 
 import com.peppermint.app.R;
 import com.peppermint.app.ui.views.simple.CustomFontButton;
 import com.peppermint.app.ui.views.simple.CustomFontTextView;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Nuno Luz on 13-11-2015.
@@ -51,6 +55,35 @@ public class CustomDialog extends Dialog implements View.OnClickListener {
     private void init() {
         mPositiveButtonText = getContext().getString(R.string.yes);
         mNegativeButtonText = getContext().getString(R.string.no);
+    }
+
+    private void refreshButtonBackgrounds() {
+        List<Button> visibleButtons = new ArrayList<>();
+
+        if(mButton1 == null || mButton2 == null || mButton3 == null) {
+            return;
+        }
+
+        if(mButton1.getVisibility() == View.VISIBLE) {
+            visibleButtons.add(mButton1);
+        }
+        if(mButton2.getVisibility() == View.VISIBLE) {
+            visibleButtons.add(mButton2);
+        }
+        if(mButton3.getVisibility() == View.VISIBLE) {
+            visibleButtons.add(mButton3);
+        }
+
+        if(visibleButtons.size() == 1) {
+            visibleButtons.get(0).setBackgroundResource(R.drawable.background_dialog_btn);
+        } else if(visibleButtons.size() == 2) {
+            visibleButtons.get(0).setBackgroundResource(R.drawable.background_dialog_btn_left);
+            visibleButtons.get(1).setBackgroundResource(R.drawable.background_dialog_btn_right);
+        } else if(visibleButtons.size() == 3) {
+            visibleButtons.get(0).setBackgroundResource(R.drawable.background_dialog_btn_left);
+            visibleButtons.get(1).setBackgroundResource(R.drawable.background_dialog_btn_center);
+            visibleButtons.get(2).setBackgroundResource(R.drawable.background_dialog_btn_right);
+        }
     }
 
     @Override
@@ -95,6 +128,8 @@ public class CustomDialog extends Dialog implements View.OnClickListener {
             mButton1.setVisibility(View.GONE);
         }
 
+        refreshButtonBackgrounds();
+
         if(mTitleText != null) {
             mTxtTitle.setText(mTitleText);
         }
@@ -132,6 +167,7 @@ public class CustomDialog extends Dialog implements View.OnClickListener {
             } else {
                 mButton3.setVisibility(View.GONE);
             }
+            refreshButtonBackgrounds();
         }
     }
 
@@ -152,6 +188,7 @@ public class CustomDialog extends Dialog implements View.OnClickListener {
             } else {
                 mButton1.setVisibility(View.GONE);
             }
+            refreshButtonBackgrounds();
         }
     }
 
@@ -172,6 +209,7 @@ public class CustomDialog extends Dialog implements View.OnClickListener {
             } else {
                 mButton2.setVisibility(View.GONE);
             }
+            refreshButtonBackgrounds();
         }
     }
 
