@@ -162,5 +162,6 @@
     <string name="msg_insert_account">You must link and pick a valid Google account</string>
     <string name="about">About</string>
     <string name="privacy_policy_terms_of_use">Privacy Policy\n&amp; Terms of Use</string>
+    <string name="privacy_policy_terms_of_use_singleline">Privacy Policy &amp; Terms of Use</string>
     <string name="version">Version</string>
 </resources>
