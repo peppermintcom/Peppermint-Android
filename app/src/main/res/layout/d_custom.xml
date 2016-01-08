@@ -38,7 +38,7 @@
             android:textSize="18dp"
             android:textAllCaps="false"
             android:textColor="@color/color_blue_to_white_pressed"
-            android:background="@drawable/background_dialog_btn_right"
+            android:background="@drawable/background_dialog_btn_center"
             style="?android:attr/borderlessButtonStyle" />
 
         <com.peppermint.app.ui.views.simple.CustomFontButton
