@@ -202,16 +202,20 @@ public class ExtendedAudioRecorder {
         return mPaused;
     }
 
-    public void start(long maxDurationMillis) {
+    public void start(long maxDurationMillis) throws NoAccessToExternalStorageException {
         if(mRecording || mPaused) {
             throw new RuntimeException("Already recording or paused. Use pause, resume or stop.");
         }
 
+        if(mContext.getExternalFilesDir(null) == null) {
+            throw new NoAccessToExternalStorageException("No access to external storage directory!");
+        }
+
         synchronized (this) {
             Calendar now = Calendar.getInstance();
-            mFilePath = mContext.getFilesDir().getAbsolutePath() + "/" + mFilePrefix + "_" +
+            mFilePath = mContext.getExternalFilesDir(null).getAbsolutePath() + "/" + mFilePrefix + "_" +
                     DATETIME_FORMAT.format(now.getTime()) + ".m4a";
-            mTempFilePath = mContext.getFilesDir().getAbsolutePath() + "/" + mFilePrefix + "_" +
+            mTempFilePath = mContext.getExternalFilesDir(null).getAbsolutePath() + "/" + mFilePrefix + "_" +
                     DATETIME_FORMAT.format(now.getTime()) + ".aac";
             mPaused = false;
             mFullDuration = 0;
