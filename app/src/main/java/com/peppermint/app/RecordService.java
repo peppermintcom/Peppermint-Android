@@ -12,12 +12,16 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.recording.RecordingActivity;
 import com.peppermint.app.ui.recording.RecordingFragment;
+import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.utils.ExtendedAudioRecorder;
+import com.peppermint.app.utils.NoAccessToExternalStorageException;
 
 import java.io.Serializable;
 
@@ -107,7 +111,13 @@ public class RecordService extends Service {
          * @param recipient the recipient of the record
          */
         void start(String filePrefix, Recipient recipient, long maxDurationMillis) {
-            RecordService.this.start(filePrefix, recipient, maxDurationMillis);
+            try {
+                RecordService.this.start(filePrefix, recipient, maxDurationMillis);
+            } catch (NoAccessToExternalStorageException e) {
+                CustomToast.makeText(RecordService.this, R.string.msg_no_external_storage, Toast.LENGTH_LONG).show();
+                Log.e(TAG, e.getMessage(), e);
+                TrackerManager.getInstance(getApplicationContext()).logException(e);
+            }
         }
 
         /**
@@ -310,10 +320,16 @@ public class RecordService extends Service {
 
         if(intent != null && intent.hasExtra(INTENT_DATA_DOSTART) && intent.hasExtra(INTENT_DATA_RECIPIENT)) {
             if(intent.getBooleanExtra(INTENT_DATA_DOSTART, false)) {
-                if(intent.hasExtra(INTENT_DATA_FILEPREFIX)) {
-                    start(intent.getStringExtra(INTENT_DATA_FILEPREFIX), (Recipient) intent.getSerializableExtra(INTENT_DATA_RECIPIENT), intent.getLongExtra(INTENT_DATA_MAXDURATION, -1));
-                } else {
-                    start(null, (Recipient) intent.getSerializableExtra(INTENT_DATA_RECIPIENT), intent.getLongExtra(INTENT_DATA_MAXDURATION, -1));
+                try {
+                    if (intent.hasExtra(INTENT_DATA_FILEPREFIX)) {
+                        start(intent.getStringExtra(INTENT_DATA_FILEPREFIX), (Recipient) intent.getSerializableExtra(INTENT_DATA_RECIPIENT), intent.getLongExtra(INTENT_DATA_MAXDURATION, -1));
+                    } else {
+                        start(null, (Recipient) intent.getSerializableExtra(INTENT_DATA_RECIPIENT), intent.getLongExtra(INTENT_DATA_MAXDURATION, -1));
+                    }
+                } catch (NoAccessToExternalStorageException e) {
+                    CustomToast.makeText(RecordService.this, R.string.msg_no_external_storage, Toast.LENGTH_LONG).show();
+                    Log.e(TAG, e.getMessage(), e);
+                    TrackerManager.getInstance(getApplicationContext()).logException(e);
                 }
             }
         }
@@ -351,7 +367,7 @@ public class RecordService extends Service {
         return mRecorder != null && mRecorder.isPaused();
     }
 
-    void start(String filePrefix, Recipient recipient, long maxDurationMillis) {
+    void start(String filePrefix, Recipient recipient, long maxDurationMillis) throws NoAccessToExternalStorageException {
         if(isRecording()) {
             throw new RuntimeException("A recording is already in progress. Available actions are pause, resume and stop.");
         }
