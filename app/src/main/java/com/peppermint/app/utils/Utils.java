@@ -193,6 +193,10 @@ public class Utils {
         return !TextUtils.isEmpty(text) && NAME_PATTERN.matcher(text).matches();
     }
 
+    public static boolean isValidNameMaybeEmpty(CharSequence text) {
+        return TextUtils.isEmpty(text) || NAME_PATTERN.matcher(text).matches();
+    }
+
     /**
      * Scales an image (to avoid OutOfMemory exceptions) and shows it on the specified ImageView.
      * As seen in http://developer.android.com/training/camera/photobasics.html

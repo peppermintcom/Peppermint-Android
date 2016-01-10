@@ -83,12 +83,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
             dismissPopup();
         }
     };
-    private Runnable mValidateDataRunnable = new Runnable() {
-        @Override
-        public void run() {
-            validateData();
-        }
-    };
+
     private final Handler mHandler = new Handler();
     private boolean mDestroyed = false;
 
@@ -271,7 +266,13 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
 
         TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
 
-        mHandler.postDelayed(mValidateDataRunnable, 100);
+        validateData();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        dismissPopup();
     }
 
     @Override
@@ -281,7 +282,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
         super.onDestroy();
     }
 
-    private int validateData() {
+    private synchronized int validateData() {
         dismissPopup();
 
         if(mTxtFirstName.getText().toString().trim().length() <= 0 || !Utils.isValidName(mTxtFirstName.getText().toString().trim())) {
@@ -290,7 +291,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
             return 1;
         }
 
-        if(!Utils.isValidName(mTxtLastName.getText().toString().trim())) {
+        if(!Utils.isValidNameMaybeEmpty(mTxtLastName.getText().toString().trim())) {
             mBtnNext.setEnabled(false);
             showPopup(mActivity, mTxtLastName, R.string.msg_insert_name);
             return 2;
@@ -337,7 +338,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
     }
 
     // the method that displays the img_popup.
-    private void showPopup(final Activity context, View parent, int strResId) {
+    private void showPopup(Activity context, View parent, int strResId) {
         if(parent.getWindowToken() == null) {
             return;
         }
