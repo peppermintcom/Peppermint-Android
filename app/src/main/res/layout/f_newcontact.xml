@@ -65,6 +65,30 @@
 
         </LinearLayout>
 
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:background="@drawable/background_border_bottom">
+
+            <EditText
+                android:id="@+id/txtEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:textSize="17dp"
+                android:textColor="@color/black"
+                android:hint="@string/email"
+                android:inputType="textEmailAddress"
+                android:textColorHint="@color/black_50percent"
+                android:drawablePadding="10dp"
+                android:drawableRight="@drawable/background_input_email"
+                android:maxLength="250"
+                android:singleLine="true"
+                android:textCursorDrawable="@drawable/ic_cursor"/>
+
+        </FrameLayout>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -89,30 +113,6 @@
                 android:textCursorDrawable="@drawable/ic_cursor"/>
 
         </LinearLayout>
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:background="@drawable/background_border_bottom">
-
-            <EditText
-                android:id="@+id/txtEmail"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="10dp"
-                android:textSize="17dp"
-                android:textColor="@color/black"
-                android:hint="@string/email"
-                android:inputType="textEmailAddress"
-                android:textColorHint="@color/black_50percent"
-                android:drawablePadding="10dp"
-                android:drawableRight="@drawable/background_input_email"
-                android:maxLength="250"
-                android:singleLine="true"
-                android:textCursorDrawable="@drawable/ic_cursor"/>
-
-        </FrameLayout>
 
         <com.peppermint.app.ui.views.simple.CustomFontTextView
             android:layout_width="match_parent"
