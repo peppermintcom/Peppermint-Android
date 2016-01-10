@@ -165,4 +165,5 @@
     <string name="privacy_policy_terms_of_use_singleline">Privacy Policy &amp; Terms of Use</string>
     <string name="version">Version</string>
     <string name="msg_no_external_storage">No access to external storage. Please make sure it is available</string>
+    <string name="msg_insert_mail_or_phone">You must insert a valid email or phone number</string>
 </resources>
