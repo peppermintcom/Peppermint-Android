@@ -290,7 +290,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
             return 1;
         }
 
-        if(!Utils.isValidName(mTxtLastName.getText().toString().trim())) {
+        if(!Utils.isValidNameMaybeEmpty(mTxtLastName.getText().toString().trim())) {
             mBtnNext.setEnabled(false);
             showPopup(mActivity, mTxtLastName, R.string.msg_insert_name);
             return 2;
