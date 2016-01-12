@@ -58,6 +58,8 @@ import java.util.Locale;
 
 /**
  * Created by Nuno Luz on 10-11-2015.
+ *
+ * New recipient/contact fragment.
  */
 public class NewRecipientFragment extends Fragment implements View.OnClickListener, AdapterView.OnItemClickListener {
 
@@ -80,6 +82,17 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     public static final int ERR_INVALID_PHONE = 4;
     public static final int ERR_UNABLE_TO_ADD = 5;
 
+    /**
+     * Create recipient/contact data at the specified google account.
+     * @param context the contact
+     * @param rawId the already existent rawId (0 for a new contact)
+     * @param fullName the new contact full name
+     * @param phone the new contact phone
+     * @param email the new contact email
+     * @param photoUrl the new contact photo URL
+     * @param googleAccountName the google account
+     * @return a {@link Bundle} with results (can be passed on to an {@link Intent}
+     */
     public static Bundle insertRecipientContact(Context context, long rawId, String fullName, String phone, String email, String photoUrl, String googleAccountName) {
         String[] names = Utils.getFirstAndLastNames(fullName);
         return insertRecipientContact(context, rawId, names[0], names[1], phone, email, photoUrl, googleAccountName);
@@ -128,6 +141,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
             return bundle;
         }
 
+        // validate phone number
         if(phone.length() > 0 && !Utils.isValidPhoneNumber(phone)) {
             bundle.putInt(KEY_ERROR, ERR_INVALID_PHONE);
             return bundle;
@@ -305,6 +319,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     private static final String SAVED_DIALOG_STATE_KEY = TAG + "_NewAvatarDialogState";
     private static final String SAVED_AVATAR_URL_KEY = TAG + "_AvatarUrl";
     private static final String SAVED_AVATAR_INPROGRESS_URL_KEY = TAG + "_AvatarInProgressUrl";
+
     private static final int TAKE_PHOTO_CODE = 123;
     private static final int CHOOSE_PHOTO_CODE = 124;
 

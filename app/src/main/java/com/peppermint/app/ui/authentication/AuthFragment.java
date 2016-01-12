@@ -38,18 +38,29 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
     private static final String TAG = AuthFragment.class.getSimpleName();
     private static final int NEW_ACCOUNT_CODE = 1234;
 
+    /**
+     * Checks if authentication is required and takes the necessary steps to launch the {@link AuthActivity}.<br />
+     * It can also request authorization from all sender (check {@link com.peppermint.app.sending.Sender} and
+     * {@link com.peppermint.app.sending.SenderManager}) API implementations.
+     *
+     * @param callerActivity the caller activity
+     * @param requestCode the request code
+     * @param authorize if it should request authorization from all senders
+     * @return true if authentication screen was launched; false otherwise
+     */
     public static boolean startAuthentication(Activity callerActivity, int requestCode, boolean authorize) {
         PepperMintPreferences prefs = new PepperMintPreferences(callerActivity);
         String displayName = Utils.capitalizeFully(prefs.getFullName());
 
-        // if the display name is not valid, no need to check anything else
-        if(displayName != null && displayName.length() > 0 && Utils.isValidName(displayName)) {
-            // check if there's already a preferred account
+        // 1. if the display name is not valid, no need to check anything else
+        if(displayName != null && Utils.isValidName(displayName)) {
+
+            // 2a. check if there's already a preferred account
             if (prefs.getGmailPreferences().getPreferredAccountName() != null) {
                 TrackerManager.getInstance(callerActivity.getApplicationContext()).setUserEmail(prefs.getGmailPreferences().getPreferredAccountName());
 
                 if(authorize) {
-                    // authorize the Gmail API and all other necessary apis
+                    // 3a. (optional) authorize the Gmail API and all other necessary apis
                     SenderServiceManager senderManager = new SenderServiceManager(callerActivity.getApplicationContext());
                     senderManager.startAndAuthorize();
                 }
@@ -57,10 +68,19 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
                 return false;
             }
 
-            // otherwise check if there's only one account and set that one as the preferred
+            // 2b. otherwise check if there's only one account and set that one as the preferred
             Account[] accounts = AccountManager.get(callerActivity).getAccountsByType("com.google");
             if (accounts.length == 1) {
                 prefs.getGmailPreferences().setPreferredAccountName(accounts[0].name);
+
+                TrackerManager.getInstance(callerActivity.getApplicationContext()).setUserEmail(prefs.getGmailPreferences().getPreferredAccountName());
+
+                if(authorize) {
+                    // 3b. (optional) authorize the Gmail API and all other necessary apis
+                    SenderServiceManager senderManager = new SenderServiceManager(callerActivity.getApplicationContext());
+                    senderManager.startAndAuthorize();
+                }
+
                 return false;
             }
         }
@@ -75,6 +95,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
     private static final String KEY_LAST_NAME = TAG + "_LastName";
     private static final String KEY_SEL_ACCOUNT = TAG + "_SelectedAccount";
 
+    // the ID of the screen for the Tracker API
     private static final String SCREEN_ID = "Authentication";
 
     private Runnable mDismissPopupRunnable = new Runnable() {
@@ -101,6 +122,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
     private PopupWindow mNamePopup;
     private TextView mTxtPopup;
 
+    // checks if the input is valid as the user inputs text
     private TextWatcher mTextWatcher = new TextWatcher() {
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -126,6 +148,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
         // hold popup
         mTxtPopup = (TextView) inflater.inflate(R.layout.v_name_popup, null);
         mNamePopup = new PopupWindow(mActivity);
@@ -193,6 +216,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
             if(lastName != null) {
                 mTxtLastName.setText(lastName);
             }
+            // only try to get the name from prefs if there's no saved instance state
             mDontSetNameFromPrefs = true;
         } else {
             mDontSetNameFromPrefs = false;
@@ -256,6 +280,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
 
         refreshAccountList();
 
+        // only try to get the name from prefs if there's no saved instance state
         if(!mDontSetNameFromPrefs) {
             String firstName = mPreferences.getFirstName();
             String lastName = mPreferences.getLastName();
@@ -280,6 +305,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
     @Override
     public void onPause() {
         super.onPause();
+        // always dismiss popups
         dismissPopup();
     }
 
