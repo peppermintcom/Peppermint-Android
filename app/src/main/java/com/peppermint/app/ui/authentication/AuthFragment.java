@@ -257,8 +257,16 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
         refreshAccountList();
 
         if(!mDontSetNameFromPrefs) {
-            mTxtFirstName.setText(mPreferences.getFirstName());
-            mTxtLastName.setText(mPreferences.getLastName());
+            String firstName = mPreferences.getFirstName();
+            String lastName = mPreferences.getLastName();
+
+            if(firstName != null && Utils.isValidName(firstName)) {
+                mTxtFirstName.setText(firstName);
+            }
+            if(lastName != null && Utils.isValidName(lastName)) {
+                mTxtLastName.setText(lastName);
+            }
+
             mDontSetNameFromPrefs = true;
         }
         mTxtFirstName.setSelection(mTxtFirstName.getText().length());
