@@ -22,9 +22,9 @@
             android:layout_weight="1"
             custom:textFont="@string/font_regular"
             android:text="Button 1"
-            android:textSize="18dp"
+            android:textSize="17dp"
             android:textAllCaps="false"
-            android:textColor="@color/color_blue_to_white_pressed"
+            android:textColor="@color/color_grey_to_white_pressed"
             android:background="@drawable/background_dialog_btn_left"
             style="?android:attr/borderlessButtonStyle" />
 
@@ -35,9 +35,9 @@
             android:layout_weight="1"
             android:text="Button 2"
             custom:textFont="@string/font_regular"
-            android:textSize="18dp"
+            android:textSize="17dp"
             android:textAllCaps="false"
-            android:textColor="@color/color_blue_to_white_pressed"
+            android:textColor="@color/color_grey_to_white_pressed"
             android:background="@drawable/background_dialog_btn_center"
             style="?android:attr/borderlessButtonStyle" />
 
@@ -48,9 +48,9 @@
             android:layout_weight="1"
             android:text="Button 3"
             custom:textFont="@string/font_regular"
-            android:textSize="18dp"
+            android:textSize="17dp"
             android:textAllCaps="false"
-            android:textColor="@color/color_blue_to_white_pressed"
+            android:textColor="@color/color_grey_to_white_pressed"
             android:background="@drawable/background_dialog_btn_right"
             style="?android:attr/borderlessButtonStyle" />
 
@@ -64,7 +64,7 @@
         android:padding="15dp"
         android:gravity="center"
         custom:textFont="@string/font_semibold"
-        android:textSize="18dp"
+        android:textSize="19dp"
         android:textColor="@color/black"
         android:text="Empty Title"/>
 
