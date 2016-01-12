@@ -378,10 +378,11 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                 if (takePictureIntent.resolveActivity(mActivity.getPackageManager()) != null) {
                     File photoFile = null;
                     try {
-                        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+                        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.getDefault()).format(new Date());
                         String imageFileName = "PeppermintAvatar_" + timeStamp + "_";
                         File storageDir = mActivity.getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-                        photoFile = File.createTempFile(imageFileName, ".jpg", storageDir);
+                        photoFile = new File(storageDir, imageFileName + ".jpg");
+                        photoFile.createNewFile();
                         mAvatarInProgressUrl = photoFile.getAbsolutePath();
                     } catch (IOException ex) {
                         TrackerManager.getInstance(mActivity.getApplicationContext()).logException(ex);
