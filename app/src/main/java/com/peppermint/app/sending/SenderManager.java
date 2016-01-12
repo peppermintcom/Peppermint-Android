@@ -99,7 +99,9 @@ public class SenderManager implements SenderListener {
                             // try to resend all queued recordings..
                             for (SendingRequest sendingRequest : queued) {
                                 Log.d(TAG, "Re-trying queued request " + sendingRequest.getId() + " to " + sendingRequest.getRecipient().getName());
-                                send(sendingRequest);
+                                if(!mTaskMap.containsKey(sendingRequest.getId())) {
+                                    send(sendingRequest);
+                                }
                             }
                         } else {
                             Log.d(TAG, "Either internet is not active or there are no queued sending requests... #" + queued.size());
