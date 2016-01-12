@@ -79,6 +79,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private PepperMintPreferences mPreferences;
     private CustomActionBarActivity mActivity;
     private AnimatorBuilder mAnimatorBuilder;
+    private boolean mHasSavedInstanceState = false;
 
     // the recipient list
     private View mRecipientListContainer;
@@ -442,6 +443,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mSearchListBarView.setTypeface(app.getFontRegular());
 
         if (savedInstanceState != null) {
+            mHasSavedInstanceState = true;
             mTappedRecipient = (Recipient) savedInstanceState.getSerializable(RECIPIENT_TAPPED_KEY);
 
             Bundle dialogState = savedInstanceState.getBundle(SAVED_DIALOG_STATE_KEY);
@@ -590,6 +592,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         // avoid cursor focus and keyboard when opening
         // if it is on onStart(), it doesn't work for screen rotations
+        if(!mHasSavedInstanceState) {
+            Utils.hideKeyboard(mActivity);
+        } else {
+            mHasSavedInstanceState = false;
+        }
         mSearchListBarView.removeSearchTextFocus(null);
         getView().requestFocus();
 
