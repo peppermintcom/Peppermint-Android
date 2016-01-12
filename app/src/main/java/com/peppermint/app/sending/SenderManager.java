@@ -410,6 +410,15 @@ public class SenderManager implements SenderListener {
             return;
         }
 
+        // sending request has been cancelled, so update the saved data
+        SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
+        try {
+            SendingRequest.delete(db, sendingTask.getSendingRequest());
+        } catch (SQLException e) {
+            TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
+        }
+        db.close();
+
         mTaskMap.remove(sendingTask.getId());
         if(mEventBus != null) {
             mEventBus.post(new SenderEvent(sendingTask, SenderEvent.EVENT_CANCELLED));
