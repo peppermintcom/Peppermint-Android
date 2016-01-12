@@ -101,6 +101,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private RecordingOverlayView mRecordingViewOverlay;
     private boolean mSendRecording = false;
     private boolean mDestroyed = false;
+    private boolean mHasSavedInstanceState = false;
 
     // swipe-related
     private Rect mContactRect = new Rect();
@@ -545,6 +546,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mSearchListBarView.setTypeface(app.getFontRegular());
 
         if (savedInstanceState != null) {
+            mHasSavedInstanceState = true;
+
             if(savedInstanceState.containsKey(RECORDING_FINAL_EVENT_KEY)) {
                 mFinalEvent = (RecordService.Event) savedInstanceState.getSerializable(RECORDING_FINAL_EVENT_KEY);
             }
@@ -707,8 +710,14 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public void onResume() {
         super.onResume();
+
         // avoid cursor focus and keyboard when opening
         // if it is on onStart(), it doesn't work for screen rotations
+        if(!mHasSavedInstanceState) {
+            Utils.hideKeyboard(mActivity);
+        } else {
+            mHasSavedInstanceState = false;
+        }
         mSearchListBarView.removeSearchTextFocus(null);
         getView().requestFocus();
 
