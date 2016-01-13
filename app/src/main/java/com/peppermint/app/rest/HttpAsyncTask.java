@@ -18,14 +18,13 @@ import java.util.UUID;
  *
  * Abstract implementation with the capability to execute and monitor asynchronous HTTP requests
  * through an {@link HttpClientManager} passed on as a parameter.
- *
  */
 public abstract class HttpAsyncTask extends AsyncTask<Void, Float, Void> implements Cloneable, HttpRequestListener {
 
     private static final String TAG = HttpAsyncTask.class.getSimpleName();
 
-    public static final String PARAM_HTTP_CLIENT_MANAGER = "HttpAsyncTask_ParamHttpClientManager";
-    public static final String PARAM_HTTP_REQUEST_TIMEOUT = "HttpAsyncTask_ParamHttpRequestTimeout";
+    public static final String PARAM_HTTP_CLIENT_MANAGER = TAG + "_ParamHttpClientManager";
+    public static final String PARAM_HTTP_REQUEST_TIMEOUT = TAG + "_ParamHttpRequestTimeout";
 
     // default request timeout values (for connection + data transfer)
     private static final int SIMPLE_REQUEST_TIMEOUT = 60000;

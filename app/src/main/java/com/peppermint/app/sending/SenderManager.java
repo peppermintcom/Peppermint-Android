@@ -99,7 +99,9 @@ public class SenderManager implements SenderListener {
                             // try to resend all queued recordings..
                             for (SendingRequest sendingRequest : queued) {
                                 Log.d(TAG, "Re-trying queued request " + sendingRequest.getId() + " to " + sendingRequest.getRecipient().getName());
-                                send(sendingRequest);
+                                if(!mTaskMap.containsKey(sendingRequest.getId())) {
+                                    send(sendingRequest);
+                                }
                             }
                         } else {
                             Log.d(TAG, "Either internet is not active or there are no queued sending requests... #" + queued.size());
@@ -407,6 +409,15 @@ public class SenderManager implements SenderListener {
             // ignore SenderAuthorizationTasks; just report events for sending requests
             return;
         }
+
+        // sending request has been cancelled, so update the saved data
+        SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
+        try {
+            SendingRequest.delete(db, sendingTask.getSendingRequest());
+        } catch (SQLException e) {
+            TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
+        }
+        db.close();
 
         mTaskMap.remove(sendingTask.getId());
         if(mEventBus != null) {

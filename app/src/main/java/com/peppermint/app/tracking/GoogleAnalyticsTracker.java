@@ -9,6 +9,8 @@ import com.google.android.gms.analytics.Tracker;
 
 /**
  * Created by Nuno Luz on 17-12-2015.
+ *
+ * Google Analytics implementation for the Tracker API.
  */
 public class GoogleAnalyticsTracker extends TrackerApi {
 

@@ -746,15 +746,21 @@ public class Utils {
      * Show the keyboard
      * @param context the activity
      */
-    public static void showKeyboard(Activity context) {
+    public static void showKeyboard(Activity context, View view) {
         context.getWindow().setSoftInputMode(
                 WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE
         );
-        View view = context.getWindow().getCurrentFocus();
+        if(view == null) {
+            view = context.getWindow().getCurrentFocus();
+        }
         if (view != null) {
             InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
         }
+    }
+
+    public static void showKeyboard(Activity context) {
+        showKeyboard(context, null);
     }
 
     /**

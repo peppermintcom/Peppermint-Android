@@ -10,6 +10,8 @@ import java.util.Map;
 
 /**
  * Created by Nuno Luz on 17-12-2015.
+ *
+ * Flurry implementation for the Tracker API.
  */
 public class FlurryTracker extends TrackerApi {
 
