@@ -34,7 +34,6 @@ public class FitsSystemWindowsFrameLayout extends FrameLayout {
         super(context, attrs, defStyle);
     }
 
-
     @TargetApi(Build.VERSION_CODES.KITKAT_WATCH)
     @Override
     public WindowInsets dispatchApplyWindowInsets(WindowInsets insets) {
@@ -43,8 +42,6 @@ public class FitsSystemWindowsFrameLayout extends FrameLayout {
         } else {
             newWindowInsets = new WindowInsets(insets);
         }
-
-        // Log.d(TAG, "dispatchApplyWindowInsets: " + newWindowInsets.toString());
 
         return super.dispatchApplyWindowInsets(newWindowInsets);
     }
@@ -56,8 +53,6 @@ public class FitsSystemWindowsFrameLayout extends FrameLayout {
         }
 
         windowInsets.set(insets);
-
-        // Log.d(TAG, "fitSystemWindows: " + windowInsets.toString());
 
         super.fitSystemWindows(insets);
         return false;

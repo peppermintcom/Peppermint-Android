@@ -723,10 +723,13 @@ public class Utils {
      * Hide the keyboard
      * @param context the activity
      */
-    public static void hideKeyboard(Activity context) {
-        context.getWindow().setSoftInputMode(
-                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN
-        );
+    public static void hideKeyboard(Activity context, Integer additionalModes) {
+        int modes = WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
+        if(additionalModes != null) {
+            modes |= additionalModes;
+        }
+
+        context.getWindow().setSoftInputMode(modes);
 
         View view = context.getWindow().getCurrentFocus();
 
@@ -740,6 +743,10 @@ public class Utils {
             InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
+    }
+
+    public static void hideKeyboard(Activity context) {
+        hideKeyboard(context, null);
     }
 
     /**

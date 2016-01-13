@@ -24,6 +24,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
@@ -620,11 +621,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 Intent intent = new Intent(mActivity, NewRecipientActivity.class);
 
                 String filter = mSearchListBarView.getSearchText();
-                if(filter != null) {
+                if (filter != null) {
                     String[] viaName = getSearchData(filter);
                     intent.putExtra(NewRecipientFragment.KEY_VIA, viaName[0]);
 
-                    if(viaName[0] == null && (Utils.isValidPhoneNumber(viaName[1]) || Utils.isValidEmail(viaName[1]))) {
+                    if (viaName[0] == null && (Utils.isValidPhoneNumber(viaName[1]) || Utils.isValidEmail(viaName[1]))) {
                         intent.putExtra(NewRecipientFragment.KEY_VIA, viaName[1]);
                     } else {
                         intent.putExtra(NewRecipientFragment.KEY_NAME, viaName[1]);
@@ -738,7 +739,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         // avoid cursor focus and keyboard when opening
         // if it is on onStart(), it doesn't work for screen rotations
         if(!mHasSavedInstanceState) {
-            Utils.hideKeyboard(mActivity);
+            Utils.hideKeyboard(mActivity, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         } else {
             mHasSavedInstanceState = false;
         }
