@@ -7,11 +7,21 @@ import java.util.Set;
 
 /**
  * Created by Nuno Luz on 17-12-2015.
+ *
+ * Manages multiple tracking/reporting/logging/analytics APIs.
+ * Get an instance through {@link #getInstance(Context)} and always use the global application context.
  */
 public class TrackerManager extends TrackerApi {
 
     private static TrackerManager SINGLETON;
 
+    /**
+     * Get the singleton instance of the TrackerManager. <br />
+     * <strong>Always use the global application context!</strong>
+     *
+     * @param applicationContext the global application context
+     * @return the singleton instance
+     */
     public synchronized static TrackerManager getInstance(Context applicationContext) {
         if(SINGLETON == null) {
             SINGLETON = new TrackerManager(applicationContext);

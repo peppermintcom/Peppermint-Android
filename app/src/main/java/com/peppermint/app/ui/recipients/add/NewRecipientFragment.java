@@ -14,10 +14,12 @@ import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.ContactsContract;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -58,6 +60,8 @@ import java.util.Locale;
 
 /**
  * Created by Nuno Luz on 10-11-2015.
+ *
+ * New recipient/contact fragment.
  */
 public class NewRecipientFragment extends Fragment implements View.OnClickListener, AdapterView.OnItemClickListener {
 
@@ -80,6 +84,17 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     public static final int ERR_INVALID_PHONE = 4;
     public static final int ERR_UNABLE_TO_ADD = 5;
 
+    /**
+     * Create recipient/contact data at the specified google account.
+     * @param context the contact
+     * @param rawId the already existent rawId (0 for a new contact)
+     * @param fullName the new contact full name
+     * @param phone the new contact phone
+     * @param email the new contact email
+     * @param photoUrl the new contact photo URL
+     * @param googleAccountName the google account
+     * @return a {@link Bundle} with results (can be passed on to an {@link Intent}
+     */
     public static Bundle insertRecipientContact(Context context, long rawId, String fullName, String phone, String email, String photoUrl, String googleAccountName) {
         String[] names = Utils.getFirstAndLastNames(fullName);
         return insertRecipientContact(context, rawId, names[0], names[1], phone, email, photoUrl, googleAccountName);
@@ -128,6 +143,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
             return bundle;
         }
 
+        // validate phone number
         if(phone.length() > 0 && !Utils.isValidPhoneNumber(phone)) {
             bundle.putInt(KEY_ERROR, ERR_INVALID_PHONE);
             return bundle;
@@ -305,6 +321,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     private static final String SAVED_DIALOG_STATE_KEY = TAG + "_NewAvatarDialogState";
     private static final String SAVED_AVATAR_URL_KEY = TAG + "_AvatarUrl";
     private static final String SAVED_AVATAR_INPROGRESS_URL_KEY = TAG + "_AvatarInProgressUrl";
+
     private static final int TAKE_PHOTO_CODE = 123;
     private static final int CHOOSE_PHOTO_CODE = 124;
 
@@ -378,10 +395,11 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                 if (takePictureIntent.resolveActivity(mActivity.getPackageManager()) != null) {
                     File photoFile = null;
                     try {
-                        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+                        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.getDefault()).format(new Date());
                         String imageFileName = "PeppermintAvatar_" + timeStamp + "_";
                         File storageDir = mActivity.getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-                        photoFile = File.createTempFile(imageFileName, ".jpg", storageDir);
+                        photoFile = new File(storageDir, imageFileName + ".jpg");
+                        photoFile.createNewFile();
                         mAvatarInProgressUrl = photoFile.getAbsolutePath();
                     } catch (IOException ex) {
                         TrackerManager.getInstance(mActivity.getApplicationContext()).logException(ex);
@@ -399,8 +417,14 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                 break;
             default:
                 // choose photo
-                Intent getPictureIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(getPictureIntent, CHOOSE_PHOTO_CODE);
+                /*Intent getPictureIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                startActivityForResult(getPictureIntent, CHOOSE_PHOTO_CODE)*/;
+
+                startActivityForResult(
+                        Intent.createChooser(
+                                new Intent(Intent.ACTION_GET_CONTENT)
+                                        .setType("image/*"), getString(R.string.choose_photo)),
+                        CHOOSE_PHOTO_CODE);
         }
     }
 
@@ -423,7 +447,20 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                 if(resultCode == Activity.RESULT_OK) {
                     Uri selectedImage = data.getData();
                     String[] filePathColumn = {MediaStore.Images.Media.DATA};
-                    Cursor cursor = mActivity.getContentResolver().query(selectedImage, filePathColumn, null, null, null);
+                    Cursor cursor;
+
+                    if(Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+                        // will return "image:x*"
+                        String wholeID = DocumentsContract.getDocumentId(selectedImage);
+                        String id = wholeID.split(":")[1];
+                        String sel = MediaStore.Images.Media._ID + "=?";
+
+                        cursor = mActivity.getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                filePathColumn, sel, new String[]{ id }, null);
+                    } else {
+                        cursor = mActivity.getContentResolver().query(selectedImage, filePathColumn, null, null, null);
+                    }
+
                     if (cursor.moveToFirst()) {
                         int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
                         setAvatarUrl(FILE_SCHEME + cursor.getString(columnIndex));

@@ -388,6 +388,10 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         }
     }
 
+    public EditText getSearchEditText() {
+        return mTxtSearch;
+    }
+
     @Override
     public Parcelable onSaveInstanceState() {
         Bundle bundle = new Bundle();

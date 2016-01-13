@@ -45,6 +45,8 @@ public class RecipientAdapterUtils {
             ContactsContract.RawContacts.ACCOUNT_TYPE
     };
 
+    private static final String GOOGLE_ACCOUNT_TYPE = "com.google";
+
     /*private static final String[] PROJECTION_DUP = {
             ContactsContract.RawContacts._ID,
             ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY
@@ -77,7 +79,9 @@ public class RecipientAdapterUtils {
         String condIds = getConditions(ContactsContract.Data.RAW_CONTACT_ID, allowedRawIds, null, false);
 
         return context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, PROJECTION,
-                "1" + condViaSearch + " AND (" + condMimeTypes + ")" + " AND (" + condIds + ")" + " AND " + ContactsContract.Contacts.IN_VISIBLE_GROUP + ">0",
+                "1" + condViaSearch + " AND (" + condMimeTypes + ")" + " AND (" + condIds + ")" +
+                        " AND ((" + ContactsContract.Contacts.IN_VISIBLE_GROUP + ">0 AND " + ContactsContract.RawContacts.ACCOUNT_TYPE + "=" + DatabaseUtils.sqlEscapeString(GOOGLE_ACCOUNT_TYPE) +
+                        ") OR " + ContactsContract.RawContacts.ACCOUNT_TYPE + "<>" + DatabaseUtils.sqlEscapeString(GOOGLE_ACCOUNT_TYPE) + ")",
                 args.toArray(new String[args.size()]), DISPLAY_NAME + " COLLATE NOCASE");
     }
 
@@ -110,7 +114,10 @@ public class RecipientAdapterUtils {
         tmp.close();*/
 
         Cursor rootCursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, null,
-                "1" + condStarred + condFreeSearch + condViaSearch + " AND (" + condMimeTypes + ")" + " AND (" + condIds + ")" + " AND " + ContactsContract.Contacts.IN_VISIBLE_GROUP + ">0",
+                "1" + condStarred + condFreeSearch + condViaSearch + " AND (" + condMimeTypes + ")" +
+                        " AND (" + condIds + ")" +
+                        " AND ((" + ContactsContract.Contacts.IN_VISIBLE_GROUP + ">0 AND " + ContactsContract.RawContacts.ACCOUNT_TYPE + "=" + DatabaseUtils.sqlEscapeString(GOOGLE_ACCOUNT_TYPE) +
+                        ") OR " + ContactsContract.RawContacts.ACCOUNT_TYPE + "<>" + DatabaseUtils.sqlEscapeString(GOOGLE_ACCOUNT_TYPE) + ")",
                 args.toArray(new String[args.size()]), DISPLAY_NAME + " COLLATE NOCASE");
 
         if(allowedIds != null) {

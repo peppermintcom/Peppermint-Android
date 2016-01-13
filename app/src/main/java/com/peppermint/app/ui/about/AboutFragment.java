@@ -14,10 +14,10 @@ import com.peppermint.app.R;
 
 /**
  * Created by Nuno Luz on 06-01-2016.
+ *
+ * About fragment.
  */
 public class AboutFragment extends Fragment implements View.OnClickListener {
-
-    private static final String TAG = AboutFragment.class.getSimpleName();
 
     private static final String PRIVACY_URL = "http://peppermint.com/privacy";
 
@@ -27,9 +27,12 @@ public class AboutFragment extends Fragment implements View.OnClickListener {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // inflate the view
         View v = inflater.inflate(R.layout.f_about, container, false);
+
+        // tap privacy listener
         mTxtPrivacy = (TextView) v.findViewById(R.id.txtPrivacy);
         mTxtPrivacy.setOnClickListener(this);
 
+        // set the version text
         TextView txtVersion = (TextView) v.findViewById(R.id.txtVersion);
         txtVersion.setText(getString(R.string.version) + " " + BuildConfig.VERSION_NAME);
 
@@ -38,6 +41,7 @@ public class AboutFragment extends Fragment implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
+        // launch browser with privacy url
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setData(Uri.parse(PRIVACY_URL));
         startActivity(intent);
