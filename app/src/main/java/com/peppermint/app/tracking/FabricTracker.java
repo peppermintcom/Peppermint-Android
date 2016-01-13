@@ -17,6 +17,8 @@ import io.fabric.sdk.android.Fabric;
 
 /**
  * Created by Nuno Luz on 17-12-2015.
+ *
+ * Fabric implementation for the Tracker API.
  */
 public class FabricTracker extends TrackerApi {
 
