@@ -14,10 +14,12 @@ import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.ContactsContract;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -415,8 +417,14 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                 break;
             default:
                 // choose photo
-                Intent getPictureIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(getPictureIntent, CHOOSE_PHOTO_CODE);
+                /*Intent getPictureIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                startActivityForResult(getPictureIntent, CHOOSE_PHOTO_CODE)*/;
+
+                startActivityForResult(
+                        Intent.createChooser(
+                                new Intent(Intent.ACTION_GET_CONTENT)
+                                        .setType("image/*"), getString(R.string.choose_photo)),
+                        CHOOSE_PHOTO_CODE);
         }
     }
 
@@ -439,7 +447,20 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                 if(resultCode == Activity.RESULT_OK) {
                     Uri selectedImage = data.getData();
                     String[] filePathColumn = {MediaStore.Images.Media.DATA};
-                    Cursor cursor = mActivity.getContentResolver().query(selectedImage, filePathColumn, null, null, null);
+                    Cursor cursor;
+
+                    if(Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+                        // will return "image:x*"
+                        String wholeID = DocumentsContract.getDocumentId(selectedImage);
+                        String id = wholeID.split(":")[1];
+                        String sel = MediaStore.Images.Media._ID + "=?";
+
+                        cursor = mActivity.getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                filePathColumn, sel, new String[]{ id }, null);
+                    } else {
+                        cursor = mActivity.getContentResolver().query(selectedImage, filePathColumn, null, null, null);
+                    }
+
                     if (cursor.moveToFirst()) {
                         int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
                         setAvatarUrl(FILE_SCHEME + cursor.getString(columnIndex));
