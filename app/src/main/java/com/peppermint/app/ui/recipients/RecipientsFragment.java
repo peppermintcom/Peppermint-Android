@@ -934,7 +934,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 float deltaX = x2 - x1;
                 float deltaY = y2 - y1;
 
-                if(hideRecordingOverlay(true)) {
+                if(hideRecordingOverlay(false)) {
                     mSendRecording = false;
 
                     if ((Math.abs(deltaX) > mMinSwipeDistance || Math.abs(deltaY) > mMinSwipeDistance) && (t2 - t1) < MAX_SWIPE_DURATION) {
@@ -1027,7 +1027,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 sendMessage();
             }
         }
-        hideRecordingOverlay(true);
+        hideRecordingOverlay(false);
     }
 
     @Override
@@ -1059,7 +1059,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         }
 
         /*mRecordingViewOverlay.explode();*/
-        hideRecordingOverlay(true);
+        hideRecordingOverlay(false);
     }
 
     @Override
