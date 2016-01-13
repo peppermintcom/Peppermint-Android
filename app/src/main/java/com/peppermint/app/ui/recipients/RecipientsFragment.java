@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -23,6 +24,7 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CursorAdapter;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
@@ -333,6 +335,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     };
 
     private final Rect mBtnAddContactHitRect = new Rect();
+    private PointF mTipPoint;
 
     private final Runnable mTipRunnable = new Runnable() {
         @Override
@@ -383,12 +386,33 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         mSenderServiceManager.start();
 
-        mTipPopup = new PopupDialog(mActivity);
+        mTipPopup = new PopupDialog(mActivity) {
+            @Override
+            public boolean onTouchEvent(MotionEvent event) {
+                mTipPoint = new PointF();
+                mTipPoint.set(event.getX(), event.getY());
+                return super.onTouchEvent(event);
+            }
+        };
         mTipPopup.setLayoutResource(R.layout.v_popup_tip1);
         mTipPopup.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
                 mPreferences.setFirstRun(false);
+                if(mTipPoint != null) {
+                    EditText searchEditText = mSearchListBarView.getSearchEditText();
+                    if(searchEditText != null) {
+                        Rect mSearchRect = new Rect();
+                        searchEditText.getGlobalVisibleRect(mSearchRect);
+                        searchEditText.setFocusableInTouchMode(true);
+                        searchEditText.setFocusable(true);
+                        searchEditText.setShowSoftInputOnFocus(true);
+                        if(mTipPoint.y < 0 && mSearchRect.contains((int) mTipPoint.x, mSearchRect.centerY())) {
+                            searchEditText.requestFocus();
+                            Utils.showKeyboard(mActivity, searchEditText);
+                        }
+                    }
+                }
             }
         });
 
@@ -406,7 +430,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                         getView().requestFocus();
                     }
                 }
-                mTipPopup.dismiss();
+                if(mTipPopup.isShowing()) {
+                    mTipPopup.dismiss();
+                }
                 return false;
             }
         });
