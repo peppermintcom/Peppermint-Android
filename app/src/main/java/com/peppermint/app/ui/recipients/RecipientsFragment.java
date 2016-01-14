@@ -14,6 +14,7 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
@@ -511,7 +512,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                         searchEditText.getGlobalVisibleRect(mSearchRect);
                         searchEditText.setFocusableInTouchMode(true);
                         searchEditText.setFocusable(true);
-                        searchEditText.setShowSoftInputOnFocus(true);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            searchEditText.setShowSoftInputOnFocus(true);
+                        }
                         if(mTipPoint.y < 0 && mSearchRect.contains((int) mTipPoint.x, mSearchRect.centerY())) {
                             searchEditText.requestFocus();
                             Utils.showKeyboard(mActivity, searchEditText);

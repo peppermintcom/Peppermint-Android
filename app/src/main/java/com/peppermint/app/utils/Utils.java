@@ -762,7 +762,7 @@ public class Utils {
         }
         if (view != null) {
             InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
+            imm.showSoftInput(view, InputMethodManager.SHOW_FORCED);
         }
     }
 
