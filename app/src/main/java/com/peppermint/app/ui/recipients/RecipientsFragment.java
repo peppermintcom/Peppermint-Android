@@ -30,6 +30,7 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CursorAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -55,6 +56,7 @@ import com.peppermint.app.ui.views.SearchListBarView;
 import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.ui.views.dialogs.PopupDialog;
 import com.peppermint.app.ui.views.simple.CustomToast;
+import com.peppermint.app.ui.views.simple.CustomVisibilityListView;
 import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.NoMicDataIOException;
@@ -125,6 +127,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private boolean mRecipientListShown;
     private BaseAdapter mRecipientAdapter;
     private Button mBtnAddContact;
+    private ImageView mImgListBorder;
     private PopupDialog mTipPopup;
     private final Runnable mShowLoadingRunnable = new Runnable() {
         @Override
@@ -613,6 +616,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         // eo: adjust status bar height*/
 
         // init no recipients view
+        mImgListBorder = (ImageView) v.findViewById(R.id.imgListBorder);
+
         mBtnAddContact = (Button) v.findViewById(R.id.btnAddContact);
         mBtnAddContact.setTypeface(app.getFontSemibold());
         mBtnAddContact.setOnClickListener(new View.OnClickListener() {
@@ -695,6 +700,14 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         getListView().setLongClickable(true);
         getListView().setOnItemLongClickListener(this);
         getListView().setOnTouchListener(this);
+        // apply visibility of list view to its border too
+        // not using drawables to avoid overdraws
+        ((CustomVisibilityListView) getListView()).setVisibilityListener(new CustomVisibilityListView.OnVisibilityChangedListener() {
+            @Override
+            public void visibilityChanged(int visibility) {
+                mImgListBorder.setVisibility(visibility);
+            }
+        });
 
         synchronized (mLock) {
             mCreated = true;

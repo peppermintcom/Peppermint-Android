@@ -1,15 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:paddingLeft="8dp"
-    android:paddingRight="8dp"
-    android:paddingTop="10dp"
-    android:paddingBottom="10dp"
-    android:gravity="center_vertical"
-    android:background="@drawable/background_white_to_solid_pressed">
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:gravity="center_vertical"
+        android:background="@drawable/background_white_to_solid_pressed">
 
     <com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView
         android:id="@+id/imgPhoto"
@@ -55,5 +60,13 @@
         </LinearLayout>
 
     </LinearLayout>
+
+</LinearLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_gravity="bottom"
+        android:src="@color/divider_dark_grey"/>
 
 </LinearLayout>

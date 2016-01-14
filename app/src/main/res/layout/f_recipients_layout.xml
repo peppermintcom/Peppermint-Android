@@ -42,13 +42,22 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <ListView android:id="@id/android:list"
+            <com.peppermint.app.ui.views.simple.CustomVisibilityListView android:id="@id/android:list"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:listSelector="@drawable/background_white_to_solid_pressed"
+                android:listSelector="@null"
                 android:drawSelectorOnTop="false"
-                android:background="@drawable/background_border_bottom"
-                android:paddingBottom="1dp" />
+                android:divider="@null"
+                android:background="@null"
+                android:layout_marginBottom="1dp" />
+
+            <ImageView
+                android:id="@+id/imgListBorder"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_gravity="bottom"
+                android:src="@color/divider_dark_grey"
+                android:visibility="gone"/>
 
             <LinearLayout
                 android:id="@id/android:empty"
