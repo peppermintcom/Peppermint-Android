@@ -29,19 +29,18 @@
             <com.peppermint.app.ui.views.simple.CustomFontTextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
+                android:layout_marginBottom="5dp"
                 android:gravity="center_vertical"
                 custom:textFont="@string/font_semibold"
                 android:textColor="@color/grey_text"
                 android:textSize="14dp"
                 android:text="@string/pref_summary_displayname" />
 
-            <com.peppermint.app.ui.views.simple.CustomFontEditText
+            <com.peppermint.app.ui.views.simple.CustomValidatedEditText
                 android:id="@+id/txtFirstName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
-                android:padding="10dp"
+                android:layout_marginBottom="21dp"
                 android:textSize="16dp"
                 android:textColor="@color/black"
                 android:hint="@string/first_name"
@@ -53,12 +52,12 @@
                 android:textCursorDrawable="@drawable/ic_cursor"
                 style="@style/Peppermint.CustomEditTextSimple"/>
 
-            <com.peppermint.app.ui.views.simple.CustomFontEditText
+            <com.peppermint.app.ui.views.simple.CustomValidatedEditText
                 android:id="@+id/txtLastName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="25dp"
-                android:padding="10dp"
+                android:layout_marginBottom="21dp"
+                android:paddingTop="5dp"
                 android:textSize="16dp"
                 android:textColor="@color/black"
                 android:hint="@string/last_name"
@@ -73,6 +72,7 @@
             <com.peppermint.app.ui.views.simple.CustomFontTextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
                 android:layout_marginBottom="5dp"
                 android:gravity="center_vertical"
                 custom:textFont="@string/font_semibold"

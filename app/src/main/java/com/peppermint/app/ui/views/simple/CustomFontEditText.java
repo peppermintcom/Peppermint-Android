@@ -20,7 +20,7 @@ public class CustomFontEditText extends EditText {
 
     private static WeakHashMap<String, Typeface> mTypefaceCache = new WeakHashMap<>();
 
-    private static Typeface getTypeface(Context context, String fontPath) {
+    protected static Typeface getTypeface(Context context, String fontPath) {
         if(mTypefaceCache.containsKey(fontPath)) {
             return mTypefaceCache.get(fontPath);
         }

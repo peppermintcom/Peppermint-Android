@@ -4,6 +4,7 @@ import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.coremedia.iso.boxes.Container;
@@ -207,15 +208,26 @@ public class ExtendedAudioRecorder {
             throw new RuntimeException("Already recording or paused. Use pause, resume or stop.");
         }
 
-        if(mContext.getExternalFilesDir(null) == null) {
+        File[] directories = ContextCompat.getExternalFilesDirs(mContext, null);
+        File directory = null;
+        if(directories != null) {
+            for(int i=0; i<directories.length && directory == null; i++) {
+                File tmpDir = directories[i];
+                if(tmpDir != null && tmpDir.canWrite()) {
+                    directory = tmpDir;
+                }
+            }
+        }
+
+        if(directory == null) {
             throw new NoAccessToExternalStorageException("No access to external storage directory!");
         }
 
         synchronized (this) {
             Calendar now = Calendar.getInstance();
-            mFilePath = mContext.getExternalFilesDir(null).getAbsolutePath() + "/" + mFilePrefix + "_" +
+            mFilePath = directory.getAbsolutePath() + "/" + mFilePrefix + "_" +
                     DATETIME_FORMAT.format(now.getTime()) + ".m4a";
-            mTempFilePath = mContext.getExternalFilesDir(null).getAbsolutePath() + "/" + mFilePrefix + "_" +
+            mTempFilePath = directory.getAbsolutePath() + "/" + mFilePrefix + "_" +
                     DATETIME_FORMAT.format(now.getTime()) + ".aac";
             mPaused = false;
             mFullDuration = 0;

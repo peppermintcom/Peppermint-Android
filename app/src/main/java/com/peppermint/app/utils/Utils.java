@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -619,6 +620,16 @@ public class Utils {
     }
 
     /**
+     * Get a color state list from resources according to the current API.
+     * @param context the context
+     * @param colorRes the color resource id
+     * @return the color
+     */
+    public static ColorStateList getColorStateList(Context context, int colorRes) {
+        return ContextCompat.getColorStateList(context, colorRes);
+    }
+
+    /**
      * Get the status bar height according to the current API and theme.
      * @param context the context
      * @return the height in pixels
@@ -753,10 +764,14 @@ public class Utils {
      * Show the keyboard
      * @param context the activity
      */
-    public static void showKeyboard(Activity context, View view) {
-        context.getWindow().setSoftInputMode(
-                WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE
-        );
+    public static void showKeyboard(Activity context, View view, Integer additionalModes) {
+        int modes = WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+        if(additionalModes != null) {
+            modes |= additionalModes;
+        }
+
+        context.getWindow().setSoftInputMode(modes);
+
         if(view == null) {
             view = context.getWindow().getCurrentFocus();
         }
@@ -767,7 +782,15 @@ public class Utils {
     }
 
     public static void showKeyboard(Activity context) {
-        showKeyboard(context, null);
+        showKeyboard(context, null, null);
+    }
+
+    public static void showKeyboard(Activity context, View view) {
+        showKeyboard(context, view, null);
+    }
+
+    public static void showKeyboard(Activity context, Integer additionalModes) {
+        showKeyboard(context, null, additionalModes);
     }
 
     /**

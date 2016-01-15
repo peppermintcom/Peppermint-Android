@@ -229,6 +229,18 @@ public class AnimatorBuilder {
     }
 
     /**
+     * Builds an animator that that slides in the target view from the top.
+     * @param v the target view
+     * @return the animator
+     */
+    public Animator buildSlideInTopAnimator(View v) {
+        ObjectAnimator slideAnimator = ObjectAnimator.ofFloat(v, "translationY", -Utils.percentScreenHeightToPx(v.getContext(), 100), 0);
+        slideAnimator.setDuration(800);
+        slideAnimator.setInterpolator(new DecelerateInterpolator());
+        return slideAnimator;
+    }
+
+    /**
      * Builds an animator that that slides in the target view from the bottom.
      * @param v the target view
      * @return the animator

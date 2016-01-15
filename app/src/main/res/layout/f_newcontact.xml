@@ -2,7 +2,8 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_height="match_parent"
-    android:layout_width="match_parent">
+    android:layout_width="match_parent"
+    android:fitsSystemWindows="true">
 
     <LinearLayout
         android:layout_height="match_parent"
@@ -12,7 +13,6 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="10dp"
             android:orientation="horizontal"
             android:background="@drawable/background_border_bottom"
             android:gravity="center">
@@ -21,37 +21,43 @@
                 android:id="@+id/imgAddAvatar"
                 android:layout_width="70dp"
                 android:layout_height="70dp"
+                android:layout_margin="10dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_addavatar_70dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
                 android:orientation="vertical">
 
-                <EditText
+                <com.peppermint.app.ui.views.simple.CustomValidatedEditText
                     android:id="@+id/txtFirstName"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1"
                     android:padding="10dp"
+                    android:layout_marginBottom="14dp"
+                    android:layout_marginTop="14dp"
+                    custom:textFont="@string/font_regular"
                     android:textSize="17dp"
                     android:textColor="@color/black"
                     android:hint="@string/first_name"
                     android:textColorHint="@color/black_50percent"
-                    android:background="@drawable/background_border_bottom"
                     android:maxLength="100"
                     android:inputType="textCapWords"
                     android:singleLine="true"
                     android:textCursorDrawable="@drawable/ic_cursor"/>
 
-                <EditText
+                <com.peppermint.app.ui.views.simple.CustomValidatedEditText
                     android:id="@+id/txtLastName"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1"
                     android:padding="10dp"
+                    android:layout_marginBottom="14dp"
+                    android:layout_marginTop="14dp"
+                    custom:textFont="@string/font_regular"
                     android:textSize="17dp"
                     android:textColor="@color/black"
                     android:hint="@string/last_name"
@@ -65,54 +71,41 @@
 
         </LinearLayout>
 
-        <FrameLayout
+        <com.peppermint.app.ui.views.simple.CustomValidatedEditText
+            android:id="@+id/txtEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="10dp"
-            android:background="@drawable/background_border_bottom">
+            android:layout_margin="14dp"
+            custom:textFont="@string/font_regular"
+            android:textSize="17dp"
+            android:textColor="@color/black"
+            android:hint="@string/email"
+            android:inputType="textEmailAddress"
+            android:textColorHint="@color/black_50percent"
+            android:drawablePadding="10dp"
+            android:drawableRight="@drawable/background_input_email"
+            android:maxLength="250"
+            android:singleLine="true"
+            android:textCursorDrawable="@drawable/ic_cursor"/>
 
-            <EditText
-                android:id="@+id/txtEmail"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="10dp"
-                android:textSize="17dp"
-                android:textColor="@color/black"
-                android:hint="@string/email"
-                android:inputType="textEmailAddress"
-                android:textColorHint="@color/black_50percent"
-                android:drawablePadding="10dp"
-                android:drawableRight="@drawable/background_input_email"
-                android:maxLength="250"
-                android:singleLine="true"
-                android:textCursorDrawable="@drawable/ic_cursor"/>
-
-        </FrameLayout>
-
-        <LinearLayout
+        <com.peppermint.app.ui.views.simple.CustomValidatedEditText
+            android:id="@+id/txtPhoneNumber"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="10dp"
-            android:background="@drawable/background_border_bottom"
-            android:orientation="horizontal">
-
-            <EditText
-                android:id="@+id/txtPhoneNumber"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="10dp"
-                android:textSize="17dp"
-                android:textColor="@color/black"
-                android:hint="@string/phone_number"
-                android:inputType="phone"
-                android:textColorHint="@color/black_50percent"
-                android:drawablePadding="10dp"
-                android:drawableRight="@drawable/background_input_phone"
-                android:maxLength="40"
-                android:singleLine="true"
-                android:textCursorDrawable="@drawable/ic_cursor"/>
-
-        </LinearLayout>
+            android:layout_margin="14dp"
+            custom:textFont="@string/font_regular"
+            android:textSize="17dp"
+            android:textColor="@color/black"
+            android:hint="@string/phone_number"
+            android:inputType="phone"
+            android:textColorHint="@color/black_50percent"
+            android:drawablePadding="10dp"
+            android:drawableRight="@drawable/background_input_phone"
+            android:maxLength="40"
+            android:singleLine="true"
+            android:textCursorDrawable="@drawable/ic_cursor"/>
 
         <com.peppermint.app.ui.views.simple.CustomFontTextView
             android:layout_width="match_parent"

@@ -11,30 +11,22 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
-import android.graphics.Rect;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Handler;
 import android.provider.ContactsContract;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.PopupWindow;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.peppermint.app.PeppermintApp;
@@ -46,6 +38,7 @@ import com.peppermint.app.ui.views.NavigationItem;
 import com.peppermint.app.ui.views.NavigationListAdapter;
 import com.peppermint.app.ui.views.dialogs.CustomListDialog;
 import com.peppermint.app.ui.views.simple.CustomToast;
+import com.peppermint.app.ui.views.simple.CustomValidatedEditText;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
 
@@ -329,48 +322,83 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     private PepperMintPreferences mPreferences;
 
     private ImageView mBtnAddAvatar;
-    private EditText mTxtFirstName, mTxtLastName, mTxtPhone, mTxtMail;
+    private CustomValidatedEditText mTxtFirstName, mTxtLastName, mTxtPhone, mTxtMail;
     private Button mBtnSave;
 
-    private PopupWindow mNamePopup;
-    private TextView mTxtPopup;
     private CustomListDialog mNewAvatarDialog;
     private NavigationListAdapter mAvatarAdapter;
     private List<NavigationItem> mAvatarOptions;
     private String mAvatarUrl, mAvatarInProgressUrl;
 
-    private Runnable mDismissPopupRunnable = new Runnable() {
+    private CustomValidatedEditText.Validator mFirstNameValidator = new CustomValidatedEditText.Validator() {
         @Override
-        public void run() {
-            dismissPopup();
-        }
-    };
-    private final Handler mHandler = new Handler();
-    private boolean mDestroyed = false;
-
-    private View.OnFocusChangeListener mFocusListener = new View.OnFocusChangeListener() {
-        @Override
-        public void onFocusChange(View v, boolean hasFocus) {
-            isValid(true);
-        }
-    };
-
-    private TextWatcher mTextWatcher = new TextWatcher() {
-        @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) { /* nothing to do here */ }
-
-        @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) { /* nothing to do here */ }
-
-        @Override
-        public void afterTextChanged(Editable s) {
-            if(isValid(false)) {
+        public String getValidatorMessage(CharSequence text) {
+            String name = text.toString().trim();
+            if(!Utils.isValidName(name)) {
+                mBtnSave.setEnabled(false);
+                return getString(R.string.msg_insert_first_name);
+            }
+            if(mValidityChecker.areValid()) {
                 mBtnSave.setEnabled(true);
             } else {
                 mBtnSave.setEnabled(false);
             }
+            return null;
         }
     };
+
+    private CustomValidatedEditText.Validator mLastNameValidator = new CustomValidatedEditText.Validator() {
+        @Override
+        public String getValidatorMessage(CharSequence text) {
+            String name = text.toString().trim();
+            if(!Utils.isValidNameMaybeEmpty(name)) {
+                mBtnSave.setEnabled(false);
+                return getString(R.string.msg_insert_last_name);
+            }
+            if(mValidityChecker.areValid()) {
+                mBtnSave.setEnabled(true);
+            } else {
+                mBtnSave.setEnabled(false);
+            }
+            return null;
+        }
+    };
+
+    private CustomValidatedEditText.Validator mEmailValidator = new CustomValidatedEditText.Validator() {
+        @Override
+        public String getValidatorMessage(CharSequence text) {
+            String email = text.toString().trim();
+            if(!Utils.isValidEmail(email)) {
+                mBtnSave.setEnabled(false);
+                return getString(R.string.msg_insert_mail);
+            }
+            if(mValidityChecker.areValid()) {
+                mBtnSave.setEnabled(true);
+            } else {
+                mBtnSave.setEnabled(false);
+            }
+            return null;
+        }
+    };
+
+    private CustomValidatedEditText.Validator mPhoneValidator = new CustomValidatedEditText.Validator() {
+        @Override
+        public String getValidatorMessage(CharSequence text) {
+            String phone = text.toString().trim();
+            if(!Utils.isValidPhoneNumber(phone)) {
+                mBtnSave.setEnabled(false);
+                return getString(R.string.msg_insert_phone);
+            }
+            if(mValidityChecker.areValid()) {
+                mBtnSave.setEnabled(true);
+            } else {
+                mBtnSave.setEnabled(false);
+            }
+            return null;
+        }
+    };
+
+    private CustomValidatedEditText.ValidityChecker mValidityChecker;
 
     private View.OnClickListener mAvatarClickListener = new View.OnClickListener() {
         @Override
@@ -479,56 +507,9 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         mPreferences = new PepperMintPreferences(context);
     }
 
-    private boolean isValid(boolean showPopup) {
-        dismissPopup();
-
-        String firstName = mTxtFirstName.getText().toString().trim();
-        String lastName = mTxtLastName.getText().toString().trim();
-        String email = mTxtMail.getText().toString().trim();
-        String phone = mTxtPhone.getText().toString().trim();
-
-        if(firstName.length() <= 0 || !Utils.isValidName(firstName)) {
-            if(showPopup) {
-                showPopup(mActivity, mTxtFirstName, R.string.msg_insert_name);
-            }
-            return false;
-        }
-        if(!Utils.isValidNameMaybeEmpty(lastName)) {
-            if(showPopup) {
-                showPopup(mActivity, mTxtLastName, R.string.msg_insert_name);
-            }
-            return false;
-        }
-
-        boolean invalidEmail = email.length() <= 0 || !Utils.isValidEmail(email);
-        boolean invalidPhone = phone.length() <= 0 || !Utils.isValidPhoneNumber(phone);
-
-        if(invalidEmail && invalidPhone) {
-            if(showPopup) {
-                showPopup(mActivity, mTxtMail, R.string.msg_insert_mail_or_phone);
-            }
-            return false;
-        }
-
-        return true;
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) mActivity.getApplication();
-
-        // hold popup
-        mTxtPopup = (TextView) inflater.inflate(R.layout.v_name_popup, null);
-        mNamePopup = new PopupWindow(mActivity);
-        mNamePopup.setContentView(mTxtPopup);
-        //noinspection deprecation
-        // although this is deprecated, it is required for versions  < 22/23, otherwise the popup doesn't show up
-        mNamePopup.setWindowLayoutMode(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        mNamePopup.setBackgroundDrawable(Utils.getDrawable(mActivity, R.drawable.img_popup));
-        mNamePopup.setAnimationStyle(R.style.Peppermint_PopupAnimation);
-        // do not let the popup get in the way of user interaction
-        mNamePopup.setFocusable(false);
-        mNamePopup.setTouchable(false);
 
         mAvatarOptions = new ArrayList<>();
         mAvatarOptions.add(new NavigationItem(getString(R.string.take_photo), R.drawable.ic_drawer_camera, null, true));
@@ -551,39 +532,27 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         mBtnSave = (Button) mActivity.getCustomActionBar().findViewById(R.id.btnSave);
         mBtnSave.setOnClickListener(this);
 
-        mActivity.getTouchInterceptor().setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                dismissPopup();
-                return false;
-            }
-        });
-
         // inflate the view
         View v = inflater.inflate(R.layout.f_newcontact, container, false);
 
         mBtnAddAvatar = (ImageView) v.findViewById(R.id.imgAddAvatar);
         mBtnAddAvatar.setOnClickListener(mAvatarClickListener);
 
-        mTxtFirstName = (EditText) v.findViewById(R.id.txtFirstName);
-        mTxtLastName = (EditText) v.findViewById(R.id.txtLastName);
-        mTxtMail = (EditText) v.findViewById(R.id.txtEmail);
-        mTxtPhone = (EditText) v.findViewById(R.id.txtPhoneNumber);
+        mTxtFirstName = (CustomValidatedEditText) v.findViewById(R.id.txtFirstName);
+        mTxtLastName = (CustomValidatedEditText) v.findViewById(R.id.txtLastName);
+        mTxtMail = (CustomValidatedEditText) v.findViewById(R.id.txtEmail);
+        mTxtPhone = (CustomValidatedEditText) v.findViewById(R.id.txtPhoneNumber);
 
-        mTxtFirstName.setTypeface(app.getFontRegular());
-        mTxtLastName.setTypeface(app.getFontRegular());
-        mTxtMail.setTypeface(app.getFontRegular());
-        mTxtPhone.setTypeface(app.getFontRegular());
+        mTxtFirstName.setBackgroundResource(R.drawable.background_border_bottom);
+        mTxtMail.setBackgroundResource(R.drawable.background_border_bottom);
+        mTxtPhone.setBackgroundResource(R.drawable.background_border_bottom);
 
-        mTxtFirstName.addTextChangedListener(mTextWatcher);
-        mTxtLastName.addTextChangedListener(mTextWatcher);
-        mTxtMail.addTextChangedListener(mTextWatcher);
-        mTxtPhone.addTextChangedListener(mTextWatcher);
+        mTxtFirstName.setValidator(mFirstNameValidator);
+        mTxtLastName.setValidator(mLastNameValidator);
+        mTxtMail.setValidator(mEmailValidator);
+        mTxtPhone.setValidator(mPhoneValidator);
 
-        mTxtFirstName.setOnFocusChangeListener(mFocusListener);
-        mTxtLastName.setOnFocusChangeListener(mFocusListener);
-        mTxtMail.setOnFocusChangeListener(mFocusListener);
-        mTxtPhone.setOnFocusChangeListener(mFocusListener);
+        mValidityChecker = new CustomValidatedEditText.ValidityChecker(mTxtFirstName, mTxtLastName, mTxtMail, mTxtPhone);
 
         Bundle args = getArguments();
         if(args != null) {
@@ -627,11 +596,6 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-    }
-
-    @Override
     public void onSaveInstanceState(Bundle outState) {
         Bundle dialogState = mNewAvatarDialog.onSaveInstanceState();
         if (dialogState != null) {
@@ -643,21 +607,21 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-    }
-
-    @Override
     public void onResume() {
         super.onResume();
-        Utils.showKeyboard(mActivity);
+
+        mTxtFirstName.validate();
+        mTxtLastName.validate();
+        mTxtMail.validate();
+        mTxtPhone.validate();
+
+        Utils.showKeyboard(mActivity, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
     }
 
     @Override
     public void onPause() {
-        dismissPopup();
-        Utils.hideKeyboard(mActivity);
+        Utils.hideKeyboard(mActivity, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         super.onPause();
     }
 
@@ -666,30 +630,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         if(mNewAvatarDialog != null && mNewAvatarDialog.isShowing()) {
             mNewAvatarDialog.dismiss();
         }
-        mDestroyed = true;
         super.onDestroy();
-    }
-
-    private void dismissPopup() {
-        if (mNamePopup.isShowing() && !isDetached() && !mDestroyed) {
-            mNamePopup.dismiss();
-            mHandler.removeCallbacks(mDismissPopupRunnable);
-        }
-    }
-
-    // the method that displays the img_popup.
-    private void showPopup(Activity context, View parent, int strResId) {
-        if(parent.getWindowToken() == null) {
-            return;
-        }
-
-        Rect outRect = new Rect();
-        parent.getGlobalVisibleRect(outRect);
-
-        dismissPopup();
-        mTxtPopup.setText(strResId);
-        mNamePopup.showAtLocation(parent, Gravity.NO_GRAVITY, Utils.dpToPx(mActivity, 40), outRect.bottom);
-        mHandler.postDelayed(mDismissPopupRunnable, 6000);
     }
 
     @Override
