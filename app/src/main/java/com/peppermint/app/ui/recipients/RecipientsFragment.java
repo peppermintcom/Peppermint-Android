@@ -697,7 +697,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
+    public void onViewCreated(final View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         getListView().setOnItemClickListener(this);
         getListView().setLongClickable(true);
@@ -705,10 +705,14 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         getListView().setOnTouchListener(this);
         // apply visibility of list view to its border too
         // not using drawables to avoid overdraws
-        ((CustomVisibilityListView) getListView()).setVisibilityListener(new CustomVisibilityListView.OnVisibilityChangedListener() {
+        ((CustomVisibilityListView) getListView()).setCanScrollListener(new CustomVisibilityListView.CanScrollListener() {
             @Override
-            public void visibilityChanged(int visibility) {
-                mImgListBorder.setVisibility(visibility);
+            public synchronized void canScrollChanged(boolean canScroll, int visibility) {
+                if(canScroll) {
+                    mImgListBorder.setVisibility(visibility);
+                } else {
+                    mImgListBorder.setVisibility(View.GONE);
+                }
             }
         });
 
