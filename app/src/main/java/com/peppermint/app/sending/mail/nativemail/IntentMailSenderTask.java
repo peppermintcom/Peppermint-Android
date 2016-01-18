@@ -65,7 +65,6 @@ public class IntentMailSenderTask extends SenderTask {
         i.putExtra(Intent.EXTRA_TEXT, Html.fromHtml(getSendingRequest().getBody()));
         Uri fileUri = FileProvider.getUriForFile(getContext(), "com.peppermint.app", file);
        /* i.addFlags();*/
-        Log.d(IntentMailSenderTask.class.getSimpleName(), "$$ " + fileUri.toString());
         i.putExtra(Intent.EXTRA_STREAM, fileUri);
         i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
 

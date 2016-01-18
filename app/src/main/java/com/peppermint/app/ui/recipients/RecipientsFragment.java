@@ -17,6 +17,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
@@ -496,7 +497,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             @Override
             public boolean onTouchEvent(MotionEvent event) {
                 mTipPoint = new PointF();
-                mTipPoint.set(event.getX(), event.getY());
+                mTipPoint.set(event.getRawX(), event.getRawY());
                 return super.onTouchEvent(event);
             }
         };
@@ -515,9 +516,28 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                             searchEditText.setShowSoftInputOnFocus(true);
                         }
-                        if(mTipPoint.y < 0 && mSearchRect.contains((int) mTipPoint.x, mSearchRect.centerY())) {
+                        if(mSearchRect.contains((int) mTipPoint.x, (int) mTipPoint.y) || (mTipPoint.y < 0 && mSearchRect.contains((int) mTipPoint.x, mSearchRect.centerY()))) {
                             searchEditText.requestFocus();
-                            Utils.showKeyboard(mActivity, searchEditText);
+                            Utils.showKeyboard(mActivity, searchEditText, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+
+                            // hack for some devices with Android < 5
+                            searchEditText.dispatchTouchEvent(MotionEvent.obtain(
+                                    SystemClock.uptimeMillis(),
+                                    SystemClock.uptimeMillis() + 100,
+                                    MotionEvent.ACTION_DOWN,
+                                    mSearchRect.centerX(),
+                                    mSearchRect.centerY(),
+                                    0
+                            ));
+
+                            searchEditText.dispatchTouchEvent(MotionEvent.obtain(
+                                    SystemClock.uptimeMillis() + 200,
+                                    SystemClock.uptimeMillis() + 300,
+                                    MotionEvent.ACTION_UP,
+                                    mSearchRect.centerX(),
+                                    mSearchRect.centerY(),
+                                    0
+                            ));
                         }
                     }
                 }
