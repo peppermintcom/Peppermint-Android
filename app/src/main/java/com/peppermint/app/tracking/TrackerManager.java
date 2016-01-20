@@ -13,7 +13,7 @@ import java.util.Set;
  */
 public class TrackerManager extends TrackerApi {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static TrackerManager SINGLETON;
 
     /**
