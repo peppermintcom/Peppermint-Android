@@ -425,7 +425,15 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                     try {
                         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.getDefault()).format(new Date());
                         String imageFileName = "PeppermintAvatar_" + timeStamp + "_";
-                        File storageDir = mActivity.getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+                        File storageDir = new File(Environment.getExternalStoragePublicDirectory(
+                                Environment.DIRECTORY_PICTURES), "Peppermint");
+                        if(!storageDir.isDirectory() && storageDir.canWrite()) {
+                            storageDir.delete();
+                        }
+                        if(!storageDir.exists()) {
+                            storageDir.mkdirs();
+                        }
+                        /*File storageDir = mActivity.getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES);*/
                         photoFile = new File(storageDir, imageFileName + ".jpg");
                         photoFile.createNewFile();
                         mAvatarInProgressUrl = photoFile.getAbsolutePath();
@@ -462,12 +470,14 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
 
         switch (requestCode) {
             case TAKE_PHOTO_CODE:
-                if(resultCode == Activity.RESULT_OK) {
-                    setAvatarUrl(FILE_SCHEME + mAvatarInProgressUrl);
-                } else {
-                    File file = new File(mAvatarInProgressUrl);
-                    if(file.exists()) {
-                        file.delete();
+                if(mAvatarInProgressUrl != null) {
+                    if (resultCode == Activity.RESULT_OK) {
+                        setAvatarUrl(FILE_SCHEME + mAvatarInProgressUrl);
+                    } else {
+                        File file = new File(mAvatarInProgressUrl);
+                        if (file.exists()) {
+                            file.delete();
+                        }
                     }
                 }
                 break;

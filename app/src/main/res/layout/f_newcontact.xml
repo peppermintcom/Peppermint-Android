@@ -29,13 +29,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="10dp"
+                android:layout_gravity="center_vertical"
                 android:orientation="vertical">
 
                 <com.peppermint.app.ui.views.simple.CustomValidatedEditText
                     android:id="@+id/txtFirstName"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
                     android:padding="10dp"
                     android:layout_marginBottom="14dp"
                     android:layout_marginTop="14dp"
@@ -52,8 +52,7 @@
                 <com.peppermint.app.ui.views.simple.CustomValidatedEditText
                     android:id="@+id/txtLastName"
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
                     android:padding="10dp"
                     android:layout_marginBottom="14dp"
                     android:layout_marginTop="14dp"
