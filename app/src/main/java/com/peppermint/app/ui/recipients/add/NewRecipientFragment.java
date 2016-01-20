@@ -13,11 +13,11 @@ import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -341,11 +341,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                 mBtnSave.setEnabled(false);
                 return getString(R.string.msg_insert_first_name);
             }
-            if(mValidityChecker.areValid()) {
-                mBtnSave.setEnabled(true);
-            } else {
-                mBtnSave.setEnabled(false);
-            }
+
             return null;
         }
     };
@@ -358,11 +354,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                 mBtnSave.setEnabled(false);
                 return getString(R.string.msg_insert_last_name);
             }
-            if(mValidityChecker.areValid()) {
-                mBtnSave.setEnabled(true);
-            } else {
-                mBtnSave.setEnabled(false);
-            }
+
             return null;
         }
     };
@@ -370,16 +362,14 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     private CustomValidatedEditText.Validator mEmailValidator = new CustomValidatedEditText.Validator() {
         @Override
         public String getValidatorMessage(CharSequence text) {
-            String email = text.toString().trim();
-            if(!Utils.isValidEmail(email)) {
+            String email = mTxtMail.getText().toString().trim();
+            String phone = mTxtPhone.getText().toString().trim();
+
+            if(!Utils.isValidEmail(email) && !(TextUtils.isEmpty(email) && Utils.isValidPhoneNumber(phone))) {
                 mBtnSave.setEnabled(false);
                 return getString(R.string.msg_insert_mail);
             }
-            if(mValidityChecker.areValid()) {
-                mBtnSave.setEnabled(true);
-            } else {
-                mBtnSave.setEnabled(false);
-            }
+
             return null;
         }
     };
@@ -387,17 +377,26 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     private CustomValidatedEditText.Validator mPhoneValidator = new CustomValidatedEditText.Validator() {
         @Override
         public String getValidatorMessage(CharSequence text) {
-            String phone = text.toString().trim();
-            if(!Utils.isValidPhoneNumber(phone)) {
+            String email = mTxtMail.getText().toString().trim();
+            String phone = mTxtPhone.getText().toString().trim();
+
+            if(!Utils.isValidPhoneNumber(phone) && !(TextUtils.isEmpty(phone) && Utils.isValidEmail(email))) {
                 mBtnSave.setEnabled(false);
                 return getString(R.string.msg_insert_phone);
             }
+
+            return null;
+        }
+    };
+
+    private CustomValidatedEditText.OnValidityChangeListener mValidityChangeListener = new CustomValidatedEditText.OnValidityChangeListener() {
+        @Override
+        public void onValidityChange(boolean isValid) {
             if(mValidityChecker.areValid()) {
                 mBtnSave.setEnabled(true);
             } else {
                 mBtnSave.setEnabled(false);
             }
-            return null;
         }
     };
 
@@ -580,6 +579,12 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         mTxtLastName.setValidator(mLastNameValidator);
         mTxtMail.setValidator(mEmailValidator);
         mTxtPhone.setValidator(mPhoneValidator);
+        mTxtMail.setLinkedEditText(mTxtPhone);
+
+        mTxtFirstName.setOnValidityChangeListener(mValidityChangeListener);
+        mTxtLastName.setOnValidityChangeListener(mValidityChangeListener);
+        mTxtMail.setOnValidityChangeListener(mValidityChangeListener);
+        mTxtPhone.setOnValidityChangeListener(mValidityChangeListener);
 
         mValidityChecker = new CustomValidatedEditText.ValidityChecker(mTxtFirstName, mTxtLastName, mTxtMail, mTxtPhone);
 

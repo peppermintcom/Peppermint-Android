@@ -70,6 +70,8 @@ public class CustomValidatedEditText extends FrameLayout implements TextWatcher 
     private static final String VALIDATOR_VIEW_STATE_KEY = TAG + "_ValidatorView";
     private static final String SUPER_STATE_KEY = TAG + "_Super";
 
+    private CustomValidatedEditText mLinkedEditText;
+
     private CustomFontEditText mEditText;
     private CustomFontTextView mValidatorTextView;
     private Validator mValidator;
@@ -204,6 +206,18 @@ public class CustomValidatedEditText extends FrameLayout implements TextWatcher 
         }
     }
 
+    public CustomValidatedEditText getLinkedEditText() {
+        return mLinkedEditText;
+    }
+
+    public void setLinkedEditText(CustomValidatedEditText mLinkedEditText) {
+        if(this.mLinkedEditText == mLinkedEditText) {
+            return;
+        }
+        this.mLinkedEditText = mLinkedEditText;
+        this.mLinkedEditText.setLinkedEditText(this);
+    }
+
     public int getValidBackgroundResource() {
         return mValidBackgroundResource;
     }
@@ -295,8 +309,7 @@ public class CustomValidatedEditText extends FrameLayout implements TextWatcher 
         mEditText.setPadding(left, top, right, bottom);
     }
 
-    @Override
-    public void afterTextChanged(Editable s) {
+    private void validate(Editable s, boolean doListener) {
         if(mValidator != null) {
             mValidatorMessage = mValidator.getValidatorMessage(s);
             if(mValidatorMessage != null) {
@@ -309,7 +322,7 @@ public class CustomValidatedEditText extends FrameLayout implements TextWatcher 
                         mValidatorTextViewShowAnimator.addListener(mShowAnimatorListener);
                         mValidatorTextViewShowAnimator.start();
                     }
-                    if(mOnValidityChangeListener != null) {
+                    if(mOnValidityChangeListener != null && doListener) {
                         mOnValidityChangeListener.onValidityChange(false);
                     }
                 }
@@ -321,7 +334,7 @@ public class CustomValidatedEditText extends FrameLayout implements TextWatcher 
                         setEditTextBackground(mValidBackgroundResource);
                     }
                     mValidatorTextView.setVisibility(GONE);
-                    if(mOnValidityChangeListener != null) {
+                    if(mOnValidityChangeListener != null && doListener) {
                         mOnValidityChangeListener.onValidityChange(true);
                     }
                 }
@@ -332,5 +345,13 @@ public class CustomValidatedEditText extends FrameLayout implements TextWatcher 
                 }
             }
         }
+    }
+
+    @Override
+    public void afterTextChanged(Editable s) {
+        if(mLinkedEditText != null) {
+            mLinkedEditText.validate(mLinkedEditText.getText(), false);
+        }
+        validate(s, true);
     }
 }
