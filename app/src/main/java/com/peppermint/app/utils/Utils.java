@@ -34,6 +34,7 @@ import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.tracking.TrackerManager;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -464,6 +465,14 @@ public class Utils {
         return BitmapFactory.decodeStream(fis, null, o2);
     }
 
+    private static final String FILE_SCHEME = "file";
+    private static InputStream openInputStream(Context context, Uri uri) throws FileNotFoundException {
+        if(FILE_SCHEME.equals(uri.getScheme())) {
+            return new FileInputStream(uri.toString().substring(6));
+        }
+        return context.getContentResolver().openInputStream(uri);
+    }
+
     /**
      * Read and load the bitmap in the provided {@link Uri} and scale it
      * using the {@link android.graphics.BitmapFactory.Options#inSampleSize} option.<br />
@@ -479,11 +488,11 @@ public class Utils {
     public static Bitmap getScaledBitmap(Context context, Uri contentUri, int width, int height) {
         Bitmap bitmap = null;
         try {
-            InputStream fis = context.getContentResolver().openInputStream(contentUri);
+            InputStream fis = openInputStream(context, contentUri);
             int scale = Math.round(getBitmapRequiredScale(fis, width, height));
             fis.close();
 
-            fis = context.getContentResolver().openInputStream(contentUri);
+            fis = openInputStream(context, contentUri);
             bitmap = getScaledBitmap(fis, scale);
             fis.close();
         } catch (IOException e) {

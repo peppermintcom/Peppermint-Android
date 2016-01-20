@@ -13,6 +13,7 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -577,7 +578,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                     intent.putExtra(NewRecipientFragment.KEY_VIA, mTappedRecipient.getVia());
                     intent.putExtra(NewRecipientFragment.KEY_NAME, mTappedRecipient.getName());
                     intent.putExtra(NewRecipientFragment.KEY_RAW_ID, mTappedRecipient.getRawId());
-                    intent.putExtra(NewRecipientFragment.KEY_PHOTO_URL, mTappedRecipient.getPhotoUri());
+                    intent.putExtra(NewRecipientFragment.KEY_PHOTO_URL, Uri.parse(mTappedRecipient.getPhotoUri()));
                 }
                 startActivityForResult(intent, REQUEST_NEWCONTACT);
                 mSmsAddContactDialog.dismiss();

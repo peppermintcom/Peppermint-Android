@@ -17,7 +17,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.ContactsContract;
-import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -84,13 +83,13 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
      * @param fullName the new contact full name
      * @param phone the new contact phone
      * @param email the new contact email
-     * @param photoUrl the new contact photo URL
+     * @param photoUri the new contact photo URI
      * @param googleAccountName the google account
      * @return a {@link Bundle} with results (can be passed on to an {@link Intent}
      */
-    public static Bundle insertRecipientContact(Context context, long rawId, String fullName, String phone, String email, String photoUrl, String googleAccountName) {
+    public static Bundle insertRecipientContact(Context context, long rawId, String fullName, String phone, String email, Uri photoUri, String googleAccountName) {
         String[] names = Utils.getFirstAndLastNames(fullName);
-        return insertRecipientContact(context, rawId, names[0], names[1], phone, email, photoUrl, googleAccountName);
+        return insertRecipientContact(context, rawId, names[0], names[1], phone, email, photoUri, googleAccountName);
     }
 
     /**
@@ -104,9 +103,11 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
      * @param lastName the contact family name
      * @param phone the phone number
      * @param email the email address
+     * @param photoUri the contact photo URI
+     * @param googleAccountName the google account name to insert the contact
      * @return a {@link Bundle} with results (can be passed on to an {@link Intent}
      */
-    public static Bundle insertRecipientContact(Context context, long rawId, String firstName, String lastName, String phone, String email, String photoUrl, String googleAccountName) {
+    public static Bundle insertRecipientContact(Context context, long rawId, String firstName, String lastName, String phone, String email, Uri photoUri, String googleAccountName) {
         Bundle bundle = new Bundle();
 
         firstName = firstName == null ? "" : Utils.capitalizeFully(firstName.trim());
@@ -256,19 +257,21 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
             }
         }
 
-        if(photoUrl != null && photoUrl.length() > 0) {
+        if(photoUri != null) {
 
             int dp200 = Utils.dpToPx(context, 200);
             int dp100 = Utils.dpToPx(context, 100);
             // scale image to 200dp to save memory
-            Bitmap realImage = photoUrl.startsWith(FILE_SCHEME) ? Utils.getScaledBitmap(photoUrl.substring(6), dp200, dp200)
-                    : Utils.getScaledBitmap(context, Uri.parse(photoUrl), dp200, dp200);
+            Bitmap realImage = /*photoUrl.startsWith(FILE_SCHEME) ? Utils.getScaledBitmap(photoUrl.substring(6), dp200, dp200)
+                    : */Utils.getScaledBitmap(context, photoUri, dp200, dp200);
 
             if(realImage != null) {
-                // rotate image according to the photo params
-                Bitmap rotatedImage = Utils.getRotatedBitmapFromFileAttributes(realImage, photoUrl.startsWith(FILE_SCHEME) ? photoUrl.substring(6) : photoUrl);
                 // cut a square thumbnail
-                rotatedImage = ThumbnailUtils.extractThumbnail(rotatedImage, dp100, dp100, ThumbnailUtils.OPTIONS_RECYCLE_INPUT);
+                Bitmap rotatedImage = ThumbnailUtils.extractThumbnail(realImage, dp100, dp100, ThumbnailUtils.OPTIONS_RECYCLE_INPUT);
+                if(FILE_SCHEME.startsWith(photoUri.getScheme())) {
+                    // rotate image according to the photo params
+                    rotatedImage = Utils.getRotatedBitmapFromFileAttributes(rotatedImage, photoUri.toString().substring(6));
+                }
 
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 rotatedImage.compress(Bitmap.CompressFormat.PNG, 100, baos);
@@ -328,7 +331,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     private CustomListDialog mNewAvatarDialog;
     private NavigationListAdapter mAvatarAdapter;
     private List<NavigationItem> mAvatarOptions;
-    private String mAvatarUrl, mAvatarInProgressUrl;
+    private Uri mAvatarUrl, mAvatarInProgressUrl;
 
     private CustomValidatedEditText.Validator mFirstNameValidator = new CustomValidatedEditText.Validator() {
         @Override
@@ -436,7 +439,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                         /*File storageDir = mActivity.getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES);*/
                         photoFile = new File(storageDir, imageFileName + ".jpg");
                         photoFile.createNewFile();
-                        mAvatarInProgressUrl = photoFile.getAbsolutePath();
+                        mAvatarInProgressUrl = Uri.parse(FILE_SCHEME + photoFile.getAbsolutePath());
                     } catch (IOException ex) {
                         TrackerManager.getInstance(mActivity.getApplicationContext()).logException(ex);
                         Log.e(TAG, "Unable to create image file!", ex);
@@ -472,9 +475,9 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
             case TAKE_PHOTO_CODE:
                 if(mAvatarInProgressUrl != null) {
                     if (resultCode == Activity.RESULT_OK) {
-                        setAvatarUrl(FILE_SCHEME + mAvatarInProgressUrl);
-                    } else {
-                        File file = new File(mAvatarInProgressUrl);
+                        setAvatarUrl(mAvatarInProgressUrl);
+                    } else if(FILE_SCHEME.startsWith(mAvatarInProgressUrl.getScheme())) {
+                        File file = new File(mAvatarInProgressUrl.toString().substring(6));
                         if (file.exists()) {
                             file.delete();
                         }
@@ -483,8 +486,24 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                 break;
             case CHOOSE_PHOTO_CODE:
                 if(resultCode == Activity.RESULT_OK) {
+                    if(data == null) {
+                        return;
+                    }
+
                     Uri selectedImage = data.getData();
-                    String[] filePathColumn = {MediaStore.Images.Media.DATA};
+                    if(selectedImage == null) {
+                        return;
+                    }
+
+                    /*if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                        final int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION & data.getFlags();
+                        mActivity.getContentResolver().takePersistableUriPermission(selectedImage, takeFlags);
+                    }*/
+
+                    setAvatarUrl(selectedImage);
+
+
+                    /*String[] filePathColumn = {MediaStore.Images.Media.DATA};
                     Cursor cursor;
 
                     if(Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
@@ -503,7 +522,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                         int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
                         setAvatarUrl(FILE_SCHEME + cursor.getString(columnIndex));
                     }
-                    cursor.close();
+                    cursor.close();*/
                 }
                 break;
         }
@@ -568,7 +587,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         if(args != null) {
             String via = args.getString(KEY_VIA, null);
             String name = args.getString(KEY_NAME, null);
-            mAvatarUrl = args.getString(KEY_PHOTO_URL, null);
+            mAvatarUrl = args.getParcelable(KEY_PHOTO_URL);
 
             if(name != null) {
                 String[] names = Utils.getFirstAndLastNames(name);
@@ -596,8 +615,8 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
             if (dialogState != null) {
                 mNewAvatarDialog.onRestoreInstanceState(dialogState);
             }
-            mAvatarUrl = savedInstanceState.getString(SAVED_AVATAR_URL_KEY, null);
-            mAvatarInProgressUrl = savedInstanceState.getString(SAVED_AVATAR_INPROGRESS_URL_KEY, null);
+            mAvatarUrl = savedInstanceState.getParcelable(SAVED_AVATAR_URL_KEY);
+            mAvatarInProgressUrl = savedInstanceState.getParcelable(SAVED_AVATAR_INPROGRESS_URL_KEY);
         }
 
         setAvatarUrl(mAvatarUrl);
@@ -611,8 +630,8 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         if (dialogState != null) {
             outState.putBundle(SAVED_DIALOG_STATE_KEY, dialogState);
         }
-        outState.putString(SAVED_AVATAR_URL_KEY, mAvatarUrl);
-        outState.putString(SAVED_AVATAR_INPROGRESS_URL_KEY, mAvatarInProgressUrl);
+        outState.putParcelable(SAVED_AVATAR_URL_KEY, mAvatarUrl);
+        outState.putParcelable(SAVED_AVATAR_INPROGRESS_URL_KEY, mAvatarInProgressUrl);
         super.onSaveInstanceState(outState);
     }
 
@@ -687,18 +706,22 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         mActivity.finish();
     }
 
-    public void setAvatarUrl(String url) {
-        String prevUrl = this.mAvatarUrl;
-        this.mAvatarUrl = url;
+    public void setAvatarUrl(Uri uri) {
+        Uri prevUrl = this.mAvatarUrl;
+        this.mAvatarUrl = uri;
 
         if(mAvatarUrl != null) {
-            int dp70 = Utils.dpToPx(mActivity, 70);
-            int dp150 = Utils.dpToPx(mActivity, 150);
-            Bitmap realImage = mAvatarUrl.startsWith(FILE_SCHEME) ? Utils.getScaledBitmap(mAvatarUrl.substring(6), dp150, dp150)
-                    : Utils.getScaledBitmap(mActivity, Uri.parse(mAvatarUrl), dp150, dp150);
+            final int dp70 = Utils.dpToPx(mActivity, 70);
+            final int dp150 = Utils.dpToPx(mActivity, 150);
+            Bitmap realImage =/* mAvatarUrl.startsWith(FILE_SCHEME) ? Utils.getScaledBitmap(mAvatarUrl.substring(6), dp150, dp150)
+                    : */Utils.getScaledBitmap(mActivity, mAvatarUrl, dp150, dp150);
             if(realImage != null) {
-                Bitmap rotatedImage = Utils.getRotatedBitmapFromFileAttributes(realImage, mAvatarUrl.startsWith(FILE_SCHEME) ? mAvatarUrl.substring(6) : mAvatarUrl);
-                rotatedImage = ThumbnailUtils.extractThumbnail(rotatedImage, dp70, dp70, ThumbnailUtils.OPTIONS_RECYCLE_INPUT);
+                // cut a square thumbnail
+                Bitmap rotatedImage = ThumbnailUtils.extractThumbnail(realImage, dp70, dp70, ThumbnailUtils.OPTIONS_RECYCLE_INPUT);
+                if(FILE_SCHEME.startsWith(mAvatarUrl.getScheme())) {
+                    // rotate image according to the photo params
+                    rotatedImage = Utils.getRotatedBitmapFromFileAttributes(rotatedImage, mAvatarUrl.toString().substring(6));
+                }
                 mBtnAddAvatar.setImageBitmap(rotatedImage);
             } else {
                 this.mAvatarUrl = prevUrl;
