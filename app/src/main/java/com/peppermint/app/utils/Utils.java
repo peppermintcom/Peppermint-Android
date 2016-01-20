@@ -256,7 +256,8 @@ public class Utils {
             urlc.setRequestProperty("Connection", "close");
             urlc.setConnectTimeout(2500);
             urlc.connect();
-            return (urlc.getResponseCode() == 200);
+            int code = urlc.getResponseCode() / 100;
+            return (code >= 1 && code <= 5);
         } catch (IOException e) {
             Log.e(Utils.class.getSimpleName(), "Error checking internet connection", e);
             return false;
