@@ -120,7 +120,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private static final int MIN_SWIPE_DISTANCE_DP = 60;        // min swipe distance
     private static final int MAX_SWIPE_DURATION = 300;        // max swipe duration
 
-    private MediaPlayer mRecordSoundPlayer;
+    private MediaPlayer mRecordSoundPlayer, mTapSoundPlayer;
     private SMSConfirmationDialog mSmsConfirmationDialog;
     private RecordService.Event mFinalEvent;
 
@@ -493,6 +493,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mRecordManager.start(false);
 
         mRecordSoundPlayer = MediaPlayer.create(mActivity, R.raw.s_record);
+        mTapSoundPlayer= MediaPlayer.create(mActivity, R.raw.s_record_half);
 
         mMinSwipeDistance = Utils.dpToPx(mActivity, MIN_SWIPE_DISTANCE_DP);
 
@@ -847,6 +848,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         }
         mRecordSoundPlayer.release();
 
+        if(mTapSoundPlayer.isPlaying()) {
+            mTapSoundPlayer.stop();
+        }
+        mTapSoundPlayer.release();
+
         mSearchListBarView.deinit();
         if(mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
             // this closes the cursor inside the adapter
@@ -955,8 +961,28 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     }
 
     @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+    public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
+
+        mRecordingViewOverlay.start();
+        showRecordingOverlay(view);
+
+        if(mTapSoundPlayer.isPlaying()) {
+            mTapSoundPlayer.stop();
+        }
+        mTapSoundPlayer.seekTo(0);
+        mTapSoundPlayer.start();
+
         showPopup(mActivity, view);
+
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if(mActivity != null) {
+                    mRecordingViewOverlay.stop();
+                    hideRecordingOverlay(false);
+                }
+            }
+        }, 500);
     }
 
     @Override

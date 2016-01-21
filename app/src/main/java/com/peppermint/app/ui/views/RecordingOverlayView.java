@@ -90,6 +90,8 @@ public class RecordingOverlayView extends FrameLayout {
             mSlideAnimator.cancel();
         }
 
+        setMillis(0);
+
         mSlideAnimator = new AnimatorSet();
 
         Animator slideInAnimator = mAnimatorBuilder.buildSlideInLeftAnimator(mLytContainer);

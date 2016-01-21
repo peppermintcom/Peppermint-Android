@@ -28,7 +28,8 @@
     <string name="msg_sms_disabled_add_contact">Sending via SMS is not possible in your device. Would you like to add an email contact?</string>
     <string name="msg_no_external_storage">No access to external storage. Please make sure it is available</string>
     <string name="msg_press_back_again_exit">Press \"back\" again to exit.</string>
-    <string name="hold_record_release_send">Hold to record, release to send</string>
+    <string name="hold_record_release_send_p1">Hold </string>
+    <string name="hold_record_release_send_p2">to record, release to send</string>
 
     <!-- RECIPIENTS LAYOUT: ITEM -->
     <string name="via">via</string>
