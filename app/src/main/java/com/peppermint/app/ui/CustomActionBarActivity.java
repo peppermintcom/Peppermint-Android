@@ -149,7 +149,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
 
         mImgUserAvatar = (ImageView) findViewById(R.id.imgUserAvatar);
         mTxtUsername = (TextView) findViewById(R.id.txtUserName);
-        mTxtUsername.setTypeface(app.getFontBold());
+        mTxtUsername.setTypeface(app.getFontSemibold());
 
         mLytDrawer = (DrawerLayout) findViewById(R.id.drawer);
         if(mNavigationItemList == null || amountVisible <= 0) {
@@ -275,14 +275,22 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
         super.onResume();
 
         // set the drawer profile data
+        refreshProfileData();
+    }
+
+    protected void refreshProfileData() {
         String[] data = Utils.getUserData(this);
         if(data[1] != null) {
             mImgUserAvatar.setImageURI(Uri.parse(data[1]));
         } else {
             mImgUserAvatar.setImageResource(R.drawable.ic_anonymous_green_48dp);
         }
-        data[0] = mPreferences.getFullName();
-        mTxtUsername.setText(data[0]);
+        data[0] = mPreferences.getFullName().trim();
+        if(Utils.isValidName(data[0])) {
+            mTxtUsername.setText(data[0]);
+        } else {
+            mTxtUsername.setText(mPreferences.getGmailPreferences().getPreferredAccountName());
+        }
     }
 
     /**

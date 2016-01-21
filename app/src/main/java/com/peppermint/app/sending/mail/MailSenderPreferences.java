@@ -71,8 +71,8 @@ public class MailSenderPreferences extends SenderPreferences {
 
         if(firstName == null && lastName == null) {
             String[] data = Utils.getUserData(getContext());
-            if(data[0] != null) {
-                name = data[0];
+            if(data[0] != null && Utils.isValidName(data[0])) {
+                name = Utils.capitalizeFully(data[0]);
                 setFullName(data[0]);
             }
         } else {

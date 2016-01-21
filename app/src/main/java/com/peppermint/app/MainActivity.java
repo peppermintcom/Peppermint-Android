@@ -131,10 +131,12 @@ public class MainActivity extends CustomActionBarActivity {
                     PERMISSION_REQUEST);
         } else {
             // afterwards, request authentication
-            AuthFragment.startAuthentication(this, AUTHENTICATION_REQUEST, mNeedsToAuthorize);
-        }
+            if(!AuthFragment.startAuthentication(this, AUTHENTICATION_REQUEST, mNeedsToAuthorize)) {
+                refreshProfileData();
+            }
 
-        mNeedsToAuthorize = false;
+            mNeedsToAuthorize = false;
+        }
 
         /*if(mPreferences.isFirstRun()) {
             mPreferences.setFirstRun(false);

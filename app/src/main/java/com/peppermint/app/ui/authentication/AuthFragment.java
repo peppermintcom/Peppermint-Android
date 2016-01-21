@@ -47,39 +47,41 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
      */
     public static boolean startAuthentication(Activity callerActivity, int requestCode, boolean authorize) {
         PepperMintPreferences prefs = new PepperMintPreferences(callerActivity);
-        String displayName = Utils.capitalizeFully(prefs.getFullName());
+        /*String displayName = Utils.capitalizeFully(prefs.getFullName());
 
         // 1. if the display name is not valid, no need to check anything else
         if(displayName != null && Utils.isValidName(displayName)) {
 
-            // 2a. check if there's already a preferred account
-            if (prefs.getGmailPreferences().getPreferredAccountName() != null) {
-                TrackerManager.getInstance(callerActivity.getApplicationContext()).setUserEmail(prefs.getGmailPreferences().getPreferredAccountName());
 
-                if(authorize) {
-                    // 3a. (optional) authorize the Gmail API and all other necessary apis
-                    SenderServiceManager senderManager = new SenderServiceManager(callerActivity.getApplicationContext());
-                    senderManager.startAndAuthorize();
-                }
+        }*/
 
-                return false;
+        // 2a. check if there's already a preferred account
+        if (prefs.getGmailPreferences().getPreferredAccountName() != null) {
+            TrackerManager.getInstance(callerActivity.getApplicationContext()).setUserEmail(prefs.getGmailPreferences().getPreferredAccountName());
+
+            if(authorize) {
+                // 3a. (optional) authorize the Gmail API and all other necessary apis
+                SenderServiceManager senderManager = new SenderServiceManager(callerActivity.getApplicationContext());
+                senderManager.startAndAuthorize();
             }
 
-            // 2b. otherwise check if there's only one account and set that one as the preferred
-            Account[] accounts = AccountManager.get(callerActivity).getAccountsByType("com.google");
-            if (accounts.length == 1) {
-                prefs.getGmailPreferences().setPreferredAccountName(accounts[0].name);
+            return false;
+        }
 
-                TrackerManager.getInstance(callerActivity.getApplicationContext()).setUserEmail(prefs.getGmailPreferences().getPreferredAccountName());
+        // 2b. otherwise check if there's only one account and set that one as the preferred
+        Account[] accounts = AccountManager.get(callerActivity).getAccountsByType("com.google");
+        if (accounts.length == 1) {
+            prefs.getGmailPreferences().setPreferredAccountName(accounts[0].name);
 
-                if(authorize) {
-                    // 3b. (optional) authorize the Gmail API and all other necessary apis
-                    SenderServiceManager senderManager = new SenderServiceManager(callerActivity.getApplicationContext());
-                    senderManager.startAndAuthorize();
-                }
+            TrackerManager.getInstance(callerActivity.getApplicationContext()).setUserEmail(prefs.getGmailPreferences().getPreferredAccountName());
 
-                return false;
+            if(authorize) {
+                // 3b. (optional) authorize the Gmail API and all other necessary apis
+                SenderServiceManager senderManager = new SenderServiceManager(callerActivity.getApplicationContext());
+                senderManager.startAndAuthorize();
             }
+
+            return false;
         }
 
         // just show the auth screen
