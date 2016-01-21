@@ -13,6 +13,7 @@ import java.util.Set;
  */
 public class TrackerManager extends TrackerApi {
 
+    private static final boolean DEBUG = false;
     private static TrackerManager SINGLETON;
 
     /**
@@ -35,9 +36,11 @@ public class TrackerManager extends TrackerApi {
         super(applicationContext);
 
         mTrackers = new HashSet<>();
-        mTrackers.add(new GoogleAnalyticsTracker(applicationContext));
-        mTrackers.add(new FabricTracker(applicationContext));
-        mTrackers.add(new FlurryTracker(applicationContext));
+        if(!DEBUG) {
+            mTrackers.add(new GoogleAnalyticsTracker(applicationContext));
+            mTrackers.add(new FabricTracker(applicationContext));
+            mTrackers.add(new FlurryTracker(applicationContext));
+        }
     }
 
     public void startSession() {

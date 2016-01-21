@@ -20,7 +20,6 @@ import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -263,6 +262,12 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
             throw new RuntimeException(e);
         }
         getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        getWindow().setBackgroundDrawableResource(R.color.background0);
     }
 
     @Override

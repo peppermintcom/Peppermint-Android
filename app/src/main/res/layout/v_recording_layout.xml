@@ -1,86 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingTop="30dp"
-    android:paddingBottom="30dp"
-    android:background="@drawable/background_darkgreen_transparent">
+    android:clipChildren="false">
 
-    <TextView
-        android:id="@+id/txtRecordingFor"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:textSize="20dp"
-        android:textColor="@color/white"
-        android:text="Recording for Bob Adams"
-        android:maxLines="3"
-        android:ellipsize="end"
-        android:singleLine="false"
-        android:scrollHorizontally="true" />
-
-    <TextView
-        android:id="@+id/txtVia"
-        android:layout_below="@id/txtRecordingFor"
-        android:layout_centerHorizontal="true"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="18dp"
-        android:textColor="@color/white"
-        android:text="012345678"
-        android:singleLine="true"
-        android:ellipsize="marquee"
-        android:marqueeRepeatLimit ="marquee_forever"
-        android:scrollHorizontally="true" />
-
-    <TextView
-        android:id="@+id/txtSwipe"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:textSize="23dp"
-        android:textColor="@color/light_grey_text"
-        android:text="@string/swipe_to_cancel" />
-
-    <RelativeLayout
-        android:id="@+id/tapLayout"
-        android:layout_below="@id/txtVia"
-        android:layout_above="@id/txtSwipe"
+    <LinearLayout
+        android:id="@+id/lytContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingTop="15dp"
-        android:paddingBottom="15dp"
-        android:orientation="vertical">
+        android:layout_height="100dp"
+        android:gravity="center_vertical"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:paddingTop="22dp"
+        android:paddingBottom="22dp"
+        android:orientation="vertical"
+        android:background="@drawable/background_shadow_top_and_bottom">
+
+        <com.peppermint.app.ui.views.simple.CustomFontTextView
+            android:id="@+id/txtRecordingFor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="120dp"
+            android:gravity="left|center_vertical"
+            android:textSize="15dp"
+            android:textColor="@color/black"
+            android:text="Recording for Bob Adams"
+            custom:textFont="@string/font_semibold"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:scrollHorizontally="true" />
 
         <!-- it's important that this text view is not set to wrap content
-             otherwise it triggers onMeasure from other animated views, which is
-             quite computationally expensive -->
-        <TextView
+         otherwise it triggers onMeasure from other animated views, which is
+         quite computationally expensive -->
+        <com.peppermint.app.ui.views.simple.CustomFontTextView
             android:id="@+id/txtDuration"
-            android:layout_centerHorizontal="true"
-            android:layout_alignParentBottom="true"
             android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:gravity="center"
-            android:textSize="44dp"
-            android:textColor="@color/white"
+            android:layout_height="33dp"
+            android:gravity="left|center_vertical"
+            android:textSize="24dp"
+            android:textColor="@color/black"
+            custom:textFont="@string/font_semibold"
             android:text="0:00" />
 
-        <com.peppermint.app.ui.canvas.sound.RecordProgressBarsView
-            android:id="@+id/cvRecord"
-            custom:contentWidth="190dp"
-            custom:contentHeight="190dp"
-            android:layout_height="match_parent"
-            android:layout_width="match_parent"
-            android:layout_above="@id/txtDuration"
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/lytMicContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="80dp"
+        android:layout_gravity="right"
+        android:layout_marginRight="15dp"
+        android:gravity="center_vertical"
+        android:clipChildren="false"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/imgMic"
+            android:layout_gravity="center"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@drawable/background_btn_recording"
+            android:src="@drawable/ic_mic_70dp"
+            android:padding="30dp"
+            android:scaleType="fitCenter" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/lytTip"
+        android:orientation="vertical"
+        android:layout_width="200dp"
+        android:layout_height="135dp"
+        android:layout_marginLeft="50dp"
+        android:gravity="center"
+        android:background="@drawable/img_popup_tip_top_right">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginBottom="10dp"
-            style="?attr/recordProgressStyle" />
+            android:src="@drawable/ic_hand" />
 
-    </RelativeLayout>
+        <com.peppermint.app.ui.views.simple.CustomFontTextView
+            android:id="@+id/txtSwipe"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:textSize="16dp"
+            android:textColor="@color/dark_grey_text"
+            android:text="@string/swipe_to_cancel"
+            custom:textFont="@string/font_semibold"
+            android:maxLines="2"
+            android:singleLine="false" />
 
-</RelativeLayout>
+    </LinearLayout>
+
+</FrameLayout>

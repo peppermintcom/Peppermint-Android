@@ -32,5 +32,6 @@
     <color name="black_50percent">#99000000</color>
     <color name="dark_green_60percent">#99074239</color>
     <color name="dark_green_80percent">#CC074239</color>
+    <color name="white_80percent">#CCFFFFFF</color>
 
 </resources>

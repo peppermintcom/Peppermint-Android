@@ -41,6 +41,7 @@
         android:layout_toLeftOf="@id/btnClear"
         android:layout_marginRight="5dp"
         android:inputType="text"
+        android:maxLength="100"
         android:singleLine="true"
         android:imeOptions="actionSearch|flagNoExtractUi"
         android:textCursorDrawable="@drawable/ic_cursor"/>

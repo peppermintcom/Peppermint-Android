@@ -1,8 +1,12 @@
 package com.peppermint.app.sending.mail.nativemail;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.support.v4.content.FileProvider;
 import android.text.Html;
+import android.util.Log;
 
 import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
@@ -16,6 +20,7 @@ import com.peppermint.app.sending.mail.MailUtils;
 import com.peppermint.app.sending.server.ServerSenderTask;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -58,14 +63,25 @@ public class IntentMailSenderTask extends SenderTask {
         Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + getSendingRequest().getRecipient().getVia()));
         i.putExtra(Intent.EXTRA_SUBJECT, getSendingRequest().getSubject());
         i.putExtra(Intent.EXTRA_TEXT, Html.fromHtml(getSendingRequest().getBody()));
-        Uri uri = Uri.parse("file://" + file.getAbsolutePath());
-        i.putExtra(Intent.EXTRA_STREAM, uri);
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Uri fileUri = FileProvider.getUriForFile(getContext(), "com.peppermint.app", file);
+       /* i.addFlags();*/
+        i.putExtra(Intent.EXTRA_STREAM, fileUri);
+        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        grantReadPermission(i, fileUri);
 
         try {
             getSender().getContext().startActivity(i);
         } catch (android.content.ActivityNotFoundException ex) {
             throw new RuntimeException("There are no email clients installed!", ex);
+        }
+    }
+
+    private void grantReadPermission(Intent i, Uri uri) {
+        List<ResolveInfo> resInfoList = getContext().getPackageManager().queryIntentActivities(i, PackageManager.MATCH_DEFAULT_ONLY);
+        for (ResolveInfo resolveInfo : resInfoList) {
+            String packageName = resolveInfo.activityInfo.packageName;
+            getContext().grantUriPermission(packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
         }
     }
 }

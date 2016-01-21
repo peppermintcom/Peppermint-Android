@@ -7,18 +7,14 @@ import android.app.Fragment;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.Settings;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
@@ -27,6 +23,7 @@ import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.views.simple.CustomNoScrollListView;
+import com.peppermint.app.ui.views.simple.CustomValidatedEditText;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
 
@@ -98,18 +95,8 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
     // the ID of the screen for the Tracker API
     private static final String SCREEN_ID = "Authentication";
 
-    private Runnable mDismissPopupRunnable = new Runnable() {
-        @Override
-        public void run() {
-            dismissPopup();
-        }
-    };
-
-    private final Handler mHandler = new Handler();
-    private boolean mDestroyed = false;
-
     private ViewGroup mLytEmpty;
-    private EditText mTxtFirstName, mTxtLastName;
+    private CustomValidatedEditText mTxtFirstName, mTxtLastName;
     private Button mBtnNext, mBtnAddAccount;
     private AuthArrayAdapter mAdapter;
     private CustomNoScrollListView mListView;
@@ -122,21 +109,37 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
     private PopupWindow mNamePopup;
     private TextView mTxtPopup;
 
-    // checks if the input is valid as the user inputs text
-    private TextWatcher mTextWatcher = new TextWatcher() {
+    private CustomValidatedEditText.Validator mFirstNameValidator = new CustomValidatedEditText.Validator() {
         @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-        }
-
-        @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-        }
-
-        @Override
-        public void afterTextChanged(Editable s) {
-            validateData();
+        public String getValidatorMessage(CharSequence text) {
+            String name = text.toString().trim();
+            if(!Utils.isValidName(name)) {
+                return getString(R.string.msg_insert_first_name);
+            }
+            mValidityChecker.areValid();
+            return null;
         }
     };
+
+    private CustomValidatedEditText.Validator mLastNameValidator = new CustomValidatedEditText.Validator() {
+        @Override
+        public String getValidatorMessage(CharSequence text) {
+            String name = text.toString().trim();
+            if(!Utils.isValidNameMaybeEmpty(name)) {
+                return getString(R.string.msg_insert_last_name);
+            }
+            return null;
+        }
+    };
+
+    private CustomValidatedEditText.OnValidityChangeListener mValidityChangeListener = new CustomValidatedEditText.OnValidityChangeListener() {
+        @Override
+        public void onValidityChange(boolean isValid) {
+            mValidityChecker.areValid();
+        }
+    };
+
+    private CustomValidatedEditText.ValidityChecker mValidityChecker;
 
     @SuppressWarnings("deprecation")
     @Override
@@ -148,9 +151,8 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
         // hold popup
-        mTxtPopup = (TextView) inflater.inflate(R.layout.v_name_popup, null);
+        mTxtPopup = (TextView) inflater.inflate(R.layout.v_popup, null);
         mNamePopup = new PopupWindow(mActivity);
         mNamePopup.setContentView(mTxtPopup);
         //noinspection deprecation
@@ -172,10 +174,9 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
                     mTxtFirstName.getGlobalVisibleRect(outRectFirst);
                     mTxtLastName.getGlobalVisibleRect(outRectLast);
                     if (!outRectFirst.contains((int) event.getRawX(), (int) event.getRawY()) && !outRectLast.contains((int) event.getRawX(), (int) event.getRawY())) {
-                        Utils.hideKeyboard(mActivity);
+                        Utils.hideKeyboard(mActivity, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
                     }
                 }
-                dismissPopup();
                 return false;
             }
         });
@@ -189,10 +190,33 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
         mBtnAddAccount = (Button) v.findViewById(R.id.btnAddAccount);
         mBtnAddAccount.setOnClickListener(this);
 
-        mTxtFirstName = (EditText) v.findViewById(R.id.txtFirstName);
-        mTxtFirstName.addTextChangedListener(mTextWatcher);
-        mTxtLastName = (EditText) v.findViewById(R.id.txtLastName);
-        mTxtLastName.addTextChangedListener(mTextWatcher);
+        mTxtFirstName = (CustomValidatedEditText) v.findViewById(R.id.txtFirstName);
+        mTxtFirstName.setValidator(mFirstNameValidator);
+        mTxtFirstName.setOnValidityChangeListener(mValidityChangeListener);
+        mTxtFirstName.setValidBackgroundResource(R.drawable.background_edittext_simple);
+        mTxtFirstName.setInvalidBackgroundResource(R.drawable.ic_edittext_invalid);
+        mTxtLastName = (CustomValidatedEditText) v.findViewById(R.id.txtLastName);
+        mTxtLastName.setOnValidityChangeListener(mValidityChangeListener);
+        mTxtLastName.setValidator(mLastNameValidator);
+        mTxtLastName.setValidBackgroundResource(R.drawable.background_edittext_simple);
+        mTxtLastName.setInvalidBackgroundResource(R.drawable.ic_edittext_invalid);
+
+        mValidityChecker = new CustomValidatedEditText.ValidityChecker(mTxtFirstName, mTxtLastName) {
+            @Override
+            public synchronized boolean areValid() {
+                if(mAccounts == null || mAccounts.length <= 0 || mListView.getCheckedItemPosition() < 0) {
+                    mBtnAddAccount.setTextColor(Utils.getColorStateList(mActivity, R.color.color_orange_to_white_pressed));
+                    mBtnNext.setEnabled(false);
+                    return false;
+                }
+
+                mBtnAddAccount.setTextColor(Utils.getColorStateList(mActivity, R.color.color_green_to_white_pressed));
+                boolean superValid = super.areValid();
+                mBtnNext.setEnabled(superValid);
+
+                return superValid;
+            }
+        };
 
         mListView = (CustomNoScrollListView) v.findViewById(android.R.id.list);
         mLytEmpty = (ViewGroup) v.findViewById(android.R.id.empty);
@@ -299,46 +323,14 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
 
         TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
 
-        validateData();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        // always dismiss popups
-        dismissPopup();
+        mTxtFirstName.validate();
+        mTxtLastName.validate();
     }
 
     @Override
     public void onDestroy() {
-        mDestroyed = true;
         mActivity = null;
         super.onDestroy();
-    }
-
-    private synchronized int validateData() {
-        dismissPopup();
-
-        if(mTxtFirstName.getText().toString().trim().length() <= 0 || !Utils.isValidName(mTxtFirstName.getText().toString().trim())) {
-            mBtnNext.setEnabled(false);
-            showPopup(mActivity, mTxtFirstName, R.string.msg_insert_name);
-            return 1;
-        }
-
-        if(!Utils.isValidNameMaybeEmpty(mTxtLastName.getText().toString().trim())) {
-            mBtnNext.setEnabled(false);
-            showPopup(mActivity, mTxtLastName, R.string.msg_insert_name);
-            return 2;
-        }
-
-        if(mAccounts == null || mAccounts.length <= 0 || mListView.getCheckedItemPosition() < 0) {
-            mBtnNext.setEnabled(false);
-            showPopup(mActivity, mBtnAddAccount, R.string.msg_insert_account);
-            return 3;
-        }
-
-        mBtnNext.setEnabled(true);
-        return 0;
     }
 
     @Override
@@ -351,7 +343,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
         }
 
         if(v.equals(mBtnNext)) {
-            if(validateData() != 0) {
+            if(!mValidityChecker.areValid()) {
                 return;
             }
 
@@ -364,32 +356,10 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
         }
     }
 
-    private void dismissPopup() {
-        if (mNamePopup.isShowing() && !isDetached() && !mDestroyed) {
-            mNamePopup.dismiss();
-            mHandler.removeCallbacks(mDismissPopupRunnable);
-        }
-    }
-
-    // the method that displays the img_popup.
-    private void showPopup(Activity context, View parent, int strResId) {
-        if(parent.getWindowToken() == null) {
-            return;
-        }
-
-        Rect outRect = new Rect();
-        parent.getGlobalVisibleRect(outRect);
-
-        dismissPopup();
-        mTxtPopup.setText(strResId);
-        mNamePopup.showAtLocation(parent, Gravity.NO_GRAVITY, Utils.dpToPx(mActivity, 40), outRect.bottom);
-        mHandler.postDelayed(mDismissPopupRunnable, 6000);
-    }
-
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         mSelectedAccount = mAccounts[position].name;
         mListView.setItemChecked(position, true);
-        validateData();
+        mValidityChecker.areValid();
     }
 }

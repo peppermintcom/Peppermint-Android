@@ -88,7 +88,7 @@
     <string name="msg_message_norecipient_error">No recipient information found. Please try again later.</string>
 
     <string name="swipe_to_cancel_oneline">Swipe in any direction to cancel</string>
-    <string name="swipe_to_cancel">Swipe in any direction\nto cancel</string>
+    <string name="swipe_to_cancel">Swipe anywhere\nto cancel</string>
     <string name="hold_record_release_send">Hold to record, release to send</string>
     <string name="recording_for">Recording for %1$s</string>
     <string name="must_supply_mandatory_permissions">One or more of the required permissions are disabled. Please grant all required permissions and try again.</string>
@@ -110,11 +110,10 @@
 
     <string name="send_email">Send Email</string>
     <string name="msg_message_sms_disabled">Your device either has telephony disabled or does not support it. Sending text messages is not possible.</string>
-    <string name="msg_message_invalid_displayname">Please input a valid name</string>
     <string name="new_contact_name">New Contact Name</string>
     <string name="phone_or_email">Phone or Email</string>
-    <string name="msg_message_invalid_contactname">Please input a valid contact name</string>
-    <string name="msg_message_invalid_contactvia">Please input a valid email address or phone number</string>
+    <string name="msg_message_invalid_contactname">Please enter a valid contact name</string>
+    <string name="msg_message_invalid_contactvia">Please enter a valid email address or phone number</string>
     <string name="msg_message_unable_addcontact">Unable to add contact. Please try again later</string>
     <string name="msg_message_contact_added">Contact added successfully!</string>
     <string name="msg_message_exceeded_maxduration">Maximum recording time has been reached. Stopped recording</string>
@@ -128,11 +127,12 @@
     <string name="no">No</string>
     <string name="sending_via_sms">Sending via SMS</string>
     <string name="when_you_send_via_sms">When you send via SMS it may cost you money for each message you send (depending on your phone plan). Do you want to continue?</string>
-    <string name="do_not_show_this_again">Do not ask this again and always send the message</string>
+    <string name="do_not_show_this_again">Do not ask this again and always send the SMS message</string>
     <string name="_continue">Continue</string>
     <string name="add_account">Add Account</string>
     <string name="your_name_">Your Name</string>
-    <string name="msg_insert_name">You must insert a valid name</string>
+    <string name="msg_insert_first_name">Please enter a valid first name</string>
+    <string name="msg_insert_last_name">Please enter a valid last name</string>
     <string name="new_contact">New contact</string>
     <string name="save">Save</string>
     <string name="first_name">First Name</string>
@@ -141,8 +141,8 @@
     <string name="email">Email</string>
     <string name="you_can_add_phone_contact_or_email">You can add a phone contact, an\nemail contact or both</string>
     <string name="add_contact">Add Contact</string>
-    <string name="msg_message_invalid_contactmail">Please input a valid email address</string>
-    <string name="msg_message_invalid_contactphone">Please input a valid phone number</string>
+    <string name="msg_message_invalid_contactmail">Please enter a valid email address</string>
+    <string name="msg_message_invalid_contactphone">Please enter a valid phone number</string>
     <string name="msg_gmail_disabled">Please enable in-app Gmail before picking a Gmail account</string>
     <string name="msg_message_sms_disabled_add_contact">Sending via SMS is not possible in your device. Would you like to add an email contact?</string>
     <string name="ok">OK</string>
@@ -166,5 +166,7 @@
     <string name="privacy_policy_terms_of_use_singleline">Privacy Policy &amp; Terms of Use</string>
     <string name="version">Version</string>
     <string name="msg_no_external_storage">No access to external storage. Please make sure it is available</string>
-    <string name="msg_insert_mail_or_phone">You must insert a valid email or phone number</string>
+    <string name="msg_insert_mail">Please enter a valid email address</string>
+    <string name="msg_insert_phone">Please enter a valid phone number</string>
+    <string name="msg_insert_name">Please enter a valid name</string>
 </resources>

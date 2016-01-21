@@ -13,9 +13,12 @@ import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
@@ -24,11 +27,13 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CursorAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -54,6 +59,7 @@ import com.peppermint.app.ui.views.SearchListBarView;
 import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.ui.views.dialogs.PopupDialog;
 import com.peppermint.app.ui.views.simple.CustomToast;
+import com.peppermint.app.ui.views.simple.CustomVisibilityListView;
 import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.NoMicDataIOException;
@@ -106,6 +112,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private boolean mHasSavedInstanceState = false;
 
     // swipe-related
+    private Rect mContactRect = new Rect();
     private float x1, x2, y1, y2;
     private long t1, t2;
     private int mMinSwipeDistance;
@@ -123,6 +130,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private boolean mRecipientListShown;
     private BaseAdapter mRecipientAdapter;
     private Button mBtnAddContact;
+    private ImageView mImgListBorder;
     private PopupDialog mTipPopup;
     private final Runnable mShowLoadingRunnable = new Runnable() {
         @Override
@@ -490,7 +498,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             @Override
             public boolean onTouchEvent(MotionEvent event) {
                 mTipPoint = new PointF();
-                mTipPoint.set(event.getX(), event.getY());
+                mTipPoint.set(event.getRawX(), event.getRawY());
                 return super.onTouchEvent(event);
             }
         };
@@ -506,10 +514,31 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                         searchEditText.getGlobalVisibleRect(mSearchRect);
                         searchEditText.setFocusableInTouchMode(true);
                         searchEditText.setFocusable(true);
-                        searchEditText.setShowSoftInputOnFocus(true);
-                        if(mTipPoint.y < 0 && mSearchRect.contains((int) mTipPoint.x, mSearchRect.centerY())) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            searchEditText.setShowSoftInputOnFocus(true);
+                        }
+                        if(mSearchRect.contains((int) mTipPoint.x, (int) mTipPoint.y) || (mTipPoint.y < 0 && mSearchRect.contains((int) mTipPoint.x, mSearchRect.centerY()))) {
                             searchEditText.requestFocus();
-                            Utils.showKeyboard(mActivity, searchEditText);
+                            Utils.showKeyboard(mActivity, searchEditText, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+
+                            // hack for some devices with Android < 5
+                            searchEditText.dispatchTouchEvent(MotionEvent.obtain(
+                                    SystemClock.uptimeMillis(),
+                                    SystemClock.uptimeMillis() + 100,
+                                    MotionEvent.ACTION_DOWN,
+                                    mSearchRect.centerX(),
+                                    mSearchRect.centerY(),
+                                    0
+                            ));
+
+                            searchEditText.dispatchTouchEvent(MotionEvent.obtain(
+                                    SystemClock.uptimeMillis() + 200,
+                                    SystemClock.uptimeMillis() + 300,
+                                    MotionEvent.ACTION_UP,
+                                    mSearchRect.centerX(),
+                                    mSearchRect.centerY(),
+                                    0
+                            ));
                         }
                     }
                 }
@@ -549,7 +578,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                     intent.putExtra(NewRecipientFragment.KEY_VIA, mTappedRecipient.getVia());
                     intent.putExtra(NewRecipientFragment.KEY_NAME, mTappedRecipient.getName());
                     intent.putExtra(NewRecipientFragment.KEY_RAW_ID, mTappedRecipient.getRawId());
-                    intent.putExtra(NewRecipientFragment.KEY_PHOTO_URL, mTappedRecipient.getPhotoUri());
+                    intent.putExtra(NewRecipientFragment.KEY_PHOTO_URL, Uri.parse(mTappedRecipient.getPhotoUri()));
                 }
                 startActivityForResult(intent, REQUEST_NEWCONTACT);
                 mSmsAddContactDialog.dismiss();
@@ -611,6 +640,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         // eo: adjust status bar height*/
 
         // init no recipients view
+        mImgListBorder = (ImageView) v.findViewById(R.id.imgListBorder);
+
         mBtnAddContact = (Button) v.findViewById(R.id.btnAddContact);
         mBtnAddContact.setTypeface(app.getFontSemibold());
         mBtnAddContact.setOnClickListener(new View.OnClickListener() {
@@ -619,11 +650,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 Intent intent = new Intent(mActivity, NewRecipientActivity.class);
 
                 String filter = mSearchListBarView.getSearchText();
-                if(filter != null) {
+                if (filter != null) {
                     String[] viaName = getSearchData(filter);
                     intent.putExtra(NewRecipientFragment.KEY_VIA, viaName[0]);
 
-                    if(viaName[0] == null && (Utils.isValidPhoneNumber(viaName[1]) || Utils.isValidEmail(viaName[1]))) {
+                    if (viaName[0] == null && (Utils.isValidPhoneNumber(viaName[1]) || Utils.isValidEmail(viaName[1]))) {
                         intent.putExtra(NewRecipientFragment.KEY_VIA, viaName[1]);
                     } else {
                         intent.putExtra(NewRecipientFragment.KEY_NAME, viaName[1]);
@@ -687,12 +718,24 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
+    public void onViewCreated(final View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         getListView().setOnItemClickListener(this);
         getListView().setLongClickable(true);
         getListView().setOnItemLongClickListener(this);
         getListView().setOnTouchListener(this);
+        // apply visibility of list view to its border too
+        // not using drawables to avoid overdraws
+        ((CustomVisibilityListView) getListView()).setCanScrollListener(new CustomVisibilityListView.CanScrollListener() {
+            @Override
+            public synchronized void canScrollChanged(boolean canScroll, int visibility) {
+                if(canScroll) {
+                    mImgListBorder.setVisibility(visibility);
+                } else {
+                    mImgListBorder.setVisibility(View.GONE);
+                }
+            }
+        });
 
         synchronized (mLock) {
             mCreated = true;
@@ -737,7 +780,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         // avoid cursor focus and keyboard when opening
         // if it is on onStart(), it doesn't work for screen rotations
         if(!mHasSavedInstanceState) {
-            Utils.hideKeyboard(mActivity);
+            Utils.hideKeyboard(mActivity, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         } else {
             mHasSavedInstanceState = false;
         }
@@ -808,11 +851,13 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         }
     }
     
-    public boolean showRecordingOverlay() {
+    public boolean showRecordingOverlay(View contactContainer) {
         mRecordingViewOverlay.start();
         boolean shown = mActivity.showOverlay(RECORDING_OVERLAY_TAG, true, null);
 
         if(shown) {
+            contactContainer.getGlobalVisibleRect(mContactRect);
+            mRecordingViewOverlay.setContentPosition(mContactRect);
             TrackerManager.getInstance(mActivity.getApplicationContext()).trackScreenView(SCREEN_RECORDING_ID);
         }
 
@@ -900,7 +945,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         }
 
         // start recording
-        if(showRecordingOverlay()) {
+        if(showRecordingOverlay(view)) {
             if(mRecordSoundPlayer.isPlaying()) {
                 mRecordSoundPlayer.stop();
             }
@@ -931,16 +976,16 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 float deltaX = x2 - x1;
                 float deltaY = y2 - y1;
 
-                if(hideRecordingOverlay(true)) {
+                if(hideRecordingOverlay(false)) {
                     mSendRecording = false;
 
                     if ((Math.abs(deltaX) > mMinSwipeDistance || Math.abs(deltaY) > mMinSwipeDistance) && (t2 - t1) < MAX_SWIPE_DURATION) {
                         // swipe: cancel
-                        mRecordingViewOverlay.explode();
+                        mRecordingViewOverlay.stop();
+                        /*mRecordingViewOverlay.explode();*/
                         mRecordManager.stopRecording(true);
                     } else {
                         // release: send
-                        mRecordingViewOverlay.stop();
                         if (mRecordingViewOverlay.getMillis() < 2000) {
                             CustomToast.makeText(mActivity, R.string.msg_record_at_least, Toast.LENGTH_LONG).show();
                             mRecordManager.stopRecording(true);
@@ -1024,7 +1069,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 sendMessage();
             }
         }
-        hideRecordingOverlay(true);
+        hideRecordingOverlay(false);
     }
 
     @Override
@@ -1055,8 +1100,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             Toast.makeText(mActivity, getString(R.string.msg_message_record_error), Toast.LENGTH_LONG).show();
         }
 
-        mRecordingViewOverlay.explode();
-        hideRecordingOverlay(true);
+        /*mRecordingViewOverlay.explode();*/
+        hideRecordingOverlay(false);
     }
 
     @Override

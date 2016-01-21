@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -33,6 +34,7 @@ import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.tracking.TrackerManager;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -255,7 +257,8 @@ public class Utils {
             urlc.setRequestProperty("Connection", "close");
             urlc.setConnectTimeout(2500);
             urlc.connect();
-            return (urlc.getResponseCode() == 200);
+            int code = urlc.getResponseCode() / 100;
+            return (code >= 1 && code <= 5);
         } catch (IOException e) {
             Log.e(Utils.class.getSimpleName(), "Error checking internet connection", e);
             return false;
@@ -462,6 +465,14 @@ public class Utils {
         return BitmapFactory.decodeStream(fis, null, o2);
     }
 
+    private static final String FILE_SCHEME = "file";
+    private static InputStream openInputStream(Context context, Uri uri) throws FileNotFoundException {
+        if(FILE_SCHEME.equals(uri.getScheme())) {
+            return new FileInputStream(uri.toString().substring(6));
+        }
+        return context.getContentResolver().openInputStream(uri);
+    }
+
     /**
      * Read and load the bitmap in the provided {@link Uri} and scale it
      * using the {@link android.graphics.BitmapFactory.Options#inSampleSize} option.<br />
@@ -477,11 +488,11 @@ public class Utils {
     public static Bitmap getScaledBitmap(Context context, Uri contentUri, int width, int height) {
         Bitmap bitmap = null;
         try {
-            InputStream fis = context.getContentResolver().openInputStream(contentUri);
+            InputStream fis = openInputStream(context, contentUri);
             int scale = Math.round(getBitmapRequiredScale(fis, width, height));
             fis.close();
 
-            fis = context.getContentResolver().openInputStream(contentUri);
+            fis = openInputStream(context, contentUri);
             bitmap = getScaledBitmap(fis, scale);
             fis.close();
         } catch (IOException e) {
@@ -619,6 +630,16 @@ public class Utils {
     }
 
     /**
+     * Get a color state list from resources according to the current API.
+     * @param context the context
+     * @param colorRes the color resource id
+     * @return the color
+     */
+    public static ColorStateList getColorStateList(Context context, int colorRes) {
+        return ContextCompat.getColorStateList(context, colorRes);
+    }
+
+    /**
      * Get the status bar height according to the current API and theme.
      * @param context the context
      * @return the height in pixels
@@ -723,10 +744,13 @@ public class Utils {
      * Hide the keyboard
      * @param context the activity
      */
-    public static void hideKeyboard(Activity context) {
-        context.getWindow().setSoftInputMode(
-                WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN
-        );
+    public static void hideKeyboard(Activity context, Integer additionalModes) {
+        int modes = WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
+        if(additionalModes != null) {
+            modes |= additionalModes;
+        }
+
+        context.getWindow().setSoftInputMode(modes);
 
         View view = context.getWindow().getCurrentFocus();
 
@@ -742,25 +766,42 @@ public class Utils {
         }
     }
 
+    public static void hideKeyboard(Activity context) {
+        hideKeyboard(context, null);
+    }
+
     /**
      * Show the keyboard
      * @param context the activity
      */
-    public static void showKeyboard(Activity context, View view) {
-        context.getWindow().setSoftInputMode(
-                WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE
-        );
+    public static void showKeyboard(Activity context, View view, Integer additionalModes) {
+        int modes = WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+        if(additionalModes != null) {
+            modes |= additionalModes;
+        }
+
+        context.getWindow().setSoftInputMode(modes);
+
         if(view == null) {
             view = context.getWindow().getCurrentFocus();
         }
         if (view != null) {
             InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
+            imm.showSoftInput(view, InputMethodManager.SHOW_FORCED);
+            /*imm.toggleSoftInputFromWindow(view.getWindowToken(), InputMethodManager.SHOW_FORCED, 0);*/
         }
     }
 
     public static void showKeyboard(Activity context) {
-        showKeyboard(context, null);
+        showKeyboard(context, null, null);
+    }
+
+    public static void showKeyboard(Activity context, View view) {
+        showKeyboard(context, view, null);
+    }
+
+    public static void showKeyboard(Activity context, Integer additionalModes) {
+        showKeyboard(context, null, additionalModes);
     }
 
     /**

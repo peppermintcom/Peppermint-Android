@@ -57,6 +57,12 @@ public class SplashActivity extends Activity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        getWindow().setBackgroundDrawableResource(R.color.background0);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
 
