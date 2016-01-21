@@ -231,7 +231,7 @@ public class SenderService extends Service {
                 }
                 break;
             case SenderEvent.EVENT_ERROR:
-                Toast.makeText(this, String.format(getString(R.string.msg_message_send_error), event.getSenderTask().getSendingRequest().getRecipient().getName()), Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, String.format(getString(R.string.sender_msg_send_error), event.getSenderTask().getSendingRequest().getRecipient().getName()), Toast.LENGTH_SHORT).show();
             case SenderEvent.EVENT_QUEUED:
             case SenderEvent.EVENT_CANCELLED:
             case SenderEvent.EVENT_FINISHED:
@@ -255,7 +255,7 @@ public class SenderService extends Service {
 
     private SendingRequest send(Recipient recipient, Recording recording) {
         // default body if no url is supplied (each sender is currently responsible for building its own message body)
-        String body = getString(R.string.default_message);
+        String body = getString(R.string.sender_default_message);
         SendingRequest sendingRequest = new SendingRequest(recording, recipient, mPreferences.getMailSubject(), body);
 
         mSenderManager.send(sendingRequest);

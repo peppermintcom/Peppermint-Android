@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.canvas.progress;
+package com.peppermint.app.ui.canvas.loading;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -18,7 +18,7 @@ import com.peppermint.app.ui.canvas.AnimatedLayerBase;
  *
  * Given the specified FPS value, draws a sequence of bitmaps on a Canvas.
  */
-public class ProgressBoxAnimatedLayer extends AnimatedLayerBase {
+public class LoadingBoxAnimatedLayer extends AnimatedLayerBase {
 
     public static final int PROGRESS_BOX = 1;
     public static final int PROGRESS_WAVE = 2;
@@ -31,7 +31,7 @@ public class ProgressBoxAnimatedLayer extends AnimatedLayerBase {
     private int mProgressType = PROGRESS_BOX;
     private boolean mFirstPartOnly = false;
 
-    public ProgressBoxAnimatedLayer(Context context, long duration, boolean looping, float cornerRadius, float progressWidth, Paint progressPaint, Paint emptyProgressPaint, Paint backgroundPaint, Paint backgroundPressedPaint) {
+    public LoadingBoxAnimatedLayer(Context context, long duration, boolean looping, float cornerRadius, float progressWidth, Paint progressPaint, Paint emptyProgressPaint, Paint backgroundPaint, Paint backgroundPressedPaint) {
         super(context);
         setLooping(looping);
         setDuration(duration);

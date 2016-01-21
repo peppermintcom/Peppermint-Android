@@ -26,7 +26,7 @@ public class SMSSender extends Sender {
     @Override
     public SenderTask newTask(SendingRequest sendingRequest) {
         if (!Utils.isSimAvailable(getContext())) {
-            Toast.makeText(getContext(), R.string.msg_message_sms_disabled, Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), R.string.sender_msg_sms_disabled, Toast.LENGTH_LONG).show();
             throw new UnsupportedSMSException();
         }
         return new SMSSenderTask(this, sendingRequest, getSenderListener(), getParameters(), getSenderPreferences());

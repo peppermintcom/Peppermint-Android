@@ -43,7 +43,7 @@ public class ServerSenderTask extends SenderTask {
         getSendingRequest().getRecording().getValidatedFile();
 
         if(!Utils.isInternetAvailable(getSender().getContext()) || !Utils.isInternetActive(getSender().getContext())) {
-            throw new NoInternetConnectionException(getSender().getContext().getString(R.string.msg_no_internet));
+            throw new NoInternetConnectionException(getSender().getContext().getString(R.string.sender_msg_no_internet));
         }
 
         ServerClientManager manager = (ServerClientManager) getParameter(ServerSender.PARAM_MANAGER);

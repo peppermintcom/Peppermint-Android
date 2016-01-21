@@ -95,7 +95,7 @@ public abstract class HttpAsyncTask extends AsyncTask<Void, Float, Void> impleme
         }
 
         if(mHttpResponse == null) {
-            throw new NoInternetConnectionException(mContext.getString(R.string.msg_no_internet));
+            throw new NoInternetConnectionException(mContext.getString(R.string.sender_msg_no_internet));
         }
         if(mHttpResponse.getCode() == 401) {
             throw new InvalidAccessTokenException();

@@ -50,7 +50,7 @@ import com.peppermint.app.data.Recording;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
-import com.peppermint.app.ui.canvas.progress.LoadingView;
+import com.peppermint.app.ui.canvas.loading.LoadingView;
 import com.peppermint.app.ui.recipients.add.NewRecipientActivity;
 import com.peppermint.app.ui.recipients.add.NewRecipientFragment;
 import com.peppermint.app.ui.views.RecordingOverlayView;
@@ -569,7 +569,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         // dialog for unsupported SMS
         mSmsAddContactDialog = new CustomConfirmationDialog(mActivity);
         mSmsAddContactDialog.setTitleText(R.string.sending_via_sms);
-        mSmsAddContactDialog.setMessageText(R.string.msg_message_sms_disabled_add_contact);
+        mSmsAddContactDialog.setMessageText(R.string.msg_sms_disabled_add_contact);
         mSmsAddContactDialog.setPositiveButtonListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -729,7 +729,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         ((CustomVisibilityListView) getListView()).setCanScrollListener(new CustomVisibilityListView.CanScrollListener() {
             @Override
             public synchronized void canScrollChanged(boolean canScroll, int visibility) {
-                if(canScroll) {
+                if (canScroll) {
                     mImgListBorder.setVisibility(visibility);
                 } else {
                     mImgListBorder.setVisibility(View.GONE);
@@ -1057,7 +1057,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         if(mSendRecording || mRecordManager.getCurrentRecording().getDurationMillis() >= MAX_DURATION_MILLIS) {
 
             if(mRecordManager.getCurrentRecording().getDurationMillis() >= MAX_DURATION_MILLIS) {
-                CustomToast.makeText(mActivity, R.string.msg_message_exceeded_maxduration, Toast.LENGTH_LONG).show();
+                CustomToast.makeText(mActivity, R.string.msg_exceeded_maxduration, Toast.LENGTH_LONG).show();
             }
 
             mSendRecording = false;
@@ -1095,9 +1095,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public void onErrorRecording(RecordService.Event event) {
         if(event.getError() instanceof NoMicDataIOException) {
-            Toast.makeText(mActivity, getString(R.string.msg_message_nomicdata_error), Toast.LENGTH_LONG).show();
+            Toast.makeText(mActivity, getString(R.string.msg_nomicdata_error), Toast.LENGTH_LONG).show();
         } else {
-            Toast.makeText(mActivity, getString(R.string.msg_message_record_error), Toast.LENGTH_LONG).show();
+            Toast.makeText(mActivity, getString(R.string.msg_record_error), Toast.LENGTH_LONG).show();
         }
 
         /*mRecordingViewOverlay.explode();*/

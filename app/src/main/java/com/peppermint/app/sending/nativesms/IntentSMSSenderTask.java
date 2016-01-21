@@ -37,7 +37,7 @@ public class IntentSMSSenderTask extends SenderTask {
     protected void send() throws Throwable {
         String url = (String) getSendingRequest().getParameter(ServerSenderTask.PARAM_SHORT_URL);
         Intent sendIntent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("smsto", getSendingRequest().getRecipient().getVia(), null));
-        sendIntent.putExtra("sms_body", String.format(getSender().getContext().getString(R.string.default_sms_body), url));
+        sendIntent.putExtra("sms_body", String.format(getSender().getContext().getString(R.string.sender_default_sms_body), url));
         sendIntent.setType("vnd.android-dir/mms-sms");
         sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
@@ -48,7 +48,7 @@ public class IntentSMSSenderTask extends SenderTask {
             sendIntent.addCategory(Intent.CATEGORY_DEFAULT);
             sendIntent.setType("vnd.android-dir/mms-sms");
             sendIntent.setData(Uri.parse("sms:" + getSendingRequest().getRecipient().getVia()));
-            sendIntent.putExtra("sms_body", String.format(getSender().getContext().getString(R.string.default_sms_body), url));
+            sendIntent.putExtra("sms_body", String.format(getSender().getContext().getString(R.string.sender_default_sms_body), url));
             sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             getSender().getContext().startActivity(sendIntent);
         }

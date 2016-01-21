@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.canvas.progress;
+package com.peppermint.app.ui.canvas.loading;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -49,7 +49,7 @@ public class LoadingView extends AnimatedView {
 
     private TextLayer mTextLayer;
     private BitmapLayer mLeftEye, mRightEye;
-    private ProgressBoxAnimatedLayer mProgressBox;
+    private LoadingBoxAnimatedLayer mProgressBox;
 
     public LoadingView(Context context) {
         super(context);
@@ -137,8 +137,8 @@ public class LoadingView extends AnimatedView {
         mTextLayer.setText(mProgressText);
         mLeftEye = new BitmapLayer(getContext(), R.drawable.img_logo_eye, mBitmapPaint);
         mRightEye = new BitmapLayer(getContext(), R.drawable.img_logo_eye, mBitmapPaint);
-        mProgressBox = new ProgressBoxAnimatedLayer(getContext(), 360 * 33, true, mCornerRadius, mAmplitude, mBackground2Paint, mBackground1Paint, mBackground1Paint, null);
-        mProgressBox.setProgressType(ProgressBoxAnimatedLayer.PROGRESS_WAVE);
+        mProgressBox = new LoadingBoxAnimatedLayer(getContext(), 360 * 33, true, mCornerRadius, mAmplitude, mBackground2Paint, mBackground1Paint, mBackground1Paint, null);
+        mProgressBox.setProgressType(LoadingBoxAnimatedLayer.PROGRESS_WAVE);
 
         addLayer(mProgressBox);
         addLayer(mLeftEye);
@@ -178,7 +178,7 @@ public class LoadingView extends AnimatedView {
         mTextLayer.setBounds(new Rect(0, (int) (textY - mTextSize), (int) getLocalWidth(), (int) (textY + mTextSize)));
     }
 
-    public ProgressBoxAnimatedLayer getProgressBox() {
+    public LoadingBoxAnimatedLayer getProgressBox() {
         return mProgressBox;
     }
 

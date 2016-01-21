@@ -34,14 +34,6 @@
                 android:resource="@xml/file_provider_paths" />
         </provider>
 
-        <!-- UI: TUTORIAL -->
-        <activity
-            android:name=".ui.tutorial.TutorialActivity"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait"
-            android:theme="@style/Peppermint.Theme.Fullscreen.Tutorial" >
-        </activity>
-
         <!-- UI: AUTHENTICATION -->
         <activity
             android:name=".ui.authentication.AuthActivity"
@@ -144,13 +136,6 @@
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="e8809814fc7d62266d6e3bb86faecc9e86696f83" />
-
-        <!-- UI: SPLASH (disabled) -->
-        <activity
-            android:name=".SplashActivity"
-            android:label="@string/app_name"
-            android:theme="@style/Peppermint.Theme.Fullscreen" >
-        </activity>
 
         <receiver android:name="com.peppermint.app.InstallReceiver" android:exported="true">
             <intent-filter>

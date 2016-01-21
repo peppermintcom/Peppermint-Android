@@ -37,7 +37,7 @@ public class GmailAuthorizationTask extends SenderAuthorizationTask {
     @Override
     protected void send() throws Throwable {
         if(!Utils.isInternetAvailable(getContext()) || !Utils.isInternetActive(getContext())) {
-            throw new NoInternetConnectionException(getContext().getString(R.string.msg_no_internet));
+            throw new NoInternetConnectionException(getContext().getString(R.string.sender_msg_no_internet));
         }
 
         String preferredAccountName = ((MailSenderPreferences) getSenderPreferences()).getPreferredAccountName();

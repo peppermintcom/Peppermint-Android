@@ -76,7 +76,7 @@ public class SMSSenderTask extends SenderTask {
 
         try {
             String url = (String) getSendingRequest().getParameter(ServerSenderTask.PARAM_SHORT_URL);
-            getSendingRequest().setBody(String.format(getSender().getContext().getString(R.string.default_sms_body), url));
+            getSendingRequest().setBody(String.format(getSender().getContext().getString(R.string.sender_default_sms_body), url));
 
             Intent sentIntent = new Intent(SMS_SENT);
             PendingIntent sentPI = PendingIntent.getBroadcast(

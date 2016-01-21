@@ -442,7 +442,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                     } catch (IOException ex) {
                         TrackerManager.getInstance(mActivity.getApplicationContext()).logException(ex);
                         Log.e(TAG, "Unable to create image file!", ex);
-                        CustomToast.makeText(mActivity, R.string.msg_message_external_storage_error, Toast.LENGTH_LONG).show();
+                        CustomToast.makeText(mActivity, R.string.msg_external_storage_error, Toast.LENGTH_LONG).show();
                     }
 
                     if (photoFile != null) {
@@ -450,7 +450,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
                         startActivityForResult(takePictureIntent, TAKE_PHOTO_CODE);
                     }
                 } else {
-                    CustomToast.makeText(mActivity, R.string.msg_message_no_camera_app, Toast.LENGTH_LONG).show();
+                    CustomToast.makeText(mActivity, R.string.msg_no_camera_app, Toast.LENGTH_LONG).show();
                 }
                 break;
             default:
@@ -684,26 +684,26 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         if(bundle.containsKey(KEY_ERROR)) {
             switch(bundle.getInt(KEY_ERROR)) {
                 case ERR_INVALID_EMAIL:
-                    Toast.makeText(mActivity, R.string.msg_message_invalid_contactmail, Toast.LENGTH_LONG).show();
+                    Toast.makeText(mActivity, R.string.msg_insert_mail, Toast.LENGTH_LONG).show();
                     return;
                 case ERR_INVALID_NAME:
-                    Toast.makeText(mActivity, R.string.msg_message_invalid_contactname, Toast.LENGTH_LONG).show();
+                    Toast.makeText(mActivity, R.string.msg_invalid_contactname, Toast.LENGTH_LONG).show();
                     return;
                 case ERR_INVALID_PHONE:
-                    Toast.makeText(mActivity, R.string.msg_message_invalid_contactphone, Toast.LENGTH_LONG).show();
+                    Toast.makeText(mActivity, R.string.msg_insert_phone, Toast.LENGTH_LONG).show();
                     return;
                 case ERR_INVALID_VIA:
-                    Toast.makeText(mActivity, R.string.msg_message_invalid_contactvia, Toast.LENGTH_LONG).show();
+                    Toast.makeText(mActivity, R.string.msg_invalid_contactvia, Toast.LENGTH_LONG).show();
                     return;
                 case ERR_UNABLE_TO_ADD:
-                    Toast.makeText(mActivity, R.string.msg_message_unable_addcontact, Toast.LENGTH_LONG).show();
+                    Toast.makeText(mActivity, R.string.msg_unable_addcontact, Toast.LENGTH_LONG).show();
                     return;
             }
 
             return;
         }
 
-        Toast.makeText(mActivity, R.string.msg_message_contact_added, Toast.LENGTH_LONG).show();
+        Toast.makeText(mActivity, R.string.msg_contact_added, Toast.LENGTH_LONG).show();
         Intent intent = new Intent();
         intent.putExtras(bundle);
 

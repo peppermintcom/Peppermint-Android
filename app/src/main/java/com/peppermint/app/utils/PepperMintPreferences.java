@@ -140,7 +140,7 @@ public class PepperMintPreferences {
     }
 
     public String getMailSubject() {
-        return mSettings.getString(MAIL_SUBJECT_KEY, mContext.getString(R.string.default_mail_subject));
+        return mSettings.getString(MAIL_SUBJECT_KEY, mContext.getString(R.string.sender_default_mail_subject));
     }
 
     public void setFirstName(String name) {

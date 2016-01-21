@@ -83,7 +83,7 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
                 return;
             } else if(resultCode == Activity.RESULT_CANCELED) {
                 preferences.setEnabled(false);
-                Toast.makeText(getContext(), R.string.msg_cancelled_gmail_api, Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), R.string.sender_msg_cancelled_gmail_api, Toast.LENGTH_LONG).show();
             }
         }
 

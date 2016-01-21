@@ -87,7 +87,7 @@ public class GmailSenderTask extends SenderTask {
         File file = getSendingRequest().getRecording().getValidatedFile();
 
         if(!Utils.isInternetAvailable(getSender().getContext())) {
-            throw new NoInternetConnectionException(getSender().getContext().getString(R.string.msg_no_internet));
+            throw new NoInternetConnectionException(getSender().getContext().getString(R.string.sender_msg_no_internet));
         }
 
         // get the email account
@@ -156,13 +156,13 @@ public class GmailSenderTask extends SenderTask {
             throw e;
         } catch(GooglePlayServicesAvailabilityIOException|GooglePlayServicesAvailabilityException e) {
             // no google play services installed on device
-            throw new ElectableForQueueingException(getSender().getContext().getString(R.string.msg_no_gplay), e);
+            throw new ElectableForQueueingException(getSender().getContext().getString(R.string.sender_msg_no_gplay), e);
         } catch(UserRecoverableAuthIOException|UserRecoverableAuthException e) {
             // recover by requesting permission to access the api
             throw e;
         } catch(IOException e) {
             TrackerManager.getInstance(getContext().getApplicationContext()).log("Throwing NoInternetConnectionException: " + e);
-            throw new NoInternetConnectionException(getSender().getContext().getString(R.string.msg_no_internet), e);
+            throw new NoInternetConnectionException(getSender().getContext().getString(R.string.sender_msg_no_internet), e);
         }
     }
 

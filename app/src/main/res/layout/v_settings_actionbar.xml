@@ -8,5 +8,5 @@
     custom:textFont="@string/font_semibold"
     android:textSize="20dp"
     android:textColor="@color/white"
-    android:text="@string/menu_settings">
+    android:text="@string/drawer_menu_settings">
 </com.peppermint.app.ui.views.simple.CustomFontTextView>

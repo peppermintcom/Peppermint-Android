@@ -103,7 +103,7 @@
         android:visibility="invisible"
         android:gravity="center">
 
-        <com.peppermint.app.ui.canvas.progress.LoadingView
+        <com.peppermint.app.ui.canvas.loading.LoadingView
             android:id="@+id/loading"
             android:layout_width="170dp"
             android:layout_height="170dp"

@@ -50,8 +50,8 @@ public class MainActivity extends CustomActionBarActivity {
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
-        navItems.add(new NavigationItem(getString(R.string.menu_contacts), R.drawable.ic_drawer_contacts, RecipientsFragment.class, false, false));
-        navItems.add(new NavigationItem(getString(R.string.menu_settings), R.drawable.ic_drawer_settings, new Runnable() {
+        navItems.add(new NavigationItem(getString(R.string.drawer_menu_contacts), R.drawable.ic_drawer_contacts, RecipientsFragment.class, false, false));
+        navItems.add(new NavigationItem(getString(R.string.drawer_menu_settings), R.drawable.ic_drawer_settings, new Runnable() {
             @Override
             public void run() {
                 Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
@@ -65,7 +65,7 @@ public class MainActivity extends CustomActionBarActivity {
                 startActivity(intent);
             }
         }, true));*/
-        navItems.add(new NavigationItem(getString(R.string.menu_help_feedback), R.drawable.ic_drawer_feedback, new Runnable() {
+        navItems.add(new NavigationItem(getString(R.string.drawer_menu_help_feedback), R.drawable.ic_drawer_feedback, new Runnable() {
             @Override
             public void run() {
                 Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + SUPPORT_EMAIL));
@@ -75,7 +75,7 @@ public class MainActivity extends CustomActionBarActivity {
                 startActivity(Intent.createChooser(i, getString(R.string.send_email)));
             }
         }, true));
-        navItems.add(new NavigationItem(getString(R.string.menu_about), R.drawable.ic_drawer_help, new Runnable() {
+        navItems.add(new NavigationItem(getString(R.string.drawer_menu_about), R.drawable.ic_drawer_help, new Runnable() {
             @Override
             public void run() {
                 Intent intent = new Intent(MainActivity.this, AboutActivity.class);
@@ -153,14 +153,14 @@ public class MainActivity extends CustomActionBarActivity {
                 }
 
                 if(!permissionsGranted) {
-                    Toast.makeText(this, R.string.must_supply_mandatory_permissions, Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, R.string.msg_must_supply_mandatory_permissions, Toast.LENGTH_LONG).show();
                     finish();
                 } else {
                     // easy way to refresh (not optimized)
                     refreshFragment(null);
                 }
             } else {
-                Toast.makeText(this, R.string.must_supply_mandatory_permissions, Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.msg_must_supply_mandatory_permissions, Toast.LENGTH_LONG).show();
                 finish();
             }
         }
@@ -172,7 +172,7 @@ public class MainActivity extends CustomActionBarActivity {
 
         if(requestCode == AUTHENTICATION_REQUEST) {
             if(resultCode != Activity.RESULT_OK) {
-                Toast.makeText(this, R.string.must_authenticate_using_account, Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.msg_must_authenticate_using_account, Toast.LENGTH_LONG).show();
                 finish();
             }
         }
