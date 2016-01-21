@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingTop="30dp"
+    android:paddingBottom="30dp"
+    android:background="@drawable/background_darkgreen_transparent">
+
+    <TextView
+        android:id="@+id/txtRecordingFor"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="20dp"
+        android:textColor="@color/white"
+        android:text="Recording for Bob Adams"
+        android:maxLines="3"
+        android:ellipsize="end"
+        android:singleLine="false"
+        android:scrollHorizontally="true" />
+
+    <TextView
+        android:id="@+id/txtVia"
+        android:layout_below="@id/txtRecordingFor"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18dp"
+        android:textColor="@color/white"
+        android:text="012345678"
+        android:singleLine="true"
+        android:ellipsize="marquee"
+        android:marqueeRepeatLimit ="marquee_forever"
+        android:scrollHorizontally="true" />
+
+    <TextView
+        android:id="@+id/txtSwipe"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="23dp"
+        android:textColor="@color/light_grey_text"
+        android:text="@string/swipe_to_cancel" />
+
+    <RelativeLayout
+        android:id="@+id/tapLayout"
+        android:layout_below="@id/txtVia"
+        android:layout_above="@id/txtSwipe"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingTop="15dp"
+        android:paddingBottom="15dp"
+        android:orientation="vertical">
+
+        <!-- it's important that this text view is not set to wrap content
+             otherwise it triggers onMeasure from other animated views, which is
+             quite computationally expensive -->
+        <TextView
+            android:id="@+id/txtDuration"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:gravity="center"
+            android:textSize="44dp"
+            android:textColor="@color/white"
+            android:text="0:00" />
+
+        <com.peppermint.app.ui.canvas.sound.RecordProgressBarsView
+            android:id="@+id/cvRecord"
+            custom:contentWidth="190dp"
+            custom:contentHeight="190dp"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:layout_above="@id/txtDuration"
+            android:layout_marginBottom="10dp"
+            style="?attr/recordProgressStyle" />
+
+    </RelativeLayout>
+
+</RelativeLayout>

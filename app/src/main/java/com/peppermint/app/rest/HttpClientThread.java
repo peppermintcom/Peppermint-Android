@@ -2,6 +2,7 @@ package com.peppermint.app.rest;
 
 import android.util.Log;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -56,7 +57,15 @@ public class HttpClientThread extends Thread {
                 }
 
                 if(!mRequest.isCancelled()) {
-                    mResponse.setCode(mConnection.getResponseCode());
+                    try {
+                        mResponse.setCode(mConnection.getResponseCode());
+                    } catch (IOException e) {
+                        if(mConnection.getResponseCode() == 401) {
+                            mResponse.setCode(401);
+                        } else {
+                            throw e;
+                        }
+                    }
                     mResponse.setMessage(mConnection.getResponseMessage());
 
                     InputStream inputStream = mResponse.getCode() >= 400 ? mConnection.getErrorStream() : mConnection.getInputStream();

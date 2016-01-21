@@ -754,5 +754,5 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
             }
         }
     }
-
+    
 }

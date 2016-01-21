@@ -8,6 +8,7 @@ import android.preference.Preference;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
@@ -42,6 +43,13 @@ public class CustomPreference extends Preference {
     public CustomPreference(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         setLayoutResource(R.layout.v_preference);
+    }
+
+    @Override
+    protected View onCreateView(ViewGroup parent) {
+        ViewGroup v = (ViewGroup) super.onCreateView(parent);
+        mTxtContent = (TextView) v.findViewById(R.id.content);
+        return v;
     }
 
     @Override

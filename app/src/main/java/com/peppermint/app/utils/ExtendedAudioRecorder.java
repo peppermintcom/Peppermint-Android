@@ -323,8 +323,20 @@ public class ExtendedAudioRecorder {
 
         short sData[] = new short[SAMPLE_SIZE];
         byte bData[] = new byte[SAMPLE_SIZE * 2];
-        long now = android.os.SystemClock.uptimeMillis();
+
+        // bo code to ignore the first 350ms to avoid noises and button sounds
+        final int ignoreTimeMs = 350;
+        final int ignoreShortAmount = (int) ((float) sampleRate * ((float) ignoreTimeMs / 1000f));
+        int ignoredShortsLeft = ignoreShortAmount;
         int emptyIts = 0;
+        while(ignoredShortsLeft > 0 && emptyIts < MAX_EMPTY_ITERATIONS) {
+            ignoredShortsLeft = ignoredShortsLeft - recorder.read(sData, 0, ignoredShortsLeft > SAMPLE_SIZE ? SAMPLE_SIZE : ignoredShortsLeft);
+            emptyIts++;
+        }
+        // eo code to ignore the first 350ms to avoid noises and button sounds
+
+        long now = android.os.SystemClock.uptimeMillis();
+        emptyIts = 0;
         int totalRead = 0;
         double totalMax = 0;
 

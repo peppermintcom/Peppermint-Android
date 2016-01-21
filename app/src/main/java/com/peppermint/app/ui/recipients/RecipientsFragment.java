@@ -9,13 +9,17 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -25,27 +29,34 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CursorAdapter;
 import android.widget.EditText;
+import android.widget.PopupWindow;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
+import com.peppermint.app.RecordService;
+import com.peppermint.app.RecordServiceManager;
 import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientType;
+import com.peppermint.app.data.Recording;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.canvas.progress.LoadingView;
 import com.peppermint.app.ui.recipients.add.NewRecipientActivity;
 import com.peppermint.app.ui.recipients.add.NewRecipientFragment;
-import com.peppermint.app.ui.recording.RecordingActivity;
-import com.peppermint.app.ui.recording.RecordingFragment;
+import com.peppermint.app.ui.views.RecordingOverlayView;
 import com.peppermint.app.ui.views.SearchListBarAdapter;
 import com.peppermint.app.ui.views.SearchListBarView;
 import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.ui.views.dialogs.PopupDialog;
+import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
+import com.peppermint.app.utils.NoMicDataIOException;
 import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
 
@@ -61,10 +72,17 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class RecipientsFragment extends ListFragment implements AdapterView.OnItemClickListener, SearchListBarView.OnSearchListener {
+public class RecipientsFragment extends ListFragment implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener, View.OnTouchListener,
+        SearchListBarView.OnSearchListener, RecordServiceManager.Listener {
 
-    public static final int REQUEST_RECORD = 111;
+    private static final String SCREEN_ID = "Contacts";
+    private static final String SCREEN_RECORDING_ID = "Recording";
+
     public static final int REQUEST_NEWCONTACT = 222;
+
+    private static final String RECORDING_OVERLAY_TAG = "RECORDING";
+    private static final int RECORDING_OVERLAY_HIDE_DELAY = 1000;
+    private static final long MAX_DURATION_MILLIS = 300000; // 5min
 
     public static final String FAST_REPLY_NAME_PARAM = "name";
     public static final String FAST_REPLY_MAIL_PARAM = "mail";
@@ -72,16 +90,31 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     // keys to save the instance state
     private static final String RECIPIENT_TAPPED_KEY = "RecipientsFragment_RecipientTapped";
     private static final String SAVED_DIALOG_STATE_KEY = "RecipientsFragment_SmsDialogState";
+    private static final String RECORDING_FINAL_EVENT_KEY = "RecipientsFragment_RecordingFinalEvent";
+    private static final String SMS_CONFIRMATION_STATE_KEY = "RecipientsFragment_SmsConfirmationState";
 
+    // avatar animation frequency
     private static final int FIXED_AVATAR_ANIMATION_INTERVAL_MS = 7500;
     private static final int VARIABLE_AVATAR_ANIMATION_INTERVAL_MS = 7500;
-
-    private static final String SCREEN_ID = "Contacts";
 
     private PepperMintPreferences mPreferences;
     private CustomActionBarActivity mActivity;
     private AnimatorBuilder mAnimatorBuilder;
+    private RecordingOverlayView mRecordingViewOverlay;
+    private boolean mSendRecording = false;
+    private boolean mDestroyed = false;
     private boolean mHasSavedInstanceState = false;
+
+    // swipe-related
+    private float x1, x2, y1, y2;
+    private long t1, t2;
+    private int mMinSwipeDistance;
+    private static final int MIN_SWIPE_DISTANCE_DP = 60;        // min swipe distance
+    private static final int MAX_SWIPE_DURATION = 300;        // max swipe duration
+
+    private MediaPlayer mRecordSoundPlayer;
+    private CustomConfirmationDialog mSmsConfirmationDialog;
+    private RecordService.Event mFinalEvent;
 
     // the recipient list
     private View mRecipientListContainer;
@@ -98,9 +131,21 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         }
     };
 
+    private PopupWindow mHoldPopup;
+    private Point mLastTouchPoint = new Point();
+    private Runnable mDismissPopupRunnable = new Runnable() {
+        @Override
+        public void run() {
+            dismissPopup();
+        }
+    };
+
     // the custom action bar (with recipient type filter and recipient search)
     private SearchListBarView mSearchListBarView;
     private SearchListBarAdapter<RecipientType> mRecipientTypeAdapter;
+
+    // recording service
+    private RecordServiceManager mRecordManager;
 
     // bottom bar
     private SenderServiceManager mSenderServiceManager;
@@ -207,7 +252,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 }
             } catch(Throwable e) {
                 if(!(e instanceof InterruptedIOException)) {
-                    TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
+                    Crashlytics.logException(e);
                 }
             }
 
@@ -377,14 +422,69 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mActivity = (CustomActionBarActivity) activity;
         mPreferences = new PepperMintPreferences(activity);
         mSenderServiceManager = new SenderServiceManager(activity);
+
+        mRecordManager = new RecordServiceManager(activity);
+        mRecordManager.setListener(this);
+        mDestroyed = false;
         mAnimatorBuilder = new AnimatorBuilder();
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) mActivity.getApplication();
 
+        mSmsConfirmationDialog = new CustomConfirmationDialog(mActivity);
+        mSmsConfirmationDialog.setTitleText(R.string.sending_via_sms);
+        mSmsConfirmationDialog.setMessageText(R.string.when_you_send_via_sms);
+        mSmsConfirmationDialog.setCheckText(R.string.do_not_show_this_again);
+        mSmsConfirmationDialog.setNegativeButtonListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mFinalEvent = null;
+                mSmsConfirmationDialog.dismiss();
+            }
+        });
+        mSmsConfirmationDialog.setPositiveButtonListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendMessage();
+                mSmsConfirmationDialog.dismiss();
+            }
+        });
+        mSmsConfirmationDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+            if (mSmsConfirmationDialog.isChecked()) {
+                mPreferences.setShownSmsConfirmation(true);
+            }
+            }
+        });
+
         mSenderServiceManager.start();
+        mRecordManager.start(false);
+
+        mRecordSoundPlayer = MediaPlayer.create(mActivity, R.raw.s_record);
+
+        mMinSwipeDistance = Utils.dpToPx(mActivity, MIN_SWIPE_DISTANCE_DP);
+
+        mRecordingViewOverlay = (RecordingOverlayView) mActivity.createOverlay(R.layout.v_recording_overlay_layout, RECORDING_OVERLAY_TAG, false, true);
+
+        // hold popup
+        mHoldPopup = new PopupWindow(mActivity);
+        mHoldPopup.setContentView(inflater.inflate(R.layout.v_recipients_popup, null));
+        //noinspection deprecation
+        // although this is deprecated, it is required for versions  < 22/23, otherwise the popup doesn't show up
+        mHoldPopup.setWindowLayoutMode(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        mHoldPopup.setBackgroundDrawable(Utils.getDrawable(mActivity, R.drawable.img_popup));
+        mHoldPopup.setAnimationStyle(R.style.Peppermint_PopupAnimation);
+        // do not let the popup get in the way of user interaction
+        mHoldPopup.setFocusable(false);
+        mHoldPopup.setTouchable(false);
 
         mTipPopup = new PopupDialog(mActivity) {
             @Override
@@ -430,9 +530,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                         getView().requestFocus();
                     }
                 }
-                if(mTipPopup.isShowing()) {
-                    mTipPopup.dismiss();
-                }
+                dismissPopup();
+                mLastTouchPoint.set((int) event.getX(), (int) event.getY());
+                mTipPopup.dismiss();
                 return false;
             }
         });
@@ -445,7 +545,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(mActivity, NewRecipientActivity.class);
-                if(mTappedRecipient != null) {
+                if (mTappedRecipient != null) {
                     intent.putExtra(NewRecipientFragment.KEY_VIA, mTappedRecipient.getVia());
                     intent.putExtra(NewRecipientFragment.KEY_NAME, mTappedRecipient.getName());
                     intent.putExtra(NewRecipientFragment.KEY_RAW_ID, mTappedRecipient.getRawId());
@@ -470,6 +570,16 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         if (savedInstanceState != null) {
             mHasSavedInstanceState = true;
+
+            if(savedInstanceState.containsKey(RECORDING_FINAL_EVENT_KEY)) {
+                mFinalEvent = (RecordService.Event) savedInstanceState.getSerializable(RECORDING_FINAL_EVENT_KEY);
+            }
+
+            Bundle smsDialogState = savedInstanceState.getBundle(SMS_CONFIRMATION_STATE_KEY);
+            if(smsDialogState != null) {
+                mSmsConfirmationDialog.onRestoreInstanceState(smsDialogState);
+            }
+            
             mTappedRecipient = (Recipient) savedInstanceState.getSerializable(RECIPIENT_TAPPED_KEY);
 
             Bundle dialogState = savedInstanceState.getBundle(SAVED_DIALOG_STATE_KEY);
@@ -580,6 +690,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         getListView().setOnItemClickListener(this);
+        getListView().setLongClickable(true);
+        getListView().setOnItemLongClickListener(this);
+        getListView().setOnTouchListener(this);
 
         synchronized (mLock) {
             mCreated = true;
@@ -596,6 +709,12 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         if (dialogState != null) {
             outState.putBundle(SAVED_DIALOG_STATE_KEY, dialogState);
         }
+
+        if(mFinalEvent != null) {
+            outState.putSerializable(RECORDING_FINAL_EVENT_KEY, mFinalEvent);
+        }
+        outState.putBundle(SMS_CONFIRMATION_STATE_KEY, mSmsConfirmationDialog.onSaveInstanceState());
+
         super.onSaveInstanceState(outState);
     }
 
@@ -606,6 +725,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         onSearch(mSearchListBarView.getSearchText());
         mSearchListBarView.setOnSearchListener(this);
         mSenderServiceManager.bind();
+        mRecordManager.bind();
 
         mHandler.postDelayed(mAnimationRunnable, FIXED_AVATAR_ANIMATION_INTERVAL_MS + mRandom.nextInt(VARIABLE_AVATAR_ANIMATION_INTERVAL_MS));
     }
@@ -613,8 +733,6 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public void onResume() {
         super.onResume();
-
-        TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
 
         // avoid cursor focus and keyboard when opening
         // if it is on onStart(), it doesn't work for screen rotations
@@ -629,6 +747,19 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         if(mPreferences.isFirstRun()) {
             mHandler.postDelayed(mTipRunnable, 100);
         }
+
+        TrackerManager.getInstance(mActivity.getApplicationContext()).trackScreenView(SCREEN_ID);
+    }
+
+    @Override
+    public void onPause() {
+        mRecordingViewOverlay.stop();
+        if(hideRecordingOverlay(false)) {
+            mSendRecording = false;
+            mRecordManager.stopRecording(true);
+        }
+
+        super.onPause();
     }
 
     @Override
@@ -636,6 +767,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mHandler.removeCallbacks(mAnimationRunnable);
 
         mSenderServiceManager.unbind();
+        mRecordManager.unbind();
         mSearchListBarView.setOnSearchListener(null);
 
         if(mGetRecipientsTask != null && !mGetRecipientsTask.isCancelled() && mGetRecipientsTask.getStatus() != AsyncTask.Status.FINISHED) {
@@ -647,6 +779,11 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onDestroy() {
+        if(mRecordSoundPlayer.isPlaying()) {
+            mRecordSoundPlayer.stop();
+        }
+        mRecordSoundPlayer.release();
+
         mSearchListBarView.deinit();
         if(mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
             // this closes the cursor inside the adapter
@@ -654,6 +791,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         }
         mTipPopup.setOnDismissListener(null);
         mTipPopup.dismiss();
+        mDestroyed = true;
         mActivity = null;
         super.onDestroy();
     }
@@ -661,22 +799,39 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == REQUEST_RECORD) {
-            if(resultCode == Activity.RESULT_OK) {
-                // go back to recent contacts after sending a message
-                mSearchListBarView.setSelectedItemPositionBeforeSearch(0);
-
-                // if the user has gone through the sending process without
-                // discarding the recording, then clear the search filter
-                mSearchListBarView.clearSearch(0);
-            }
-        } else if(requestCode == REQUEST_NEWCONTACT) {
+        if(requestCode == REQUEST_NEWCONTACT) {
             if(resultCode == Activity.RESULT_OK) {
                 mSearchListBarView.setSearchText(data.getStringExtra(NewRecipientFragment.KEY_NAME));
             } else {
                 mSearchListBarView.clearSearch(0);
             }
         }
+    }
+    
+    public boolean showRecordingOverlay() {
+        mRecordingViewOverlay.start();
+        boolean shown = mActivity.showOverlay(RECORDING_OVERLAY_TAG, true, null);
+
+        if(shown) {
+            TrackerManager.getInstance(mActivity.getApplicationContext()).trackScreenView(SCREEN_RECORDING_ID);
+        }
+
+        return shown;
+    }
+
+    public boolean hideRecordingOverlay(boolean animated) {
+        //mRecordingViewOverlay.blinkLeft();
+        //mRecordingViewOverlay.stop();
+        mSearchListBarView.removeSearchTextFocus(null);
+        getView().requestFocus();
+
+        boolean hidden = mActivity.hideOverlay(RECORDING_OVERLAY_TAG, RECORDING_OVERLAY_HIDE_DELAY, animated);   // FIXME animated hide is buggy
+
+        if(hidden) {
+            TrackerManager.getInstance(mActivity.getApplicationContext()).trackScreenView(SCREEN_ID);
+        }
+
+        return hidden;
     }
 
     public int clearFilters() {
@@ -725,7 +880,12 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Intent recordIntent = new Intent(mActivity, RecordingActivity.class);
+        showPopup(mActivity, view);
+    }
+
+    @Override
+    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        setRecordDuration(0);
 
         mTappedRecipient = mRecipientAdapter instanceof RecipientCursorAdapter ?
                 ((RecipientCursorAdapter) mRecipientAdapter).getRecipient(position) :
@@ -736,11 +896,76 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             if(!mSmsAddContactDialog.isShowing()) {
                 mSmsAddContactDialog.show();
             }
-            return;
+            return true;
         }
 
-        recordIntent.putExtra(RecordingFragment.INTENT_RECIPIENT_EXTRA, mTappedRecipient);
-        startActivityForResult(recordIntent, REQUEST_RECORD);
+        // start recording
+        if(showRecordingOverlay()) {
+            if(mRecordSoundPlayer.isPlaying()) {
+                mRecordSoundPlayer.stop();
+            }
+            mRecordSoundPlayer.seekTo(0);
+            mRecordSoundPlayer.start();
+
+            mRecordingViewOverlay.setName(mTappedRecipient.getName());
+            mRecordingViewOverlay.setVia(mTappedRecipient.getVia());
+            String filename = getString(R.string.filename_message_from) + Utils.normalizeAndCleanString(mPreferences.getFullName());
+            mRecordManager.startRecording(filename, mTappedRecipient, MAX_DURATION_MILLIS);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        switch(event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                x1 = event.getX();
+                y1 = event.getY();
+                t1 = android.os.SystemClock.uptimeMillis();
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                x2 = event.getX();
+                y2 = event.getY();
+                t2 = android.os.SystemClock.uptimeMillis();
+                float deltaX = x2 - x1;
+                float deltaY = y2 - y1;
+
+                if(hideRecordingOverlay(true)) {
+                    mSendRecording = false;
+
+                    if ((Math.abs(deltaX) > mMinSwipeDistance || Math.abs(deltaY) > mMinSwipeDistance) && (t2 - t1) < MAX_SWIPE_DURATION) {
+                        // swipe: cancel
+                        mRecordingViewOverlay.explode();
+                        mRecordManager.stopRecording(true);
+                    } else {
+                        // release: send
+                        mRecordingViewOverlay.stop();
+                        if (mRecordingViewOverlay.getMillis() < 2000) {
+                            CustomToast.makeText(mActivity, R.string.msg_record_at_least, Toast.LENGTH_LONG).show();
+                            mRecordManager.stopRecording(true);
+                        } else {
+                            mSendRecording = true;
+                            mRecordManager.stopRecording(false);
+                        }
+                    }
+                }
+                break;
+            default:
+                long now = android.os.SystemClock.uptimeMillis();
+                if((now - t1) > MAX_SWIPE_DURATION) {
+                    t1 = now;
+                    x1 = event.getX();
+                    y1 = event.getY();
+                }
+        }
+
+        return false;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        onSearch(mSearchListBarView.getSearchText());
     }
 
     @Override
@@ -760,6 +985,99 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         }
 
         return false;
+    }
+
+    private void dismissPopup() {
+        if(mHoldPopup.isShowing() && !isDetached() && !mDestroyed) {
+            mHoldPopup.dismiss();
+            mHandler.removeCallbacks(mDismissPopupRunnable);
+        }
+    }
+
+    // the method that displays the img_popup.
+    private void showPopup(final Activity context, View parent) {
+        dismissPopup();
+        mHoldPopup.showAtLocation(parent, Gravity.NO_GRAVITY, mLastTouchPoint.x - Utils.dpToPx(mActivity, 80), mLastTouchPoint.y + Utils.dpToPx(mActivity, 10));
+        mHandler.postDelayed(mDismissPopupRunnable, 6000);
+    }
+
+    @Override
+    public void onStartRecording(RecordService.Event event) {
+        onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
+    }
+
+    @Override
+    public void onStopRecording(RecordService.Event event) {
+        onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
+        if(mSendRecording || mRecordManager.getCurrentRecording().getDurationMillis() >= MAX_DURATION_MILLIS) {
+
+            if(mRecordManager.getCurrentRecording().getDurationMillis() >= MAX_DURATION_MILLIS) {
+                CustomToast.makeText(mActivity, R.string.msg_message_exceeded_maxduration, Toast.LENGTH_LONG).show();
+            }
+
+            mSendRecording = false;
+
+            mFinalEvent = event;
+            if(!mPreferences.isShownSmsConfirmation() && event.getRecipient().getMimeType().equals(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)) {
+                mSmsConfirmationDialog.show();
+            } else {
+                sendMessage();
+            }
+        }
+        hideRecordingOverlay(true);
+    }
+
+    @Override
+    public void onResumeRecording(RecordService.Event event) {
+        onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
+    }
+
+    @Override
+    public void onPauseRecording(RecordService.Event event) {
+        onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
+    }
+
+    private void setRecordDuration(float fullDuration) {
+        mRecordingViewOverlay.setMillis(fullDuration);
+    }
+
+    @Override
+    public void onLoudnessRecording(RecordService.Event event) {
+        mRecordingViewOverlay.pushAmplitude(event.getLoudness());
+        setRecordDuration(event.getRecording().getDurationMillis());
+    }
+
+    @Override
+    public void onErrorRecording(RecordService.Event event) {
+        if(event.getError() instanceof NoMicDataIOException) {
+            Toast.makeText(mActivity, getString(R.string.msg_message_nomicdata_error), Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(mActivity, getString(R.string.msg_message_record_error), Toast.LENGTH_LONG).show();
+        }
+
+        mRecordingViewOverlay.explode();
+        hideRecordingOverlay(true);
+    }
+
+    @Override
+    public void onBoundRecording(Recording currentRecording, Recipient currentRecipient, float currentLoudness) {
+        setRecordDuration(currentRecording == null ? 0 : currentRecording.getDurationMillis());
+    }
+
+    private void sendMessage() {
+        mPreferences.addRecentContactUri(mFinalEvent.getRecipient().getContactId());
+        mSenderServiceManager.startAndSend(mFinalEvent.getRecipient(), mFinalEvent.getRecording());
+
+        mFinalEvent = null;
+
+        // go back to recent contacts after sending a message
+        mSearchListBarView.setSelectedItemPositionBeforeSearch(0);
+
+        // if the user has gone through the sending process without
+        // discarding the recording, then clear the search filter
+        if(!mSearchListBarView.clearSearch(0)) {
+            onSearch(mSearchListBarView.getSearchText());
+        }
     }
 
 }

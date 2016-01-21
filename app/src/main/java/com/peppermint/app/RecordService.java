@@ -2,7 +2,6 @@ package com.peppermint.app;
 
 import android.app.Notification;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -10,15 +9,12 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.ui.recording.RecordingActivity;
-import com.peppermint.app.ui.recording.RecordingFragment;
 import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.utils.ExtendedAudioRecorder;
 import com.peppermint.app.utils.NoAccessToExternalStorageException;
@@ -65,6 +61,8 @@ public class RecordService extends Service {
     public static final int EVENT_ERROR = 6;
 
     protected RecordServiceBinder mBinder = new RecordServiceBinder();
+
+    private float mMaxAmplitude;
 
     /**
      * The service binder used by external components to interact with the service.
@@ -172,14 +170,21 @@ public class RecordService extends Service {
         }
     }
 
-    private static float getLoudnessFromAmplitude(float amplitude) {
-        float topAmplitude = 500f;
-
-        while((amplitude > topAmplitude)) {
-            topAmplitude += 500f;
+    private float getLoudnessFromAmplitude(float amplitude) {
+        while((amplitude / mMaxAmplitude) > 0.9f) {
+            mMaxAmplitude += 200f;
         }
 
-        return amplitude / topAmplitude;
+        // gradually adapt the max amplitude to allow useful loudness range values
+        while(mMaxAmplitude > 300f && (amplitude / mMaxAmplitude) < 0.1f) {
+            mMaxAmplitude -= 300f;
+        }
+
+        if(mMaxAmplitude < 300) {
+            mMaxAmplitude = 300;
+        }
+
+        return Math.min(1, amplitude / mMaxAmplitude);
     }
 
     private static Recording newRecording(ExtendedAudioRecorder recorder) {
@@ -373,6 +378,7 @@ public class RecordService extends Service {
         }
 
         mRecipient = recipient;
+        mMaxAmplitude = 1500f;
 
         if(filePrefix == null) {
             mRecorder = new ExtendedAudioRecorder(RecordService.this);
@@ -415,13 +421,13 @@ public class RecordService extends Service {
     }
 
     private Notification getNotification() {
-        Intent notificationIntent = new Intent(this, RecordingActivity.class);
+        /*Intent notificationIntent = new Intent(this, RecordingActivity.class);
         notificationIntent.putExtra(RecordingFragment.INTENT_RECIPIENT_EXTRA, mRecipient);
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         // make sure that the main activity of the app is present in the backstack
         stackBuilder.addParentStack(RecordingActivity.class);
         stackBuilder.addNextIntent(notificationIntent);
-        PendingIntent pendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);*/
 
         // FIXME use proper icons for these notifications
         // TODO add pause/resume + send + discard? actions to notification perhaps?
@@ -429,8 +435,8 @@ public class RecordService extends Service {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(RecordService.this)
                 .setSmallIcon(R.drawable.ic_mic_24dp)
                 .setContentTitle(getString(R.string.app_name))
-                .setContentText(getString(mBinder.isPaused() ? R.string.paused : R.string.recording))
-                .setContentIntent(pendingIntent);
+                .setContentText(getString(mBinder.isPaused() ? R.string.paused : R.string.recording));
+                //.setContentIntent(pendingIntent);
 
         return builder.build();
     }

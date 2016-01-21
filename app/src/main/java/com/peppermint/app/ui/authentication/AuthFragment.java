@@ -312,6 +312,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
     @Override
     public void onDestroy() {
         mDestroyed = true;
+        mActivity = null;
         super.onDestroy();
     }
 
