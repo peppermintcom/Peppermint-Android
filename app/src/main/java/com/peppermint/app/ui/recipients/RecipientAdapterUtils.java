@@ -83,6 +83,23 @@ public class RecipientAdapterUtils {
                 args.toArray(new String[args.size()]), DISPLAY_NAME + " COLLATE NOCASE");
     }
 
+    public static Recipient getMainEmailRecipient(Context context, Recipient recipient) {
+        Recipient result = null;
+
+        Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, null,
+                ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE) +
+                        " AND " + ContactsContract.Data.RAW_CONTACT_ID + "=" + recipient.getRawId(),
+                null, ContactsContract.Data.IS_PRIMARY + " DESC");
+
+        if(cursor.moveToNext()) {
+            result = getRecipient(cursor);
+        }
+
+        cursor.close();
+
+        return result;
+    }
+
     /**
      * Obtains a list of all recipients found in the Android contacts database according to
      * the given restrictions.

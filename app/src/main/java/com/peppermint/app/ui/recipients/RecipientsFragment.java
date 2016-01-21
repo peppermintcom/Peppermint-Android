@@ -85,6 +85,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private static final String SCREEN_RECORDING_ID = "Recording";
 
     public static final int REQUEST_NEWCONTACT = 222;
+    public static final int REQUEST_NEWCONTACT_AND_SEND = 223;
 
     private static final String RECORDING_OVERLAY_TAG = "RECORDING";
     private static final int RECORDING_OVERLAY_HIDE_DELAY = 1000;
@@ -120,7 +121,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private static final int MAX_SWIPE_DURATION = 300;        // max swipe duration
 
     private MediaPlayer mRecordSoundPlayer;
-    private CustomConfirmationDialog mSmsConfirmationDialog;
+    private SMSConfirmationDialog mSmsConfirmationDialog;
     private RecordService.Event mFinalEvent;
 
     // the recipient list
@@ -446,7 +447,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) mActivity.getApplication();
 
-        mSmsConfirmationDialog = new CustomConfirmationDialog(mActivity);
+        mSmsConfirmationDialog = new SMSConfirmationDialog(mActivity);
         mSmsConfirmationDialog.setTitleText(R.string.sending_via_sms);
         mSmsConfirmationDialog.setMessageText(R.string.when_you_send_via_sms);
         mSmsConfirmationDialog.setCheckText(R.string.do_not_show_this_again);
@@ -460,16 +461,31 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mSmsConfirmationDialog.setPositiveButtonListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendMessage();
+                sendMessage(mFinalEvent.getRecipient(), mFinalEvent.getRecording());
+                mFinalEvent = null;
                 mSmsConfirmationDialog.dismiss();
             }
         });
         mSmsConfirmationDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
-            if (mSmsConfirmationDialog.isChecked()) {
-                mPreferences.setShownSmsConfirmation(true);
+                mSmsConfirmationDialog.setEmailRecipient(null);
+                if (mSmsConfirmationDialog.isChecked()) {
+                    mPreferences.setShownSmsConfirmation(true);
+                }
             }
+        });
+        mSmsConfirmationDialog.setEmailClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Recipient emailRecipient = mSmsConfirmationDialog.getEmailRecipient();
+                if(emailRecipient != null) {
+                    sendMessage(emailRecipient, mFinalEvent.getRecording());
+                    mFinalEvent = null;
+                    mSmsConfirmationDialog.dismiss();
+                } else {
+                    launchNewRecipientActivity(mFinalEvent.getRecipient(), REQUEST_NEWCONTACT_AND_SEND);
+                }
             }
         });
 
@@ -573,14 +589,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mSmsAddContactDialog.setPositiveButtonListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(mActivity, NewRecipientActivity.class);
-                if (mTappedRecipient != null) {
-                    intent.putExtra(NewRecipientFragment.KEY_VIA, mTappedRecipient.getVia());
-                    intent.putExtra(NewRecipientFragment.KEY_NAME, mTappedRecipient.getName());
-                    intent.putExtra(NewRecipientFragment.KEY_RAW_ID, mTappedRecipient.getRawId());
-                    intent.putExtra(NewRecipientFragment.KEY_PHOTO_URL, Uri.parse(mTappedRecipient.getPhotoUri()));
-                }
-                startActivityForResult(intent, REQUEST_NEWCONTACT);
+                launchNewRecipientActivity(mTappedRecipient, REQUEST_NEWCONTACT);
                 mSmsAddContactDialog.dismiss();
             }
         });
@@ -743,6 +752,17 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         }
     }
 
+    private void launchNewRecipientActivity(Recipient editRecipient, int requestCode) {
+        Intent intent = new Intent(mActivity, NewRecipientActivity.class);
+        if (editRecipient != null) {
+            intent.putExtra(NewRecipientFragment.KEY_VIA, editRecipient.getVia());
+            intent.putExtra(NewRecipientFragment.KEY_NAME, editRecipient.getName());
+            intent.putExtra(NewRecipientFragment.KEY_RAW_ID, editRecipient.getRawId());
+            intent.putExtra(NewRecipientFragment.KEY_PHOTO_URL, editRecipient.getPhotoUri() == null ? null : Uri.parse(editRecipient.getPhotoUri()));
+        }
+        startActivityForResult(intent, requestCode);
+    }
+
     @Override
     public void onSaveInstanceState(Bundle outState) {
         // save tapped recipient in case add contact dialog is showing
@@ -847,6 +867,17 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
                 mSearchListBarView.setSearchText(data.getStringExtra(NewRecipientFragment.KEY_NAME));
             } else {
                 mSearchListBarView.clearSearch(0);
+            }
+        } else if(requestCode == REQUEST_NEWCONTACT_AND_SEND) {
+            if(resultCode == Activity.RESULT_OK) {
+                Recipient emailRecipient = RecipientAdapterUtils.getMainEmailRecipient(mActivity, mFinalEvent.getRecipient());
+                if(emailRecipient == null) {
+                    CustomToast.makeText(mActivity, R.string.msg_no_email_address, Toast.LENGTH_LONG).show();
+                } else {
+                    mSmsConfirmationDialog.dismiss();
+                    sendMessage(emailRecipient, mFinalEvent.getRecording());
+                    mFinalEvent = null;
+                }
             }
         }
     }
@@ -1064,9 +1095,12 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
             mFinalEvent = event;
             if(!mPreferences.isShownSmsConfirmation() && event.getRecipient().getMimeType().equals(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)) {
+                Recipient emailRecipient = RecipientAdapterUtils.getMainEmailRecipient(mActivity, mFinalEvent.getRecipient());
+                mSmsConfirmationDialog.setEmailRecipient(emailRecipient);
                 mSmsConfirmationDialog.show();
             } else {
-                sendMessage();
+                sendMessage(mFinalEvent.getRecipient(), mFinalEvent.getRecording());
+                mFinalEvent = null;
             }
         }
         hideRecordingOverlay(false);
@@ -1109,9 +1143,9 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         setRecordDuration(currentRecording == null ? 0 : currentRecording.getDurationMillis());
     }
 
-    private void sendMessage() {
-        mPreferences.addRecentContactUri(mFinalEvent.getRecipient().getContactId());
-        mSenderServiceManager.startAndSend(mFinalEvent.getRecipient(), mFinalEvent.getRecording());
+    private void sendMessage(Recipient recipient, Recording recording) {
+        mPreferences.addRecentContactUri(recipient.getContactId());
+        mSenderServiceManager.startAndSend(recipient, recording);
 
         mFinalEvent = null;
 

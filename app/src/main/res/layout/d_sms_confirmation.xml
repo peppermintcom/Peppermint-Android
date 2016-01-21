@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:orientation="vertical">
+
+    <com.peppermint.app.ui.views.simple.CustomFontTextView
+        android:id="@+id/text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:gravity="left|center_vertical"
+        android:singleLine="false"
+        custom:textFont="@string/font_regular"
+        android:textSize="16dp"
+        android:textColor="@color/black"
+        android:text="@string/when_you_send_via_sms" />
+
+    <LinearLayout
+        android:id="@+id/lytEmail"
+        android:clickable="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:padding="15dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:background="@drawable/background_transparent_to_solid_pressed">
+
+        <com.peppermint.app.ui.views.simple.CustomFontTextView
+            android:id="@+id/txtEmailInstead"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            custom:textFont="@string/font_semibold"
+            android:textSize="16dp"
+            android:textColor="@color/color_green_to_white_pressed"
+            android:text="@string/send_to_email_instead"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="horizontal">
+
+            <com.peppermint.app.ui.views.simple.CustomFontTextView
+                android:id="@+id/txtEmailVia"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:singleLine="true"
+                custom:textFont="@string/font_regular"
+                android:textSize="14dp"
+                android:textColor="@color/color_green_to_white_pressed"
+                android:text="@string/via"/>
+
+            <com.peppermint.app.ui.views.simple.CustomFontTextView
+                android:id="@+id/txtEmailValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginLeft="5dp"
+                android:singleLine="true"
+                custom:textFont="@string/font_regular"
+                android:text="john.doe@gmail.com"
+                android:textSize="14dp"
+                android:textColor="@color/color_green_to_white_pressed" />
+                <!--android:visibility="gone"-->
+
+        </LinearLayout>
+
+
+
+    </LinearLayout>
+
+    <com.peppermint.app.ui.views.simple.CustomFontButton
+        android:id="@+id/check"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="10dp"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:gravity="left|center_vertical"
+        android:text="@string/do_not_show_this_again"
+        android:textAllCaps="false"
+        custom:textFont="@string/font_regular"
+        android:textSize="14dp"
+        android:textColor="@color/grey_text"
+        android:drawablePadding="15dp"
+        android:drawableLeft="@drawable/ic_checkbox"
+        android:drawableTint="@color/grey_text"
+        android:background="@android:color/transparent"
+        style="?android:attr/borderlessButtonStyle" />
+
+</LinearLayout>
