@@ -17,9 +17,11 @@ import java.util.UUID;
  * Created by Nuno Luz on 25-11-2015.
  *
  * Abstract implementation with the capability to execute and monitor asynchronous HTTP requests
- * through an {@link HttpClientManager} passed on as a parameter.
+ * through an {@link HttpClientManager} passed on as a parameter.<br /><br />
+ *
+ * <strong>Never execute this outside of a custom thread pool! It uses Thread.sleep() and might block all other AsyncTasks.</strong>
  */
-public abstract class HttpAsyncTask extends AsyncTask<Void, Float, Void> implements Cloneable, HttpRequestListener {
+public abstract class HttpAsyncTask<T, E> extends AsyncTask<T, Float, E> implements Cloneable, HttpRequestListener {
 
     private static final String TAG = HttpAsyncTask.class.getSimpleName();
 
@@ -66,16 +68,17 @@ public abstract class HttpAsyncTask extends AsyncTask<Void, Float, Void> impleme
      * Actual async task implementation
      * @throws Throwable
      */
-    protected abstract void send() throws Throwable;
+    protected abstract E send(T... params) throws Throwable;
 
     @Override
-    protected Void doInBackground(Void... params) {
+    protected E doInBackground(T... params) {
+        E result = null;
         mRunner = Thread.currentThread();
         if(getHttpClientManager() != null) {
             getHttpClientManager().addHttpRequestListener(this);
         }
         try {
-            send();
+            result = send(params);
         } catch (Throwable e) {
             mError = e;
             Log.w(TAG, e);
@@ -84,12 +87,12 @@ public abstract class HttpAsyncTask extends AsyncTask<Void, Float, Void> impleme
                 getHttpClientManager().removeHttpRequestListener(this);
             }
         }
-        return null;
+        return result;
     }
 
     protected String waitForHttpResponse() throws Throwable {
         try {
-            Thread.sleep(getHttpRequestTimeout());
+            mRunner.sleep(getHttpRequestTimeout());
         } catch(InterruptedException e) {
             // nothing to do here
         }
@@ -169,7 +172,7 @@ public abstract class HttpAsyncTask extends AsyncTask<Void, Float, Void> impleme
         return getHttpClientManager().performRequest(request);
     }
 
-    private long getHttpRequestTimeout() {
+    protected long getHttpRequestTimeout() {
         Object timeout = getParameter(PARAM_HTTP_REQUEST_TIMEOUT);
         if (timeout == null) {
             return SIMPLE_REQUEST_TIMEOUT;
@@ -177,8 +180,12 @@ public abstract class HttpAsyncTask extends AsyncTask<Void, Float, Void> impleme
         return (Long) timeout;
     }
 
-    private HttpClientManager getHttpClientManager() {
+    protected HttpClientManager getHttpClientManager() {
         return (HttpClientManager) getParameter(PARAM_HTTP_CLIENT_MANAGER);
+    }
+
+    public void setHttpCLientManager(HttpClientManager httpCLientManager) {
+        setParameter(PARAM_HTTP_CLIENT_MANAGER, httpCLientManager);
     }
 
     public Context getContext() {

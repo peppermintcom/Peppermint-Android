@@ -3,6 +3,7 @@ package com.peppermint.app.sending.mail.gmail;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.google.android.gms.common.Scopes;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.http.HttpTransport;
@@ -34,7 +35,7 @@ public class GmailSender extends Sender {
     public static final String PARAM_GMAIL_CREDENTIAL = "GmailSendingTask_paramGmailCredentials";
 
     // Gmail API required permissions
-    protected static final String[] SCOPES = { GmailScopes.GMAIL_COMPOSE, GmailScopes.GMAIL_MODIFY };
+    protected static final String[] SCOPES = { GmailScopes.GMAIL_COMPOSE, GmailScopes.GMAIL_MODIFY, "https://www.googleapis.com/auth/userinfo.profile" };
 
     protected Gmail mService;
     protected GoogleAccountCredential mCredential;

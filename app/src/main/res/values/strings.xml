@@ -57,7 +57,7 @@
     <string name="when_you_send_via_sms">Sending via SMS may cost you money. Continue?</string>
     <string name="do_not_show_this_again">Do not ask this again and always send the SMS message</string>
     <string name="send_to_email_instead">Send to Email Instead</string>
-    <string name="must_add_an_email_address_first">Must add an email address first</string>
+    <string name="must_add_an_email_address_first">Add email address</string>
     <string name="msg_no_email_address">No email address found. Please try again and insert a valid email address.</string>
 
     <!-- RECIPIENTS LAYOUT: TIPS -->

@@ -5,6 +5,8 @@ import android.animation.AnimatorListenerAdapter;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.net.Uri;
@@ -46,7 +48,7 @@ import java.util.Set;
  *
  * Abstract activity implementation that uses Peppermint's custom action bar.
  */
-public abstract class CustomActionBarActivity  extends FragmentActivity {
+public abstract class CustomActionBarActivity  extends FragmentActivity implements OnSharedPreferenceChangeListener {
 
     private static final String SAVED_MENU_POSITION_KEY = "DrawerActivity_SAVED_MENU_POSITION_KEY";
 
@@ -202,6 +204,10 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
             });
         }
 
+        // set the drawer profile data
+        refreshProfileData();
+        mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+
         if (savedInstanceState != null) {
             if(mLytDrawer != null) {
                 int pos = savedInstanceState.getInt(SAVED_MENU_POSITION_KEY, -1);
@@ -271,11 +277,16 @@ public abstract class CustomActionBarActivity  extends FragmentActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onDestroy() {
+        mPreferences.getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+        super.onDestroy();
+    }
 
-        // set the drawer profile data
-        refreshProfileData();
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if(key.equals(PepperMintPreferences.FIRST_NAME_KEY) || key.equals(PepperMintPreferences.LAST_NAME_KEY)) {
+            refreshProfileData();
+        }
     }
 
     protected void refreshProfileData() {

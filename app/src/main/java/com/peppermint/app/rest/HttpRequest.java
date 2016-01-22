@@ -114,7 +114,9 @@ public class HttpRequest implements Parcelable {
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 		conn.setUseCaches(false);
 		//conn.setDoInput(true);
-		conn.setDoOutput(true);
+		if(mRequestMethod != METHOD_GET) {
+			conn.setDoOutput(true);
+		}
         long contentLength = getContentLength();
         if(contentLength < 0) {
             conn.setChunkedStreamingMode(0);

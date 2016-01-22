@@ -22,8 +22,13 @@ import com.peppermint.app.sending.SenderTask;
 import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
 import com.peppermint.app.sending.server.InvalidAccessTokenException;
 import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.utils.PepperMintPreferences;
+import com.peppermint.app.utils.Utils;
 
 import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
@@ -36,6 +41,9 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
 
     private static final int REQUEST_AUTHORIZATION = 998;
     private static final int REQUEST_ACCOUNT_PICKER = 999;
+
+    // FIXME try to use the managers' executor!
+    private ThreadPoolExecutor mExecutor;
 
     private class GetTokenAsyncTask extends AsyncTask<GoogleAccountCredential, Void, Throwable> {
         @Override
@@ -51,6 +59,25 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
 
     public GmailSenderErrorHandler(Context context, SenderListener senderListener, Map<String, Object> parameters, SenderPreferences preferences) {
         super(context, senderListener, parameters, preferences);
+
+        this.mExecutor = new ThreadPoolExecutor(1, 1,
+                60, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>());
+    }
+
+    @Override
+    public void deinit() {
+        super.deinit();
+        mExecutor.shutdown();
+    }
+
+    private void tryToGetNameFromApi() {
+        PepperMintPreferences prefs = new PepperMintPreferences(getContext());
+        if(!Utils.isValidName(prefs.getFullName())) {
+            Log.d(TAG, "User name is not valid (" + prefs.getFullName() + ") trying Google API...");
+            GmailDisplayNameTask task = new GmailDisplayNameTask(getContext(), getParameters());
+            task.executeOnExecutor(mExecutor);
+        }
     }
 
     @Override
@@ -79,6 +106,7 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
         // the user has given (or not) permission to use the Gmail API with his/her account
         if(requestCode == REQUEST_AUTHORIZATION){
             if(resultCode == Activity.RESULT_OK) {
+                tryToGetNameFromApi();
                 doRecover(recoveredTask);
                 return;
             } else if(resultCode == Activity.RESULT_CANCELED) {
@@ -132,6 +160,7 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
             try {
                 Throwable obj = new GetTokenAsyncTask().execute(credential).get();
                 if(obj == null) {
+                    tryToGetNameFromApi();
                     doRecover(failedSendingTask);
                 } else if(obj instanceof UserRecoverableAuthIOException || obj instanceof UserRecoverableAuthException) {
                     Intent intent = obj instanceof UserRecoverableAuthIOException ? ((UserRecoverableAuthIOException) obj).getIntent() : ((UserRecoverableAuthException) obj).getIntent();

@@ -18,7 +18,7 @@ import java.util.Map;
  *     the sending task instance (each implementation may have its own parameters).
  * </p>
  */
-public abstract class SenderTask extends HttpAsyncTask implements Cloneable {
+public abstract class SenderTask extends HttpAsyncTask<Void, Void> implements Cloneable {
 
     public static final float PROGRESS_INDETERMINATE = -1f;
     public static final float PROGRESS_MAX = 100f;
@@ -67,6 +67,12 @@ public abstract class SenderTask extends HttpAsyncTask implements Cloneable {
      * @throws Throwable
      */
     protected abstract void send() throws Throwable;
+
+    @Override
+    protected Void send(Void... params) throws Throwable {
+        send();
+        return null;
+    }
 
     @Override
     protected void onPreExecute() {

@@ -53,16 +53,16 @@ public abstract class Sender {
      * Initializes the sender and its error handler.
      */
     public void init() {
-        SenderErrorHandler errorHandler = getErrorHandler();
-        if(errorHandler != null) {
-            errorHandler.init();
-        }
-
         if(mUseHttpManager) {
             mHttpManager = new HttpClientManager(mContext);
             mHttpManager.start();
 
             setParameter(HttpAsyncTask.PARAM_HTTP_CLIENT_MANAGER, mHttpManager);
+        }
+
+        SenderErrorHandler errorHandler = getErrorHandler();
+        if(errorHandler != null) {
+            errorHandler.init();
         }
     }
 
