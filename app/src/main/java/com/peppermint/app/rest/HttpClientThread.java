@@ -15,13 +15,12 @@ import java.net.HttpURLConnection;
  * </p>
  */
 public class HttpClientThread extends Thread {
-	
+
 	private static final String TAG = HttpClientThread.class.getSimpleName();
 
 	private HttpClientThreadListener mListener;
 	private HttpRequest mRequest;                   // the running request
     private HttpResponse mResponse;                 // the running request response
-	private HttpURLConnection mConnection;          // the running request connection
 
 	public HttpClientThread(HttpClientThreadListener listener, HttpRequest request, HttpResponse response) {
 		this.mListener = listener;
@@ -43,50 +42,7 @@ public class HttpClientThread extends Thread {
             mListener.onConnect(this, mRequest);
         }
 
-        try {
-            mConnection = mRequest.createConnection();
-
-            if(mConnection != null) {
-                if(!mRequest.isCancelled()) {
-                    if(mRequest.getBody() != null) {
-                        OutputStream outStream = mConnection.getOutputStream();
-                        mRequest.writeBody(outStream);
-                        outStream.flush();
-                        outStream.close();
-                    }
-                }
-
-                if(!mRequest.isCancelled()) {
-                    try {
-                        mResponse.setCode(mConnection.getResponseCode());
-                    } catch (IOException e) {
-                        if(mConnection.getResponseCode() == 401) {
-                            mResponse.setCode(401);
-                        } else {
-                            throw e;
-                        }
-                    }
-                    mResponse.setMessage(mConnection.getResponseMessage());
-
-                    InputStream inputStream = mResponse.getCode() >= 400 ? mConnection.getErrorStream() : mConnection.getInputStream();
-                     mResponse.readBody(inputStream, mRequest);
-                    inputStream.close();
-                }
-            } else {
-                throw new NullPointerException("HttpURLConnection is null. Skipping...");
-            }
-        } catch (Throwable e) {
-            Log.e(TAG, "Error while performing HttpURLConnection!", e);
-            mResponse.setException(e);
-        }
-
-        if(mConnection != null) {
-            try {
-                mConnection.disconnect();
-            } catch(Throwable e) {
-                Log.e(TAG, "Error disconnecting...", e);
-            }
-        }
+        mRequest.execute(mResponse);
 
         if(mListener != null) {
             mListener.onDisconnect(this, mRequest, mResponse);
@@ -98,13 +54,10 @@ public class HttpClientThread extends Thread {
      * This method tries to interrupt the thread and disconnect the connection.
      */
 	public void cancel() {
+        // TODO neither disconnect or interrupt works for HttpUrlConnection!
+        // This has been fixed by sending a virtual cancel event back to the listener;
+        // The thread/runnable still hangs until the request times out and further events are ignored.
 		mRequest.cancel();
-		if(mConnection != null) {
-			// TODO neither disconnect or interrupt works for HttpUrlConnection!
-            // This has been fixed by sending a virtual cancel event back to the listener;
-            // The thread/runnable still hangs until the request times out and further events are ignored.
-			mConnection.disconnect();
-			interrupt();
-		}
+        interrupt();
 	}
 }

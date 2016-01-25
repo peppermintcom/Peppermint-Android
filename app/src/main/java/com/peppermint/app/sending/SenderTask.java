@@ -1,125 +1,115 @@
 package com.peppermint.app.sending;
 
+import android.content.Context;
+import android.os.AsyncTask;
+
+import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
-import com.peppermint.app.rest.HttpAsyncTask;
+import com.peppermint.app.sending.api.GoogleApi;
+import com.peppermint.app.sending.api.PeppermintApi;
+import com.peppermint.app.sending.exceptions.ElectableForQueueingException;
+import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
+import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.utils.Utils;
 
 import java.util.Map;
+import java.util.UUID;
+
+import javax.net.ssl.SSLException;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
  * <p>
- *     The abstract AsyncTask implementation executed by a {@link Sender}.<br />
- *     Each {@link Sender} must have their own {@link SenderTask} concrete implementations.
+ *     The abstract AsyncTask implementation executed by {@link Sender} or {@link SenderErrorHandler}.<br />
+ *     Each {@link Sender} must have their own concrete implementations of either {@link SenderUploadTask} or {@link SenderSupportTask}.<br />
+ *     <ul>
+ *     <li>{@link SenderUploadTask} perform main routines and are handled directly by the {@link SenderManager}.</li>
+ *     <li>{@link SenderSupportTask} run support routines and are usually launched by the {@link SenderErrorHandler} to handle errors asynchronously.</li>
+ *     </ul>
  * </p>
  * <p>
- *     As with {@link Sender}s, {@link SenderTask}s are configured through Parameters and Preferences.
- *     Preferences use the native Android Shared Preferences mechanism, so that data is saved
- *     across different executions of the app. Parameters are part of a key-value map passed to
- *     the sending task instance (each implementation may have its own parameters).
+ *     As with {@link Sender}s, {@link SenderTask}s require the base contextual data found in {@link SenderObject}.
+ *     This data is accessible through the instance returned by {@link #getIdentity()}.
  * </p>
  */
-public abstract class SenderTask extends HttpAsyncTask<Void, Void> implements Cloneable {
+public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements Cloneable {
 
     public static final float PROGRESS_INDETERMINATE = -1f;
     public static final float PROGRESS_MAX = 100f;
     public static final float PROGRESS_MIN = 0f;
 
-    private float mProgress = PROGRESS_INDETERMINATE;
+    protected float mProgress = PROGRESS_INDETERMINATE;
 
+    private SenderObject mIdentity;
+
+    // error thrown while executing the async task's doInBackground
+    private Throwable mError;
     private Sender mSender;
-    private SenderPreferences mPreferences;
-    private SenderListener mListener;
-
     private SendingRequest mSendingRequest;
-    private boolean mRecovering = false;
 
-    public SenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
-        super(sender.getContext());
+    public SenderTask(Sender sender, SendingRequest sendingRequest) {
+        this.mIdentity = new SenderObject(sender);
         this.mSender = sender;
-        this.mListener = listener;
         this.mSendingRequest = sendingRequest;
         if(sendingRequest != null) {
-            setId(sendingRequest.getId());
-        }
-    }
-
-    public SenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener, Map<String, Object> parameters, SenderPreferences preferences) {
-        super(sender.getContext(), parameters);
-        this.mSender = sender;
-        this.mListener = listener;
-        this.mPreferences = preferences;
-        this.mSendingRequest = sendingRequest;
-        if(sendingRequest != null) {
-            setId(sendingRequest.getId());
+            mIdentity.setId(sendingRequest.getId());
         }
     }
 
     public SenderTask(SenderTask sendingTask) {
-        super(sendingTask);
+        this.mIdentity = sendingTask.mIdentity;
         this.mSender = sendingTask.mSender;
-        this.mListener = sendingTask.mListener;
-        this.mPreferences = sendingTask.mPreferences;
         this.mSendingRequest = sendingTask.mSendingRequest;
     }
 
+    protected void checkInternetConnection() throws NoInternetConnectionException {
+        if(!Utils.isInternetAvailable(getSender().getContext()) || !Utils.isInternetActive(getSender().getContext())) {
+            throw new NoInternetConnectionException(getSender().getContext().getString(R.string.sender_msg_no_internet));
+        }
+    }
+
     /**
-     * Actually sends the audio/video file to a {@link com.peppermint.app.data.Recipient}
-     * @throws Throwable
+     * Concrete routine implementation of the task.
+     * @throws Throwable any error/exception thrown while executing
      */
-    protected abstract void send() throws Throwable;
+    protected abstract void execute() throws Throwable;
 
     @Override
-    protected Void send(Void... params) throws Throwable {
-        send();
+    protected Void doInBackground(Void... params) {
+        try {
+            execute();
+        } catch (Throwable e) {
+            // hack to queue SSL errors
+            // some wifis might require proxies that override security certificates
+            // this queues the message and retries sending after connection is established
+            // on some other network
+            if(e instanceof SSLException) {
+                mError = new ElectableForQueueingException(e);
+            } else {
+                mError = e;
+            }
+        }
         return null;
-    }
-
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-        if(mListener != null && !mRecovering) {
-            mListener.onSendingTaskStarted(this);
-        }
-    }
-
-    @Override
-    protected void onProgressUpdate(Float... values) {
-        mProgress = values[0];
-        if(mListener != null) {
-            mListener.onSendingTaskProgress(this, mProgress);
-        }
-    }
-
-    @Override
-    protected void onCancelled(Void aVoid) {
-        if(mListener != null) {
-            mListener.onSendingTaskCancelled(this);
-        }
-    }
-
-    @Override
-    protected void onPostExecute(Void aVoid) {
-        if(getError() == null) {
-            if(mListener != null) {
-                mListener.onSendingTaskFinished(this);
-            }
-        } else {
-            if (mListener != null) {
-                mListener.onSendingTaskError(this, getError());
-            }
-        }
     }
 
     public Sender getSender() {
         return mSender;
     }
 
-    public SenderListener getSenderListener() {
-        return mListener;
+    public SendingRequest getSendingRequest() {
+        return mSendingRequest;
     }
 
-    public void setSenderListener(SenderListener mListener) {
-        this.mListener = mListener;
+    public void setSendingRequest(SendingRequest mSendingRequest) {
+        this.mSendingRequest = mSendingRequest;
+    }
+
+    public Throwable getError() {
+        return mError;
+    }
+
+    protected void setError(Throwable error) {
+        this.mError = error;
     }
 
     public float getProgressMax() {
@@ -134,23 +124,47 @@ public abstract class SenderTask extends HttpAsyncTask<Void, Void> implements Cl
         return mProgress;
     }
 
+    public SenderObject getIdentity() {
+        return mIdentity;
+    }
+
     public SenderPreferences getSenderPreferences() {
-        return mPreferences;
+        return mIdentity.getPreferences();
     }
 
-    public SendingRequest getSendingRequest() {
-        return mSendingRequest;
+    public Context getContext() {
+        return mIdentity.getContext();
     }
 
-    public void setSendingRequest(SendingRequest mSendingRequest) {
-        this.mSendingRequest = mSendingRequest;
+    public Map<String, Object> getParameters() {
+        return mIdentity.getParameters();
     }
 
-    public boolean isRecovering() {
-        return mRecovering;
+    public void setParameters(Map<String, Object> mParameters) {
+        mIdentity.setParameters(mParameters);
     }
 
-    public void setRecovering(boolean mRecovering) {
-        this.mRecovering = mRecovering;
+    public Object getParameter(String key) {
+        return mIdentity.getParameter(key);
+    }
+
+    public void setParameter(String key, Object value) {
+        mIdentity.setParameter(key, value);
+    }
+
+    public UUID getId() {
+        return mIdentity.getId();
+    }
+
+    public TrackerManager getTrackerManager() {
+        return mIdentity.getTrackerManager();
+    }
+
+    protected PeppermintApi getPeppermintApi() {
+        return (PeppermintApi) mIdentity.getParameter(Sender.PARAM_PEPPERMINT_API);
+    }
+
+    protected GoogleApi getGoogleApi() {
+        return (GoogleApi) mIdentity.getParameter(Sender.PARAM_GOOGLE_API);
     }
 }

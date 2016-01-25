@@ -30,6 +30,7 @@ import android.widget.Toast;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
+import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
@@ -38,7 +39,6 @@ import com.peppermint.app.ui.views.NavigationListAdapter;
 import com.peppermint.app.ui.views.dialogs.CustomListDialog;
 import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.ui.views.simple.CustomValidatedEditText;
-import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
@@ -322,7 +322,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     private static final int CHOOSE_PHOTO_CODE = 124;
 
     private CustomActionBarActivity mActivity;
-    private PepperMintPreferences mPreferences;
+    private SenderPreferences mPreferences;
 
     private ImageView mBtnAddAvatar;
     private CustomValidatedEditText mTxtFirstName, mTxtLastName, mTxtPhone, mTxtMail;
@@ -532,7 +532,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     public void onAttach(Activity context) {
         super.onAttach(context);
         mActivity = (CustomActionBarActivity) context;
-        mPreferences = new PepperMintPreferences(context);
+        mPreferences = new SenderPreferences(context);
     }
 
     @Override
@@ -679,7 +679,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         String phone = mTxtPhone.getText().toString().trim();
         String email = mTxtMail.getText().toString().trim();
 
-        Bundle bundle = insertRecipientContact(mActivity, rawId, firstName, lastName, phone, email, mAvatarUrl, mPreferences.getGmailPreferences().getPreferredAccountName());
+        Bundle bundle = insertRecipientContact(mActivity, rawId, firstName, lastName, phone, email, mAvatarUrl, mPreferences.getGmailSenderPreferences().getPreferredAccountName());
 
         if(bundle.containsKey(KEY_ERROR)) {
             switch(bundle.getInt(KEY_ERROR)) {

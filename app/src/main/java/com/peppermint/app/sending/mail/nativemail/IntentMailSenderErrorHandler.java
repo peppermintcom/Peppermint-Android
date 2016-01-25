@@ -3,18 +3,14 @@ package com.peppermint.app.sending.mail.nativemail;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
-import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderErrorHandler;
-import com.peppermint.app.sending.SenderListener;
-import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SenderTask;
+import com.peppermint.app.sending.SenderUploadListener;
+import com.peppermint.app.sending.SenderUploadTask;
 import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
-
-import java.util.Map;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
@@ -27,13 +23,13 @@ public class IntentMailSenderErrorHandler extends SenderErrorHandler {
 
     private static final String ACCOUNT_TYPE = "com.google";
 
-    public IntentMailSenderErrorHandler(Context context, SenderListener senderListener, Map<String, Object> parameters, SenderPreferences preferences) {
-        super(context, senderListener, parameters, preferences);
+    public IntentMailSenderErrorHandler(Sender sender, SenderUploadListener senderUploadListener) {
+        super(sender, senderUploadListener);
     }
 
     @Override
-    protected void onActivityResult(SenderTask recoveredTask, int requestCode, int resultCode, Intent data) {
-        IntentMailSenderPreferences preferences = (IntentMailSenderPreferences) getSenderPreferences();
+    protected void onUploadTaskActivityResult(SenderUploadTask recoveredTask, int requestCode, int resultCode, Intent data) {
+        IntentMailSenderPreferences preferences = (IntentMailSenderPreferences) getPreferences();
 
         // the user has picked one of the multiple available google accounts to use...
         if(requestCode == REQUEST_ACCOUNT_PICKER) {
@@ -56,40 +52,37 @@ public class IntentMailSenderErrorHandler extends SenderErrorHandler {
     }
 
     @Override
-    public void tryToRecover(SenderTask failedSendingTask) {
-        super.tryToRecover(failedSendingTask);
+    protected int tryToRecover(SenderUploadTask failedUploadTask, Throwable error) {
 
-        Throwable e = failedSendingTask.getError();
-        IntentMailSenderPreferences preferences = (IntentMailSenderPreferences) getSenderPreferences();
-        SendingRequest request = failedSendingTask.getSendingRequest();
+        IntentMailSenderPreferences preferences = (IntentMailSenderPreferences) getPreferences();
 
         // in this case pick an account from those registered in the Android device
-        if(e instanceof MailPreferredAccountNotSetException) {
+        if(error instanceof MailPreferredAccountNotSetException) {
             Account[] accounts = AccountManager.get(getContext()).getAccountsByType(ACCOUNT_TYPE);
             if(accounts.length <= 0) {
                 // no accounts in the device, so just fail
-                doNotRecover(failedSendingTask);
-                return;
+                return RECOVERY_NOK;
             }
 
             if(accounts.length <= 1) {
                 // one account in the device, so automatically pick it
                 preferences.setPreferredAccountName(accounts[0].name);
-                doRecover(failedSendingTask);
-                return;
+                return RECOVERY_OK;
             }
 
             // multiple accounts in the device - ask the user to pick one
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                startActivityForResult(request.getId(), REQUEST_ACCOUNT_PICKER, AccountManager.newChooseAccountIntent(null, null,
+                startActivityForResult(failedUploadTask, REQUEST_ACCOUNT_PICKER, AccountManager.newChooseAccountIntent(null, null,
                         new String[]{ACCOUNT_TYPE}, null, null, null, null));
             } else {
-                startActivityForResult(request.getId(), REQUEST_ACCOUNT_PICKER, AccountManager.newChooseAccountIntent(null, null,
+                startActivityForResult(failedUploadTask, REQUEST_ACCOUNT_PICKER, AccountManager.newChooseAccountIntent(null, null,
                         new String[]{ACCOUNT_TYPE}, true, null, null, null, null));
             }
-            return;
+
+            return RECOVERY_DONOTHING;
         }
 
-        doNotRecover(failedSendingTask);
+        return RECOVERY_NOK;
     }
+
 }

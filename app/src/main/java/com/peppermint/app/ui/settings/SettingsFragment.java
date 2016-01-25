@@ -19,12 +19,12 @@ import android.widget.Toast;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.SenderServiceManager;
+import com.peppermint.app.sending.SenderPreferences;
+import com.peppermint.app.sending.api.GoogleApi;
 import com.peppermint.app.sending.mail.MailSenderPreferences;
-import com.peppermint.app.sending.mail.gmail.GmailSender;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.views.simple.CustomToast;
-import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
@@ -43,7 +43,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
     private CustomPreference mPrefGmailAccount;
     private CustomActionBarActivity mActivity;
-    private PepperMintPreferences mPreferences;
+    private SenderPreferences mPreferences;
 
     public SettingsFragment() {
     }
@@ -53,7 +53,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         mActivity = (CustomActionBarActivity) activity;
-        mPreferences = new PepperMintPreferences(mActivity);
+        mPreferences = new SenderPreferences(mActivity);
     }
 
     @Override
@@ -61,16 +61,16 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.pref_global);
 
-        String preferredAccountName = mPreferences.getGmailPreferences().getPreferredAccountName();
+        String preferredAccountName = mPreferences.getGmailSenderPreferences().getPreferredAccountName();
         mPrefGmailAccount = (CustomPreference) findPreference(MailSenderPreferences.ACCOUNT_NAME_KEY);
         mPrefGmailAccount.setContent(preferredAccountName);
         mPrefGmailAccount.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                GmailSender sender = new GmailSender(mActivity, null);
-                sender.init();
-                startActivityForResult(sender.getCredential().newChooseAccountIntent(), PREF_GMAIL_ACCOUNT_REQUEST);
-                sender.deinit();
+                String preferredAccountName = mPreferences.getGmailSenderPreferences().getPreferredAccountName();
+                GoogleApi googleApi = new GoogleApi(mActivity);
+                googleApi.setAccountName(preferredAccountName);
+                startActivityForResult(googleApi.getCredential().newChooseAccountIntent(), PREF_GMAIL_ACCOUNT_REQUEST);
                 return true;
             }
         });

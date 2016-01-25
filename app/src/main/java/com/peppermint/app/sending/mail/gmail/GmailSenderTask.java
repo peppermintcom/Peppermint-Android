@@ -1,30 +1,23 @@
 package com.peppermint.app.sending.mail.gmail;
 
-import android.util.Log;
-
 import com.google.android.gms.auth.GooglePlayServicesAvailabilityException;
 import com.google.android.gms.auth.UserRecoverableAuthException;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Draft;
 import com.google.api.services.gmail.model.Message;
 import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
-import com.peppermint.app.rest.HttpResponse;
 import com.peppermint.app.sending.Sender;
-import com.peppermint.app.sending.SenderListener;
-import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SenderTask;
+import com.peppermint.app.sending.SenderUploadListener;
+import com.peppermint.app.sending.SenderUploadTask;
+import com.peppermint.app.sending.api.GoogleApi;
 import com.peppermint.app.sending.exceptions.ElectableForQueueingException;
 import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
 import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
 import com.peppermint.app.sending.mail.MailSenderPreferences;
 import com.peppermint.app.sending.mail.MailUtils;
-import com.peppermint.app.sending.server.ServerSenderTask;
-import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.Utils;
 
 import org.json.JSONArray;
@@ -34,29 +27,24 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by Nuno Luz on 08-09-2015.
  *
  * SenderTask for emails using the Gmail API.
  */
-public class GmailSenderTask extends SenderTask {
+public class GmailSenderTask extends SenderUploadTask {
 
-    private static final String TAG = GmailSenderTask.class.getSimpleName();
-
-    public GmailSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
-        super(sender, sendingRequest, listener);
+    public GmailSenderTask(GmailSenderTask uploadTask) {
+        super(uploadTask);
     }
 
-    public GmailSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener, Map<String, Object> parameters, SenderPreferences preferences) {
-        super(sender, sendingRequest, listener, parameters, preferences);
-    }
-
-    public GmailSenderTask(GmailSenderTask sendingTask) {
-        super(sendingTask);
+    public GmailSenderTask(Sender sender, SendingRequest sendingRequest, SenderUploadListener senderUploadListener) {
+        super(sender, sendingRequest, senderUploadListener);
     }
 
     private Draft getDraftFromResponse(String response) throws JSONException {
@@ -83,25 +71,25 @@ public class GmailSenderTask extends SenderTask {
     }
 
     @Override
-    public void send() throws Throwable {
-        File file = getSendingRequest().getRecording().getValidatedFile();
-
-        if(!Utils.isInternetAvailable(getSender().getContext())) {
-            throw new NoInternetConnectionException(getSender().getContext().getString(R.string.sender_msg_no_internet));
-        }
-
+    public void execute() throws Throwable {
         // get the email account
         String preferredAccountName = ((MailSenderPreferences) getSenderPreferences()).getPreferredAccountName();
         if(preferredAccountName == null) {
             throw new MailPreferredAccountNotSetException();
         }
 
+        uploadPeppermintMessageDoChecks();
+        uploadPeppermintMessage();
+        String url = getSendingRequest().getServerShortUrl();
+
         long now = android.os.SystemClock.uptimeMillis();
 
-        String displayName = ((MailSenderPreferences) getSenderPreferences()).getFullName();
+        GoogleApi googleApi = getGoogleApi();
+        String displayName = getSenderPreferences().getFullName();
+        googleApi.setDisplayName(displayName);
+        File file = getSendingRequest().getRecording().getFile();
 
         // build the email body
-        String url = (String) getSendingRequest().getParameter(ServerSenderTask.PARAM_SHORT_URL);
         getSendingRequest().setBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template, url,
                 getSendingRequest().getRecording().getDurationMillis(),
                 getSendingRequest().getRecording().getContentType(),
@@ -110,21 +98,20 @@ public class GmailSenderTask extends SenderTask {
         try {
             Draft draft = null;
 
+            Date emailDate = new Date();
             try {
-                // custom, performance optimized code to create the draft
-                GmailAttachmentRequest request = new GmailAttachmentRequest(file, preferredAccountName, displayName, getSendingRequest().getRecipient().getVia(),
-                        getSendingRequest().getSubject(), getSendingRequest().getBody(), getSendingRequest().getRecording().getContentType(),
-                        Utils.parseTimestamp(getSendingRequest().getRegistrationTimestamp()));
-                request.setHeaderParam("Authorization", "Bearer " + ((GoogleAccountCredential) getParameter(GmailSender.PARAM_GMAIL_CREDENTIAL)).getToken());
-                request.setHeaderParam("Content-Type", "application/json; charset=UTF-8");
-                // perform request to the Gmail API endpoint
-                executeHttpRequest(request, new HttpResponse());
-                // wait for response and parse into a Gmail API Draft
-                draft = getDraftFromResponse(waitForHttpResponse());
+                emailDate = Utils.parseTimestamp(getSendingRequest().getRegistrationTimestamp());
+            } catch(ParseException e) {
+                getTrackerManager().logException(e);
+            }
 
-                Log.d(TAG, "Finished creating draft in " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
+            try {
+                GoogleApi.DraftResponse response = googleApi.createGmailDraft(getSendingRequest().getSubject(), getSendingRequest().getBody(), getSendingRequest().getRecipient().getVia(),
+                        getSendingRequest().getRecording().getContentType(), emailDate, file);
+                draft = (Draft) response.getBody();
+
+                getTrackerManager().log("Gmail # Created Draft at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
             } catch (InterruptedIOException e) {
-                Log.d(TAG, "Interrupted creating draft! Likely user cancelled.", e);
                 if(!isCancelled()) {
                     throw e;
                 }
@@ -133,12 +120,12 @@ public class GmailSenderTask extends SenderTask {
             if(!isCancelled()) {
                 try {
                     // send the draft
-                    ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().drafts().send("me", draft).execute();
+                    googleApi.sendGmailDraft(draft);
+                    getTrackerManager().log("Gmail # Sent Draft at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
                 } catch (InterruptedIOException e) {
-                    Log.d(TAG, "Interrupted sending draft! Likely user cancelled.", e);
                     if(!isCancelled()) {
                         // try to delete the draft if something goes wrong
-                        ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().drafts().delete("me", draft.getId());
+                        googleApi.deleteGmailDraft(draft);
                         throw e;
                     }
                 }
@@ -146,10 +133,11 @@ public class GmailSenderTask extends SenderTask {
 
             if(isCancelled()) {
                 // just delete the draft if cancelled
-                ((Gmail) getParameter(GmailSender.PARAM_GMAIL_SERVICE)).users().drafts().delete("me", draft.getId());
+                googleApi.deleteGmailDraft(draft);
+                getTrackerManager().log("Gmail # Delete draft after cancel.");
             }
 
-            Log.d(TAG, "Finished sending email in " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
+            getTrackerManager().log("Gmail # Finished at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
 
         } catch(GoogleJsonResponseException e) {
             // when the Google JSON payload contains an error message
@@ -161,7 +149,6 @@ public class GmailSenderTask extends SenderTask {
             // recover by requesting permission to access the api
             throw e;
         } catch(IOException e) {
-            TrackerManager.getInstance(getContext().getApplicationContext()).log("Throwing NoInternetConnectionException: " + e);
             throw new NoInternetConnectionException(getSender().getContext().getString(R.string.sender_msg_no_internet), e);
         }
     }

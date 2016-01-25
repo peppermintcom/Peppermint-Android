@@ -20,8 +20,8 @@ import java.util.Map;
  */
 public class HttpResponse implements Parcelable {
 
-	private Map<String, String> mHeaderParams = new HashMap<>();
-	private Serializable mBody;
+    private Map<String, String> mHeaderParams = new HashMap<>();
+	private Object mBody;
 	private int mCode;
 	private String mMessage;
 	private Throwable mException;
@@ -38,7 +38,7 @@ public class HttpResponse implements Parcelable {
 		this.mHeaderParams.putAll(resp.mHeaderParams);
 	}
 
-	public HttpResponse(String body) {
+	public HttpResponse(Object body) {
 		this.mBody = body;
 	}
 
@@ -49,6 +49,10 @@ public class HttpResponse implements Parcelable {
 		return mBody;
 	}
 
+	protected void setBody(Object body) {
+		this.mBody = body;
+	}
+
 	/**
 	 * Reads the body data from the supplied {@link BufferedReader}.<br />
      * Stops the process if the request is cancelled.
@@ -56,7 +60,7 @@ public class HttpResponse implements Parcelable {
 	 * @param request the request
 	 * @throws IOException
 	 */
-	public void readBody(InputStream inStream, HttpRequest request) throws IOException {
+	public void readBody(InputStream inStream, HttpRequest request) throws Throwable {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(inStream));
 		StringBuilder builder = new StringBuilder();
 
@@ -134,7 +138,9 @@ public class HttpResponse implements Parcelable {
         out.writeMap(mHeaderParams);
         out.writeString(mMessage);
         out.writeSerializable(mException);
-        out.writeSerializable(mBody);
+		if(mBody != null && mBody instanceof Serializable) {
+			out.writeSerializable((Serializable) mBody);
+		}
 	}
 
 	public static final Creator<HttpResponse> CREATOR = new Creator<HttpResponse>() {

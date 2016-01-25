@@ -20,11 +20,11 @@ import android.widget.TextView;
 
 import com.peppermint.app.R;
 import com.peppermint.app.SenderServiceManager;
+import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.views.simple.CustomNoScrollListView;
 import com.peppermint.app.ui.views.simple.CustomValidatedEditText;
-import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
 
 /**
@@ -46,7 +46,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
      * @return true if authentication screen was launched; false otherwise
      */
     public static boolean startAuthentication(Activity callerActivity, int requestCode, boolean authorize) {
-        PepperMintPreferences prefs = new PepperMintPreferences(callerActivity);
+        SenderPreferences prefs = new SenderPreferences(callerActivity);
         /*String displayName = Utils.capitalizeFully(prefs.getFullName());
 
         // 1. if the display name is not valid, no need to check anything else
@@ -56,8 +56,8 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
         }*/
 
         // 2a. check if there's already a preferred account
-        if (prefs.getGmailPreferences().getPreferredAccountName() != null) {
-            TrackerManager.getInstance(callerActivity.getApplicationContext()).setUserEmail(prefs.getGmailPreferences().getPreferredAccountName());
+        if (prefs.getGmailSenderPreferences().getPreferredAccountName() != null) {
+            TrackerManager.getInstance(callerActivity.getApplicationContext()).setUserEmail(prefs.getGmailSenderPreferences().getPreferredAccountName());
 
             if(authorize) {
                 // 3a. (optional) authorize the Gmail API and all other necessary apis
@@ -71,9 +71,9 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
         // 2b. otherwise check if there's only one account and set that one as the preferred
         Account[] accounts = AccountManager.get(callerActivity).getAccountsByType("com.google");
         if (accounts.length == 1) {
-            prefs.getGmailPreferences().setPreferredAccountName(accounts[0].name);
+            prefs.getGmailSenderPreferences().setPreferredAccountName(accounts[0].name);
 
-            TrackerManager.getInstance(callerActivity.getApplicationContext()).setUserEmail(prefs.getGmailPreferences().getPreferredAccountName());
+            TrackerManager.getInstance(callerActivity.getApplicationContext()).setUserEmail(prefs.getGmailSenderPreferences().getPreferredAccountName());
 
             if(authorize) {
                 // 3b. (optional) authorize the Gmail API and all other necessary apis
@@ -104,7 +104,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
     private CustomNoScrollListView mListView;
     private Account[] mAccounts;
     private String mSelectedAccount;
-    private PepperMintPreferences mPreferences;
+    private SenderPreferences mPreferences;
     private CustomActionBarActivity mActivity;
     private boolean mDontSetNameFromPrefs = false;
 
@@ -148,7 +148,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
     public void onAttach(Activity context) {
         super.onAttach(context);
         mActivity = (CustomActionBarActivity) context;
-        mPreferences = new PepperMintPreferences(context);
+        mPreferences = new SenderPreferences(context);
     }
 
     @Override
@@ -351,7 +351,7 @@ public class AuthFragment extends Fragment implements View.OnClickListener, Adap
 
             mPreferences.setFirstName(Utils.capitalizeFully(mTxtFirstName.getText().toString()));
             mPreferences.setLastName(Utils.capitalizeFully(mTxtLastName.getText().toString()));
-            mPreferences.getGmailPreferences().setPreferredAccountName(mAccounts[mListView.getCheckedItemPosition()].name);
+            mPreferences.getGmailSenderPreferences().setPreferredAccountName(mAccounts[mListView.getCheckedItemPosition()].name);
 
             mActivity.setResult(Activity.RESULT_OK);
             mActivity.finish();

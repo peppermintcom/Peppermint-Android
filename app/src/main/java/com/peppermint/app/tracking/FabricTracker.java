@@ -65,8 +65,35 @@ public class FabricTracker extends TrackerApi {
     }
 
     @Override
-    public void log(String log) {
-        Crashlytics.log(log);
+    public void log(String log, Throwable t) {
+        if(t == null) {
+            Crashlytics.log(log);
+            return;
+        }
+
+        try {
+            StringBuilder writer = new StringBuilder();
+            writer.append(log + "\n");
+            for(boolean e = true; t != null; t = t.getCause()) {
+                String message = t.getLocalizedMessage();
+                message = message == null ? "" : message.replaceAll("(\r\n|\n|\f)", " ");
+                String causedBy = e ? "" : "Caused by: ";
+                writer.append(causedBy + t.getClass().getName() + ": " + message + "\n");
+                e = false;
+                StackTraceElement[] arr$ = t.getStackTrace();
+                int len$ = arr$.length;
+
+                for(int i$ = 0; i$ < len$; ++i$) {
+                    StackTraceElement element = arr$[i$];
+                    writer.append("\tat " + element.toString() + "\n");
+                }
+            }
+
+            Crashlytics.log(writer.toString());
+        } catch (Exception ex) {
+            Crashlytics.log(log);
+            Crashlytics.logException(ex);
+        }
     }
 
     @Override

@@ -30,11 +30,11 @@ import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
+import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.ui.views.CustomActionBarView;
 import com.peppermint.app.ui.views.NavigationItem;
 import com.peppermint.app.ui.views.NavigationListAdapter;
 import com.peppermint.app.utils.AnimatorBuilder;
-import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
 
 import java.util.HashMap;
@@ -61,7 +61,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity implemen
     private ListView mLstDrawer;
     private ImageView mImgUserAvatar;
     private TextView mTxtUsername;
-    protected PepperMintPreferences mPreferences;
+    protected SenderPreferences mPreferences;
 
     // Overlay
     private AnimatorBuilder mAnimatorBuilder;
@@ -132,7 +132,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity implemen
             }
         });
 
-        mPreferences = new PepperMintPreferences(this);
+        mPreferences = new SenderPreferences(this);
         PeppermintApp app = (PeppermintApp) getApplication();
 
         mLytOverlay = (FrameLayout) findViewById(R.id.lytOverlay);
@@ -284,7 +284,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity implemen
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if(key.equals(PepperMintPreferences.FIRST_NAME_KEY) || key.equals(PepperMintPreferences.LAST_NAME_KEY)) {
+        if(key.equals(SenderPreferences.FIRST_NAME_KEY) || key.equals(SenderPreferences.LAST_NAME_KEY)) {
             refreshProfileData();
         }
     }
@@ -300,7 +300,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity implemen
         if(Utils.isValidName(data[0])) {
             mTxtUsername.setText(data[0]);
         } else {
-            mTxtUsername.setText(mPreferences.getGmailPreferences().getPreferredAccountName());
+            mTxtUsername.setText(mPreferences.getGmailSenderPreferences().getPreferredAccountName());
         }
     }
 

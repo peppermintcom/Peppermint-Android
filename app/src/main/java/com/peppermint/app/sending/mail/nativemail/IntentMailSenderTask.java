@@ -6,59 +6,53 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.support.v4.content.FileProvider;
 import android.text.Html;
-import android.util.Log;
 
 import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.Sender;
-import com.peppermint.app.sending.SenderListener;
-import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SenderTask;
+import com.peppermint.app.sending.SenderUploadListener;
+import com.peppermint.app.sending.SenderUploadTask;
 import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
 import com.peppermint.app.sending.mail.MailSenderPreferences;
 import com.peppermint.app.sending.mail.MailUtils;
-import com.peppermint.app.sending.server.ServerSenderTask;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by Nuno Luz on 02-10-2015.
  *
  * SenderTask that launches a native app to send the audio/video recording through email.
  */
-public class IntentMailSenderTask extends SenderTask {
+public class IntentMailSenderTask extends SenderUploadTask {
 
-    public IntentMailSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
-        super(sender, sendingRequest, listener);
+    public IntentMailSenderTask(IntentMailSenderTask uploadTask) {
+        super(uploadTask);
     }
 
-    public IntentMailSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener, Map<String, Object> parameters, SenderPreferences preferences) {
-        super(sender, sendingRequest, listener, parameters, preferences);
-    }
-
-    public IntentMailSenderTask(IntentMailSenderTask sendingTask) {
-        super(sendingTask);
+    public IntentMailSenderTask(Sender sender, SendingRequest sendingRequest, SenderUploadListener senderUploadListener) {
+        super(sender, sendingRequest, senderUploadListener);
     }
 
     @Override
-    protected void send() throws Throwable {
+    protected void execute() throws Throwable {
         String preferredAccountName = ((MailSenderPreferences) getSenderPreferences()).getPreferredAccountName();
         if(preferredAccountName == null) {
             throw new MailPreferredAccountNotSetException();
         }
 
+        uploadPeppermintMessageDoChecks();
+        uploadPeppermintMessage();
+        String url = getSendingRequest().getServerShortUrl();
         String displayName = ((MailSenderPreferences) getSenderPreferences()).getFullName();
 
         // build the email body
-        String url = (String) getSendingRequest().getParameter(ServerSenderTask.PARAM_SHORT_URL);
         getSendingRequest().setBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_simple, url,
                 getSendingRequest().getRecording().getDurationMillis(),
                 getSendingRequest().getRecording().getContentType(),
                 displayName, preferredAccountName, false));
 
-        File file = getSendingRequest().getRecording().getValidatedFile();
+        File file = getSendingRequest().getRecording().getFile();
 
         Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + getSendingRequest().getRecipient().getVia()));
         i.putExtra(Intent.EXTRA_SUBJECT, getSendingRequest().getSubject());

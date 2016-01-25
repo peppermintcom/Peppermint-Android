@@ -3,32 +3,25 @@ package com.peppermint.app.sending.mail.gmail;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.auth.UserRecoverableAuthException;
-import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.peppermint.app.R;
+import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderErrorHandler;
-import com.peppermint.app.sending.SenderListener;
-import com.peppermint.app.sending.SenderPreferences;
+import com.peppermint.app.sending.SenderSupportTask;
 import com.peppermint.app.sending.SenderTask;
+import com.peppermint.app.sending.SenderUploadListener;
+import com.peppermint.app.sending.SenderUploadTask;
+import com.peppermint.app.sending.api.GoogleApi;
+import com.peppermint.app.sending.api.exceptions.GoogleApiInvalidAccessTokenException;
 import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
-import com.peppermint.app.sending.server.InvalidAccessTokenException;
-import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
-
-import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
@@ -42,142 +35,149 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
     private static final int REQUEST_AUTHORIZATION = 998;
     private static final int REQUEST_ACCOUNT_PICKER = 999;
 
-    // FIXME try to use the managers' executor!
-    private ThreadPoolExecutor mExecutor;
-
-    private class GetTokenAsyncTask extends AsyncTask<GoogleAccountCredential, Void, Throwable> {
-        @Override
-        protected Throwable doInBackground(GoogleAccountCredential... params) {
-            try {
-                GoogleAuthUtil.clearToken(getContext(), params[0].getToken());
-                return null;
-            } catch(Throwable e) {
-                return e;
-            }
-        }
+    public GmailSenderErrorHandler(Sender sender, SenderUploadListener senderUploadListener) {
+        super(sender, senderUploadListener);
     }
 
-    public GmailSenderErrorHandler(Context context, SenderListener senderListener, Map<String, Object> parameters, SenderPreferences preferences) {
-        super(context, senderListener, parameters, preferences);
-
-        this.mExecutor = new ThreadPoolExecutor(1, 1,
-                60, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<Runnable>());
-    }
-
-    @Override
-    public void deinit() {
-        super.deinit();
-        mExecutor.shutdown();
-    }
-
-    private void tryToGetNameFromApi() {
-        PepperMintPreferences prefs = new PepperMintPreferences(getContext());
-        if(!Utils.isValidName(prefs.getFullName())) {
-            Log.d(TAG, "User name is not valid (" + prefs.getFullName() + ") trying Google API...");
-            GmailDisplayNameTask task = new GmailDisplayNameTask(getContext(), getParameters());
-            task.executeOnExecutor(mExecutor);
+    private void tryToGetNameFromApi(SendingRequest request, GmailSenderPreferences preferences) {
+        if(!Utils.isValidName(preferences.getFullName())) {
+            Log.d(TAG, "User name is not valid (" + preferences.getFullName() + ") trying Google API...");
+            GoogleUserInfoSupportTask task = new GoogleUserInfoSupportTask(getSender(), request, null);
+            launchSupportTask(task);
         }
     }
 
     @Override
-    protected void onActivityResult(SenderTask recoveredTask, int requestCode, int resultCode, Intent data) {
-        GoogleAccountCredential credential = (GoogleAccountCredential) getParameter(GmailSender.PARAM_GMAIL_CREDENTIAL);
-        GmailSenderPreferences preferences = (GmailSenderPreferences) getSenderPreferences();
+    protected void onUploadTaskActivityResult(SenderUploadTask recoveringTask, int requestCode, int resultCode, Intent data) {
+        GoogleApi googleApi = getGoogleApi();
+        GmailSenderPreferences preferences = (GmailSenderPreferences) getPreferences();
 
         // the user has picked one of the multiple available google accounts to use...
         if(requestCode == REQUEST_ACCOUNT_PICKER) {
             if (resultCode == Activity.RESULT_OK && data != null && data.getExtras() != null) {
                 String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
                 if (accountName != null) {
-                    credential.setSelectedAccountName(accountName);
+                    googleApi.getCredential().setSelectedAccountName(accountName);
                     preferences.setPreferredAccountName(accountName);
                 }
             }
 
             if(preferences.getPreferredAccountName() == null) {
-                doNotRecover(recoveredTask);
+                doNotRecover(recoveringTask);
             } else {
-                doRecover(recoveredTask);
+                doRecover(recoveringTask);
             }
             return;
         }
 
-        // the user has given (or not) permission to use the Gmail API with his/her account
-        if(requestCode == REQUEST_AUTHORIZATION){
-            if(resultCode == Activity.RESULT_OK) {
-                tryToGetNameFromApi();
-                doRecover(recoveredTask);
+        if(requestCode == REQUEST_AUTHORIZATION) {
+            if(handleAuthorizationActivityResult(recoveringTask, resultCode)) {
+                doRecover(recoveringTask);
                 return;
-            } else if(resultCode == Activity.RESULT_CANCELED) {
-                preferences.setEnabled(false);
-                Toast.makeText(getContext(), R.string.sender_msg_cancelled_gmail_api, Toast.LENGTH_LONG).show();
             }
         }
 
-        doNotRecover(recoveredTask);
+        doNotRecover(recoveringTask);
     }
 
     @Override
-    public void tryToRecover(SenderTask failedSendingTask) {
-        super.tryToRecover(failedSendingTask);
+    protected void onSupportTaskActivityResult(SenderSupportTask supportTask, SenderUploadTask recoveringTask, int requestCode, int resultCode, Intent data) {
 
-        Throwable e = failedSendingTask.getError();
-        GoogleAccountCredential credential = (GoogleAccountCredential) getParameter(GmailSender.PARAM_GMAIL_CREDENTIAL);
-        GmailSenderPreferences preferences = (GmailSenderPreferences) getSenderPreferences();
+        if(requestCode == REQUEST_AUTHORIZATION) {
+            if(handleAuthorizationActivityResult(supportTask, resultCode) && recoveringTask != null) {
+                doRecover(recoveringTask);
+                return;
+            }
+        }
+
+        if(recoveringTask != null) {
+            doNotRecover(recoveringTask);
+        }
+    }
+
+    private boolean handleAuthorizationActivityResult(SenderTask recoveringTask, int resultCode) {
+        // the user has given (or not) permission to use the Gmail API with his/her account
+
+        if(resultCode == Activity.RESULT_OK) {
+            tryToGetNameFromApi(recoveringTask.getSendingRequest(), (GmailSenderPreferences) getPreferences());
+            return true;
+        }
+
+        if(resultCode == Activity.RESULT_CANCELED) {
+            getPreferences().setEnabled(false);
+            Toast.makeText(getContext(), R.string.sender_msg_cancelled_gmail_api, Toast.LENGTH_LONG).show();
+        }
+
+        return false;
+    }
+
+    @Override
+    protected int tryToRecover(SenderUploadTask failedUploadTask, Throwable error) {
+
+        GoogleApi googleApi = getGoogleApi();
+        GmailSenderPreferences preferences = (GmailSenderPreferences) getPreferences();
 
         // in this case just ask for permissions
-        if(e instanceof UserRecoverableAuthIOException || e instanceof UserRecoverableAuthException) {
-            Intent intent = e instanceof UserRecoverableAuthIOException ? ((UserRecoverableAuthIOException) e).getIntent() : ((UserRecoverableAuthException) e).getIntent();
-            startActivityForResult(failedSendingTask.getId(), REQUEST_AUTHORIZATION, intent);
-            return;
+        if(error instanceof UserRecoverableAuthIOException || error instanceof UserRecoverableAuthException) {
+            Intent intent = error instanceof UserRecoverableAuthIOException ? ((UserRecoverableAuthIOException) error).getIntent() : ((UserRecoverableAuthException) error).getIntent();
+            startActivityForResult(failedUploadTask, REQUEST_AUTHORIZATION, intent);
+            return RECOVERY_DONOTHING;
         }
 
         // in this case pick an account from those registered in the Android device
-        if(e instanceof MailPreferredAccountNotSetException) {
+        if(error instanceof MailPreferredAccountNotSetException) {
             Account[] accounts = AccountManager.get(getContext()).getAccountsByType("com.google");
             if(accounts.length <= 0) {
                 // no accounts in the device, so just fail
-                doNotRecover(failedSendingTask);
-                return;
+                doNotRecover(failedUploadTask);
+                return RECOVERY_NOK;
             }
 
             if(accounts.length <= 1) {
                 // one account in the device, so automatically pick it
-                credential.setSelectedAccountName(accounts[0].name);
+                googleApi.getCredential().setSelectedAccountName(accounts[0].name);
                 preferences.setPreferredAccountName(accounts[0].name);
-                doRecover(failedSendingTask);
-                return;
+                doRecover(failedUploadTask);
+                return RECOVERY_OK;
             }
 
             // multiple accounts in the device - ask the user to pick one
-            startActivityForResult(failedSendingTask.getId(), REQUEST_ACCOUNT_PICKER, credential.newChooseAccountIntent());
-            return;
+            startActivityForResult(failedUploadTask, REQUEST_ACCOUNT_PICKER, googleApi.getCredential().newChooseAccountIntent());
+            return RECOVERY_DONOTHING;
         }
 
         // in this case, try to ask for another access token
-        if(e instanceof GoogleJsonResponseException || e instanceof GmailResponseException || e instanceof InvalidAccessTokenException) {
-            try {
-                Throwable obj = new GetTokenAsyncTask().execute(credential).get();
-                if(obj == null) {
-                    tryToGetNameFromApi();
-                    doRecover(failedSendingTask);
-                } else if(obj instanceof UserRecoverableAuthIOException || obj instanceof UserRecoverableAuthException) {
-                    Intent intent = obj instanceof UserRecoverableAuthIOException ? ((UserRecoverableAuthIOException) obj).getIntent() : ((UserRecoverableAuthException) obj).getIntent();
-                    startActivityForResult(failedSendingTask.getId(), REQUEST_AUTHORIZATION, intent);
-                } else {
-                    throw obj;
-                }
-            } catch (Throwable ex) {
-                Log.e(TAG, "Error invalidating Gmail API token!", ex);
-                TrackerManager.getInstance(getContext().getApplicationContext()).logException(ex);
-                doNotRecover(failedSendingTask);
-            }
-            return;
+        if(error instanceof GoogleJsonResponseException || error instanceof GoogleApiInvalidAccessTokenException) {
+            authorize(failedUploadTask.getSendingRequest());
+            return RECOVERY_DONOTHING;
         }
 
         // NoInternetConnectionException might include small connection issues
         // even if there's internet connection, so allow the retries
-        checkRetries(failedSendingTask);
+        return RECOVERY_RETRY;
+    }
+
+    @Override
+    protected int supportFinishedOk(SenderSupportTask supportTask) {
+        if(supportTask instanceof GoogleAuthorizationSupportTask) {
+            tryToGetNameFromApi(supportTask.getSendingRequest(), (GmailSenderPreferences) getPreferences());
+        }
+        return RECOVERY_OK;
+    }
+
+    @Override
+    protected int tryToRecoverSupport(SenderSupportTask supportTask, Throwable error) {
+        if(error instanceof UserRecoverableAuthIOException || error instanceof UserRecoverableAuthException) {
+            Intent intent = error instanceof UserRecoverableAuthIOException ? ((UserRecoverableAuthIOException) error).getIntent() : ((UserRecoverableAuthException) error).getIntent();
+            startActivityForResult(supportTask, REQUEST_AUTHORIZATION, intent);
+            return RECOVERY_DONOTHING;
+        }
+        return RECOVERY_RETRY;
+    }
+
+    @Override
+    public void authorize(SendingRequest sendingRequest) {
+        GoogleAuthorizationSupportTask task = new GoogleAuthorizationSupportTask(getSender(), sendingRequest, null);
+        launchSupportTask(task);
     }
 }

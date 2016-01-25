@@ -10,7 +10,6 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.peppermint.app.data.Recipient;
@@ -18,7 +17,7 @@ import com.peppermint.app.data.Recording;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.SenderEvent;
 import com.peppermint.app.sending.SenderManager;
-import com.peppermint.app.utils.PepperMintPreferences;
+import com.peppermint.app.sending.SenderPreferences;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,8 +29,6 @@ import de.greenrobot.event.EventBus;
  * Service that allows the background_gradient sending of files through different methods.
  */
 public class SenderService extends Service {
-
-    private static final String TAG = SenderService.class.getSimpleName();
 
     /**
          Intent extra key for the {@link Recording} containing the recording information and the file to send.
@@ -113,7 +110,7 @@ public class SenderService extends Service {
 
     private static final int FIRST_AUDIO_MESSAGE_NOTIFICATION_ID = 1;
 
-    private PepperMintPreferences mPreferences;
+    private SenderPreferences mPreferences;
     private EventBus mEventBus;
     private SenderManager mSenderManager;
 
@@ -167,7 +164,7 @@ public class SenderService extends Service {
 
         mEventBus.register(this);
 
-        mPreferences = new PepperMintPreferences(this);
+        mPreferences = new SenderPreferences(this);
 
         Map<String, Object> senderParameters = new HashMap<>();
         // empty parameters
@@ -179,8 +176,6 @@ public class SenderService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand: " + intent);
-
         if(intent != null) {
             if(intent.hasExtra(INTENT_DATA_RECORDING) && intent.hasExtra(INTENT_DATA_RECIPIENT)) {
                 Recording recording = (Recording) intent.getSerializableExtra(INTENT_DATA_RECORDING);

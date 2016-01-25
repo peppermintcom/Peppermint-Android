@@ -57,7 +57,7 @@ public class GoogleAnalyticsTracker extends TrackerApi {
     }
 
     @Override
-    public void log(String log) {
+    public void log(String log, Throwable t) {
         /* nothing to do here */
     }
 

@@ -94,7 +94,7 @@ public class FlurryTracker extends TrackerApi {
     }
 
     @Override
-    public void log(String log) {
+    public void log(String log, Throwable t) {
         /* disabled; not supported */
     }
 

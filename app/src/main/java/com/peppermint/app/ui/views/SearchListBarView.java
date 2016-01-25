@@ -11,7 +11,6 @@ import android.os.Parcelable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -91,7 +90,6 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
             /*mHandler.removeCallbacks(mSearchRunnable);
             mHandler.postDelayed(mSearchRunnable, 10);*/
             if(_startVia < 0 && _endVia < 0) {
-                Log.d(TAG, "Text = " + s.toString());
                 mSearchRunnable.run();
             } else {
                 if(_startVia >= 0) {
@@ -113,7 +111,6 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
 
             // go back to recent/fav contacts if the search field was emptied
             if(searchText == null) {
-                Log.d(TAG, "innerSetSelectedItemPosition1 - " + mSelectedItemPositionBeforeSearch);
                 innerSetSelectedItemPosition(mSelectedItemPositionBeforeSearch);
             } else {
                 // otherwise, if the current pos doesn't allow searching - move to next
@@ -127,7 +124,6 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
                         }
                     }
                     if(searchableItemPos >= 0) {
-                        Log.d(TAG, "innerSetSelectedItemPosition2 - " + searchableItemPos);
                         innerSetSelectedItemPosition(searchableItemPos);
                     }
                 }

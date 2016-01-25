@@ -47,6 +47,7 @@ import com.peppermint.app.SenderServiceManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientType;
 import com.peppermint.app.data.Recording;
+import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
@@ -63,7 +64,6 @@ import com.peppermint.app.ui.views.simple.CustomVisibilityListView;
 import com.peppermint.app.utils.AnimatorBuilder;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.NoMicDataIOException;
-import com.peppermint.app.utils.PepperMintPreferences;
 import com.peppermint.app.utils.Utils;
 
 import java.io.InterruptedIOException;
@@ -104,7 +104,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private static final int FIXED_AVATAR_ANIMATION_INTERVAL_MS = 7500;
     private static final int VARIABLE_AVATAR_ANIMATION_INTERVAL_MS = 7500;
 
-    private PepperMintPreferences mPreferences;
+    private SenderPreferences mPreferences;
     private CustomActionBarActivity mActivity;
     private AnimatorBuilder mAnimatorBuilder;
     private RecordingOverlayView mRecordingViewOverlay;
@@ -429,7 +429,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         super.onAttach(activity);
 
         mActivity = (CustomActionBarActivity) activity;
-        mPreferences = new PepperMintPreferences(activity);
+        mPreferences = new SenderPreferences(activity);
         mSenderServiceManager = new SenderServiceManager(activity);
 
         mRecordManager = new RecordServiceManager(activity);
@@ -711,7 +711,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
                 // if not, add the contact
                 if(!alreadyHasEmail) {
-                    Bundle bundle = NewRecipientFragment.insertRecipientContact(mActivity, 0, name, null, mail, null, mPreferences.getGmailPreferences().getPreferredAccountName());
+                    Bundle bundle = NewRecipientFragment.insertRecipientContact(mActivity, 0, name, null, mail, null, mPreferences.getGmailSenderPreferences().getPreferredAccountName());
                     // will fail if there's no name or if the email is invalid
                     if(!bundle.containsKey(NewRecipientFragment.KEY_ERROR)) {
                         alreadyHasEmail = true;

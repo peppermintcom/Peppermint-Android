@@ -32,6 +32,8 @@ public class SendingRequest {
         sendingRequest.setId(UUID.fromString(cursor.getString(cursor.getColumnIndex("sending_request_uuid"))));
         sendingRequest.setSubject(cursor.getString(cursor.getColumnIndex("subject")));
         sendingRequest.setBody(cursor.getString(cursor.getColumnIndex("body")));
+        sendingRequest.setServerShortUrl(cursor.getString(cursor.getColumnIndex("short_url")));
+        sendingRequest.setServerCanonicalUrl(cursor.getString(cursor.getColumnIndex("canonical_url")));
         if(db != null) {
             sendingRequest.setRecipient(Recipient.get(db, cursor.getLong(cursor.getColumnIndex("recipient_id"))));
             sendingRequest.setRecording(Recording.get(db, cursor.getLong(cursor.getColumnIndex("recording_id"))));
@@ -60,6 +62,8 @@ public class SendingRequest {
         cv.put("recipient_id", sendingRequest.getRecipient().getId());
         cv.put("registration_ts", sendingRequest.getRegistrationTimestamp());
         cv.put("sent", sendingRequest.isSent() ? 1 : 0);
+        cv.put("short_url", sendingRequest.getServerShortUrl());
+        cv.put("canonical_url", sendingRequest.getServerCanonicalUrl());
 
         long id = db.insert("tbl_sending_request", null, cv);
         if(id < 0) {
@@ -85,6 +89,8 @@ public class SendingRequest {
         cv.put("body", sendingRequest.getBody());
         cv.put("recording_id", sendingRequest.getRecording().getId());
         cv.put("recipient_id", sendingRequest.getRecipient().getId());
+        cv.put("short_url", sendingRequest.getServerShortUrl());
+        cv.put("canonical_url", sendingRequest.getServerCanonicalUrl());
         cv.put("sent", sendingRequest.isSent() ? 1 : 0);
 
         long id = db.update("tbl_sending_request", cv, "sending_request_uuid = ?", new String[]{sendingRequest.getId().toString()});
@@ -190,6 +196,8 @@ public class SendingRequest {
     private String mRegistrationTimestamp = Utils.getCurrentTimestamp();
     private boolean mSent = false;
 
+    private String mServerCanonicalUrl, mServerShortUrl;
+
     // extra parameters about the sending request that can be stored by/feed to senders
     private Map<String, Object> mParameters = new HashMap<>();
 
@@ -283,5 +291,21 @@ public class SendingRequest {
     public SendingRequest setParameter(String key, Object value) {
         mParameters.put(key, value);
         return this;
+    }
+
+    public String getServerShortUrl() {
+        return mServerShortUrl;
+    }
+
+    public void setServerShortUrl(String mServerShortUrl) {
+        this.mServerShortUrl = mServerShortUrl;
+    }
+
+    public String getServerCanonicalUrl() {
+        return mServerCanonicalUrl;
+    }
+
+    public void setServerCanonicalUrl(String mServerCanonicalUrl) {
+        this.mServerCanonicalUrl = mServerCanonicalUrl;
     }
 }

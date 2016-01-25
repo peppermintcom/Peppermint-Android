@@ -11,12 +11,8 @@ import android.telephony.SmsManager;
 import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.Sender;
-import com.peppermint.app.sending.SenderListener;
-import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SenderTask;
-import com.peppermint.app.sending.server.ServerSenderTask;
-
-import java.util.Map;
+import com.peppermint.app.sending.SenderUploadListener;
+import com.peppermint.app.sending.SenderUploadTask;
 
 /**
  * Created by Nuno Luz on 02-10-2015.
@@ -24,7 +20,7 @@ import java.util.Map;
  * SenderTask for SMS/text messages using the native Android API.
  * This is not thread-safe! An instance should only be used by a single thread.
  */
-public class SMSSenderTask extends SenderTask {
+public class SMSSenderTask extends SenderUploadTask {
 
     private static final long SMS_REQUEST_TIMEOUT = 30000;
     private static final String SMS_SENT = "com.peppermint.app.SMS_SENT";
@@ -56,26 +52,26 @@ public class SMSSenderTask extends SenderTask {
     private boolean mSent = false;
     private SMSNotSentException mException;
 
-    public SMSSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
-        super(sender, sendingRequest, listener);
+    public SMSSenderTask(SMSSenderTask uploadTask) {
+        super(uploadTask);
     }
 
-    public SMSSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener, Map<String, Object> parameters, SenderPreferences preferences) {
-        super(sender, sendingRequest, listener, parameters, preferences);
-    }
-
-    public SMSSenderTask(SMSSenderTask sendingTask) {
-        super(sendingTask);
+    public SMSSenderTask(Sender sender, SendingRequest sendingRequest, SenderUploadListener senderUploadListener) {
+        super(sender, sendingRequest, senderUploadListener);
     }
 
     @Override
-    protected void send() throws Throwable {
+    protected void execute() throws Throwable {
+
+        uploadPeppermintMessageDoChecks();
+        uploadPeppermintMessage();
+        String url = getSendingRequest().getServerShortUrl();
+
         mSent = false;
         mRunner = Thread.currentThread();
         getSender().getContext().registerReceiver(mReceiver, mIntentFilter);
 
         try {
-            String url = (String) getSendingRequest().getParameter(ServerSenderTask.PARAM_SHORT_URL);
             getSendingRequest().setBody(String.format(getSender().getContext().getString(R.string.sender_default_sms_body), url));
 
             Intent sentIntent = new Intent(SMS_SENT);

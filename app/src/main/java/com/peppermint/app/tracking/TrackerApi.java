@@ -80,7 +80,11 @@ public abstract class TrackerApi {
      * Log entry.<br />
      * Not all registered APIs need to support this.
      */
-    public abstract void log(String log);
+    public void log(String log) {
+        log(log, null);
+    }
+
+    public abstract void log(String log, Throwable t);
 
     // PARAMETERS
 

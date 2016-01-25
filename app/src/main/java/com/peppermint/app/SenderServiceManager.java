@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
-import android.util.Log;
 
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
@@ -69,8 +68,6 @@ public class SenderServiceManager {
         void onSendQueued(SenderEvent event);
     }
 
-    private static final String TAG = SenderServiceManager.class.getSimpleName();
-
     private Context mContext;
     private SenderService.SendRecordServiceBinder mService;
     private Listener mListener;
@@ -118,13 +115,11 @@ public class SenderServiceManager {
             if(mListener != null) {
                 mListener.onBoundSendService();
             }
-            Log.d(TAG, "onServiceConnected");
         }
 
         public void onServiceDisconnected(ComponentName className) {
             // this is called when the connection with the service has been unexpectedly disconnected - process crashed.
             mService = null;
-            Log.d(TAG, "onServiceDisconnected");
         }
     };
 

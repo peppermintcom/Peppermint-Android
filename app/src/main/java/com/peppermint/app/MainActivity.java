@@ -133,9 +133,8 @@ public class MainActivity extends CustomActionBarActivity {
             // afterwards, request authentication
             if(!AuthFragment.startAuthentication(this, AUTHENTICATION_REQUEST, mNeedsToAuthorize)) {
                 refreshProfileData();
+                mNeedsToAuthorize = false;
             }
-
-            mNeedsToAuthorize = false;
         }
 
         /*if(mPreferences.isFirstRun()) {

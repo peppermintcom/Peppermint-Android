@@ -2,12 +2,15 @@ package com.peppermint.app.sending.mail.nativemail;
 
 import android.content.Context;
 
+import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.Sender;
-import com.peppermint.app.sending.SenderErrorHandler;
-import com.peppermint.app.sending.SenderListener;
-import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SenderTask;
+import com.peppermint.app.sending.SenderObject;
+import com.peppermint.app.sending.SenderUploadListener;
+import com.peppermint.app.sending.SenderUploadTask;
+import com.peppermint.app.tracking.TrackerManager;
+
+import java.util.Map;
 
 /**
  * Created by Nuno Luz on 08-09-2015.
@@ -16,29 +19,24 @@ import com.peppermint.app.sending.SenderTask;
  */
 public class IntentMailSender extends Sender {
 
-    private IntentMailSenderPreferences mPreferences;
-    private IntentMailSenderErrorHandler mErrorHandler;
+    public IntentMailSender(Context context, TrackerManager trackerManager, Map<String, Object> parameters, DatabaseHelper databaseHelper, SenderUploadListener senderUploadListener) {
+        super(context, trackerManager, parameters, databaseHelper, senderUploadListener);
+        construct();
+    }
 
-    public IntentMailSender(Context context, SenderListener senderListener) {
-        super(context, senderListener);
+    public IntentMailSender(SenderObject objToExtend, SenderUploadListener senderUploadListener) {
+        super(objToExtend, senderUploadListener);
+        construct();
+    }
+
+    private void construct() {
         mPreferences = new IntentMailSenderPreferences(getContext());
+        mErrorHandler = new IntentMailSenderErrorHandler(this, getSenderUploadListener());
     }
 
     @Override
-    public SenderTask newTask(SendingRequest sendingRequest) {
-        return new IntentMailSenderTask(this, sendingRequest, getSenderListener(), getParameters(), getSenderPreferences());
+    public SenderUploadTask newTask(SendingRequest sendingRequest) {
+        return new IntentMailSenderTask(this, sendingRequest, getSenderUploadListener());
     }
 
-    @Override
-    public SenderErrorHandler getErrorHandler() {
-        if(mErrorHandler == null) {
-            mErrorHandler = new IntentMailSenderErrorHandler(getContext(), getSenderListener(), getParameters(), getSenderPreferences());
-        }
-        return mErrorHandler;
-    }
-
-    @Override
-    public SenderPreferences getSenderPreferences() {
-        return mPreferences;
-    }
 }

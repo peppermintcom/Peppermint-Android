@@ -2,8 +2,10 @@ package com.peppermint.app.rest;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
@@ -23,6 +25,8 @@ import java.util.UUID;
  */
 public class HttpRequest implements Parcelable {
 
+    private static final String TAG = HttpRequest.class.getSimpleName();
+
 	public static final int METHOD_GET = 1;
 	public static final int METHOD_POST = 2;
 	public static final int METHOD_PUT = 3;
@@ -40,6 +44,8 @@ public class HttpRequest implements Parcelable {
 	private String body;
 	private boolean cancelled = false;
     private UUID mUuid = UUID.randomUUID();
+
+    private transient HttpURLConnection mConnection;          // the running request connection
 
     /**
      * Copy constructor
@@ -79,6 +85,53 @@ public class HttpRequest implements Parcelable {
 	public HttpRequest(String endpoint, int requestMethod, boolean forceOnlyGetAndPost) {
 		this(endpoint, requestMethod);
 		this.mForceOnlyGetAndPost = forceOnlyGetAndPost;
+	}
+
+	public void execute(HttpResponse response) {
+		try {
+			mConnection = createConnection();
+
+			if(mConnection != null) {
+				if(!isCancelled()) {
+					if(getBody() != null) {
+						OutputStream outStream = mConnection.getOutputStream();
+						writeBody(outStream);
+						outStream.flush();
+						outStream.close();
+					}
+				}
+
+				if(!isCancelled()) {
+					try {
+                        response.setCode(mConnection.getResponseCode());
+					} catch (IOException e) {
+						if(mConnection.getResponseCode() == 401) {
+                            response.setCode(401);
+						} else {
+							throw e;
+						}
+					}
+                    response.setMessage(mConnection.getResponseMessage());
+
+					InputStream inputStream = response.getCode() >= 400 ? mConnection.getErrorStream() : mConnection.getInputStream();
+                    response.readBody(inputStream, this);
+					inputStream.close();
+				}
+			} else {
+				throw new NullPointerException("HttpURLConnection is null. Skipping...");
+			}
+		} catch (Throwable e) {
+			Log.e(TAG, "Error while performing HttpURLConnection!", e);
+            response.setException(e);
+		}
+
+		if(mConnection != null) {
+			try {
+				mConnection.disconnect();
+			} catch(Throwable e) {
+				Log.e(TAG, "Error disconnecting...", e);
+			}
+		}
 	}
 
     protected long getContentLength() {
@@ -281,6 +334,9 @@ public class HttpRequest implements Parcelable {
 	 */
 	public void cancel() {
 		this.cancelled = true;
+        if(mConnection != null) {
+            mConnection.disconnect();
+        }
 	}
 
 	@Override

@@ -40,6 +40,8 @@ public class TrackerManager extends TrackerApi {
             mTrackers.add(new GoogleAnalyticsTracker(applicationContext));
             mTrackers.add(new FabricTracker(applicationContext));
             mTrackers.add(new FlurryTracker(applicationContext));
+        } else {
+            mTrackers.add(new ConsoleTracker(applicationContext));
         }
     }
 
@@ -85,6 +87,13 @@ public class TrackerManager extends TrackerApi {
     public void log(String log) {
         for(TrackerApi tracker : mTrackers) {
             tracker.log(log);
+        }
+    }
+
+    @Override
+    public void log(String log, Throwable t) {
+        for(TrackerApi tracker : mTrackers) {
+            tracker.log(log, t);
         }
     }
 

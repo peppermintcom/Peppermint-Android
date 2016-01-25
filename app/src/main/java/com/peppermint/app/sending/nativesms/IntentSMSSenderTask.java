@@ -7,35 +7,31 @@ import android.net.Uri;
 import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.Sender;
-import com.peppermint.app.sending.SenderListener;
-import com.peppermint.app.sending.SenderPreferences;
-import com.peppermint.app.sending.SenderTask;
-import com.peppermint.app.sending.server.ServerSenderTask;
-
-import java.util.Map;
+import com.peppermint.app.sending.SenderUploadListener;
+import com.peppermint.app.sending.SenderUploadTask;
 
 /**
  * Created by Nuno Luz on 02-10-2015.
  *
  * SenderTask that launches a native app to send the audio/video recording through SMS.
  */
-public class IntentSMSSenderTask extends SenderTask {
+public class IntentSMSSenderTask extends SenderUploadTask {
 
-    public IntentSMSSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener) {
-        super(sender, sendingRequest, listener);
+
+    public IntentSMSSenderTask(IntentSMSSenderTask uploadTask) {
+        super(uploadTask);
     }
 
-    public IntentSMSSenderTask(Sender sender, SendingRequest sendingRequest, SenderListener listener, Map<String, Object> parameters, SenderPreferences preferences) {
-        super(sender, sendingRequest, listener, parameters, preferences);
-    }
-
-    public IntentSMSSenderTask(IntentSMSSenderTask sendingTask) {
-        super(sendingTask);
+    public IntentSMSSenderTask(Sender sender, SendingRequest sendingRequest, SenderUploadListener senderUploadListener) {
+        super(sender, sendingRequest, senderUploadListener);
     }
 
     @Override
-    protected void send() throws Throwable {
-        String url = (String) getSendingRequest().getParameter(ServerSenderTask.PARAM_SHORT_URL);
+    protected void execute() throws Throwable {
+        uploadPeppermintMessageDoChecks();
+        uploadPeppermintMessage();
+        String url = getSendingRequest().getServerShortUrl();
+
         Intent sendIntent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("smsto", getSendingRequest().getRecipient().getVia(), null));
         sendIntent.putExtra("sms_body", String.format(getSender().getContext().getString(R.string.sender_default_sms_body), url));
         sendIntent.setType("vnd.android-dir/mms-sms");
@@ -44,6 +40,7 @@ public class IntentSMSSenderTask extends SenderTask {
         try {
             getSender().getContext().startActivity(sendIntent);
         } catch(ActivityNotFoundException e) {
+            // try different action
             sendIntent = new Intent(Intent.ACTION_SENDTO);
             sendIntent.addCategory(Intent.CATEGORY_DEFAULT);
             sendIntent.setType("vnd.android-dir/mms-sms");

@@ -2,11 +2,10 @@ package com.peppermint.app.sending;
 
 import android.content.Context;
 
+import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.SendingRequest;
-import com.peppermint.app.rest.HttpAsyncTask;
-import com.peppermint.app.rest.HttpClientManager;
+import com.peppermint.app.tracking.TrackerManager;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -16,58 +15,58 @@ import java.util.Map;
  *     {@link com.peppermint.app.data.Recipient} through a particular medium/protocol.
  *</p>
  * <p>
- *     Senders can be configured through Parameters and Preferences. Preferences use the native
- *     Android Shared Preferences mechanism, so that data is saved across different executions
- *     of the app. Parameters are part of a key-value map passed to the sender instance (each
- *     implementation may have its own parameters).
+ *     Senders are an extension of {@link SenderObject}s, thus containing common contextual data.
  *</p>
  * <p>
  *     If a sender fails to execute a request, its failure chain sender can be used to try and
- *     do it afterwards. Several senders can be setup to form a failure chain. *
+ *     do it afterwards. Several senders can be setup to form a failure chain.
  * </p>
  */
-public abstract class Sender {
+public abstract class Sender extends SenderObject {
 
-    private Context mContext;
-    private SenderListener mSenderListener;
-    private Map<String, Object> mParameters;
+    private static final String TAG = Sender.class.getSimpleName();
+
+    public static final String PARAM_GOOGLE_API = TAG + "_paramGoogleApi";
+    public static final String PARAM_PEPPERMINT_API = TAG + "_paramPeppermintApi";
+
+    protected SenderErrorHandler mErrorHandler;
+    private SenderUploadListener mSenderUploadListener;
     private Sender mFailureChainSender;
-    private Sender mSuccessChainSender;
 
-    private HttpClientManager mHttpManager;
-    private boolean mUseHttpManager = false;
-
-    public Sender(Context context, SenderListener senderListener) {
-        this.mParameters = new HashMap<>();
-        this.mContext = context;
-        this.mSenderListener = senderListener;
+    public Sender(Context context, TrackerManager trackerManager, Map<String, Object> parameters, DatabaseHelper databaseHelper, SenderUploadListener senderUploadListener) {
+        super(context, trackerManager, parameters, null, databaseHelper);
+        this.mSenderUploadListener = senderUploadListener;
+        this.mErrorHandler = new SenderErrorHandler(this, mSenderUploadListener);
     }
 
-    public Sender(Context context, SenderListener senderListener, Map<String, Object> parameters) {
-        this.mContext = context;
-        this.mSenderListener = senderListener;
-        this.mParameters = parameters;
+    public Sender(SenderObject objToExtend, SenderUploadListener senderUploadListener) {
+        super(objToExtend);
+        this.mSenderUploadListener = senderUploadListener;
+        this.mErrorHandler = new SenderErrorHandler(this, mSenderUploadListener);
     }
 
     /**
      * Initializes the sender and its error handler.
      */
     public void init() {
-        if(mUseHttpManager) {
-            mHttpManager = new HttpClientManager(mContext);
-            mHttpManager.start();
-
-            setParameter(HttpAsyncTask.PARAM_HTTP_CLIENT_MANAGER, mHttpManager);
-        }
-
-        SenderErrorHandler errorHandler = getErrorHandler();
-        if(errorHandler != null) {
-            errorHandler.init();
+        if(mErrorHandler != null) {
+            mErrorHandler.init();
         }
     }
 
-    public SenderTask newAuthorizationTask() {
-        return null;
+    /**
+     * De-initializes the sender and its error handler.
+     */
+    public void deinit() {
+        if(mErrorHandler != null) {
+            mErrorHandler.deinit();
+        }
+    }
+
+    public void authorize() {
+        if(mErrorHandler != null && (mPreferences == null || mPreferences.isEnabled())) {
+            mErrorHandler.authorize(null);
+        }
     }
 
     /**
@@ -75,7 +74,7 @@ public abstract class Sender {
      * @param sendingRequest the sending request
      * @return the asynchronous task that will try to execute the sending request
      */
-    public abstract SenderTask newTask(SendingRequest sendingRequest);
+    public abstract SenderUploadTask newTask(SendingRequest sendingRequest);
 
     /**
      * Gets the sender's error handler. Useful to check if the sender can recover from
@@ -84,65 +83,20 @@ public abstract class Sender {
      *
      * @return the error handler
      */
-    public abstract SenderErrorHandler getErrorHandler();
-
-    /**
-     * Android shared preferences used by this sender.
-     *
-     * @return the sender preferences instance
-     */
-    public abstract SenderPreferences getSenderPreferences();
-
-    /**
-     * De-initializes the sender and its error handler.
-     */
-    public void deinit() {
-        SenderErrorHandler errorHandler = getErrorHandler();
-        if(errorHandler != null) {
-            errorHandler.deinit();
-        }
-
-        if(mHttpManager != null && mHttpManager.isBound()) {
-            mHttpManager.unbind();
-        }
+    public SenderErrorHandler getSenderErrorHandler() {
+        return mErrorHandler;
     }
 
-    public Context getContext() {
-        return mContext;
+    public void setSenderErrorHandler(SenderErrorHandler senderErrorHandler) {
+        this.mErrorHandler = senderErrorHandler;
     }
 
-    public Sender setContext(Context mContext) {
-        this.mContext = mContext;
-        return this;
+    public SenderUploadListener getSenderUploadListener() {
+        return mSenderUploadListener;
     }
 
-    public SenderListener getSenderListener() {
-        return mSenderListener;
-    }
-
-    public Sender setSenderListener(SenderListener senderListener) {
-        this.mSenderListener = senderListener;
-        return this;
-    }
-
-    public Map<String, Object> getParameters() {
-        return mParameters;
-    }
-
-    public Sender setParameters(Map<String, Object> mParameters) {
-        this.mParameters = mParameters;
-        return this;
-    }
-
-    public Object getParameter(String key) {
-        if(!mParameters.containsKey(key)) {
-            return null;
-        }
-        return mParameters.get(key);
-    }
-
-    public Sender setParameter(String key, Object value) {
-        mParameters.put(key, value);
+    public Sender setSenderUploadListener(SenderUploadListener senderUploadListener) {
+        this.mSenderUploadListener = senderUploadListener;
         return this;
     }
 
@@ -152,21 +106,5 @@ public abstract class Sender {
 
     public void setFailureChainSender(Sender mFailureChainSender) {
         this.mFailureChainSender = mFailureChainSender;
-    }
-
-    public Sender getSuccessChainSender() {
-        return mSuccessChainSender;
-    }
-
-    public void setSuccessChainSender(Sender mSuccessChainSender) {
-        this.mSuccessChainSender = mSuccessChainSender;
-    }
-
-    public boolean isUseHttpManager() {
-        return mUseHttpManager;
-    }
-
-    public void setUseHttpManager(boolean mUseHttpManager) {
-        this.mUseHttpManager = mUseHttpManager;
     }
 }
