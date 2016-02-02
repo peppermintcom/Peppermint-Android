@@ -37,8 +37,7 @@ public class MainActivity extends CustomActionBarActivity {
         Manifest.permission.ACCESS_NETWORK_STATE,
 
         Manifest.permission.GET_ACCOUNTS,
-        "android.permission.USE_CREDENTIALS",
-        Manifest.permission.READ_PHONE_STATE
+        "android.permission.USE_CREDENTIALS"
     };
     private static final String SUPPORT_EMAIL = "support@peppermint.com";
     private static final String SUPPORT_SUBJECT = "Feedback or question about Peppermint Android app";

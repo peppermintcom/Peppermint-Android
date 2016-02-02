@@ -87,6 +87,7 @@
     <string name="sender_msg_no_internet">No internet connection. Peppermint will send your message when you connect.</string>
     <string name="sender_msg_no_gplay">No Google play services available. The task of sending your record has been queued. Please make sure you have an up to date version of Google play services installed.</string>
     <string name="sender_msg_sms_disabled">Your device either has telephony disabled or does not support it. Sending text messages is not possible.</string>
+    <string name="sender_msg_secure_connection">Could not establish a secure connection to the Peppermint server. The task of sending your record has been queued.</string>
 
     <!-- PREFERENCES -->
     <string name="pref_title_displayname">Your name</string>
@@ -124,6 +125,12 @@
     <string name="your_name_">Your Name</string>
     <string name="next">Next</string>
     <string name="link_another_gmail">link another gmail</string>
+    <string name="only_one_peppermint_account_supported">Only one Peppermint account is supported.</string>
+    <string name="authenticating_">Authenticating…</string>
+    <string name="msg_secure_connection">Could not establish a secure connection to the Peppermint server. Please try again later.</string>
+    <string name="msg_authentication_error">It was not possible to sign in. Please try again later.</string>
+    <string name="msg_google_api_denied">Google sign in is required to continue.</string>
+    <string name="msg_invalid_credentials">Invalid credentials.</string>
 
     <!-- AUTHENTICATION/NEW CONTACT -->
     <string name="msg_insert_first_name">Please enter a valid first name</string>
@@ -140,4 +147,5 @@
     <string name="privacy_policy_terms_of_use">Privacy Policy\n&amp; Terms of Use</string>
     <string name="privacy_policy_terms_of_use_singleline">Privacy Policy &amp; Terms of Use</string>
     <string name="version">Version</string>
+
 </resources>

@@ -121,7 +121,7 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
         }
 
         // run one time (almost) immediately
-        mMaintenanceFuture = mScheduledExecutor.scheduleAtFixedRate(mMaintenanceRunnable, 5, 3600, TimeUnit.SECONDS);
+        mMaintenanceFuture = mScheduledExecutor.scheduleAtFixedRate(mMaintenanceRunnable, 10, 3600, TimeUnit.SECONDS);
     }
 
     // if there's a change to a particular preference, trigger the sender authorization routine
@@ -159,7 +159,7 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
         // executor for the maintenance routine
         this.mScheduledExecutor = new ScheduledThreadPoolExecutor(1);
 
-        setParameter(Sender.PARAM_PEPPERMINT_API, new PeppermintApi(mContext));
+        setParameter(Sender.PARAM_PEPPERMINT_API, new PeppermintApi());
 
         // here we add all available sender instances to the sender map
         // add gmail api + email intent sender chain
@@ -261,11 +261,19 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
      * Requests authorization for senders that require it.
      */
     public void authorize() {
+        Sender firstSender = null;
         for(Sender sender : mSenderMap.values()) {
             while(sender != null) {
+                if(firstSender == null) {
+                    firstSender = sender;
+                }
                 sender.authorize();
                 sender = sender.getFailureChainSender();
             }
+        }
+        // do this only once
+        if(firstSender != null) {
+            firstSender.getSenderErrorHandler().authorizePeppermint(null);
         }
     }
 

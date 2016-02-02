@@ -7,19 +7,19 @@ package com.peppermint.app.sending.exceptions;
  * Since it is an {@link ElectableForQueueingException}, it allows a {@link com.peppermint.app.data.SendingRequest}
  * to be queued for future retries if there's no connectivity.
  */
-public class NoInternetConnectionException extends Exception implements ElectableForQueueingException {
-    public NoInternetConnectionException() {
+public class TryAgainException extends Exception implements ElectableForQueueingException {
+    public TryAgainException() {
     }
 
-    public NoInternetConnectionException(String detailMessage) {
+    public TryAgainException(String detailMessage) {
         super(detailMessage);
     }
 
-    public NoInternetConnectionException(String detailMessage, Throwable throwable) {
+    public TryAgainException(String detailMessage, Throwable throwable) {
         super(detailMessage, throwable);
     }
 
-    public NoInternetConnectionException(Throwable throwable) {
+    public TryAgainException(Throwable throwable) {
         super(throwable);
     }
 }

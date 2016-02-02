@@ -1,8 +1,14 @@
 package com.peppermint.app.sending;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
+
+import com.peppermint.app.authenticator.AuthenticatorConstants;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.api.PeppermintApi;
+import com.peppermint.app.sending.api.data.RecordResponse;
 import com.peppermint.app.sending.api.exceptions.PeppermintApiInvalidAccessTokenException;
+import com.peppermint.app.sending.api.exceptions.PeppermintApiNoAccountException;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
@@ -44,6 +50,14 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
 
         checkInternetConnection();
 
+        AccountManager am = AccountManager.get(getContext());
+        Account[] accounts = am.getAccountsByType(AuthenticatorConstants.ACCOUNT_TYPE);
+        if(accounts == null || accounts.length <= 0) {
+            throw new PeppermintApiNoAccountException();
+        }
+
+        getPeppermintApi().setAccessToken(am.peekAuthToken(accounts[0], AuthenticatorConstants.FULL_TOKEN_TYPE));
+
         if(getPeppermintApi().getAccessToken() == null) {
             throw new PeppermintApiInvalidAccessTokenException("Token is null!");
         }
@@ -64,8 +78,8 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         long now = android.os.SystemClock.uptimeMillis();
 
         // get AWS signed URL
-        String signedUrl = (String) api.getSignedUrl(getSenderPreferences().getFullName(),
-                getSenderPreferences().getGmailSenderPreferences().getPreferredAccountName(), contentType).getBody();
+        String signedUrl = api.getSignedUrl(getSenderPreferences().getFullName(),
+                getSenderPreferences().getGmailSenderPreferences().getPreferredAccountName(), contentType).getSignedUrl();
         getTrackerManager().log("Peppermint # Obtained AWS Signed URL at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
 
         // upload to AWS
@@ -76,9 +90,9 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
 
         // confirm that the upload to AWS was successfully performed
         if(!isCancelled()) {
-            PeppermintApi.JSONObjectItemResponse response = api.confirmUploadMessage(signedUrl);
-            getSendingRequest().setServerCanonicalUrl(String.valueOf(response.getBody("canonical_url")));
-            getSendingRequest().setServerShortUrl(String.valueOf(response.getBody("short_url")));
+            RecordResponse response = api.confirmUploadMessage(signedUrl);
+            getSendingRequest().setServerCanonicalUrl(String.valueOf(response.getCanonicalUrl()));
+            getSendingRequest().setServerShortUrl(String.valueOf(response.getShortUrl()));
             getTrackerManager().log("Peppermint # Confirmed Upload at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
         }
     }

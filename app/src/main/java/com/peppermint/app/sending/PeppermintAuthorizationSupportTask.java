@@ -1,7 +1,7 @@
 package com.peppermint.app.sending;
 
+import com.peppermint.app.authenticator.AuthenticatorUtils;
 import com.peppermint.app.data.SendingRequest;
-import com.peppermint.app.sending.api.PeppermintApi;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
@@ -10,6 +10,8 @@ import com.peppermint.app.sending.api.PeppermintApi;
  * </p>
  */
 public class PeppermintAuthorizationSupportTask extends SenderSupportTask implements Cloneable {
+
+    private static final String TAG = PeppermintAuthorizationSupportTask.class.getSimpleName();
 
     public PeppermintAuthorizationSupportTask(PeppermintAuthorizationSupportTask supportTask) {
         super(supportTask);
@@ -23,8 +25,10 @@ public class PeppermintAuthorizationSupportTask extends SenderSupportTask implem
     protected void execute() throws Throwable {
         checkInternetConnection();
 
-        String[] keys = PeppermintApi.getKeys(getContext());
-        getPeppermintApi().authRecorder(keys[0], keys[1]);
+        final AuthenticatorUtils authenticatorUtils = new AuthenticatorUtils(getContext());
+        authenticatorUtils.invalidateAccessToken();
+        String authToken = authenticatorUtils.getAccessToken();
+        getPeppermintApi().setAccessToken(authToken);
     }
 
 }

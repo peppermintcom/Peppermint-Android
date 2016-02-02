@@ -7,8 +7,8 @@ import com.peppermint.app.R;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.api.GoogleApi;
 import com.peppermint.app.sending.api.PeppermintApi;
-import com.peppermint.app.sending.exceptions.ElectableForQueueingException;
 import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
+import com.peppermint.app.sending.exceptions.TryAgainException;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.Utils;
 
@@ -48,7 +48,11 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
     private SendingRequest mSendingRequest;
 
     public SenderTask(Sender sender, SendingRequest sendingRequest) {
-        this.mIdentity = new SenderObject(sender);
+        if(sender != null) {
+            this.mIdentity = new SenderObject(sender);
+        } else {
+            this.mIdentity = new SenderObject(null, null, null, null, null);
+        }
         this.mSender = sender;
         this.mSendingRequest = sendingRequest;
         if(sendingRequest != null) {
@@ -63,8 +67,8 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
     }
 
     protected void checkInternetConnection() throws NoInternetConnectionException {
-        if(!Utils.isInternetAvailable(getSender().getContext()) || !Utils.isInternetActive(getSender().getContext())) {
-            throw new NoInternetConnectionException(getSender().getContext().getString(R.string.sender_msg_no_internet));
+        if(!Utils.isInternetAvailable(getContext()) || !Utils.isInternetActive(getContext())) {
+            throw new NoInternetConnectionException(getContext().getString(R.string.sender_msg_no_internet));
         }
     }
 
@@ -84,7 +88,7 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
             // this queues the message and retries sending after connection is established
             // on some other network
             if(e instanceof SSLException) {
-                mError = new ElectableForQueueingException(e);
+                mError = new TryAgainException(getContext().getString(R.string.sender_msg_secure_connection), e);
             } else {
                 mError = e;
             }

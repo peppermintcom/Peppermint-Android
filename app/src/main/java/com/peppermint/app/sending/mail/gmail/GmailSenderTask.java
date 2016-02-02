@@ -13,8 +13,8 @@ import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderUploadListener;
 import com.peppermint.app.sending.SenderUploadTask;
 import com.peppermint.app.sending.api.GoogleApi;
-import com.peppermint.app.sending.exceptions.ElectableForQueueingException;
 import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
+import com.peppermint.app.sending.exceptions.TryAgainException;
 import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
 import com.peppermint.app.sending.mail.MailSenderPreferences;
 import com.peppermint.app.sending.mail.MailUtils;
@@ -144,7 +144,7 @@ public class GmailSenderTask extends SenderUploadTask {
             throw e;
         } catch(GooglePlayServicesAvailabilityIOException|GooglePlayServicesAvailabilityException e) {
             // no google play services installed on device
-            throw new ElectableForQueueingException(getSender().getContext().getString(R.string.sender_msg_no_gplay), e);
+            throw new TryAgainException(getSender().getContext().getString(R.string.sender_msg_no_gplay), e);
         } catch(UserRecoverableAuthIOException|UserRecoverableAuthException e) {
             // recover by requesting permission to access the api
             throw e;

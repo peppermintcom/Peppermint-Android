@@ -375,4 +375,12 @@ public class HttpRequest implements Parcelable {
         cancelled = in.readInt() != 0;
         mUuid = (UUID) in.readSerializable();
     }
+
+    @Override
+    public String toString() {
+        return mEndpoint +
+                " [" + mRequestMethod + "] { URLPARAMS=" + urlParams +
+                ", HEADERPARAMS=" + headerParams +
+                ", BODY=" + body + "}";
+    }
 }

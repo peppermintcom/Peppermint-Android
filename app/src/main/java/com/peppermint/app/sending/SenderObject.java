@@ -20,8 +20,8 @@ public class SenderObject implements Cloneable {
 
     private UUID mId = UUID.randomUUID();
 
-    protected Context mContext;
-    protected TrackerManager mTrackerManager;
+    protected transient Context mContext;
+    protected transient TrackerManager mTrackerManager;
 
     protected Map<String, Object> mParameters;
     protected SenderPreferences mPreferences;

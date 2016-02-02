@@ -64,6 +64,8 @@ public abstract class CustomActionBarActivity  extends FragmentActivity implemen
     protected SenderPreferences mPreferences;
 
     // Overlay
+    private int mPreviousOrientation;
+
     private AnimatorBuilder mAnimatorBuilder;
     private Handler mDelayHandler = new Handler();
     private class OverlayWrapper {
@@ -137,23 +139,27 @@ public abstract class CustomActionBarActivity  extends FragmentActivity implemen
 
         mLytOverlay = (FrameLayout) findViewById(R.id.lytOverlay);
 
-        mNavigationItemList = getNavigationItems();
-        int amountVisible = 0;
-        for(NavigationItem item : mNavigationItemList) {
-            if(item.isVisible()) {
-                amountVisible++;
-            }
-        }
-        NavigationItem firstNavigationItem = mNavigationItemList.get(0);
-        if(!firstNavigationItem.isVisible()) {
-            mNavigationItemList.remove(0);
-        }
-
         mImgUserAvatar = (ImageView) findViewById(R.id.imgUserAvatar);
         mTxtUsername = (TextView) findViewById(R.id.txtUserName);
         mTxtUsername.setTypeface(app.getFontSemibold());
-
         mLytDrawer = (DrawerLayout) findViewById(R.id.drawer);
+
+        mNavigationItemList = getNavigationItems();
+        int amountVisible = 0;
+        NavigationItem firstNavigationItem = null;
+
+        if(mNavigationItemList != null && mNavigationItemList.size() > 0) {
+            for (NavigationItem item : mNavigationItemList) {
+                if (item.isVisible()) {
+                    amountVisible++;
+                }
+            }
+            firstNavigationItem = mNavigationItemList.get(0);
+            if (!firstNavigationItem.isVisible()) {
+                mNavigationItemList.remove(0);
+            }
+        }
+
         if(mNavigationItemList == null || amountVisible <= 0) {
             mLytDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
             getCustomActionBar().setDisplayMenuAsUpEnabled(true);
@@ -204,6 +210,7 @@ public abstract class CustomActionBarActivity  extends FragmentActivity implemen
             });
         }
 
+        // FIXME only need to do this if the drawer is not locked and closed
         // set the drawer profile data
         refreshProfileData();
         mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
@@ -218,15 +225,17 @@ public abstract class CustomActionBarActivity  extends FragmentActivity implemen
             return; // avoids duplicate fragments
         }
 
-        // show intro screen
-        Fragment introScreenFragment;
-        try {
-            introScreenFragment = firstNavigationItem.getFragmentClass().newInstance();
-            setFragmentArgumentsFromIntent(introScreenFragment, getIntent());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        if(firstNavigationItem != null) {
+            // show intro screen
+            Fragment introScreenFragment;
+            try {
+                introScreenFragment = firstNavigationItem.getFragmentClass().newInstance();
+                setFragmentArgumentsFromIntent(introScreenFragment, getIntent());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            getFragmentManager().beginTransaction().add(R.id.container, introScreenFragment).commit();
         }
-        getFragmentManager().beginTransaction().add(R.id.container, introScreenFragment).commit();
     }
 
     private void setFragmentArgumentsFromIntent(Fragment fragment, Intent intent) {
@@ -375,6 +384,16 @@ public abstract class CustomActionBarActivity  extends FragmentActivity implemen
         }
 
         return true;
+    }
+
+    protected void lockOrientation() {
+        mPreviousOrientation = getRequestedOrientation();
+        //noinspection ResourceType
+        setRequestedOrientation(getActivityInfoOrientation());
+    }
+
+    protected void unlockOrientation() {
+        setRequestedOrientation(mPreviousOrientation);
     }
 
     private int getActivityInfoOrientation() {

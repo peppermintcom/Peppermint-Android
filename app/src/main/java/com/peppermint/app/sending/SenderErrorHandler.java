@@ -1,5 +1,6 @@
 package com.peppermint.app.sending;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -7,10 +8,12 @@ import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.peppermint.app.authenticator.AuthenticatorActivity;
 import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.api.GoogleApi;
 import com.peppermint.app.sending.api.PeppermintApi;
 import com.peppermint.app.sending.api.exceptions.PeppermintApiInvalidAccessTokenException;
+import com.peppermint.app.sending.api.exceptions.PeppermintApiNoAccountException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +38,10 @@ public class SenderErrorHandler extends SenderObject {
 
     private static final String TAG = SenderErrorHandler.class.getSimpleName();
 
-    protected static final int RECOVERY_OK = 0;
+    public static boolean IS_APP_ON_BACKGROUND = false;
+
+    private static final int REQUEST_CODE_AUTH = 98765;
+
     protected static final int RECOVERY_RETRY = -1;
     protected static final int RECOVERY_NOK = -2;
     protected static final int RECOVERY_DONOTHING = 1;
@@ -73,12 +79,12 @@ public class SenderErrorHandler extends SenderObject {
                 }
 
                 recoveringTask = null;
-                SenderSupportTask supportTask =  mSupportTaskActivityResultMap.remove(taskId);
+                SenderSupportTask supportTask = mSupportTaskActivityResultMap.remove(taskId);
                 if(supportTask != null) {
                     if(supportTask.getSendingRequest() != null && mRecoveringTaskMap.containsKey(supportTask.getSendingRequest().getId())) {
                         recoveringTask = mRecoveringTaskMap.get(supportTask.getSendingRequest().getId());
                     }
-                    onSupportTaskActivityResult(supportTask, recoveringTask,
+                    handleOnSupportTaskActivityResult(supportTask, recoveringTask,
                             intent.getIntExtra(GetResultActivity.INTENT_REQUESTCODE, -1),
                             intent.getIntExtra(GetResultActivity.INTENT_RESULTCODE, -1),
                             (Intent) intent.getParcelableExtra(GetResultActivity.INTENT_DATA));
@@ -125,6 +131,11 @@ public class SenderErrorHandler extends SenderObject {
         mSupportTaskActivityResultMap.clear();
     }
 
+    public void authorizePeppermint(SendingRequest sendingRequest) {
+        PeppermintAuthorizationSupportTask task = new PeppermintAuthorizationSupportTask(getSender(), sendingRequest, null);
+        launchSupportTask(task);
+    }
+
     public void authorize(SendingRequest sendingRequest) {
         /* nothing to do here */
     }
@@ -140,11 +151,29 @@ public class SenderErrorHandler extends SenderObject {
          doNotRecover(recoveringTask);   // nothing to recover; must be overriden to include additional behaviour
     }
 
+    private void handleOnSupportTaskActivityResult(SenderSupportTask supportTask, SenderUploadTask recoveringTask, int requestCode, int resultCode, Intent data) {
+        mSupportTaskMap.remove(supportTask.getId());
+
+        if(requestCode == REQUEST_CODE_AUTH) {
+            if(recoveringTask != null) {
+                if(resultCode == Activity.RESULT_OK) {
+                    checkRetries(recoveringTask);
+                } else {
+                    doNotRecover(recoveringTask);
+                }
+            }
+            return;
+        }
+
+        onSupportTaskActivityResult(supportTask, recoveringTask, requestCode, resultCode, data);
+    }
+
     protected void onSupportTaskActivityResult(SenderSupportTask supportTask, SenderUploadTask recoveringTask, int requestCode, int resultCode, Intent data) {
         if(recoveringTask != null) {
             // nothing to recover; must be overriden to include additional behaviour
             doNotRecover(recoveringTask);
         }
+
         // just ignore the support task in this case
         // sub-classes should override this method so that this never happens
         mTrackerManager.log("Ignored onActivityResult from " + supportTask.getClass().getSimpleName() + " " + supportTask.getId());
@@ -167,7 +196,6 @@ public class SenderErrorHandler extends SenderObject {
 
     /**
      * Return {@link #RECOVERY_DONOTHING} if you are doing some kind of asynchronous recovery work and want to do nothing for now
-     * Return {@link #RECOVERY_OK} if a way of recovery was found and a fresh retry is needed
      * Return {@link #RECOVERY_NOK} if there's no way of recovering and to stop the task
      * Return {@link #RECOVERY_RETRY} to just retry until MAX_RETRIES is exceeded
      *
@@ -191,20 +219,26 @@ public class SenderErrorHandler extends SenderObject {
 
         // in this case just re-new the access token
         if(e instanceof PeppermintApiInvalidAccessTokenException) {
-            PeppermintAuthorizationSupportTask authTask = new PeppermintAuthorizationSupportTask(mSender, failedSenderTask.getSendingRequest(), mSupportListener);
-            launchSupportTask(authTask);
+            authorizePeppermint(failedSenderTask.getSendingRequest());
             return;
+        }
+
+        if(e instanceof PeppermintApiNoAccountException) {
+            if(!IS_APP_ON_BACKGROUND) {
+                Intent intent = new Intent(getContext(), AuthenticatorActivity.class);
+                startActivityForResult(failedSenderTask, REQUEST_CODE_AUTH, intent);
+                return;
+            } else {
+                doNotRecover(failedSenderTask);
+                return;
+            }
         }
 
         int recoveryCode = tryToRecover(failedSenderTask, e);
         switch (recoveryCode) {
             case RECOVERY_DONOTHING:
                 return;
-            case RECOVERY_OK:
-                doRecover(failedSenderTask);
-                return;
             case RECOVERY_NOK:
-                mRetryMap.remove(failedSenderTask.getId());
                 doNotRecover(failedSenderTask);
                 return;
             default:
@@ -221,6 +255,7 @@ public class SenderErrorHandler extends SenderObject {
      * @param recoveringTask the failed/recovering task
      */
     protected void doNotRecover(SenderUploadTask recoveringTask) {
+        mRetryMap.remove(recoveringTask.getId());
         mRecoveringTaskMap.remove(recoveringTask.getId());
         if(mSenderUploadListener != null) {
             mSenderUploadListener.onSendingUploadRequestNotRecovered(recoveringTask, recoveringTask.getError());
@@ -286,24 +321,25 @@ public class SenderErrorHandler extends SenderObject {
     }
 
     protected int supportFinishedOk(SenderSupportTask supportTask) {
-        return RECOVERY_OK;
+        return RECOVERY_RETRY;
+    }
+
+    private SenderUploadTask finishSupportAndGetUploadTask(SenderSupportTask supportTask) {
+        mSupportTaskMap.remove(supportTask.getId());
+
+        if(supportTask.getSendingRequest() == null) {
+            return null;
+        }
+
+        SenderUploadTask failedUploadTask = mRecoveringTaskMap.get(supportTask.getSendingRequest().getId());
+        if(failedUploadTask == null) {
+            Log.w(TAG, "Unable to find support task!");
+        }
+
+        return failedUploadTask;
     }
 
     private final SenderSupportListener mSupportListener = new SenderSupportListener() {
-        private SenderUploadTask finishSupportAndGetUploadTask(SenderSupportTask supportTask) {
-            mSupportTaskMap.remove(supportTask.getId());
-
-            if(supportTask.getSendingRequest() == null) {
-                return null;
-            }
-
-            SenderUploadTask failedUploadTask = mRecoveringTaskMap.remove(supportTask.getSendingRequest().getId());
-            if(failedUploadTask == null) {
-                Log.w(TAG, "Unable to find support task!");
-            }
-
-            return failedUploadTask;
-        }
 
         @Override
         public void onSendingSupportStarted(SenderSupportTask supportTask) {
@@ -315,6 +351,7 @@ public class SenderErrorHandler extends SenderObject {
             mTrackerManager.log("Cancelled SenderSupportTask " + supportTask.getClass().getSimpleName());
 
             SenderUploadTask uploadTask = finishSupportAndGetUploadTask(supportTask);
+            supportTask.conclude(false);
             if(uploadTask != null) {
                 doNotRecover(uploadTask);
             }
@@ -328,49 +365,59 @@ public class SenderErrorHandler extends SenderObject {
 
             mTrackerManager.log("Finished SenderSupportTask " + supportTask.getClass().getSimpleName() + " Code " + recoveryCode);
 
-            if(uploadTask != null) {
-                switch (recoveryCode) {
-                    case RECOVERY_DONOTHING:
-                        return;
-                    case RECOVERY_RETRY:
-                        checkRetries(uploadTask);
-                        return;
-                    case RECOVERY_NOK:
+            switch (recoveryCode) {
+                case RECOVERY_DONOTHING:
+                    return;
+                case RECOVERY_NOK:
+                    supportTask.conclude(false);
+                    if(uploadTask != null) {
                         doNotRecover(uploadTask);
-                        return;
-                    default:
-                        doRecover(uploadTask);
-                }
+                    }
+                    return;
+                default:
+                    supportTask.conclude(true);
+                    if(uploadTask != null) {
+                        checkRetries(uploadTask);
+                    }
             }
         }
 
         @Override
         public void onSendingSupportError(SenderSupportTask supportTask, Throwable error) {
-            SenderUploadTask uploadTask = finishSupportAndGetUploadTask(supportTask);
-
             mTrackerManager.log("Error at SenderSupportTask " + supportTask.getClass().getSimpleName(), error);
 
-            // if the token is still invalid, try to register the device
-            if(error instanceof PeppermintApiInvalidAccessTokenException) {
-                PeppermintRegistrationSupportTask registrationTask = new PeppermintRegistrationSupportTask(mSender, supportTask.getSendingRequest(), mSupportListener);
-                launchSupportTask(registrationTask);
-                return;
+            SenderUploadTask uploadTask = finishSupportAndGetUploadTask(supportTask);
+
+            if(error instanceof PeppermintApiNoAccountException) {
+                if(!IS_APP_ON_BACKGROUND) {
+                    Intent intent = new Intent(getContext(), AuthenticatorActivity.class);
+                    startActivityForResult(supportTask, REQUEST_CODE_AUTH, intent);
+                    return;
+                } else {
+                    supportTask.conclude(false);
+                    if(uploadTask != null) {
+                        doNotRecover(uploadTask);
+                    }
+                    return;
+                }
             }
 
             int recoveryCode = tryToRecoverSupport(supportTask, error);
-            if(uploadTask != null) {
-                switch (recoveryCode) {
-                    case RECOVERY_DONOTHING:
-                        return;
-                    case RECOVERY_OK:
-                        doRecover(uploadTask);
-                        return;
-                    case RECOVERY_NOK:
+
+            switch (recoveryCode) {
+                case RECOVERY_DONOTHING:
+                    return;
+                case RECOVERY_NOK:
+                    supportTask.conclude(false);
+                    if(uploadTask != null) {
                         doNotRecover(uploadTask);
-                        return;
-                    default:
+                    }
+                    return;
+                default:
+                    supportTask.conclude(true);
+                    if(uploadTask != null) {
                         checkRetries(uploadTask);
-                }
+                    }
             }
         }
 

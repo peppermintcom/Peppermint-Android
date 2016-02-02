@@ -67,7 +67,7 @@ public class IntentMailSenderErrorHandler extends SenderErrorHandler {
             if(accounts.length <= 1) {
                 // one account in the device, so automatically pick it
                 preferences.setPreferredAccountName(accounts[0].name);
-                return RECOVERY_OK;
+                return RECOVERY_RETRY;
             }
 
             // multiple accounts in the device - ask the user to pick one

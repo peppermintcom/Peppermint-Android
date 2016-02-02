@@ -4,7 +4,6 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.Intent;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.UserRecoverableAuthException;
@@ -21,7 +20,6 @@ import com.peppermint.app.sending.SenderUploadTask;
 import com.peppermint.app.sending.api.GoogleApi;
 import com.peppermint.app.sending.api.exceptions.GoogleApiInvalidAccessTokenException;
 import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
-import com.peppermint.app.utils.Utils;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
@@ -39,13 +37,13 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
         super(sender, senderUploadListener);
     }
 
-    private void tryToGetNameFromApi(SendingRequest request, GmailSenderPreferences preferences) {
+    /*private void tryToGetNameFromApi(SendingRequest request, GmailSenderPreferences preferences) {
         if(!Utils.isValidName(preferences.getFullName())) {
             Log.d(TAG, "User name is not valid (" + preferences.getFullName() + ") trying Google API...");
             GoogleUserInfoSupportTask task = new GoogleUserInfoSupportTask(getSender(), request, null);
             launchSupportTask(task);
         }
-    }
+    }*/
 
     @Override
     protected void onUploadTaskActivityResult(SenderUploadTask recoveringTask, int requestCode, int resultCode, Intent data) {
@@ -65,14 +63,14 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
             if(preferences.getPreferredAccountName() == null) {
                 doNotRecover(recoveringTask);
             } else {
-                doRecover(recoveringTask);
+                checkRetries(recoveringTask);
             }
             return;
         }
 
         if(requestCode == REQUEST_AUTHORIZATION) {
             if(handleAuthorizationActivityResult(recoveringTask, resultCode)) {
-                doRecover(recoveringTask);
+                checkRetries(recoveringTask);
                 return;
             }
         }
@@ -84,13 +82,17 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
     protected void onSupportTaskActivityResult(SenderSupportTask supportTask, SenderUploadTask recoveringTask, int requestCode, int resultCode, Intent data) {
 
         if(requestCode == REQUEST_AUTHORIZATION) {
-            if(handleAuthorizationActivityResult(supportTask, resultCode) && recoveringTask != null) {
-                doRecover(recoveringTask);
+            boolean success = handleAuthorizationActivityResult(supportTask, resultCode);
+            supportTask.conclude(success);
+
+            if(success && recoveringTask != null) {
+                checkRetries(recoveringTask);
                 return;
             }
         }
 
         if(recoveringTask != null) {
+            supportTask.conclude(false);
             doNotRecover(recoveringTask);
         }
     }
@@ -99,7 +101,7 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
         // the user has given (or not) permission to use the Gmail API with his/her account
 
         if(resultCode == Activity.RESULT_OK) {
-            tryToGetNameFromApi(recoveringTask.getSendingRequest(), (GmailSenderPreferences) getPreferences());
+            /*tryToGetNameFromApi(recoveringTask.getSendingRequest(), (GmailSenderPreferences) getPreferences());*/
             return true;
         }
 
@@ -113,7 +115,6 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
 
     @Override
     protected int tryToRecover(SenderUploadTask failedUploadTask, Throwable error) {
-
         GoogleApi googleApi = getGoogleApi();
         GmailSenderPreferences preferences = (GmailSenderPreferences) getPreferences();
 
@@ -129,7 +130,6 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
             Account[] accounts = AccountManager.get(getContext()).getAccountsByType("com.google");
             if(accounts.length <= 0) {
                 // no accounts in the device, so just fail
-                doNotRecover(failedUploadTask);
                 return RECOVERY_NOK;
             }
 
@@ -137,8 +137,7 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
                 // one account in the device, so automatically pick it
                 googleApi.getCredential().setSelectedAccountName(accounts[0].name);
                 preferences.setPreferredAccountName(accounts[0].name);
-                doRecover(failedUploadTask);
-                return RECOVERY_OK;
+                return RECOVERY_RETRY;
             }
 
             // multiple accounts in the device - ask the user to pick one
@@ -159,10 +158,10 @@ public class GmailSenderErrorHandler extends SenderErrorHandler {
 
     @Override
     protected int supportFinishedOk(SenderSupportTask supportTask) {
-        if(supportTask instanceof GoogleAuthorizationSupportTask) {
+        /*if(supportTask instanceof GoogleAuthorizationSupportTask) {
             tryToGetNameFromApi(supportTask.getSendingRequest(), (GmailSenderPreferences) getPreferences());
-        }
-        return RECOVERY_OK;
+        }*/
+        return RECOVERY_RETRY;
     }
 
     @Override

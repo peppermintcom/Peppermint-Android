@@ -14,8 +14,7 @@
     <!-- GET_ACCOUNTS & USE_CREDENTIALS is used to obtain account details and credentials for the Gmail API -->
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
-    <!-- READ_PHONE_STATE is used to obtain the device unique ID -->
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
 
     <application
         android:name=".PeppermintApp"
@@ -38,6 +37,7 @@
         <activity
             android:name=".ui.authentication.AuthActivity"
             android:label="@string/app_name"
+            android:launchMode="singleTask"
             android:windowSoftInputMode="stateHidden|adjustPan"
             android:theme="@style/Peppermint.Theme.NoActionBar" >
         </activity>
@@ -124,11 +124,26 @@
         </service>
 
         <!-- SERV: HTTP REST -->
-        <service
+        <!--<service
             android:name=".rest.HttpClientService"
             android:enabled="true"
             android:exported="false" >
         </service>
+-->
+        <service android:name=".authenticator.AuthenticationService"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.accounts.AccountAuthenticator" />
+            </intent-filter>
+            <meta-data android:name="android.accounts.AccountAuthenticator"
+                android:resource="@xml/authenticator" />
+        </service>
+        <activity
+            android:name=".authenticator.AuthenticatorActivity"
+            android:label="@string/app_name"
+            android:windowSoftInputMode="stateHidden|adjustPan"
+            android:theme="@style/Peppermint.Theme.NoActionBar" >
+        </activity>
 
         <meta-data
             android:name="com.google.android.gms.version"

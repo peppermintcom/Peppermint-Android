@@ -1,5 +1,8 @@
 package com.peppermint.app.sending;
 
+import android.content.Intent;
+import android.support.v4.content.LocalBroadcastManager;
+
 import com.peppermint.app.data.SendingRequest;
 
 /**
@@ -14,6 +17,14 @@ import com.peppermint.app.data.SendingRequest;
  */
 public abstract class SenderSupportTask extends SenderTask implements Cloneable {
 
+    private static final String TAG = SenderSupportTask.class.getSimpleName();
+    public static final String INTENT_ACTION_FINISHED = TAG + "_Finished";
+    public static final String INTENT_TASK_ID = TAG + "_TaskId";
+    public static final String INTENT_THROWABLE = TAG + "_Throwable";
+    public static final String INTENT_TASK_TYPE = TAG + "_TaskType";
+    public static final String INTENT_SUCCESS = TAG + "_Success";
+
+    private final Intent mFinishedIntent = new Intent(INTENT_ACTION_FINISHED);
     private SenderSupportListener mSenderSupportListener;
 
     public SenderSupportTask(SenderSupportTask supportTask) {
@@ -62,11 +73,23 @@ public abstract class SenderSupportTask extends SenderTask implements Cloneable 
         }
     }
 
+    public void conclude(boolean success) {
+        mFinishedIntent.putExtra(INTENT_TASK_TYPE, getClass());
+        mFinishedIntent.putExtra(INTENT_THROWABLE, getError());
+        mFinishedIntent.putExtra(INTENT_TASK_ID, getId());
+        mFinishedIntent.putExtra(INTENT_SUCCESS, success);
+        LocalBroadcastManager.getInstance(getContext()).sendBroadcast(mFinishedIntent);
+    }
+
     public SenderSupportListener getSenderSupportListener() {
         return mSenderSupportListener;
     }
 
     public void setSenderSupportListener(SenderSupportListener mListener) {
         this.mSenderSupportListener = mListener;
+    }
+
+    protected Intent getFinishedIntent() {
+        return mFinishedIntent;
     }
 }

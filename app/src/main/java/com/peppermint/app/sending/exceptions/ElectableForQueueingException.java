@@ -5,19 +5,5 @@ package com.peppermint.app.sending.exceptions;
  *
  * Type of exception that allows a sending request to be queued for future retries.
  */
-public class ElectableForQueueingException extends Exception {
-    public ElectableForQueueingException() {
-    }
-
-    public ElectableForQueueingException(String detailMessage) {
-        super(detailMessage);
-    }
-
-    public ElectableForQueueingException(String detailMessage, Throwable throwable) {
-        super(detailMessage, throwable);
-    }
-
-    public ElectableForQueueingException(Throwable throwable) {
-        super(throwable);
-    }
+public interface ElectableForQueueingException {
 }
