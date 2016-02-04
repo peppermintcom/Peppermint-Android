@@ -1,25 +1,28 @@
 package com.peppermint.app.authenticator;
 
+import java.io.Serializable;
+
 /**
  * Created by Nuno Luz on 02-02-2016.
  */
-public class AuthenticationData {
+public class AuthenticationData implements Serializable {
     private String mEmail, mPassword;
     private String mDeviceId, mDeviceKey;
-    private String mFirstName, mLastName;
     private int mAccountType;
+    private String mDeviceServerId;
+    private String mGcmRegistration;
 
     public AuthenticationData() {
     }
 
-    public AuthenticationData(String mEmail, String mPassword, String mDeviceId, String mDeviceKey, String mFirstName, String mLastName, int mAccountType) {
+    public AuthenticationData(String mEmail, String mPassword, String mDeviceServerId, String mDeviceId, String mDeviceKey, int mAccountType, String mGcmRegistration) {
         this.mEmail = mEmail;
         this.mPassword = mPassword;
         this.mDeviceId = mDeviceId;
         this.mDeviceKey = mDeviceKey;
-        this.mFirstName = mFirstName;
-        this.mLastName = mLastName;
         this.mAccountType = mAccountType;
+        this.mDeviceServerId = mDeviceServerId;
+        this.mGcmRegistration = mGcmRegistration;
     }
 
     public String getEmail() {
@@ -54,28 +57,28 @@ public class AuthenticationData {
         this.mDeviceKey = mDeviceKey;
     }
 
-    public String getFirstName() {
-        return mFirstName;
-    }
-
-    public void setFirstName(String mFirstName) {
-        this.mFirstName = mFirstName;
-    }
-
-    public String getLastName() {
-        return mLastName;
-    }
-
-    public void setLastName(String mLastName) {
-        this.mLastName = mLastName;
-    }
-
     public int getAccountType() {
         return mAccountType;
     }
 
     public void setAccountType(int mAccountType) {
         this.mAccountType = mAccountType;
+    }
+
+    public String getDeviceServerId() {
+        return mDeviceServerId;
+    }
+
+    public void setDeviceServerId(String mDeviceServerId) {
+        this.mDeviceServerId = mDeviceServerId;
+    }
+
+    public String getGcmRegistration() {
+        return mGcmRegistration;
+    }
+
+    public void setGcmRegistration(String mGcmRegistration) {
+        this.mGcmRegistration = mGcmRegistration;
     }
 
     @Override
@@ -85,9 +88,9 @@ public class AuthenticationData {
                 ", mPassword='" + mPassword + '\'' +
                 ", mDeviceId='" + mDeviceId + '\'' +
                 ", mDeviceKey='" + mDeviceKey + '\'' +
-                ", mFirstName='" + mFirstName + '\'' +
-                ", mLastName='" + mLastName + '\'' +
                 ", mAccountType=" + mAccountType +
+                ", mDeviceServerId=" + mDeviceServerId +
+                ", mGcmRegistration=" + mGcmRegistration +
                 '}';
     }
 }

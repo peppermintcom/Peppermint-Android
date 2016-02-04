@@ -18,7 +18,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	private static final String TAG = DatabaseHelper.class.getSimpleName();
 	
 	private static final String DATABASE_NAME = "peppermint.db";    // database filename
-	public static final int DATABASE_VERSION = 10;                   // database version
+	public static final int DATABASE_VERSION = 12;                   // database version
 	private Context mContext;
 
 	public DatabaseHelper(Context context) {

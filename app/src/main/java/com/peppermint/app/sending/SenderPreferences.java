@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
-import com.peppermint.app.R;
 import com.peppermint.app.sending.mail.gmail.GmailSenderPreferences;
 import com.peppermint.app.utils.Utils;
 
@@ -28,7 +27,6 @@ public class SenderPreferences {
     public static final String IS_FIRST_RUN_KEY = "isFirstRun";
     public static final String HAS_SENT_KEY = "hasSentMessage";
 
-    public static final String MAIL_SUBJECT_KEY = "mailSubject";
     public static final String FIRST_NAME_KEY = "firstName";
     public static final String LAST_NAME_KEY = "lastName";
 
@@ -144,16 +142,6 @@ public class SenderPreferences {
         return getSharedPreferences().getBoolean(SHOWN_SMS_CONFIRMATION_KEY, false);
     }
 
-    public void setMailSubject(String subject) {
-        SharedPreferences.Editor editor = getSharedPreferences().edit();
-        editor.putString(MAIL_SUBJECT_KEY, subject);
-        editor.commit();
-    }
-
-    public String getMailSubject() {
-        return getSharedPreferences().getString(MAIL_SUBJECT_KEY, mContext.getString(R.string.sender_default_mail_subject));
-    }
-
     public void setFirstName(String name) {
         SharedPreferences.Editor editor = getSharedPreferences().edit();
         editor.putString(FIRST_NAME_KEY, name);
@@ -191,7 +179,7 @@ public class SenderPreferences {
     public String getFullName() {
         String firstName = getFirstName();
         String lastName = getLastName();
-        String name = "";
+        String name = null;
 
         if(firstName == null && lastName == null) {
             String[] data = Utils.getUserData(mContext);

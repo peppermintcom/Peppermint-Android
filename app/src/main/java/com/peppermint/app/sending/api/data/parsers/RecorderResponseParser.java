@@ -30,6 +30,10 @@ public class RecorderResponseParser implements JSONParser<RecorderResponse> {
             userObj = obj.getJSONObject("recorder");
         }
 
+        if(!userObj.isNull("recorder_id")) {
+            response.setRecorderId(userObj.getString("recorder_id"));
+        }
+
         if(!userObj.isNull("recorder_key")) {
             response.setRecorderKey(userObj.getString("recorder_key"));
         }

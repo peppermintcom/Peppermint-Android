@@ -5,7 +5,7 @@ import android.widget.Toast;
 
 import com.peppermint.app.R;
 import com.peppermint.app.data.DatabaseHelper;
-import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.data.Message;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderObject;
 import com.peppermint.app.sending.SenderUploadListener;
@@ -14,6 +14,7 @@ import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.Utils;
 
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Created by Nuno Luz on 08-09-2015.
@@ -31,11 +32,15 @@ public class SMSSender extends Sender {
     }
 
     @Override
-    public SenderUploadTask newTask(SendingRequest sendingRequest) {
+    public SenderUploadTask newTask(Message message, UUID enforcedId) {
         if (!Utils.isSimAvailable(getContext())) {
             Toast.makeText(getContext(), R.string.sender_msg_sms_disabled, Toast.LENGTH_LONG).show();
             throw new UnsupportedSMSException();
         }
-        return new SMSSenderTask(this, sendingRequest, getSenderUploadListener());
+        SenderUploadTask task = new SMSSenderTask(this, message, getSenderUploadListener());
+        if(enforcedId != null) {
+            task.getIdentity().setId(enforcedId);
+        }
+        return task;
     }
 }

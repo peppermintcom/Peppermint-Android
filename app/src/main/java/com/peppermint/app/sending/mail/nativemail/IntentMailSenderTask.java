@@ -8,12 +8,11 @@ import android.support.v4.content.FileProvider;
 import android.text.Html;
 
 import com.peppermint.app.R;
-import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.authenticator.AuthenticationData;
+import com.peppermint.app.data.Message;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderUploadListener;
 import com.peppermint.app.sending.SenderUploadTask;
-import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
-import com.peppermint.app.sending.mail.MailSenderPreferences;
 import com.peppermint.app.sending.mail.MailUtils;
 
 import java.io.File;
@@ -30,35 +29,30 @@ public class IntentMailSenderTask extends SenderUploadTask {
         super(uploadTask);
     }
 
-    public IntentMailSenderTask(Sender sender, SendingRequest sendingRequest, SenderUploadListener senderUploadListener) {
-        super(sender, sendingRequest, senderUploadListener);
+    public IntentMailSenderTask(Sender sender, Message message, SenderUploadListener senderUploadListener) {
+        super(sender, message, senderUploadListener);
     }
 
     @Override
     protected void execute() throws Throwable {
-        String preferredAccountName = ((MailSenderPreferences) getSenderPreferences()).getPreferredAccountName();
-        if(preferredAccountName == null) {
-            throw new MailPreferredAccountNotSetException();
-        }
-
-        uploadPeppermintMessageDoChecks();
+        AuthenticationData data = setupPeppermintAuthentication();
         uploadPeppermintMessage();
-        String url = getSendingRequest().getServerShortUrl();
-        String displayName = ((MailSenderPreferences) getSenderPreferences()).getFullName();
+
+        String url = getMessage().getServerShortUrl();
+        String displayName = getSenderPreferences().getFullName();
 
         // build the email body
-        getSendingRequest().setBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_simple, url,
-                getSendingRequest().getRecording().getDurationMillis(),
-                getSendingRequest().getRecording().getContentType(),
-                displayName, preferredAccountName, false));
+        getMessage().setEmailBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_simple, url,
+                getMessage().getRecording().getDurationMillis(),
+                getMessage().getRecording().getContentType(),
+                displayName, data.getEmail(), false));
 
-        File file = getSendingRequest().getRecording().getFile();
+        File file = getMessage().getRecording().getFile();
 
-        Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + getSendingRequest().getRecipient().getVia()));
-        i.putExtra(Intent.EXTRA_SUBJECT, getSendingRequest().getSubject());
-        i.putExtra(Intent.EXTRA_TEXT, Html.fromHtml(getSendingRequest().getBody()));
+        Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + getMessage().getRecipient().getVia()));
+        i.putExtra(Intent.EXTRA_SUBJECT, getMessage().getEmailSubject());
+        i.putExtra(Intent.EXTRA_TEXT, Html.fromHtml(getMessage().getEmailBody()));
         Uri fileUri = FileProvider.getUriForFile(getContext(), "com.peppermint.app", file);
-       /* i.addFlags();*/
         i.putExtra(Intent.EXTRA_STREAM, fileUri);
         i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
 

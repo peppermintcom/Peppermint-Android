@@ -19,59 +19,6 @@
             <com.peppermint.app.ui.views.simple.CustomFontTextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
-                android:gravity="center_vertical"
-                custom:textFont="@string/font_semibold"
-                android:textColor="@color/black"
-                android:textSize="16dp"
-                android:text="@string/your_name_" />
-
-            <com.peppermint.app.ui.views.simple.CustomFontTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
-                android:gravity="center_vertical"
-                custom:textFont="@string/font_semibold"
-                android:textColor="@color/grey_text"
-                android:textSize="14dp"
-                android:text="@string/pref_summary_displayname" />
-
-            <com.peppermint.app.ui.views.simple.CustomValidatedEditText
-                android:id="@+id/txtFirstName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="21dp"
-                android:textSize="16dp"
-                android:textColor="@color/black"
-                android:hint="@string/first_name"
-                android:textColorHint="@color/black_50percent"
-                android:maxLength="40"
-                android:inputType="textCapWords"
-                custom:textFont="@string/font_regular"
-                android:singleLine="true"
-                android:textCursorDrawable="@drawable/ic_cursor"
-                style="@style/Peppermint.CustomEditTextSimple"/>
-
-            <com.peppermint.app.ui.views.simple.CustomValidatedEditText
-                android:id="@+id/txtLastName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="21dp"
-                android:paddingTop="5dp"
-                android:textSize="16dp"
-                android:textColor="@color/black"
-                android:hint="@string/last_name"
-                android:textColorHint="@color/black_50percent"
-                android:maxLength="40"
-                android:inputType="textCapWords"
-                custom:textFont="@string/font_regular"
-                android:singleLine="true"
-                android:textCursorDrawable="@drawable/ic_cursor"
-                style="@style/Peppermint.CustomEditTextSimple"/>
-
-            <com.peppermint.app.ui.views.simple.CustomFontTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="5dp"
                 android:gravity="center_vertical"
@@ -148,7 +95,7 @@
             android:background="@drawable/background_white_to_solid_border_top_and_bottom_pressed"
             style="?android:attr/borderlessButtonStyle" />
 
-        <com.peppermint.app.ui.views.simple.CustomFontButton
+ <!--       <com.peppermint.app.ui.views.simple.CustomFontButton
             android:id="@+id/btnNext"
             android:layout_gravity="center_horizontal"
             android:layout_width="wrap_content"
@@ -165,7 +112,7 @@
             android:textColor="@color/color_white_to_grey_disabled"
             android:background="@drawable/background_btn_alt"
             android:enabled="false"
-            style="?android:attr/borderlessButtonStyle" />
+            style="?android:attr/borderlessButtonStyle" />-->
 
     </LinearLayout>
 

@@ -13,22 +13,22 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.peppermint.app.R;
-import com.peppermint.app.SenderServiceManager;
+import com.peppermint.app.MessagesServiceManager;
 import com.peppermint.app.sending.SenderEvent;
 import com.peppermint.app.sending.mail.nativemail.IntentMailSenderTask;
 import com.peppermint.app.sending.nativesms.IntentSMSSenderTask;
-import com.peppermint.app.utils.AnimatorBuilder;
+import com.peppermint.app.ui.AnimatorBuilder;
 
 /**
  * Created by Nuno Luz on 17-09-2015.
  */
-public class SenderControlLayout extends FrameLayout implements View.OnClickListener, SenderServiceManager.Listener {
+public class SenderControlLayout extends FrameLayout implements View.OnClickListener, MessagesServiceManager.Listener {
 
     private static final int DURATION = 4000;
 
     private TextView mTxtStatus, mTxtTapToCancel;
     private ImageView mImgStatus;
-    private SenderServiceManager mSenderServiceManager;
+    private MessagesServiceManager mMessagesServiceManager;
     private AnimatorBuilder mAnimatorBuilder;
 
     private Animator mShowAnimation, mHideAnimation;
@@ -74,8 +74,8 @@ public class SenderControlLayout extends FrameLayout implements View.OnClickList
         mTxtTapToCancel.setTypeface(font);
     }
 
-    public void setSenderManager(SenderServiceManager mSenderServiceManager) {
-        this.mSenderServiceManager = mSenderServiceManager;
+    public void setSenderManager(MessagesServiceManager mMessagesServiceManager) {
+        this.mMessagesServiceManager = mMessagesServiceManager;
     }
 
     protected void hide(int delay) {
@@ -136,14 +136,14 @@ public class SenderControlLayout extends FrameLayout implements View.OnClickList
 
     @Override
     public void onClick(View v) {
-        if(mSenderServiceManager.cancel()) {
+        if(mMessagesServiceManager.cancel()) {
             mTxtTapToCancel.setVisibility(View.GONE);
             mTxtStatus.setText(R.string.cancelling);
         }
     }
 
     private void onBoundSendService(SenderEvent event) {
-        if(mSenderServiceManager.isSending()) {
+        if(mMessagesServiceManager.isSending()) {
             mTxtStatus.setText(getContext().getString(R.string.uploading));
             mTxtTapToCancel.setVisibility(View.VISIBLE);
             mImgStatus.setVisibility(View.GONE);
@@ -153,7 +153,7 @@ public class SenderControlLayout extends FrameLayout implements View.OnClickList
 
     @Override
     public void onSendFinished(SenderEvent event) {
-        if(!mSenderServiceManager.isSending()) {
+        if(!mMessagesServiceManager.isSending()) {
             // do not show message for IntentMailSender and IntentSMSSender
             if(event != null && (event.getSenderTask() instanceof IntentMailSenderTask || event.getSenderTask() instanceof IntentSMSSenderTask)) {
                 hide(0);
@@ -178,7 +178,7 @@ public class SenderControlLayout extends FrameLayout implements View.OnClickList
 
     @Override
     public void onSendCancelled(SenderEvent event) {
-        if(!mSenderServiceManager.isSending()) {
+        if(!mMessagesServiceManager.isSending()) {
             mTxtStatus.setText(getContext().getString(R.string.cancelled));
             mTxtTapToCancel.setVisibility(View.GONE);
             mImgStatus.setVisibility(View.GONE);
@@ -188,7 +188,7 @@ public class SenderControlLayout extends FrameLayout implements View.OnClickList
 
     @Override
     public void onSendError(SenderEvent event) {
-        if(!mSenderServiceManager.isSending()) {
+        if(!mMessagesServiceManager.isSending()) {
             mTxtStatus.setText(getContext().getString(R.string.not_sent));
             mTxtTapToCancel.setVisibility(View.GONE);
             mImgStatus.setVisibility(View.GONE);
@@ -201,7 +201,7 @@ public class SenderControlLayout extends FrameLayout implements View.OnClickList
 
     @Override
     public void onSendQueued(SenderEvent event) {
-        if(!mSenderServiceManager.isSending()) {
+        if(!mMessagesServiceManager.isSending()) {
             mTxtStatus.setText(getContext().getString(R.string.queued));
             mTxtTapToCancel.setVisibility(View.GONE);
             mImgStatus.setVisibility(View.GONE);

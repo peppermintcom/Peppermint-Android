@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 
 import com.peppermint.app.R;
-import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.data.Message;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderUploadListener;
 import com.peppermint.app.sending.SenderUploadTask;
@@ -22,17 +22,17 @@ public class IntentSMSSenderTask extends SenderUploadTask {
         super(uploadTask);
     }
 
-    public IntentSMSSenderTask(Sender sender, SendingRequest sendingRequest, SenderUploadListener senderUploadListener) {
-        super(sender, sendingRequest, senderUploadListener);
+    public IntentSMSSenderTask(Sender sender, Message message, SenderUploadListener senderUploadListener) {
+        super(sender, message, senderUploadListener);
     }
 
     @Override
     protected void execute() throws Throwable {
-        uploadPeppermintMessageDoChecks();
+        setupPeppermintAuthentication();
         uploadPeppermintMessage();
-        String url = getSendingRequest().getServerShortUrl();
+        String url = getMessage().getServerShortUrl();
 
-        Intent sendIntent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("smsto", getSendingRequest().getRecipient().getVia(), null));
+        Intent sendIntent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("smsto", getMessage().getRecipient().getVia(), null));
         sendIntent.putExtra("sms_body", String.format(getSender().getContext().getString(R.string.sender_default_sms_body), url));
         sendIntent.setType("vnd.android-dir/mms-sms");
         sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -44,7 +44,7 @@ public class IntentSMSSenderTask extends SenderUploadTask {
             sendIntent = new Intent(Intent.ACTION_SENDTO);
             sendIntent.addCategory(Intent.CATEGORY_DEFAULT);
             sendIntent.setType("vnd.android-dir/mms-sms");
-            sendIntent.setData(Uri.parse("sms:" + getSendingRequest().getRecipient().getVia()));
+            sendIntent.setData(Uri.parse("sms:" + getMessage().getRecipient().getVia()));
             sendIntent.putExtra("sms_body", String.format(getSender().getContext().getString(R.string.sender_default_sms_body), url));
             sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             getSender().getContext().startActivity(sendIntent);

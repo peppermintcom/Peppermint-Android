@@ -24,8 +24,8 @@ public class SenderObject implements Cloneable {
     protected transient TrackerManager mTrackerManager;
 
     protected Map<String, Object> mParameters;
-    protected SenderPreferences mPreferences;
-    protected DatabaseHelper mDatabaseHelper;
+    protected transient SenderPreferences mPreferences;
+    protected transient DatabaseHelper mDatabaseHelper;
 
     public SenderObject(SenderObject inst) {
         this(inst.mContext, inst.mTrackerManager, inst.mParameters, inst.mPreferences, inst.mDatabaseHelper);

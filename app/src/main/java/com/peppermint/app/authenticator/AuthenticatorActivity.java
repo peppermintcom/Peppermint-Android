@@ -23,7 +23,6 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
@@ -36,23 +35,18 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
-import com.google.android.gms.auth.UserRecoverableAuthException;
-import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 import com.peppermint.app.R;
-import com.peppermint.app.SenderServiceManager;
-import com.peppermint.app.sending.SenderPreferences;
+import com.peppermint.app.gcm.RegistrationIntentService;
 import com.peppermint.app.sending.SenderSupportListener;
 import com.peppermint.app.sending.SenderSupportTask;
-import com.peppermint.app.sending.api.GoogleApi;
 import com.peppermint.app.sending.api.PeppermintApi;
 import com.peppermint.app.sending.api.exceptions.GoogleApiDeniedAuthorizationException;
+import com.peppermint.app.sending.api.exceptions.GoogleApiNoAuthorizationException;
 import com.peppermint.app.sending.api.exceptions.PeppermintApiInvalidAccessTokenException;
 import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomAuthenticatorActivity;
-import com.peppermint.app.ui.authentication.AuthActivity;
 import com.peppermint.app.ui.views.simple.CustomNoScrollListView;
-import com.peppermint.app.ui.views.simple.CustomValidatedEditText;
 import com.peppermint.app.utils.Utils;
 
 import javax.net.ssl.SSLException;
@@ -64,59 +58,9 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
 
     private static final String TAG = AuthenticatorActivity.class.getSimpleName();
 
-    /**
-     * Checks if authentication is required and takes the necessary steps to launch the {@link AuthActivity}.<br />
-     * It can also request authorization from all sender (check {@link com.peppermint.app.sending.Sender} and
-     * {@link com.peppermint.app.sending.SenderManager}) API implementations.
-     *
-     * @param callerActivity the caller activity
-     * @param requestCode the request code
-     * @param authorize if it should request authorization from all senders
-     * @return true if authentication screen was launched; false otherwise
-     */
-    public static boolean startAuthentication(Activity callerActivity, int requestCode, boolean authorize) {
-        SenderPreferences prefs = new SenderPreferences(callerActivity);
-
-        // 2a. check if there's already a preferred account
-        if (prefs.getGmailSenderPreferences().getPreferredAccountName() != null) {
-            TrackerManager.getInstance(callerActivity.getApplicationContext()).setUserEmail(prefs.getGmailSenderPreferences().getPreferredAccountName());
-
-            if(authorize) {
-                // 3a. (optional) authorize the Gmail API and all other necessary apis
-                SenderServiceManager senderManager = new SenderServiceManager(callerActivity.getApplicationContext());
-                senderManager.startAndAuthorize();
-            }
-
-            return false;
-        }
-
-        // 2b. otherwise check if there's only one account and set that one as the preferred
-        Account[] accounts = AccountManager.get(callerActivity).getAccountsByType("com.google");
-        if (accounts.length == 1) {
-            prefs.getGmailSenderPreferences().setPreferredAccountName(accounts[0].name);
-
-            TrackerManager.getInstance(callerActivity.getApplicationContext()).setUserEmail(prefs.getGmailSenderPreferences().getPreferredAccountName());
-
-            if(authorize) {
-                // 3b. (optional) authorize the Gmail API and all other necessary apis
-                SenderServiceManager senderManager = new SenderServiceManager(callerActivity.getApplicationContext());
-                senderManager.startAndAuthorize();
-            }
-
-            return false;
-        }
-
-        // just show the auth screen
-        Intent intent = new Intent(callerActivity, AuthActivity.class);
-        callerActivity.startActivityForResult(intent, requestCode);
-        return true;
-    }
-
     private static final int NEW_ACCOUNT_CODE = 1234;
     private static final int AUTHORIZATION_CODE = 1235;
 
-    private static final String KEY_FIRST_NAME = TAG + "_FirstName";
-    private static final String KEY_LAST_NAME = TAG + "_LastName";
     private static final String KEY_SEL_ACCOUNT = TAG + "_SelectedAccount";
 
     private static final String KEY_DEVICE_ID = TAG + "_DeviceId";
@@ -124,53 +68,14 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
 
     private static final String KEY_PASSWORD = TAG + "_Password";
     private static final String KEY_ACCOUNT_TYPE = TAG + "_AccountType";
-    private static final String KEY_GOOGLE_TOKEN = TAG + "_GoogleToken";
+    private static final String KEY_DEVICE_SERVER_ID = TAG + "_DeviceServerId";
 
     // the ID of the screen for the Tracker API
     private static final String SCREEN_ID = "Authentication";
 
     // general use
     private TrackerManager mTrackerManager;
-    private SenderPreferences mPreferences;
-    private GoogleApi mGoogleApi;
-    private PeppermintApi mPeppermintApi;
     private AuthenticatorUtils mAuthenticatorUtils;
-
-    // names
-    private CustomValidatedEditText mTxtFirstName, mTxtLastName;
-    private boolean mDontSetNameFromPrefs = false;
-
-    private CustomValidatedEditText.Validator mFirstNameValidator = new CustomValidatedEditText.Validator() {
-        @Override
-        public String getValidatorMessage(CharSequence text) {
-            String name = text.toString().trim();
-            if(!Utils.isValidName(name)) {
-                return getString(R.string.msg_insert_first_name);
-            }
-            mValidityChecker.areValid();
-            return null;
-        }
-    };
-
-    private CustomValidatedEditText.Validator mLastNameValidator = new CustomValidatedEditText.Validator() {
-        @Override
-        public String getValidatorMessage(CharSequence text) {
-            String name = text.toString().trim();
-            if(!Utils.isValidNameMaybeEmpty(name)) {
-                return getString(R.string.msg_insert_last_name);
-            }
-            return null;
-        }
-    };
-
-    private CustomValidatedEditText.OnValidityChangeListener mValidityChangeListener = new CustomValidatedEditText.OnValidityChangeListener() {
-        @Override
-        public void onValidityChange(boolean isValid) {
-            mValidityChecker.areValid();
-        }
-    };
-
-    private CustomValidatedEditText.ValidityChecker mValidityChecker;
 
     // account list
     private CustomNoScrollListView mListView;
@@ -181,7 +86,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     private String mSelectedAccount;
 
     // buttons
-    private Button mBtnNext, mBtnAddAccount;
+    private Button mBtnAddAccount;
 
     // authentication
     private ProgressDialog mProgressDialog = null;
@@ -190,9 +95,9 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     private AuthenticationGoogleApiTask mAuthenticationGoogleApiTask;
 
     private String mDeviceId, mDeviceKey;
-    private String mFirstName, mLastName, mPassword;
+    private String mPassword;
     private int mAccountType = PeppermintApi.ACCOUNT_TYPE_GOOGLE;
-    private String mGoogleToken;
+    private String mDeviceServerId;
 
     private final SenderSupportListener mGoogleApiTaskListener = new SenderSupportListener() {
         @Override
@@ -206,7 +111,9 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
 
         @Override
         public void onSendingSupportFinished(SenderSupportTask supportTask) {
-            mGoogleToken = ((AuthenticationGoogleApiTask) supportTask).getGoogleToken();
+            AuthenticationGoogleApiTask task = ((AuthenticationGoogleApiTask) supportTask);
+            mAccountType = PeppermintApi.ACCOUNT_TYPE_GOOGLE;
+            mPassword = task.getGoogleToken();
             startPeppermintAuthentication();
         }
 
@@ -233,6 +140,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         public void onSendingSupportFinished(SenderSupportTask supportTask) {
             AuthenticationPeppermintTask task = (AuthenticationPeppermintTask) supportTask;
             hideProgress();
+            mDeviceServerId = task.getDeviceServerId();
             finishAuthentication(task.getAccessToken());
         }
 
@@ -247,31 +155,28 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
 
     private void startGoogleAuthentication() {
         showProgress();
-        mGoogleApi.setAccountName(mSelectedAccount);
-        mAuthenticationGoogleApiTask = new AuthenticationGoogleApiTask(this, mGoogleApi, mGoogleApiTaskListener);
+        mAuthenticationGoogleApiTask = new AuthenticationGoogleApiTask(this, mSelectedAccount, mGoogleApiTaskListener);
         mAuthenticationGoogleApiTask.getIdentity().setTrackerManager(mTrackerManager);
+        mAuthenticationGoogleApiTask.getIdentity().setPreferences(mPreferences);
         mAuthenticationGoogleApiTask.execute((Void) null);
     }
 
     private void startPeppermintAuthentication() {
         showProgress();
-        mFirstName = Utils.capitalizeFully(mTxtFirstName.getText().toString());
-        mLastName = Utils.capitalizeFully(mTxtLastName.getText().toString());
         String[] keys = PeppermintApi.getKeys(this);
         mDeviceId = keys[0];
         mDeviceKey = keys[1];
-        mPassword = mDeviceId + "-" + mDeviceKey;
-        mAccountType = PeppermintApi.ACCOUNT_TYPE_GOOGLE;
 
-        mAuthenticationPeppermintTask = new AuthenticationPeppermintTask(this, mPeppermintApi, mAccountType, mDeviceId, mDeviceKey, mSelectedAccount, mPassword, mFirstName, mLastName, mPeppermintTaskListener);
+        mAuthenticationPeppermintTask = new AuthenticationPeppermintTask(this, mAccountType, mDeviceId, mDeviceKey, mSelectedAccount, mPassword, mPeppermintTaskListener);
         mAuthenticationPeppermintTask.getIdentity().setTrackerManager(mTrackerManager);
+        mAuthenticationPeppermintTask.getIdentity().setPreferences(mPreferences);
         mAuthenticationPeppermintTask.execute((Void) null);
     }
 
     private void handleError(Throwable error) {
 
-        if(error instanceof UserRecoverableAuthIOException || error instanceof UserRecoverableAuthException) {
-            Intent intent = error instanceof UserRecoverableAuthIOException ? ((UserRecoverableAuthIOException) error).getIntent() : ((UserRecoverableAuthException) error).getIntent();
+        if(error instanceof GoogleApiNoAuthorizationException) {
+            Intent intent = ((GoogleApiNoAuthorizationException) error).getHandleIntent();
             startActivityForResult(intent, AUTHORIZATION_CODE);
             return;
         }
@@ -302,7 +207,11 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     }
 
     private void finishAuthentication(String accessToken) {
-        mAuthenticatorUtils.createAccount(accessToken, mSelectedAccount, mPassword, mDeviceId, mDeviceKey, mFirstName, mLastName, mAccountType);
+        mAuthenticatorUtils.createAccount(accessToken, mSelectedAccount, mPassword, mDeviceServerId, mDeviceId, mDeviceKey, mAccountType);
+
+        // register to GCM
+        Intent gcmIntent = new Intent(this, RegistrationIntentService.class);
+        startService(gcmIntent);
 
         final Intent intent = new Intent();
         intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, AuthenticatorConstants.ACCOUNT_NAME);
@@ -318,13 +227,13 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // do not enforce an authentication policy for the authenticator activity
+        getAuthenticationPolicyEnforcer().setRequiresAuthentication(false);
+
         FrameLayout lytContainer = (FrameLayout) findViewById(R.id.container);
         View v = getLayoutInflater().inflate(R.layout.f_authentication, null, false);
         lytContainer.addView(v, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
 
-        mPreferences = new SenderPreferences(this);
-        mGoogleApi = new GoogleApi(this);
-        mPeppermintApi = new PeppermintApi();
         mAuthenticatorUtils = new AuthenticatorUtils(this);
         mTrackerManager = TrackerManager.getInstance(getApplicationContext());
 
@@ -340,53 +249,13 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         getTouchInterceptor().setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    Rect outRectFirst = new Rect();
-                    Rect outRectLast = new Rect();
-                    mTxtFirstName.getGlobalVisibleRect(outRectFirst);
-                    mTxtLastName.getGlobalVisibleRect(outRectLast);
-                    if (!outRectFirst.contains((int) event.getRawX(), (int) event.getRawY()) && !outRectLast.contains((int) event.getRawX(), (int) event.getRawY())) {
-                        Utils.hideKeyboard(AuthenticatorActivity.this, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
-                    }
-                }
+                Utils.hideKeyboard(AuthenticatorActivity.this, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
                 return false;
             }
         });
 
-        mBtnNext = (Button) findViewById(R.id.btnNext);
-        mBtnNext.setOnClickListener(this);
-
         mBtnAddAccount = (Button) findViewById(R.id.btnAddAccount);
         mBtnAddAccount.setOnClickListener(this);
-
-        mTxtFirstName = (CustomValidatedEditText) findViewById(R.id.txtFirstName);
-        mTxtFirstName.setValidator(mFirstNameValidator);
-        mTxtFirstName.setOnValidityChangeListener(mValidityChangeListener);
-        mTxtFirstName.setValidBackgroundResource(R.drawable.background_edittext_simple);
-        mTxtFirstName.setInvalidBackgroundResource(R.drawable.ic_edittext_invalid);
-
-        mTxtLastName = (CustomValidatedEditText) findViewById(R.id.txtLastName);
-        mTxtLastName.setOnValidityChangeListener(mValidityChangeListener);
-        mTxtLastName.setValidator(mLastNameValidator);
-        mTxtLastName.setValidBackgroundResource(R.drawable.background_edittext_simple);
-        mTxtLastName.setInvalidBackgroundResource(R.drawable.ic_edittext_invalid);
-
-        mValidityChecker = new CustomValidatedEditText.ValidityChecker(mTxtFirstName, mTxtLastName) {
-            @Override
-            public synchronized boolean areValid() {
-                if(mAccounts == null || mAccounts.length <= 0 || mListView.getCheckedItemPosition() < 0) {
-                    mBtnAddAccount.setTextColor(Utils.getColorStateList(AuthenticatorActivity.this, R.color.color_orange_to_white_pressed));
-                    mBtnNext.setEnabled(false);
-                    return false;
-                }
-
-                mBtnAddAccount.setTextColor(Utils.getColorStateList(AuthenticatorActivity.this, R.color.color_green_to_white_pressed));
-                boolean superValid = super.areValid();
-                mBtnNext.setEnabled(superValid);
-
-                return superValid;
-            }
-        };
 
         mListView = (CustomNoScrollListView) findViewById(android.R.id.list);
         mLytEmpty = (ViewGroup) findViewById(android.R.id.empty);
@@ -394,27 +263,12 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         mListView.setOnItemClickListener(this);
 
         if(savedInstanceState != null) {
-            mFirstName = savedInstanceState.getString(KEY_FIRST_NAME);
-            mLastName = savedInstanceState.getString(KEY_LAST_NAME);
             mSelectedAccount = savedInstanceState.getString(KEY_SEL_ACCOUNT);
             mDeviceKey = savedInstanceState.getString(KEY_DEVICE_KEY);
             mDeviceId = savedInstanceState.getString(KEY_DEVICE_ID);
             mPassword = savedInstanceState.getString(KEY_PASSWORD);
             mAccountType = savedInstanceState.getInt(KEY_ACCOUNT_TYPE, PeppermintApi.ACCOUNT_TYPE_GOOGLE);
-            mGoogleToken = savedInstanceState.getString(KEY_GOOGLE_TOKEN);
-        }
-
-        if(mFirstName != null || mLastName != null) {
-            if(mFirstName != null) {
-                mTxtFirstName.setText(mFirstName);
-            }
-            if(mLastName != null) {
-                mTxtLastName.setText(mLastName);
-            }
-            // only try to get the name from prefs if there's no saved instance state
-            mDontSetNameFromPrefs = true;
-        } else {
-            mDontSetNameFromPrefs = false;
+            mDeviceServerId = savedInstanceState.getString(KEY_DEVICE_SERVER_ID);
         }
     }
 
@@ -428,6 +282,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         if(mAuthenticationGoogleApiTask != null) {
             mAuthenticationGoogleApiTask.cancel(true);
         }
+
         super.onDestroy();
     }
 
@@ -441,14 +296,12 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     @Override
     public void onSaveInstanceState(Bundle outState) {
         hideProgress();
-        outState.putString(KEY_FIRST_NAME, mTxtFirstName.getText().toString());
-        outState.putString(KEY_LAST_NAME, mTxtLastName.getText().toString());
         outState.putString(KEY_SEL_ACCOUNT, mSelectedAccount);
         outState.putString(KEY_DEVICE_ID, mDeviceId);
         outState.putString(KEY_DEVICE_KEY, mDeviceKey);
         outState.putString(KEY_PASSWORD, mPassword);
         outState.putInt(KEY_ACCOUNT_TYPE, mAccountType);
-        outState.putString(KEY_GOOGLE_TOKEN, mGoogleToken);
+        outState.putString(KEY_DEVICE_SERVER_ID, mDeviceServerId);
         super.onSaveInstanceState(outState);
     }
 
@@ -499,7 +352,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
             if(resultCode != RESULT_OK) {
                 handleError(new GoogleApiDeniedAuthorizationException());
             } else {
-                startPeppermintAuthentication();
+                startGoogleAuthentication();
             }
         }
     }
@@ -510,27 +363,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
 
         refreshAccountList();
 
-        // only try to get the name from prefs if there's no saved instance state
-        if(!mDontSetNameFromPrefs) {
-            String firstName = mPreferences.getFirstName();
-            String lastName = mPreferences.getLastName();
-
-            if(firstName != null && Utils.isValidName(firstName)) {
-                mTxtFirstName.setText(firstName);
-            }
-            if(lastName != null && Utils.isValidName(lastName)) {
-                mTxtLastName.setText(lastName);
-            }
-
-            mDontSetNameFromPrefs = true;
-        }
-        mTxtFirstName.setSelection(mTxtFirstName.getText().length());
-        mTxtLastName.setSelection(mTxtLastName.getText().length());
-
         mTrackerManager.trackScreenView(SCREEN_ID);
-
-        mTxtFirstName.validate();
-        mTxtLastName.validate();
     }
 
     @Override
@@ -541,21 +374,13 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
             startActivityForResult(intent, NEW_ACCOUNT_CODE);
             return;
         }
-
-        if(v.equals(mBtnNext)) {
-            if(!mValidityChecker.areValid()) {
-                return;
-            }
-
-            startGoogleAuthentication();
-        }
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         mSelectedAccount = mAccounts[position].name;
         mListView.setItemChecked(position, true);
-        mValidityChecker.areValid();
+        startGoogleAuthentication();
     }
 
     /*
@@ -601,4 +426,5 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
             mProgressDialog = null;
         }
     }
+
 }

@@ -39,11 +39,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
+import com.peppermint.app.MessagesServiceManager;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.RecordService;
 import com.peppermint.app.RecordServiceManager;
-import com.peppermint.app.SenderServiceManager;
+import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientType;
 import com.peppermint.app.data.Recording;
@@ -61,7 +62,8 @@ import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.ui.views.dialogs.PopupDialog;
 import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.ui.views.simple.CustomVisibilityListView;
-import com.peppermint.app.utils.AnimatorBuilder;
+import com.peppermint.app.ui.AnimatorBuilder;
+import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.NoMicDataIOException;
 import com.peppermint.app.utils.Utils;
@@ -157,7 +159,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     private RecordServiceManager mRecordManager;
 
     // bottom bar
-    private SenderServiceManager mSenderServiceManager;
+    private MessagesServiceManager mMessagesServiceManager;
     private SenderControlLayout mLytSenderControl;
     private CustomConfirmationDialog mSmsAddContactDialog;
     private Recipient mTappedRecipient;
@@ -423,6 +425,43 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         return viaName;
     }
 
+    private AuthenticationPolicyEnforcer.AuthenticationDoneCallback mAuthenticationDoneCallback = new AuthenticationPolicyEnforcer.AuthenticationDoneCallback() {
+        @Override
+        public void done(AuthenticationData data) {
+            mActivity.getAuthenticationPolicyEnforcer().removeAuthenticationDoneCallback(this);
+
+            if(getArguments() != null && (getArguments().containsKey(FAST_REPLY_NAME_PARAM) || getArguments().containsKey(FAST_REPLY_MAIL_PARAM))) {
+                String name = getArguments().getString(FAST_REPLY_NAME_PARAM, "");
+                String mail = getArguments().getString(FAST_REPLY_MAIL_PARAM, "");
+
+                if(mail.length() <= 0) {
+                    // if the email was not supplied, just search for the name
+                    mSearchListBarView.setSearchText(name);
+                } else {
+                    // if mail is supplied, check if the contact exists
+                    List<String> mimeTypes = new ArrayList<>();
+                    mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
+                    mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
+                    FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, null, null, mimeTypes, mail);
+                    boolean alreadyHasEmail = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
+
+                    // if not, add the contact
+                    if(!alreadyHasEmail) {
+                        Bundle bundle = NewRecipientFragment.insertRecipientContact(mActivity, 0, name, null, mail, null, data.getEmail());
+                        // will fail if there's no name or if the email is invalid
+                        if(!bundle.containsKey(NewRecipientFragment.KEY_ERROR)) {
+                            alreadyHasEmail = true;
+                        }
+                    }
+
+                    // if it fails, add complete name+email search text to allow adding the full contact
+                    // otherwise, just search by email
+                    mSearchListBarView.setSearchText(alreadyHasEmail || name.length() <= 0 ? mail : name + " <" + mail + ">");
+                }
+            }
+        }
+    };
+
     @SuppressWarnings("deprecation")
     @Override
     public void onAttach(Activity activity) {
@@ -430,7 +469,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         mActivity = (CustomActionBarActivity) activity;
         mPreferences = new SenderPreferences(activity);
-        mSenderServiceManager = new SenderServiceManager(activity);
+        mMessagesServiceManager = new MessagesServiceManager(activity);
 
         mRecordManager = new RecordServiceManager(activity);
         mRecordManager.setListener(this);
@@ -446,6 +485,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) mActivity.getApplication();
+
+        mActivity.getAuthenticationPolicyEnforcer().addAuthenticationDoneCallback(mAuthenticationDoneCallback);
 
         mSmsConfirmationDialog = new SMSConfirmationDialog(mActivity);
         mSmsConfirmationDialog.setTitleText(R.string.sending_via_sms);
@@ -489,7 +530,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
             }
         });
 
-        mSenderServiceManager.start();
+        mMessagesServiceManager.start();
         mRecordManager.start(false);
 
         mRecordSoundPlayer = MediaPlayer.create(mActivity, R.raw.s_record);
@@ -497,7 +538,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         mMinSwipeDistance = Utils.dpToPx(mActivity, MIN_SWIPE_DISTANCE_DP);
 
-        mRecordingViewOverlay = (RecordingOverlayView) mActivity.createOverlay(R.layout.v_recording_overlay_layout, RECORDING_OVERLAY_TAG, false, true);
+        mRecordingViewOverlay = (RecordingOverlayView) mActivity.getOverlayManager().createOverlay(R.layout.v_recording_overlay_layout, RECORDING_OVERLAY_TAG, false, true);
 
         // hold popup
         mHoldPopup = new PopupWindow(mActivity);
@@ -687,42 +728,12 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         // bottom status bar
         mLytSenderControl = (SenderControlLayout) v.findViewById(R.id.lytStatus);
-        mLytSenderControl.setSenderManager(mSenderServiceManager);
+        mLytSenderControl.setSenderManager(mMessagesServiceManager);
         mLytSenderControl.setTypeface(app.getFontSemibold());
-        mSenderServiceManager.setListener(mLytSenderControl);
+        mMessagesServiceManager.setListener(mLytSenderControl);
 
         // avoid showing "no contacts" for a split second, right after creation
         setListShownNoAnimation(false);
-
-        if(getArguments() != null && (getArguments().containsKey(FAST_REPLY_NAME_PARAM) || getArguments().containsKey(FAST_REPLY_MAIL_PARAM))) {
-            String name = getArguments().getString(FAST_REPLY_NAME_PARAM, "");
-            String mail = getArguments().getString(FAST_REPLY_MAIL_PARAM, "");
-
-            if(mail.length() <= 0) {
-                // if the email was not supplied, just search for the name
-                mSearchListBarView.setSearchText(name);
-            } else {
-                // if mail is supplied, check if the contact exists
-                List<String> mimeTypes = new ArrayList<>();
-                mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
-                mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-                FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(mActivity, null, null, null, mimeTypes, mail);
-                boolean alreadyHasEmail = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
-
-                // if not, add the contact
-                if(!alreadyHasEmail) {
-                    Bundle bundle = NewRecipientFragment.insertRecipientContact(mActivity, 0, name, null, mail, null, mPreferences.getGmailSenderPreferences().getPreferredAccountName());
-                    // will fail if there's no name or if the email is invalid
-                    if(!bundle.containsKey(NewRecipientFragment.KEY_ERROR)) {
-                        alreadyHasEmail = true;
-                    }
-                }
-
-                // if it fails, add complete name+email search text to allow adding the full contact
-                // otherwise, just search by email
-                mSearchListBarView.setSearchText(alreadyHasEmail || name.length() <= 0 ? mail : name + " <" + mail + ">");
-            }
-        }
 
         return v;
     }
@@ -788,7 +799,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
         onSearch(mSearchListBarView.getSearchText());
         mSearchListBarView.setOnSearchListener(this);
-        mSenderServiceManager.bind();
+        mMessagesServiceManager.bind();
         mRecordManager.bind();
 
         mHandler.postDelayed(mAnimationRunnable, FIXED_AVATAR_ANIMATION_INTERVAL_MS + mRandom.nextInt(VARIABLE_AVATAR_ANIMATION_INTERVAL_MS));
@@ -830,7 +841,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     public void onStop() {
         mHandler.removeCallbacks(mAnimationRunnable);
 
-        mSenderServiceManager.unbind();
+        mMessagesServiceManager.unbind();
         mRecordManager.unbind();
         mSearchListBarView.setOnSearchListener(null);
 
@@ -890,7 +901,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
     
     public boolean showRecordingOverlay(View contactContainer) {
         mRecordingViewOverlay.start();
-        boolean shown = mActivity.showOverlay(RECORDING_OVERLAY_TAG, true, null);
+        boolean shown = mActivity.getOverlayManager().showOverlay(RECORDING_OVERLAY_TAG, true, null);
 
         if(shown) {
             contactContainer.getGlobalVisibleRect(mContactRect);
@@ -907,7 +918,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mSearchListBarView.removeSearchTextFocus(null);
         getView().requestFocus();
 
-        boolean hidden = mActivity.hideOverlay(RECORDING_OVERLAY_TAG, RECORDING_OVERLAY_HIDE_DELAY, animated);   // FIXME animated hide is buggy
+        boolean hidden = mActivity.getOverlayManager().hideOverlay(RECORDING_OVERLAY_TAG, RECORDING_OVERLAY_HIDE_DELAY, animated);   // FIXME animated hide is buggy
 
         if(hidden) {
             TrackerManager.getInstance(mActivity.getApplicationContext()).trackScreenView(SCREEN_ID);
@@ -987,6 +998,16 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+
+        AuthenticationData authData = mActivity.getAuthenticationPolicyEnforcer().getAuthenticationData();
+        if(authData == null) {
+            return false;
+        }
+        String userRef = mPreferences.getFullName();
+        if(userRef == null) {
+            userRef = authData.getEmail();
+        }
+
         setRecordDuration(0);
 
         mTappedRecipient = mRecipientAdapter instanceof RecipientCursorAdapter ?
@@ -1011,9 +1032,10 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
             mRecordingViewOverlay.setName(mTappedRecipient.getName());
             mRecordingViewOverlay.setVia(mTappedRecipient.getVia());
-            String filename = getString(R.string.filename_message_from) + Utils.normalizeAndCleanString(mPreferences.getFullName());
+            String filename = getString(R.string.filename_message_from) + Utils.normalizeAndCleanString(userRef);
             mRecordManager.startRecording(filename, mTappedRecipient, MAX_DURATION_MILLIS);
         }
+
         return true;
     }
 
@@ -1171,7 +1193,7 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
 
     private void sendMessage(Recipient recipient, Recording recording) {
         mPreferences.addRecentContactUri(recipient.getContactId());
-        mSenderServiceManager.startAndSend(recipient, recording);
+        mMessagesServiceManager.startAndSend(null, recipient, recording);
 
         mFinalEvent = null;
 

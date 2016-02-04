@@ -57,21 +57,37 @@ public class AuthenticatorUtils {
         }
     }
 
-    public void createAccount(String accessToken, AuthenticationData data) {
-        createAccount(accessToken, data.getEmail(), data.getPassword(), data.getDeviceId(), data.getDeviceKey(), data.getFirstName(), data.getLastName(), data.getAccountType());
+    public void updateAccountGcmRegistration(String gcmRegistration) throws PeppermintApiNoAccountException {
+        if(mAccount == null) {
+            throw new PeppermintApiNoAccountException();
+        }
+
+        mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_GCM_REG, gcmRegistration);
     }
 
-    public void createAccount(String accessToken, String email, String password, String deviceId, String deviceKey, String firstName, String lastName, int accountType) {
+    public void updateAccountPassword(String password) throws PeppermintApiNoAccountException {
+        if(mAccount == null) {
+            throw new PeppermintApiNoAccountException();
+        }
+
+        mAccountManager.setPassword(mAccount, password);
+        invalidateAccessToken();
+    }
+
+    public void createAccount(String accessToken, AuthenticationData data) {
+        createAccount(accessToken, data.getEmail(), data.getPassword(), data.getDeviceServerId(), data.getDeviceId(), data.getDeviceKey(), data.getAccountType());
+    }
+
+    public void createAccount(String accessToken, String email, String password, String deviceServerId, String deviceId, String deviceKey, int accountType) {
         if(mAccount == null) {
             mAccount = new Account(AuthenticatorConstants.ACCOUNT_NAME, AuthenticatorConstants.ACCOUNT_TYPE);
             mAccountManager.addAccountExplicitly(mAccount, password, null);
         }
 
         mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_EMAIL, email);
+        mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_DEVICE_SERVER_ID, deviceServerId);
         mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_DEVICE_ID, deviceId);
         mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_DEVICE_KEY, deviceKey);
-        mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_FIRST_NAME, firstName);
-        mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_LAST_NAME, lastName);
         mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_TYPE, String.valueOf(accountType));
         mAccountManager.setPassword(mAccount, password);
 
@@ -86,11 +102,11 @@ public class AuthenticatorUtils {
         }
 
         AuthenticationData data = new AuthenticationData();
+        data.setGcmRegistration(mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_GCM_REG));
         data.setEmail(mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_EMAIL));
+        data.setDeviceServerId(mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_DEVICE_SERVER_ID));
         data.setDeviceId(mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_DEVICE_ID));
         data.setDeviceKey(mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_DEVICE_KEY));
-        data.setFirstName(mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_FIRST_NAME));
-        data.setLastName(mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_LAST_NAME));
         data.setAccountType(Integer.valueOf(mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_TYPE)));
         data.setPassword(mAccountManager.getPassword(mAccount));
 
@@ -99,5 +115,9 @@ public class AuthenticatorUtils {
 
     public Account getAccount() {
         return mAccount;
+    }
+
+    public AccountManager getAccountManager() {
+        return mAccountManager;
     }
 }

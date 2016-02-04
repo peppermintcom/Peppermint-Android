@@ -47,7 +47,7 @@ public class Recipient implements Serializable {
         cv.put("via", recipient.getVia());
         cv.put("account_type", recipient.getType());
 
-        long id = db.insert("tbl_sending_request_recipient", null, cv);
+        long id = db.insert("tbl_recipient", null, cv);
         if(id < 0) {
             throw new SQLException("Unable to insert recipient!");
         }
@@ -71,7 +71,7 @@ public class Recipient implements Serializable {
         cv.put("via", recipient.getVia());
         cv.put("account_type", recipient.getType());
 
-        long id = db.update("tbl_sending_request_recipient", cv, "recipient_id = " + recipient.getId(), null);
+        long id = db.update("tbl_recipient", cv, "recipient_id = " + recipient.getId(), null);
         if(id < 0) {
             throw new SQLException("Unable to update recipient!");
         }
@@ -101,7 +101,7 @@ public class Recipient implements Serializable {
      * @throws SQLException
      */
     public static void delete(SQLiteDatabase db, Recipient recipient) throws SQLException {
-        long id = db.delete("tbl_sending_request_recipient", "recipient_id = " + recipient.getId(), null);
+        long id = db.delete("tbl_recipient", "recipient_id = " + recipient.getId(), null);
         if(id < 0) {
             throw new SQLException("Unable to delete the recipient!");
         }
@@ -116,7 +116,7 @@ public class Recipient implements Serializable {
      */
     public static Recipient get(SQLiteDatabase db, long id) {
         Recipient recipient = null;
-        Cursor cursor = db.rawQuery("SELECT * FROM tbl_sending_request_recipient WHERE recipient_id = " + id, null);
+        Cursor cursor = db.rawQuery("SELECT * FROM tbl_recipient WHERE recipient_id = " + id, null);
         if(cursor != null && cursor.moveToFirst()) {
             recipient = getFromCursor(cursor);
         }
@@ -131,7 +131,7 @@ public class Recipient implements Serializable {
      */
     public static Recipient getByVia(SQLiteDatabase db, String via) {
         Recipient recipient = null;
-        Cursor cursor = db.rawQuery("SELECT * FROM tbl_sending_request_recipient WHERE via = ?;", new String[]{ via });
+        Cursor cursor = db.rawQuery("SELECT * FROM tbl_recipient WHERE via = ?;", new String[]{ via });
         if(cursor != null && cursor.moveToFirst()) {
             recipient = getFromCursor(cursor);
         }
@@ -232,5 +232,20 @@ public class Recipient implements Serializable {
 
     public void setRawId(long mRawId) {
         this.mRawId = mRawId;
+    }
+
+    @Override
+    public String toString() {
+        return "Recipient{" +
+                "mContactId=" + mContactId +
+                ", mId=" + mId +
+                ", mRawId=" + mRawId +
+                ", mStarred=" + mStarred +
+                ", mMimeType='" + mMimeType + '\'' +
+                ", mPhotoUri='" + mPhotoUri + '\'' +
+                ", mName='" + mName + '\'' +
+                ", mType='" + mType + '\'' +
+                ", mVia='" + mVia + '\'' +
+                '}';
     }
 }

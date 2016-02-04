@@ -30,6 +30,7 @@ import android.widget.Toast;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
+import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
@@ -669,6 +670,12 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
 
     @Override
     public void onClick(View v) {
+
+        AuthenticationData authData = mActivity.getAuthenticationPolicyEnforcer().getAuthenticationData();
+        if(authData == null) {
+            return;
+        }
+
         long rawId = 0;
         if(getArguments() != null) {
             rawId = getArguments().getLong(KEY_RAW_ID, 0);
@@ -679,7 +686,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         String phone = mTxtPhone.getText().toString().trim();
         String email = mTxtMail.getText().toString().trim();
 
-        Bundle bundle = insertRecipientContact(mActivity, rawId, firstName, lastName, phone, email, mAvatarUrl, mPreferences.getGmailSenderPreferences().getPreferredAccountName());
+        Bundle bundle = insertRecipientContact(mActivity, rawId, firstName, lastName, phone, email, mAvatarUrl, authData.getEmail());
 
         if(bundle.containsKey(KEY_ERROR)) {
             switch(bundle.getInt(KEY_ERROR)) {

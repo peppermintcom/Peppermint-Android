@@ -14,7 +14,7 @@ public class InstallReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if(intent.getAction().compareTo(ACTION_INSTALL_REFERRER) == 0) {
-            Intent launchServiceIntent = new Intent(context, SenderService.class);
+            Intent launchServiceIntent = new Intent(context, MessagesService.class);
             context.startService(launchServiceIntent);
         }
     }

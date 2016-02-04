@@ -3,7 +3,7 @@ package com.peppermint.app.sending;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.data.Message;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
@@ -26,14 +26,15 @@ public abstract class SenderSupportTask extends SenderTask implements Cloneable 
 
     private final Intent mFinishedIntent = new Intent(INTENT_ACTION_FINISHED);
     private SenderSupportListener mSenderSupportListener;
+    private SenderUploadTask mRelatedUploadTask;
 
     public SenderSupportTask(SenderSupportTask supportTask) {
         super(supportTask);
         this.mSenderSupportListener = supportTask.mSenderSupportListener;
     }
 
-    public SenderSupportTask(Sender sender, SendingRequest sendingRequest, SenderSupportListener senderSupportListener) {
-        super(sender, sendingRequest);
+    public SenderSupportTask(Sender sender, Message message, SenderSupportListener senderSupportListener) {
+        super(sender, message);
         this.mSenderSupportListener = senderSupportListener;
     }
 
@@ -91,5 +92,13 @@ public abstract class SenderSupportTask extends SenderTask implements Cloneable 
 
     protected Intent getFinishedIntent() {
         return mFinishedIntent;
+    }
+
+    public SenderUploadTask getRelatedUploadTask() {
+        return mRelatedUploadTask;
+    }
+
+    public void setRelatedUploadTask(SenderUploadTask mUploadTask) {
+        this.mRelatedUploadTask = mUploadTask;
     }
 }

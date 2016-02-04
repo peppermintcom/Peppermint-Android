@@ -1,4 +1,4 @@
-package com.peppermint.app.utils;
+package com.peppermint.app.ui;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -9,6 +9,8 @@ import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
+
+import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;

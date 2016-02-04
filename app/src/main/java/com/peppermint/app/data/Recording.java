@@ -53,7 +53,7 @@ public class Recording implements Serializable {
         cv.put("recorded_ts", recording.getRecordedTimestamp());
         cv.put("content_type", recording.getContentType());
 
-        long id = db.insert("tbl_sending_request_recording", null, cv);
+        long id = db.insert("tbl_recording", null, cv);
         if(id < 0) {
             throw new SQLException("Unable to insert recording!");
         }
@@ -78,7 +78,7 @@ public class Recording implements Serializable {
         cv.put("recorded_ts", recording.getRecordedTimestamp());
         cv.put("content_type", recording.getContentType());
 
-        long id = db.update("tbl_sending_request_recording", cv, "recording_id = " + recording.getId(), null);
+        long id = db.update("tbl_recording", cv, "recording_id = " + recording.getId(), null);
         if(id < 0) {
             throw new SQLException("Unable to update recording!");
         }
@@ -108,7 +108,7 @@ public class Recording implements Serializable {
      * @throws SQLException
      */
     public static void delete(SQLiteDatabase db, Recording recording) throws SQLException {
-        long id = db.delete("tbl_sending_request_recording", "recording_id = " + recording.getId(), null);
+        long id = db.delete("tbl_recording", "recording_id = " + recording.getId(), null);
         if(id < 0) {
             throw new SQLException("Unable to delete the recording!");
         }
@@ -123,7 +123,7 @@ public class Recording implements Serializable {
      */
     public static Recording get(SQLiteDatabase db, long id) {
         Recording recording = null;
-        Cursor cursor = db.rawQuery("SELECT * FROM tbl_sending_request_recording WHERE recording_id = " + id, null);
+        Cursor cursor = db.rawQuery("SELECT * FROM tbl_recording WHERE recording_id = " + id, null);
         if(cursor != null && cursor.moveToFirst()) {
             recording = getFromCursor(cursor);
         }
@@ -232,5 +232,18 @@ public class Recording implements Serializable {
 
     public void setRecordedTimestamp(String mRecordedTimestamp) {
         this.mRecordedTimestamp = mRecordedTimestamp;
+    }
+
+    @Override
+    public String toString() {
+        return "Recording{" +
+                "mId=" + mId +
+                ", mFilePath='" + mFilePath + '\'' +
+                ", mContentType='" + mContentType + '\'' +
+                ", mDurationMillis=" + mDurationMillis +
+                ", mSizeKb=" + mSizeKb +
+                ", mRecordedTimestamp='" + mRecordedTimestamp + '\'' +
+                ", mHasVideo=" + mHasVideo +
+                '}';
     }
 }

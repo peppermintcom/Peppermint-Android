@@ -22,6 +22,7 @@ import com.peppermint.app.sending.api.data.parsers.RecorderResponseParser;
 import com.peppermint.app.sending.api.data.parsers.UploadsResponseParser;
 import com.peppermint.app.sending.api.exceptions.PeppermintApiAlreadyRegisteredException;
 import com.peppermint.app.sending.api.exceptions.PeppermintApiInvalidAccessTokenException;
+import com.peppermint.app.sending.api.exceptions.PeppermintApiRecipientNoAppException;
 import com.peppermint.app.sending.api.exceptions.PeppermintApiResponseCodeException;
 import com.peppermint.app.sending.api.exceptions.PeppermintApiTooManyRequestsException;
 import com.peppermint.app.tracking.TrackerManager;
@@ -70,16 +71,20 @@ public class PeppermintApi implements Serializable {
     }
 
     // MESSAGES
-    public MessagesResponse sendMessage(String transcriptionUrl, String audioUrl, String senderEmail, String recipientEmail) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException, PeppermintApiTooManyRequestsException {
+    public MessagesResponse sendMessage(String transcriptionUrl, String audioUrl, String senderEmail, String recipientEmail) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException, PeppermintApiTooManyRequestsException, PeppermintApiRecipientNoAppException {
         HttpRequest request = new HttpRequest(MESSAGES_ENDPOINT, HttpRequest.METHOD_POST);
         request.setHeaderParam("Authorization", "Bearer " + getAccessToken());
         request.setHeaderParam("X-Api-Key", API_KEY);
+        request.setHeaderParam("Content-Type", CONTENT_TYPE_JSON);
         request.setBody("{ \"data\": { \"attributes\": { \"audio_url\": \"" + audioUrl + "\", \"sender_email\": \"" + senderEmail + "\", \"recipient_email\": \"" + recipientEmail + "\" }, \"type\":\"messages\" } }");
         HttpJSONResponse<MessagesResponse> response = new HttpJSONResponse<>(mMessagesResponseParser);
         request.execute(response);
 
-        if(response.getCode() == 401 || response.getCode() == 404 || response.getCode() == 403) {
+        if(response.getCode() == 401 || response.getCode() == 403) {
             throw new PeppermintApiInvalidAccessTokenException(request.toString());
+        }
+        if(response.getCode() == 404) {
+            throw new PeppermintApiRecipientNoAppException();
         }
         if((response.getCode() / 100) != 2) {
             throw new PeppermintApiResponseCodeException(response.getCode(), request.toString());
@@ -95,6 +100,7 @@ public class PeppermintApi implements Serializable {
 
         try {
             jwtsResponse = authBoth(accountEmail, accountPassword, recorderId, recorderKey, accountType);
+            Log.d("PeppermintApi", jwtsResponse.toString());
             addReceiverRecorder(jwtsResponse.getAccount().getAccountId(), jwtsResponse.getRecorder().getRecorderId());
         } catch(PeppermintApiInvalidAccessTokenException e) {
             // register/auth recorder
@@ -104,11 +110,13 @@ public class PeppermintApi implements Serializable {
                 trackerManager.log("Recorder already registered! Moving on...");
             }
 
-            // register/auth account
-            try {
-                registerAccount(accountEmail, accountPassword, fullName, accountType);
-            } catch (PeppermintApiAlreadyRegisteredException ex) {
-                trackerManager.log("Account already registered! Moving on...");
+            if(accountType == ACCOUNT_TYPE_REGULAR) {
+                // register/auth account
+                try {
+                    registerAccount(accountEmail, accountPassword, fullName, accountType);
+                } catch (PeppermintApiAlreadyRegisteredException ex) {
+                    trackerManager.log("Account already registered! Moving on...");
+                }
             }
 
             // try again to authenticate; it should work now
@@ -121,9 +129,20 @@ public class PeppermintApi implements Serializable {
     }
 
     public JWTsResponse authBoth(String accountEmail, String accountPassword, String recorderId, String recorderKey, int accountType) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException, PeppermintApiTooManyRequestsException {
+        String accountTypeStr = "account";
+        switch (accountType) {
+            case ACCOUNT_TYPE_GOOGLE:
+                accountTypeStr = "google";
+                break;
+            case ACCOUNT_TYPE_FACEBOOK:
+                accountTypeStr = "facebook";
+                break;
+        };
+
         HttpRequest request = new HttpRequest(JWTS_ENDPOINT, HttpRequest.METHOD_POST);
         Log.d("authBoth", accountEmail + ":" + accountPassword + "  " + recorderId + ":" + recorderKey);
-        request.setHeaderParam("Authorization", "Peppermint account=" + Utils.getBasicAuthenticationToken(accountEmail, accountPassword) + ", recorder=" + Utils.getBasicAuthenticationToken(recorderId, recorderKey));
+        Log.d("authBoth", "Peppermint " + accountTypeStr + "=" + Utils.getBasicAuthenticationToken(accountEmail, accountPassword) + ", recorder=" + Utils.getBasicAuthenticationToken(recorderId, recorderKey));
+        request.setHeaderParam("Authorization", "Peppermint " + accountTypeStr + "=" + Utils.getBasicAuthenticationToken(accountEmail, accountPassword) + ", recorder=" + Utils.getBasicAuthenticationToken(recorderId, recorderKey));
         request.setHeaderParam("X-Api-Key", API_KEY);
         HttpJSONResponse<JWTsResponse> response = new HttpJSONResponse<>(mJWTsResponseParser);
         request.execute(response);
@@ -135,7 +154,6 @@ public class PeppermintApi implements Serializable {
             throw new PeppermintApiTooManyRequestsException(request.toString());
         }
         if((response.getCode() / 100) != 2) {
-            Log.d("PeppermintApi", "RecorderId=" + recorderId + " RecorderKey=" + recorderKey);
             throw new PeppermintApiResponseCodeException(response.getCode(), request.toString());
         }
 
@@ -251,6 +269,8 @@ public class PeppermintApi implements Serializable {
     public HttpResponse updateRecorder(String recorderId, String gcmRegistrationToken) throws PeppermintApiInvalidAccessTokenException, PeppermintApiResponseCodeException, PeppermintApiAlreadyRegisteredException {
         HttpRequest request = new HttpRequest(RECORDERS_ENDPOINT.replace("{recorder_id}", recorderId), HttpRequest.METHOD_PUT);
         request.setHeaderParam("X-Api-Key", API_KEY);
+        request.setHeaderParam("Content-Type", CONTENT_TYPE_JSON);
+        request.setHeaderParam("Authorization", "Bearer " + getAccessToken());
         request.setBody("{\"data\": { \"type\": \"recorders\", \"id\": \"" + recorderId + "\", \"attributes\": { \"gcm_registration_token\": \"" + gcmRegistrationToken + "\" } } }");
         HttpResponse response = new HttpResponse();
         request.execute(response);

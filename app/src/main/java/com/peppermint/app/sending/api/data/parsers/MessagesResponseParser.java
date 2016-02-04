@@ -18,12 +18,15 @@ public class MessagesResponseParser implements JSONParser<MessagesResponse> {
     public MessagesResponse processJson(JSONObject obj) throws JSONException {
         MessagesResponse response = new MessagesResponse();
 
-        JSONObject jsonData = obj.getJSONObject("application/vnd.api+json");
-        response.setMessageId(jsonData.getString("id"));
+        response.setMessageId(obj.getString("id"));
 
-        JSONObject attrData = jsonData.getJSONObject("attributes");
-        response.setAudioUrl(attrData.getString("audio_url"));
-        response.setTranscriptionUrl(attrData.getString("transcription_url"));
+        JSONObject attrData = obj.getJSONObject("attributes");
+        if(!attrData.isNull("audio_url")) {
+            response.setAudioUrl(attrData.getString("audio_url"));
+        }
+        if(!attrData.isNull("transcription_url")) {
+            response.setTranscriptionUrl(attrData.getString("transcription_url"));
+        }
         response.setSenderEmail(attrData.getString("sender_email"));
         response.setRecipientEmail(attrData.getString("recipient_email"));
         response.setCreatedTimestamp(attrData.getString("created"));

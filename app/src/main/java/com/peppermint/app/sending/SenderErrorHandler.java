@@ -7,13 +7,18 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
 
-import com.peppermint.app.authenticator.AuthenticatorActivity;
-import com.peppermint.app.data.SendingRequest;
+import com.google.android.gms.auth.UserRecoverableAuthException;
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
+import com.peppermint.app.R;
+import com.peppermint.app.data.Message;
 import com.peppermint.app.sending.api.GoogleApi;
 import com.peppermint.app.sending.api.PeppermintApi;
+import com.peppermint.app.sending.api.exceptions.GoogleApiInvalidAccessTokenException;
+import com.peppermint.app.sending.api.exceptions.GoogleApiNoAuthorizationException;
 import com.peppermint.app.sending.api.exceptions.PeppermintApiInvalidAccessTokenException;
-import com.peppermint.app.sending.api.exceptions.PeppermintApiNoAccountException;
+import com.peppermint.app.sending.mail.gmail.GmailSender;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,28 +41,30 @@ import java.util.concurrent.TimeUnit;
  */
 public class SenderErrorHandler extends SenderObject {
 
-    private static final String TAG = SenderErrorHandler.class.getSimpleName();
-
     public static boolean IS_APP_ON_BACKGROUND = false;
 
-    private static final int REQUEST_CODE_AUTH = 98765;
+    private static final String TAG = SenderErrorHandler.class.getSimpleName();
+
+    private static final int REQUEST_AUTHORIZATION_GOOGLE = 98764;
+    private static final int REQUEST_AUTHORIZATION_PEPPERMINT = 98765;
 
     protected static final int RECOVERY_RETRY = -1;
     protected static final int RECOVERY_NOK = -2;
     protected static final int RECOVERY_DONOTHING = 1;
 
-    private Map<UUID, SenderUploadTask> mRecoveringTaskMap;          // holds failed sender tasks that are recovering
+    // allow the sender task to be executed up to MAX_RETRIES+1 times
+    private static final int MAX_RETRIES = 9;
 
-    private ThreadPoolExecutor mExecutor;                           // a thread pool for sending tasks
-    private Map<UUID, SenderSupportTask> mSupportTaskMap;           // map of support tasks under execution
-    private Map<UUID, SenderSupportTask> mSupportTaskActivityResultMap;
+    // FIXME retry map gets filled and there's no mechanism to clean it up properly!
+    private Map<UUID, Integer> mRetryMap;                               // map of upload task ids and their about of retries
+    private Map<UUID, SenderUploadTask> mRecoveringTaskMap;             // map of upload tasks that are recovering
+
+    private ThreadPoolExecutor mExecutor;                               // a thread pool for support tasks
+    private Map<UUID, SenderSupportTask> mSupportTaskMap;               // map of support tasks under execution
+    private Map<UUID, SenderSupportTask> mSupportTaskActivityResultMap; // map of support tasks not under execution, that are waiting for an activity response
 
     private SenderUploadListener mSenderUploadListener;
     private Sender mSender;
-
-    // allow the sender task to be executed up to MAX_RETRIES+1 times
-    private static final int MAX_RETRIES = 9;
-    protected Map<UUID, Integer> mRetryMap;
 
     /**
      * This broadcast receiver gets results from {@link GetResultActivity}<br />
@@ -78,13 +85,9 @@ public class SenderErrorHandler extends SenderObject {
                     return;
                 }
 
-                recoveringTask = null;
                 SenderSupportTask supportTask = mSupportTaskActivityResultMap.remove(taskId);
                 if(supportTask != null) {
-                    if(supportTask.getSendingRequest() != null && mRecoveringTaskMap.containsKey(supportTask.getSendingRequest().getId())) {
-                        recoveringTask = mRecoveringTaskMap.get(supportTask.getSendingRequest().getId());
-                    }
-                    handleOnSupportTaskActivityResult(supportTask, recoveringTask,
+                    handleOnSupportTaskActivityResult(supportTask, supportTask.getRelatedUploadTask(),
                             intent.getIntExtra(GetResultActivity.INTENT_REQUESTCODE, -1),
                             intent.getIntExtra(GetResultActivity.INTENT_RESULTCODE, -1),
                             (Intent) intent.getParcelableExtra(GetResultActivity.INTENT_DATA));
@@ -103,8 +106,12 @@ public class SenderErrorHandler extends SenderObject {
     private void construct(Sender sender, SenderUploadListener senderUploadListener) {
         this.mSender = sender;
         this.mSenderUploadListener = senderUploadListener;
-        this.mRecoveringTaskMap = new HashMap<>();
+
+        // upload task maps
         this.mRetryMap = new HashMap<>();
+        this.mRecoveringTaskMap = new HashMap<>();
+
+        // support task maps
         this.mSupportTaskMap = new HashMap<>();
         this.mSupportTaskActivityResultMap = new HashMap<>();
 
@@ -120,6 +127,7 @@ public class SenderErrorHandler extends SenderObject {
      * <strong>{@link #deinit()} must always be invoked after the error handler is no longer needed.</strong>
      */
     public void init() {
+        // register the activity result broadcast listener
         LocalBroadcastManager.getInstance(mContext).registerReceiver(mReceiver, mFilter);
     }
 
@@ -127,34 +135,40 @@ public class SenderErrorHandler extends SenderObject {
      * De-initializes the error handler.
      */
     public void deinit() {
+        // unregister the activity result broadcast listener
         LocalBroadcastManager.getInstance(mContext).unregisterReceiver(mReceiver);
         mSupportTaskActivityResultMap.clear();
     }
 
-    public void authorizePeppermint(SendingRequest sendingRequest) {
-        PeppermintAuthorizationSupportTask task = new PeppermintAuthorizationSupportTask(getSender(), sendingRequest, null);
-        launchSupportTask(task);
+    public void authorizePeppermint(SenderUploadTask relatedUploadTask, Message message) {
+        PeppermintAuthorizationSupportTask task = new PeppermintAuthorizationSupportTask(getSender(), message, null);
+        launchSupportTask(task, relatedUploadTask);
     }
 
-    public void authorize(SendingRequest sendingRequest) {
-        /* nothing to do here */
-    }
-
-    protected UUID launchSupportTask(SenderSupportTask task) {
+    protected UUID launchSupportTask(SenderSupportTask task, SenderUploadTask relatedUploadTask) {
         mSupportTaskMap.put(task.getId(), task);
         task.setSenderSupportListener(mSupportListener);
+        task.setRelatedUploadTask(relatedUploadTask);
         task.executeOnExecutor(mExecutor);
         return task.getId();
     }
 
     protected void onUploadTaskActivityResult(SenderUploadTask recoveringTask, int requestCode, int resultCode, Intent data) {
-         doNotRecover(recoveringTask);   // nothing to recover; must be overriden to include additional behaviour
+        if(requestCode == REQUEST_AUTHORIZATION_GOOGLE) {
+            if(resultCode == Activity.RESULT_OK) {
+                checkRetries(recoveringTask);
+                return;
+            }
+            Toast.makeText(getContext(), R.string.sender_msg_cancelled_gmail_api, Toast.LENGTH_LONG).show();
+        }
+
+        doNotRecover(recoveringTask);   // nothing to recover; must be overriden to include additional behaviour
     }
 
     private void handleOnSupportTaskActivityResult(SenderSupportTask supportTask, SenderUploadTask recoveringTask, int requestCode, int resultCode, Intent data) {
         mSupportTaskMap.remove(supportTask.getId());
 
-        if(requestCode == REQUEST_CODE_AUTH) {
+        /*if(requestCode == REQUEST_AUTHORIZATION_PEPPERMINT) {
             if(recoveringTask != null) {
                 if(resultCode == Activity.RESULT_OK) {
                     checkRetries(recoveringTask);
@@ -163,6 +177,18 @@ public class SenderErrorHandler extends SenderObject {
                 }
             }
             return;
+        }*/
+
+        if(requestCode == REQUEST_AUTHORIZATION_GOOGLE) {
+            if(resultCode == Activity.RESULT_OK) {
+                if(recoveringTask != null) {
+                    supportTask.conclude(true);
+                    checkRetries(recoveringTask);
+                }
+                return;
+            }
+
+            Toast.makeText(getContext(), R.string.sender_msg_cancelled_gmail_api, Toast.LENGTH_LONG).show();
         }
 
         onSupportTaskActivityResult(supportTask, recoveringTask, requestCode, resultCode, data);
@@ -171,11 +197,11 @@ public class SenderErrorHandler extends SenderObject {
     protected void onSupportTaskActivityResult(SenderSupportTask supportTask, SenderUploadTask recoveringTask, int requestCode, int resultCode, Intent data) {
         if(recoveringTask != null) {
             // nothing to recover; must be overriden to include additional behaviour
+            supportTask.conclude(false);
             doNotRecover(recoveringTask);
         }
 
         // just ignore the support task in this case
-        // sub-classes should override this method so that this never happens
         mTrackerManager.log("Ignored onActivityResult from " + supportTask.getClass().getSimpleName() + " " + supportTask.getId());
         return;
     }
@@ -219,20 +245,34 @@ public class SenderErrorHandler extends SenderObject {
 
         // in this case just re-new the access token
         if(e instanceof PeppermintApiInvalidAccessTokenException) {
-            authorizePeppermint(failedSenderTask.getSendingRequest());
+            authorizePeppermint(failedSenderTask, failedSenderTask.getMessage());
             return;
         }
 
-        if(e instanceof PeppermintApiNoAccountException) {
+        // in this case, try to ask for another access token
+        if(e instanceof GoogleApiInvalidAccessTokenException) {
+            GoogleAuthorizationSupportTask task = new GoogleAuthorizationSupportTask(getSender(), failedSenderTask.getMessage(), null);
+            launchSupportTask(task, failedSenderTask);
+            return;
+        }
+
+        // in this case just ask for permissions
+        if(e instanceof GoogleApiNoAuthorizationException) {
+            Intent intent = ((GoogleApiNoAuthorizationException) e).getHandleIntent();
+            startActivityForResult(failedSenderTask, REQUEST_AUTHORIZATION_GOOGLE, intent);
+            return;
+        }
+
+        /*if(e instanceof PeppermintApiNoAccountException) {
             if(!IS_APP_ON_BACKGROUND) {
                 Intent intent = new Intent(getContext(), AuthenticatorActivity.class);
-                startActivityForResult(failedSenderTask, REQUEST_CODE_AUTH, intent);
+                startActivityForResult(failedSenderTask, REQUEST_AUTHORIZATION_PEPPERMINT, intent);
                 return;
             } else {
                 doNotRecover(failedSenderTask);
                 return;
             }
-        }
+        }*/
 
         int recoveryCode = tryToRecover(failedSenderTask, e);
         switch (recoveryCode) {
@@ -255,7 +295,7 @@ public class SenderErrorHandler extends SenderObject {
      * @param recoveringTask the failed/recovering task
      */
     protected void doNotRecover(SenderUploadTask recoveringTask) {
-        mRetryMap.remove(recoveringTask.getId());
+        mRetryMap.remove(recoveringTask.getMessage().getId());
         mRecoveringTaskMap.remove(recoveringTask.getId());
         if(mSenderUploadListener != null) {
             mSenderUploadListener.onSendingUploadRequestNotRecovered(recoveringTask, recoveringTask.getError());
@@ -272,6 +312,13 @@ public class SenderErrorHandler extends SenderObject {
      * @param recoveringTask the failed/recovering task
      */
     protected void doRecover(SenderUploadTask recoveringTask) {
+        doRecover(recoveringTask, true);
+    }
+
+    protected void doRecover(SenderUploadTask recoveringTask, boolean cleanRetries) {
+        if(cleanRetries) {
+            mRetryMap.remove(recoveringTask.getMessage().getId());
+        }
         mRecoveringTaskMap.remove(recoveringTask.getId());
         if(mSenderUploadListener != null) {
             mSenderUploadListener.onSendingUploadRequestRecovered(recoveringTask);
@@ -279,25 +326,26 @@ public class SenderErrorHandler extends SenderObject {
     }
 
     protected void checkRetries(SenderUploadTask failedSendingTask) {
+        UUID sendingRequestId = failedSendingTask.getMessage().getId();
 
-        if(!mRetryMap.containsKey(failedSendingTask.getId())) {
-            mRetryMap.put(failedSendingTask.getId(), 1);
+        if(!mRetryMap.containsKey(sendingRequestId)) {
+            mRetryMap.put(sendingRequestId, 1);
         } else {
-            mRetryMap.put(failedSendingTask.getId(), mRetryMap.get(failedSendingTask.getId()) + 1);
+            mRetryMap.put(sendingRequestId, mRetryMap.get(sendingRequestId) + 1);
         }
 
         // if it has failed MAX_RETRIES times, do not try it anymore
-        int retryNum = mRetryMap.get(failedSendingTask.getId());
+        int retryNum = mRetryMap.get(sendingRequestId);
         if(retryNum > MAX_RETRIES) {
-            mRetryMap.remove(failedSendingTask.getId());
+            mRetryMap.remove(sendingRequestId);
             doNotRecover(failedSendingTask);
             return;
         }
 
-        mTrackerManager.log("Retry #" + retryNum + " for SenderUploadTask " + failedSendingTask.getId());
+        mTrackerManager.log("Retry #" + retryNum + " for Message " + sendingRequestId);
 
         // just try again for MAX_RETRIES times tops
-        doRecover(failedSendingTask);
+        doRecover(failedSendingTask, false);
     }
 
     public Sender getSender() {
@@ -308,12 +356,33 @@ public class SenderErrorHandler extends SenderObject {
         this.mSender = mSender;
     }
 
-    protected PeppermintApi getPeppermintApi() {
-        return (PeppermintApi) getParameter(Sender.PARAM_PEPPERMINT_API);
+    protected GoogleApi getGoogleApi(String email) {
+        GoogleApi api = (GoogleApi) getParameter(GmailSender.PARAM_GOOGLE_API);
+        if(api == null) {
+            api = new GoogleApi(getContext());
+            setParameter(GmailSender.PARAM_GOOGLE_API, api);
+        }
+        if(api.getCredential() == null || api.getService() == null || api.getAccountName().compareTo(email) != 0) {
+            api.setAccountName(email);
+        }
+        return api;
     }
 
-    protected GoogleApi getGoogleApi() {
-        return (GoogleApi) getParameter(Sender.PARAM_GOOGLE_API);
+    protected void setGoogleApi(GoogleApi googleApi) {
+        setParameter(Sender.PARAM_GOOGLE_API, googleApi);
+    }
+
+    protected PeppermintApi getPeppermintApi() {
+        PeppermintApi api = (PeppermintApi) getParameter(Sender.PARAM_PEPPERMINT_API);
+        if(api == null) {
+            api = new PeppermintApi();
+            setPeppermintApi(api);
+        }
+        return api;
+    }
+
+    protected void setPeppermintApi(PeppermintApi peppermintApi) {
+        setParameter(Sender.PARAM_PEPPERMINT_API, peppermintApi);
     }
 
     protected int tryToRecoverSupport(SenderSupportTask supportTask, Throwable error) {
@@ -327,11 +396,11 @@ public class SenderErrorHandler extends SenderObject {
     private SenderUploadTask finishSupportAndGetUploadTask(SenderSupportTask supportTask) {
         mSupportTaskMap.remove(supportTask.getId());
 
-        if(supportTask.getSendingRequest() == null) {
+        if(supportTask.getMessage() == null) {
             return null;
         }
 
-        SenderUploadTask failedUploadTask = mRecoveringTaskMap.get(supportTask.getSendingRequest().getId());
+        SenderUploadTask failedUploadTask = mRecoveringTaskMap.get(supportTask.getRelatedUploadTask().getId());
         if(failedUploadTask == null) {
             Log.w(TAG, "Unable to find support task!");
         }
@@ -388,10 +457,16 @@ public class SenderErrorHandler extends SenderObject {
 
             SenderUploadTask uploadTask = finishSupportAndGetUploadTask(supportTask);
 
-            if(error instanceof PeppermintApiNoAccountException) {
+            if(error instanceof UserRecoverableAuthIOException || error instanceof UserRecoverableAuthException) {
+                Intent intent = error instanceof UserRecoverableAuthIOException ? ((UserRecoverableAuthIOException) error).getIntent() : ((UserRecoverableAuthException) error).getIntent();
+                startActivityForResult(supportTask, REQUEST_AUTHORIZATION_GOOGLE, intent);
+                return;
+            }
+
+            /*if(error instanceof PeppermintApiNoAccountException) {
                 if(!IS_APP_ON_BACKGROUND) {
                     Intent intent = new Intent(getContext(), AuthenticatorActivity.class);
-                    startActivityForResult(supportTask, REQUEST_CODE_AUTH, intent);
+                    startActivityForResult(supportTask, REQUEST_AUTHORIZATION_PEPPERMINT, intent);
                     return;
                 } else {
                     supportTask.conclude(false);
@@ -400,7 +475,7 @@ public class SenderErrorHandler extends SenderObject {
                     }
                     return;
                 }
-            }
+            }*/
 
             int recoveryCode = tryToRecoverSupport(supportTask, error);
 

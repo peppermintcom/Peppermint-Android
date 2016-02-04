@@ -1,14 +1,11 @@
 package com.peppermint.app.sending;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
-
-import com.peppermint.app.authenticator.AuthenticatorConstants;
-import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.authenticator.AuthenticationData;
+import com.peppermint.app.data.Message;
 import com.peppermint.app.sending.api.PeppermintApi;
 import com.peppermint.app.sending.api.data.RecordResponse;
-import com.peppermint.app.sending.api.exceptions.PeppermintApiInvalidAccessTokenException;
-import com.peppermint.app.sending.api.exceptions.PeppermintApiNoAccountException;
+
+import java.io.File;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
@@ -31,68 +28,48 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         this.mSenderUploadListener = uploadTask.mSenderUploadListener;
     }
 
-    public SenderUploadTask(Sender sender, SendingRequest sendingRequest, SenderUploadListener senderUploadListener) {
-        super(sender, sendingRequest);
+    public SenderUploadTask(Sender sender, Message message, SenderUploadListener senderUploadListener) {
+        super(sender, message);
         this.mSenderUploadListener = senderUploadListener;
     }
 
     /**
-     * Does the verifications necessary to perform {@link #uploadPeppermintMessage()}.<br />
-     * <ol>
-     *     <li>Validates the {@link SendingRequest#getRecording()} file</li>
-     *     <li>Checks internet connection</li>
-     *     <li>Checks the {@link PeppermintApi} access token</li>
-     * </ol>
-     * @throws Throwable
-     */
-    protected void uploadPeppermintMessageDoChecks() throws Throwable {
-        getSendingRequest().getRecording().getValidatedFile();
-
-        checkInternetConnection();
-
-        AccountManager am = AccountManager.get(getContext());
-        Account[] accounts = am.getAccountsByType(AuthenticatorConstants.ACCOUNT_TYPE);
-        if(accounts == null || accounts.length <= 0) {
-            throw new PeppermintApiNoAccountException();
-        }
-
-        getPeppermintApi().setAccessToken(am.peekAuthToken(accounts[0], AuthenticatorConstants.FULL_TOKEN_TYPE));
-
-        if(getPeppermintApi().getAccessToken() == null) {
-            throw new PeppermintApiInvalidAccessTokenException("Token is null!");
-        }
-    }
-
-    /**
-     * Uploads the {@link SendingRequest} recording to the Peppermint server.<br />
-     * If successful, access URLs will be accessible through {@link SendingRequest#getServerShortUrl()} and {@link SendingRequest#getServerCanonicalUrl()}.
+     * Uploads the {@link Message} recording to the Peppermint server.<br />
+     * If successful, access URLs will be accessible through {@link Message#getServerShortUrl()} and {@link Message#getServerCanonicalUrl()}.
      * @throws Throwable
      */
     protected void uploadPeppermintMessage() throws Throwable {
-        if(getSendingRequest().getServerShortUrl() != null && getSendingRequest().getServerCanonicalUrl() != null) {
+        File recordedFile = getMessage().getRecording().getValidatedFile();
+
+        if(getMessage().getServerShortUrl() != null && getMessage().getServerCanonicalUrl() != null) {
             return;
         }
 
+        AuthenticationData data = getAuthenticationData();
+
         PeppermintApi api = getPeppermintApi();
-        String contentType = getSendingRequest().getRecording().getContentType();
+        String contentType = getMessage().getRecording().getContentType();
         long now = android.os.SystemClock.uptimeMillis();
+        String fullName = getSenderPreferences().getFullName();
+        if(fullName == null) {
+            fullName = data.getEmail();
+        }
 
         // get AWS signed URL
-        String signedUrl = api.getSignedUrl(getSenderPreferences().getFullName(),
-                getSenderPreferences().getGmailSenderPreferences().getPreferredAccountName(), contentType).getSignedUrl();
+        String signedUrl = api.getSignedUrl(fullName, data.getEmail(), contentType).getSignedUrl();
         getTrackerManager().log("Peppermint # Obtained AWS Signed URL at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
 
         // upload to AWS
         if(!isCancelled()) {
-            api.uploadMessage(signedUrl, getSendingRequest().getRecording().getFile(), contentType);
+            api.uploadMessage(signedUrl, recordedFile, contentType);
             getTrackerManager().log("Peppermint # Uploaded to AWS at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
         }
 
         // confirm that the upload to AWS was successfully performed
         if(!isCancelled()) {
             RecordResponse response = api.confirmUploadMessage(signedUrl);
-            getSendingRequest().setServerCanonicalUrl(String.valueOf(response.getCanonicalUrl()));
-            getSendingRequest().setServerShortUrl(String.valueOf(response.getShortUrl()));
+            getMessage().setServerCanonicalUrl(String.valueOf(response.getCanonicalUrl()));
+            getMessage().setServerShortUrl(String.valueOf(response.getShortUrl()));
             getTrackerManager().log("Peppermint # Confirmed Upload at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
         }
     }

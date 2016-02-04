@@ -6,9 +6,10 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 
+import com.peppermint.app.data.Chat;
+import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
-import com.peppermint.app.data.SendingRequest;
 import com.peppermint.app.sending.SenderEvent;
 
 import java.util.UUID;
@@ -20,7 +21,7 @@ import java.util.UUID;
  * Allows sending multiple files concurrently.
  * It allows an easier interaction with the Android Service API.
  */
-public class SenderServiceManager {
+public class MessagesServiceManager {
 
     /**
      * Listener for file send events (see {@link SenderEvent}).
@@ -69,7 +70,7 @@ public class SenderServiceManager {
     }
 
     private Context mContext;
-    private SenderService.SendRecordServiceBinder mService;
+    private MessagesService.SendRecordServiceBinder mService;
     private Listener mListener;
     protected boolean mIsBound = false;                                         // if the manager is bound to the service
 
@@ -109,8 +110,8 @@ public class SenderServiceManager {
      */
     protected ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder binder) {
-            mService = (SenderService.SendRecordServiceBinder) binder;
-            mService.register(SenderServiceManager.this);
+            mService = (MessagesService.SendRecordServiceBinder) binder;
+            mService.register(MessagesServiceManager.this);
 
             if(mListener != null) {
                 mListener.onBoundSendService();
@@ -123,7 +124,7 @@ public class SenderServiceManager {
         }
     };
 
-    public SenderServiceManager(Context context) {
+    public MessagesServiceManager(Context context) {
         this.mContext = context;
     }
 
@@ -132,21 +133,22 @@ public class SenderServiceManager {
      * @param recipient the recipient of the file
      * @param recording the recording with the file to send
      */
-    public void startAndSend(Recipient recipient, Recording recording) {
-        Intent intent = new Intent(mContext, SenderService.class);
-        intent.putExtra(SenderService.INTENT_DATA_RECORDING, recording);
-        intent.putExtra(SenderService.INTENT_DATA_RECIPIENT, recipient);
+    public void startAndSend(Chat chat, Recipient recipient, Recording recording) {
+        Intent intent = new Intent(mContext, MessagesService.class);
+        intent.putExtra(MessagesService.PARAM_MESSAGE_SEND_CHAT, chat);
+        intent.putExtra(MessagesService.PARAM_MESSAGE_SEND_RECORDING, recording);
+        intent.putExtra(MessagesService.PARAM_MESSAGE_SEND_RECIPIENT, recipient);
         mContext.startService(intent);
     }
 
     public void startAndAuthorize() {
-        Intent intent = new Intent(mContext, SenderService.class);
-        intent.putExtra(SenderService.INTENT_DATA_AUTHORIZE, true);
+        Intent intent = new Intent(mContext, MessagesService.class);
+        intent.putExtra(MessagesService.PARAM_MESSAGE_SEND_AUTHORIZE, true);
         mContext.startService(intent);
     }
 
     public void start() {
-        Intent intent = new Intent(mContext, SenderService.class);
+        Intent intent = new Intent(mContext, MessagesService.class);
         mContext.startService(intent);
     }
 
@@ -155,7 +157,7 @@ public class SenderServiceManager {
      * <b>Also binds this manager to the service.</b>
      */
     public void startAndBind() {
-        Intent intent = new Intent(mContext, SenderService.class);
+        Intent intent = new Intent(mContext, MessagesService.class);
         mContext.startService(intent);
         bind();
     }
@@ -175,7 +177,7 @@ public class SenderServiceManager {
      * Binds this manager to the service.
      */
     public void bind() {
-        mContext.bindService(new Intent(mContext, SenderService.class), mConnection, Context.BIND_AUTO_CREATE);
+        mContext.bindService(new Intent(mContext, MessagesService.class), mConnection, Context.BIND_AUTO_CREATE);
         mIsBound = true;
     }
 
@@ -186,7 +188,7 @@ public class SenderServiceManager {
         if (mIsBound) {
             // if we have received the service, and hence registered with it, then now is the time to unregister.
             if (mService != null) {
-                mService.unregister(SenderServiceManager.this);
+                mService.unregister(MessagesServiceManager.this);
             }
             // detach our existing connection.
             mContext.unbindService(mConnection);
@@ -199,10 +201,10 @@ public class SenderServiceManager {
      * Can only be used if the manager is bound to the service.
      * @param recipient the recipient of the file
      * @param recording the recording and file location
-     * @return the {@link SendingRequest} of the send file request/task
+     * @return the {@link Message} of the send file request/task
      */
-    public SendingRequest send(Recipient recipient, Recording recording) {
-        return mService.send(recipient, recording);
+    public Message send(Chat chat, Recipient recipient, Recording recording) {
+        return mService.send(chat, recipient, recording);
     }
 
     /**

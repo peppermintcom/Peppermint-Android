@@ -1,6 +1,5 @@
 package com.peppermint.app.ui.chat;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -26,7 +25,7 @@ public class ChatActivity extends CustomActionBarActivity {
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
-        navItems.add(new NavigationItem("New Contact", R.drawable.ic_settings_36dp, ChatFragment.class, false, false));
+        navItems.add(new NavigationItem("Chat", R.drawable.ic_settings_36dp, ChatFragment.class, false, false));
         return navItems;
     }
 
@@ -50,9 +49,4 @@ public class ChatActivity extends CustomActionBarActivity {
         getCustomActionBar().getMenuButton().setImageResource(R.drawable.ic_cancel_14dp);
     }
 
-    @Override
-    public void onBackPressed() {
-        setResult(Activity.RESULT_CANCELED);
-        super.onBackPressed();
-    }
 }

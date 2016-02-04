@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">Peppermint</string>
     <string name="peppermint_com">Peppermint.com</string>
+    <string name="google_app_id">peppermint-1166</string>
+    <string name="gcm_default_sender_id">896089644819</string>
 
     <string name="send_email">Send Email</string>
     <string name="filename_message_from">Message-from-</string>
@@ -124,7 +126,7 @@
     <string name="add_account_to_start">Add a Google account to your device to start using Peppermint</string>
     <string name="your_name_">Your Name</string>
     <string name="next">Next</string>
-    <string name="link_another_gmail">link another gmail</string>
+    <string name="link_another_gmail">Add Google Account</string>
     <string name="only_one_peppermint_account_supported">Only one Peppermint account is supported.</string>
     <string name="authenticating_">Authenticating…</string>
     <string name="msg_secure_connection">Could not establish a secure connection to the Peppermint server. Please try again later.</string>
@@ -147,5 +149,10 @@
     <string name="privacy_policy_terms_of_use">Privacy Policy\n&amp; Terms of Use</string>
     <string name="privacy_policy_terms_of_use_singleline">Privacy Policy &amp; Terms of Use</string>
     <string name="version">Version</string>
+
+    <!-- ACCOUNT AUTHENTICATOR -->
+    <string name="account_general_settings">General Settings</string>
+    <string name="account_settings">Account Settings</string>
+    <string name="account_settings_desc">Your name, message channels, and more</string>
 
 </resources>

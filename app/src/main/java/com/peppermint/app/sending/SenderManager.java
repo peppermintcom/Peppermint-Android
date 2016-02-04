@@ -1,38 +1,23 @@
 package com.peppermint.app.sending;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.database.sqlite.SQLiteDatabase;
-import android.net.ConnectivityManager;
-import android.preference.PreferenceManager;
 import android.provider.ContactsContract;
-import android.util.Log;
-import android.widget.Toast;
 
 import com.peppermint.app.data.DatabaseHelper;
-import com.peppermint.app.data.SendingRequest;
-import com.peppermint.app.sending.api.PeppermintApi;
+import com.peppermint.app.data.Message;
 import com.peppermint.app.sending.exceptions.ElectableForQueueingException;
 import com.peppermint.app.sending.mail.gmail.GmailSender;
-import com.peppermint.app.sending.mail.gmail.GmailSenderPreferences;
 import com.peppermint.app.sending.mail.nativemail.IntentMailSender;
 import com.peppermint.app.sending.nativesms.IntentSMSSender;
 import com.peppermint.app.sending.sms.SMSSender;
 import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.utils.Utils;
 
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -64,78 +49,11 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
 
     private EventBus mEventBus;                                 // event bus (listener)
     private ThreadPoolExecutor mExecutor;                       // a thread pool for sending tasks
-    private ScheduledThreadPoolExecutor mScheduledExecutor;     // a thread pool that sends queued requests
 
+    /*private InAppSender mRootSender;                            // root in-app sender (always try it first)*/
     private Map<String, Sender> mSenderMap;                     // map of senders <mime type, sender>
-    private Map<String, Sender> mSenderAuthPrefMap;             // map of preference keys which change triggers authorization requests
 
     private Map<UUID, SenderTask> mTaskMap;                     // map of sending tasks under execution
-    private SharedPreferences mPreferences;                     // raw shared preferences
-
-    // broadcast receiver that handles internet connectivity status changes
-    private BroadcastReceiver mConnectivityChangeReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "Connectivity status has changed! Performing maintenance...");
-            rescheduleMaintenance();
-        }
-    };
-    private final IntentFilter mConnectivityChangeFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-    private final Runnable mMaintenanceRunnable = new Runnable() {
-        @Override
-        public void run() {
-            // this task is scheduled for execution once the connectivity status changes
-            // it basically tries to re-execute pending sending requests that failed due to
-            // the lack of internet connectivity
-            synchronized (SenderManager.this) {
-                try {
-                    if (Utils.isInternetAvailable(mContext)) {
-                        SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
-                        List<SendingRequest> queued = SendingRequest.getQueued(db);
-                        db.close();
-                        if (queued.size() > 0 && Utils.isInternetActive(mContext)) {
-                            // try to resend all queued recordings..
-                            for (SendingRequest sendingRequest : queued) {
-                                Log.d(TAG, "Re-trying queued request " + sendingRequest.getId() + " to " + sendingRequest.getRecipient().getName());
-                                if(!mTaskMap.containsKey(sendingRequest.getId())) {
-                                    send(sendingRequest);
-                                }
-                            }
-                        } else {
-                            Log.d(TAG, "Either internet is not active or there are no queued sending requests... #" + queued.size());
-                        }
-                    }
-                } catch(Throwable e) {
-                    Log.e(TAG, "Error on maintenance thread!", e);
-                    mTrackerManager.logException(e);
-                }
-            }
-        }
-    };
-    private ScheduledFuture<?> mMaintenanceFuture;
-
-    private void rescheduleMaintenance() {
-        // if it is scheduled, cancel and reschedule
-        if(mMaintenanceFuture != null) {
-            mMaintenanceFuture.cancel(true);
-        }
-
-        // run one time (almost) immediately
-        mMaintenanceFuture = mScheduledExecutor.scheduleAtFixedRate(mMaintenanceRunnable, 10, 3600, TimeUnit.SECONDS);
-    }
-
-    // if there's a change to a particular preference, trigger the sender authorization routine
-    private SharedPreferences.OnSharedPreferenceChangeListener mAuthorizationListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-        @Override
-        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            if(mSenderAuthPrefMap.containsKey(key)) {
-                Sender sender = mSenderAuthPrefMap.get(key);
-                if(sender.getPreferences().isEnabled()) {
-                    sender.authorize();
-                }
-            }
-        }
-    };
 
     public SenderManager(Context context, EventBus eventBus, Map<String, Object> defaultSenderParameters) {
         super(context,
@@ -145,10 +63,8 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
                 new DatabaseHelper(context));
 
         this.mEventBus = eventBus;
-        this.mTaskMap = new HashMap<>();
+        this.mTaskMap = new ConcurrentHashMap<>();
         this.mSenderMap = new HashMap<>();
-        this.mSenderAuthPrefMap = new HashMap<>();
-        this.mPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 
         // private thread pool to avoid hanging up other AsyncTasks
         // only one thread so that messages are sent one at a time (allows better control when cancelling)
@@ -156,12 +72,11 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
                 60, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>());
 
-        // executor for the maintenance routine
-        this.mScheduledExecutor = new ScheduledThreadPoolExecutor(1);
-
-        setParameter(Sender.PARAM_PEPPERMINT_API, new PeppermintApi());
-
         // here we add all available sender instances to the sender map
+        /*mRootSender = new InAppSender(this, this);
+        mRootSender.getParameters().putAll(defaultSenderParameters);
+        mRootSender.setTrackerManager(mTrackerManager);*/
+
         // add gmail api + email intent sender chain
         GmailSender gmailSender = new GmailSender(this, this);
         gmailSender.getParameters().putAll(defaultSenderParameters);
@@ -174,8 +89,6 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
         // if sending the email through gmail sender fails, try through intent mail sender
         gmailSender.setFailureChainSender(intentMailSender);
 
-        mSenderAuthPrefMap.put(GmailSenderPreferences.ACCOUNT_NAME_KEY, gmailSender);
-        mSenderAuthPrefMap.put(GmailSenderPreferences.getEnabledPreferenceKey(GmailSenderPreferences.class), gmailSender);
         mSenderMap.put(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, gmailSender);
 
         //sms/text message sender
@@ -203,15 +116,13 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
      * <p><strong>{@link #deinit()} must always be invoked when the manager is no longer needed.</strong></p>
      */
     public void init() {
+        /*mRootSender.init();*/
         for(Sender sender : mSenderMap.values()) {
             while(sender != null) {
                 sender.init();
                 sender = sender.getFailureChainSender();
             }
         }
-        mContext.registerReceiver(mConnectivityChangeReceiver, mConnectivityChangeFilter);
-        mPreferences.registerOnSharedPreferenceChangeListener(mAuthorizationListener);
-        rescheduleMaintenance();
     }
 
     /**
@@ -224,31 +135,10 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
      * </ol>
      */
     public void deinit() {
-        if(mMaintenanceFuture != null) {
-            mMaintenanceFuture.cancel(true);
-        }
-        mPreferences.unregisterOnSharedPreferenceChangeListener(mAuthorizationListener);
-        mContext.unregisterReceiver(mConnectivityChangeReceiver);
-
-        // save tasks that were not cancelled and are being executed
-        // these will be re-executed once the service restarts
-        DatabaseHelper dbHelper = new DatabaseHelper(mContext);
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        for(UUID uuid : mTaskMap.keySet()) {
-            SenderTask task = mTaskMap.get(uuid);
-            if(!task.isCancelled() && !task.getSendingRequest().isSent()) {
-                task.cancel(true);
-                try {
-                    SendingRequest.insertOrUpdate(db, task.getSendingRequest());
-                } catch (SQLException e) {
-                    mTrackerManager.logException(e);
-                }
-            }
-        }
-        db.close();
-
+        // cancel all tasks
         cancel();
 
+        /*mRootSender.deinit();*/
         for(Sender sender : mSenderMap.values()) {
             while(sender != null) {
                 sender.deinit();
@@ -261,29 +151,22 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
      * Requests authorization for senders that require it.
      */
     public void authorize() {
-        Sender firstSender = null;
-        for(Sender sender : mSenderMap.values()) {
-            while(sender != null) {
-                if(firstSender == null) {
-                    firstSender = sender;
-                }
-                sender.authorize();
-                sender = sender.getFailureChainSender();
-            }
-        }
-        // do this only once
-        if(firstSender != null) {
-            firstSender.getSenderErrorHandler().authorizePeppermint(null);
-        }
+        /*if(mRootSender != null) {
+            mRootSender.getSenderErrorHandler().authorizePeppermint(null, null);
+        }*/
     }
 
     /**
      * Tries to execute the specified sending request using one of the available {@link Sender}s.
-     * @param sendingRequest the sending request
+     * @param message the sending request
      * @return the UUID of the sending request
      */
-    public UUID send(SendingRequest sendingRequest) {
-        String mimeType = sendingRequest.getRecipient().getMimeType();
+    public UUID send(Message message) {
+        return send(message, null);
+    }
+
+    public UUID send(Message message, SenderUploadTask previousFailedTask) {
+        String mimeType = message.getRecipient().getMimeType();
 
         // check if there's a sender for the specified recipient mime type
         if(!mSenderMap.containsKey(mimeType)) {
@@ -291,16 +174,16 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
         }
 
         Sender sender = mSenderMap.get(mimeType);
-        return send(sendingRequest, sender);
+        return send(message, sender, previousFailedTask);
     }
 
     /**
      * Tries to execute the specified sending request using the specified {@link Sender}.
-     * @param sendingRequest the sending request
+     * @param message the sending request
      * @param sender the sender
      * @return the UUID of the sending request
      */
-    private UUID send(SendingRequest sendingRequest, Sender sender) {
+    private UUID send(Message message, Sender sender, SenderUploadTask previousFailedTask) {
         while(sender != null && (sender.getPreferences() != null && !sender.getPreferences().isEnabled())) {
             sender = sender.getFailureChainSender();
         }
@@ -308,13 +191,17 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
             throw new RuntimeException("No sender available. Make sure that all possible senders are not disabled.");
         }
 
-        SenderUploadTask task = sender.newTask(sendingRequest);
-        if(mTaskMap.containsKey(task.getId())) {
-            task.setRecovering(true);
-        }
+        /*if(previousFailedTask == null) {
+            SenderUploadTask rootTask = mRootSender.newTask(message, null);
+            mTaskMap.put(rootTask.getId(), rootTask);
+            rootTask.executeOnExecutor(mExecutor);
+        }*/
+
+        SenderUploadTask task = sender.newTask(message, previousFailedTask == null ? null : previousFailedTask.getId());
+        task.setRecovering(previousFailedTask != null);
         mTaskMap.put(task.getId(), task);
         task.executeOnExecutor(mExecutor);
-        return sendingRequest.getId();
+        return message.getId();
     }
 
     /**
@@ -383,15 +270,6 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
     public void onSendingUploadCancelled(SenderUploadTask uploadTask) {
         mTrackerManager.log("Cancelled SenderUploadTask " + uploadTask.getId());
 
-        // sending request has been cancelled, so update the saved data
-        SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
-        try {
-            SendingRequest.delete(db, uploadTask.getSendingRequest());
-        } catch (SQLException e) {
-            mTrackerManager.logException(e);
-        }
-        db.close();
-
         mTaskMap.remove(uploadTask.getId());
 
         if(mEventBus != null) {
@@ -402,16 +280,6 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
     @Override
     public void onSendingUploadFinished(SenderUploadTask uploadTask) {
         mTrackerManager.log("Finished SenderUploadTask " + uploadTask.getId());
-
-        // sending request has finished, so update the saved data and mark as sent
-        SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
-        try {
-            uploadTask.getSendingRequest().setSent(true);
-            SendingRequest.insertOrUpdate(db, uploadTask.getSendingRequest());
-        } catch (SQLException e) {
-            mTrackerManager.logException(e);
-        }
-        db.close();
 
         mTaskMap.remove(uploadTask.getId());
 
@@ -443,55 +311,29 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
     @Override
     public void onSendingUploadRequestRecovered(SenderUploadTask previousUploadTask) {
         // try again
-        send(previousUploadTask.getSendingRequest(), previousUploadTask.getSender());
+        send(previousUploadTask.getMessage(), previousUploadTask.getSender(), previousUploadTask);
     }
 
     @Override
     public void onSendingUploadRequestNotRecovered(SenderUploadTask previousUploadTask, Throwable error) {
-        SendingRequest sendingRequest = previousUploadTask.getSendingRequest();
+        Message message = previousUploadTask.getMessage();
         Sender nextSender = previousUploadTask.getSender().getFailureChainSender();
 
         if(nextSender == null || error instanceof ElectableForQueueingException) {
             mTaskMap.remove(previousUploadTask.getId());
-
-            SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
             if (error instanceof ElectableForQueueingException) {
-                try {
-                    sendingRequest.setSent(false);
-                    SendingRequest.insertOrUpdate(db, sendingRequest);
-
-                    if (error.getMessage() != null) {
-                        Toast.makeText(mContext, error.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-
-                    if (mEventBus != null) {
-                        mEventBus.post(new SenderEvent(previousUploadTask, SenderEvent.EVENT_QUEUED, error));
-                    }
-                } catch (SQLException e) {
-                    mTrackerManager.logException(e);
-                    if (mEventBus != null) {
-                        mEventBus.post(new SenderEvent(previousUploadTask, e));
-                    }
+                if (mEventBus != null) {
+                    mEventBus.post(new SenderEvent(previousUploadTask, SenderEvent.EVENT_QUEUED, error));
                 }
             } else {
-                try {
-                    SendingRequest.delete(db, sendingRequest);
-                } catch (SQLException e) {
-                    // log the exception but the main exception is in the asynctask
-                    mTrackerManager.log("Error deleting sending request " + sendingRequest.getId() + ". May not exist and that's ok. " + e.getMessage());
-                }
-
-                if (error != null) {
-                    mTrackerManager.logException(error);
-                }
+                mTrackerManager.logException(error);
 
                 if (mEventBus != null) {
                     mEventBus.post(new SenderEvent(previousUploadTask, error));
                 }
             }
-            db.close();
         } else {
-            send(sendingRequest, nextSender);
+            send(message, nextSender, previousUploadTask);
         }
     }
 

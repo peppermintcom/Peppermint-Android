@@ -9,7 +9,7 @@ import android.content.IntentFilter;
 import android.telephony.SmsManager;
 
 import com.peppermint.app.R;
-import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.data.Message;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderUploadListener;
 import com.peppermint.app.sending.SenderUploadTask;
@@ -56,23 +56,23 @@ public class SMSSenderTask extends SenderUploadTask {
         super(uploadTask);
     }
 
-    public SMSSenderTask(Sender sender, SendingRequest sendingRequest, SenderUploadListener senderUploadListener) {
-        super(sender, sendingRequest, senderUploadListener);
+    public SMSSenderTask(Sender sender, Message message, SenderUploadListener senderUploadListener) {
+        super(sender, message, senderUploadListener);
     }
 
     @Override
     protected void execute() throws Throwable {
-
-        uploadPeppermintMessageDoChecks();
+        setupPeppermintAuthentication();
         uploadPeppermintMessage();
-        String url = getSendingRequest().getServerShortUrl();
+
+        String url = getMessage().getServerShortUrl();
 
         mSent = false;
         mRunner = Thread.currentThread();
         getSender().getContext().registerReceiver(mReceiver, mIntentFilter);
 
         try {
-            getSendingRequest().setBody(String.format(getSender().getContext().getString(R.string.sender_default_sms_body), url));
+            getMessage().setEmailBody(String.format(getSender().getContext().getString(R.string.sender_default_sms_body), url));
 
             Intent sentIntent = new Intent(SMS_SENT);
             PendingIntent sentPI = PendingIntent.getBroadcast(
@@ -80,7 +80,7 @@ public class SMSSenderTask extends SenderUploadTask {
                     PendingIntent.FLAG_UPDATE_CURRENT);
 
             SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(getSendingRequest().getRecipient().getVia(), null, getSendingRequest().getBody(), sentPI, null);
+            smsManager.sendTextMessage(getMessage().getRecipient().getVia(), null, getMessage().getEmailBody(), sentPI, null);
 
             try {
                 // wait for SMS to be sent

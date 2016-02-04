@@ -16,12 +16,47 @@
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
 
+    <!-- GCM Permissions -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <permission android:name="com.peppermint.app.permission.C2D_MESSAGE"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="com.peppermint.app.permission.C2D_MESSAGE" />
+
     <application
         android:name=".PeppermintApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/Peppermint.Theme" >
+
+        <!-- BO GCM Components -->
+        <receiver
+            android:name="com.google.android.gms.gcm.GcmReceiver"
+            android:exported="true"
+            android:permission="com.google.android.c2dm.permission.SEND" >
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
+                <category android:name="com.peppermint.app.gcm" />
+            </intent-filter>
+        </receiver>
+        <service
+            android:name=".gcm.PeppermintGcmListenerService"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".gcm.PeppermintInstanceIDListenerService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.android.gms.iid.InstanceID" />
+            </intent-filter>
+        </service>
+        <service android:name=".gcm.RegistrationIntentService" android:exported="false">
+        </service>
+        <!-- EO GCM Components -->
         
         <provider
             android:authorities="com.peppermint.app"
@@ -32,15 +67,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_provider_paths" />
         </provider>
-
-        <!-- UI: AUTHENTICATION -->
-        <activity
-            android:name=".ui.authentication.AuthActivity"
-            android:label="@string/app_name"
-            android:launchMode="singleTask"
-            android:windowSoftInputMode="stateHidden|adjustPan"
-            android:theme="@style/Peppermint.Theme.NoActionBar" >
-        </activity>
 
         <!-- UI: NEW RECIPIENT -->
         <activity
@@ -118,18 +144,12 @@
 
         <!-- SERV: SENDING -->
         <service
-            android:name=".SenderService"
+            android:name=".MessagesService"
             android:enabled="true"
             android:exported="false" >
         </service>
 
-        <!-- SERV: HTTP REST -->
-        <!--<service
-            android:name=".rest.HttpClientService"
-            android:enabled="true"
-            android:exported="false" >
-        </service>
--->
+        <!-- UI: AUTHENTICATION -->
         <service android:name=".authenticator.AuthenticationService"
             android:enabled="true">
             <intent-filter>
@@ -138,9 +158,11 @@
             <meta-data android:name="android.accounts.AccountAuthenticator"
                 android:resource="@xml/authenticator" />
         </service>
+
         <activity
             android:name=".authenticator.AuthenticatorActivity"
             android:label="@string/app_name"
+            android:launchMode="singleTop"
             android:windowSoftInputMode="stateHidden|adjustPan"
             android:theme="@style/Peppermint.Theme.NoActionBar" >
         </activity>

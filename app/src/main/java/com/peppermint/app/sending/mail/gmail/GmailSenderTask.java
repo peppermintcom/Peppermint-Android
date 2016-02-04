@@ -6,17 +6,16 @@ import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlaySe
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.services.gmail.model.Draft;
-import com.google.api.services.gmail.model.Message;
 import com.peppermint.app.R;
-import com.peppermint.app.data.SendingRequest;
+import com.peppermint.app.authenticator.AuthenticationData;
+import com.peppermint.app.data.Message;
 import com.peppermint.app.sending.Sender;
 import com.peppermint.app.sending.SenderUploadListener;
 import com.peppermint.app.sending.SenderUploadTask;
 import com.peppermint.app.sending.api.GoogleApi;
+import com.peppermint.app.sending.api.exceptions.PeppermintApiRecipientNoAppException;
 import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
 import com.peppermint.app.sending.exceptions.TryAgainException;
-import com.peppermint.app.sending.mail.MailPreferredAccountNotSetException;
-import com.peppermint.app.sending.mail.MailSenderPreferences;
 import com.peppermint.app.sending.mail.MailUtils;
 import com.peppermint.app.utils.Utils;
 
@@ -43,8 +42,8 @@ public class GmailSenderTask extends SenderUploadTask {
         super(uploadTask);
     }
 
-    public GmailSenderTask(Sender sender, SendingRequest sendingRequest, SenderUploadListener senderUploadListener) {
-        super(sender, sendingRequest, senderUploadListener);
+    public GmailSenderTask(Sender sender, Message message, SenderUploadListener senderUploadListener) {
+        super(sender, message, senderUploadListener);
     }
 
     private Draft getDraftFromResponse(String response) throws JSONException {
@@ -54,7 +53,7 @@ public class GmailSenderTask extends SenderUploadTask {
         }
 
         JSONObject jsonMessage = jsonResponse.getJSONObject("message");
-        Message responseMessage = new Message();
+        com.google.api.services.gmail.model.Message responseMessage = new com.google.api.services.gmail.model.Message();
         responseMessage.setId(jsonMessage.getString("id"));
         responseMessage.setThreadId(jsonMessage.getString("threadId"));
         JSONArray jsonLabels = jsonMessage.getJSONArray("labelIds");
@@ -72,47 +71,53 @@ public class GmailSenderTask extends SenderUploadTask {
 
     @Override
     public void execute() throws Throwable {
-        // get the email account
-        String preferredAccountName = ((MailSenderPreferences) getSenderPreferences()).getPreferredAccountName();
-        if(preferredAccountName == null) {
-            throw new MailPreferredAccountNotSetException();
-        }
 
-        uploadPeppermintMessageDoChecks();
+        AuthenticationData data = setupPeppermintAuthentication();
         uploadPeppermintMessage();
-        String url = getSendingRequest().getServerShortUrl();
+        String url = getMessage().getServerShortUrl();
 
         long now = android.os.SystemClock.uptimeMillis();
+        String fullName = getSenderPreferences().getFullName();
 
-        GoogleApi googleApi = getGoogleApi();
-        String displayName = getSenderPreferences().getFullName();
-        googleApi.setDisplayName(displayName);
-        File file = getSendingRequest().getRecording().getFile();
+        GoogleApi googleApi = getGoogleApi(data.getEmail());
+        googleApi.setDisplayName(fullName);
+        File file = getMessage().getRecording().getFile();
 
         // build the email body
-        getSendingRequest().setBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template, url,
-                getSendingRequest().getRecording().getDurationMillis(),
-                getSendingRequest().getRecording().getContentType(),
-                displayName, preferredAccountName, true));
+        getMessage().setEmailBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template, url,
+                getMessage().getRecording().getDurationMillis(),
+                getMessage().getRecording().getContentType(),
+                fullName, data.getEmail(), true));
 
         try {
             Draft draft = null;
 
             Date emailDate = new Date();
             try {
-                emailDate = Utils.parseTimestamp(getSendingRequest().getRegistrationTimestamp());
+                emailDate = Utils.parseTimestamp(getMessage().getRegistrationTimestamp());
             } catch(ParseException e) {
                 getTrackerManager().logException(e);
             }
 
             try {
-                GoogleApi.DraftResponse response = googleApi.createGmailDraft(getSendingRequest().getSubject(), getSendingRequest().getBody(), getSendingRequest().getRecipient().getVia(),
-                        getSendingRequest().getRecording().getContentType(), emailDate, file);
+                GoogleApi.DraftResponse response = googleApi.createGmailDraft(getMessage().getEmailSubject(), getMessage().getEmailBody(), getMessage().getRecipient().getVia(),
+                        getMessage().getRecording().getContentType(), emailDate, file);
                 draft = (Draft) response.getBody();
 
                 getTrackerManager().log("Gmail # Created Draft at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
             } catch (InterruptedIOException e) {
                 if(!isCancelled()) {
+                    throw e;
+                }
+            }
+
+            if(!isCancelled()) {
+                try {
+                    getPeppermintApi().sendMessage(null, url, data.getEmail(), getMessage().getRecipient().getVia());
+                } catch(PeppermintApiRecipientNoAppException e) {
+                    getTrackerManager().log("Unable to send through Peppermint", e);
+                } catch(Throwable e) {
+                    googleApi.deleteGmailDraft(draft);
                     throw e;
                 }
             }

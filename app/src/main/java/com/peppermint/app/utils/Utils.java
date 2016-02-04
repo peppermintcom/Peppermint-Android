@@ -192,7 +192,7 @@ public class Utils {
      * @return true if valid; false if not
      */
     public static boolean isValidName(CharSequence text) {
-        return !TextUtils.isEmpty(text) && NAME_PATTERN.matcher(text).matches();
+        return text != null && !TextUtils.isEmpty(text) && NAME_PATTERN.matcher(text).matches();
     }
 
     public static boolean isValidNameMaybeEmpty(CharSequence text) {
