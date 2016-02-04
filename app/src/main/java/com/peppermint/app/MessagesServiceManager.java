@@ -10,6 +10,7 @@ import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
+import com.peppermint.app.sending.ReceiverEvent;
 import com.peppermint.app.sending.SenderEvent;
 
 import java.util.UUID;
@@ -23,15 +24,17 @@ import java.util.UUID;
  */
 public class MessagesServiceManager {
 
-    /**
-     * Listener for file send events (see {@link SenderEvent}).
-     */
-    public interface Listener {
+    public interface ServiceListener {
         /**
          * Invoked when a binding to the service is performed.
          */
         void onBoundSendService();
+    }
 
+    /**
+     * Listener for file send events (see {@link SenderEvent}).
+     */
+    public interface SenderListener {
         /**
          * Invoked when a send file request starts.
          * @param event the event
@@ -69,38 +72,56 @@ public class MessagesServiceManager {
         void onSendQueued(SenderEvent event);
     }
 
+    public interface ReceiverListener {
+        void onReceivedMessage(ReceiverEvent event);
+    }
+
     private Context mContext;
     private MessagesService.SendRecordServiceBinder mService;
-    private Listener mListener;
+    private SenderListener mSenderListener;
+    private ReceiverListener mReceiverListener;
+    private ServiceListener mServiceListener;
     protected boolean mIsBound = false;                                         // if the manager is bound to the service
+
+    public void onEventMainThread(ReceiverEvent event) {
+        if(mReceiverListener == null) {
+            return;
+        }
+
+        switch(event.getType()) {
+            case ReceiverEvent.EVENT_RECEIVED:
+                mReceiverListener.onReceivedMessage(event);
+                break;
+        }
+    }
 
     /**
      * Event callback triggered by the {@link RecordService} through an {@link de.greenrobot.event.EventBus}.<br />
      * @param event the event (see {@link RecordService.Event})
      */
     public void onEventMainThread(SenderEvent event) {
-        if(mListener == null) {
+        if(mSenderListener == null) {
             return;
         }
 
         switch (event.getType()) {
             case SenderEvent.EVENT_STARTED:
-                mListener.onSendStarted(event);
+                mSenderListener.onSendStarted(event);
                 break;
             case SenderEvent.EVENT_ERROR:
-                mListener.onSendError(event);
+                mSenderListener.onSendError(event);
                 break;
             case SenderEvent.EVENT_CANCELLED:
-                mListener.onSendCancelled(event);
+                mSenderListener.onSendCancelled(event);
                 break;
             case SenderEvent.EVENT_FINISHED:
-                mListener.onSendFinished(event);
+                mSenderListener.onSendFinished(event);
                 break;
             case SenderEvent.EVENT_PROGRESS:
-                mListener.onSendProgress(event);
+                mSenderListener.onSendProgress(event);
                 break;
             case SenderEvent.EVENT_QUEUED:
-                mListener.onSendQueued(event);
+                mSenderListener.onSendQueued(event);
                 break;
         }
     }
@@ -113,8 +134,8 @@ public class MessagesServiceManager {
             mService = (MessagesService.SendRecordServiceBinder) binder;
             mService.register(MessagesServiceManager.this);
 
-            if(mListener != null) {
-                mListener.onBoundSendService();
+            if(mServiceListener != null) {
+                mServiceListener.onBoundSendService();
             }
         }
 
@@ -138,12 +159,6 @@ public class MessagesServiceManager {
         intent.putExtra(MessagesService.PARAM_MESSAGE_SEND_CHAT, chat);
         intent.putExtra(MessagesService.PARAM_MESSAGE_SEND_RECORDING, recording);
         intent.putExtra(MessagesService.PARAM_MESSAGE_SEND_RECIPIENT, recipient);
-        mContext.startService(intent);
-    }
-
-    public void startAndAuthorize() {
-        Intent intent = new Intent(mContext, MessagesService.class);
-        intent.putExtra(MessagesService.PARAM_MESSAGE_SEND_AUTHORIZE, true);
         mContext.startService(intent);
     }
 
@@ -209,29 +224,45 @@ public class MessagesServiceManager {
 
     /**
      * Cancels the send file request with the supplied {@link UUID}.
-     * @param uuid the {@link UUID} of the send file request/task
+     * @param message the {@link UUID} of the send file request/task
      */
-    public boolean cancel(UUID uuid) {
-        return mService.cancel(uuid);
+    public boolean cancel(Message message) {
+        return mService.cancel(message);
     }
 
     public boolean cancel() {
         return mService.cancel();
     }
 
-    public boolean isSending(UUID uuid) {
-        return mService.isSending(uuid);
+    public boolean isSending(Message message) {
+        return mService.isSending(message);
     }
 
     public boolean isSending() {
         return mService.isSending();
     }
 
-    public Listener getListener() {
-        return mListener;
+    public SenderListener getSenderListener() {
+        return mSenderListener;
     }
 
-    public void setListener(Listener mListener) {
-        this.mListener = mListener;
+    public void setSenderListener(SenderListener mSenderListener) {
+        this.mSenderListener = mSenderListener;
+    }
+
+    public ServiceListener getServiceListener() {
+        return mServiceListener;
+    }
+
+    public void setServiceListener(ServiceListener mServiceListener) {
+        this.mServiceListener = mServiceListener;
+    }
+
+    public ReceiverListener getmReceiverListener() {
+        return mReceiverListener;
+    }
+
+    public void setReceiverListener(ReceiverListener mReceiverListener) {
+        this.mReceiverListener = mReceiverListener;
     }
 }

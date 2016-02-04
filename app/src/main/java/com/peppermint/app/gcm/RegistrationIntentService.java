@@ -19,7 +19,8 @@ public class RegistrationIntentService extends IntentService {
 
     private static final String TAG = PeppermintInstanceIDListenerService.class.getSimpleName();
 
-    public static final String REGISTRATION_COMPLETE = "com.peppermint.app.gcm.REGISTRATION_COMPLETE";
+    public static final String REGISTRATION_COMPLETE_ACTION = "com.peppermint.app.gcm.REGISTRATION_COMPLETE";
+    public static final String PARAM_REGISTRATION_ERROR = TAG + "_paramError";
 
     private AuthenticatorUtils mAuthenticatorUtils;
     private PeppermintApi mPeppermintApi;
@@ -31,6 +32,7 @@ public class RegistrationIntentService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        Throwable error = null;
         try {
             mAuthenticatorUtils = new AuthenticatorUtils(this);
             String accessToken = mAuthenticatorUtils.getAccessToken();
@@ -52,11 +54,13 @@ public class RegistrationIntentService extends IntentService {
             mPeppermintApi.updateRecorder(data.getDeviceServerId(), token);
             mAuthenticatorUtils.updateAccountGcmRegistration(token);
             // [END register_for_gcm]
-        } catch (Exception e) {
-            Log .d(TAG, "Failed to complete token refresh", e);
+        } catch (Throwable e) {
+            Log.d(TAG, "Failed to complete token refresh", e);
+            error = e;
         }
         // Notify UI that registration has completed, so the progress indicator can be hidden.
-        Intent registrationComplete = new Intent(REGISTRATION_COMPLETE);
+        Intent registrationComplete = new Intent(REGISTRATION_COMPLETE_ACTION);
+        registrationComplete.putExtra(PARAM_REGISTRATION_ERROR, error);
         LocalBroadcastManager.getInstance(this).sendBroadcast(registrationComplete);
     }
 

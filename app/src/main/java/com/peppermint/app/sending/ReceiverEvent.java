@@ -1,5 +1,7 @@
 package com.peppermint.app.sending;
 
+import com.peppermint.app.data.Message;
+
 /**
  * Created by Nuno Luz on 01-10-2015.
  *
@@ -10,20 +12,17 @@ public class ReceiverEvent {
     public static final int EVENT_RECEIVED = 1;
 
     private int mType;
-    private String mReceiverEmail, mSenderEmail, mSenderName;
-    private String mAudioUrl, mTranscriptionUrl;
+    private String mReceiverEmail;
+    private Message mMessage;
 
     public ReceiverEvent() {
         mType = EVENT_RECEIVED;
     }
 
-    public ReceiverEvent(int mType, String mReceiverEmail, String mSenderEmail, String mSenderName, String mAudioUrl, String mTranscriptionUrl) {
+    public ReceiverEvent(int mType, String mReceiverEmail, Message mMessage) {
         this.mType = mType;
         this.mReceiverEmail = mReceiverEmail;
-        this.mSenderEmail = mSenderEmail;
-        this.mSenderName = mSenderName;
-        this.mAudioUrl = mAudioUrl;
-        this.mTranscriptionUrl = mTranscriptionUrl;
+        this.mMessage = mMessage;
     }
 
     public int getType() {
@@ -42,36 +41,12 @@ public class ReceiverEvent {
         this.mReceiverEmail = mReceiverEmail;
     }
 
-    public String getSenderEmail() {
-        return mSenderEmail;
+    public Message getMessage() {
+        return mMessage;
     }
 
-    public void setSenderEmail(String mSenderEmail) {
-        this.mSenderEmail = mSenderEmail;
-    }
-
-    public String getSenderName() {
-        return mSenderName;
-    }
-
-    public void setSenderName(String mSenderName) {
-        this.mSenderName = mSenderName;
-    }
-
-    public String getAudioUrl() {
-        return mAudioUrl;
-    }
-
-    public void setAudioUrl(String mAudioUrl) {
-        this.mAudioUrl = mAudioUrl;
-    }
-
-    public String getTranscriptionUrl() {
-        return mTranscriptionUrl;
-    }
-
-    public void setTranscriptionUrl(String mTranscriptionUrl) {
-        this.mTranscriptionUrl = mTranscriptionUrl;
+    public void setMessage(Message mMessage) {
+        this.mMessage = mMessage;
     }
 
     @Override
@@ -79,10 +54,7 @@ public class ReceiverEvent {
         return "ReceiverEvent{" +
                 "mType=" + mType +
                 ", mReceiverEmail='" + mReceiverEmail + '\'' +
-                ", mSenderEmail='" + mSenderEmail + '\'' +
-                ", mSenderName='" + mSenderName + '\'' +
-                ", mAudioUrl='" + mAudioUrl + '\'' +
-                ", mTranscriptionUrl='" + mTranscriptionUrl + '\'' +
+                ", mMessage=" + mMessage +
                 '}';
     }
 }

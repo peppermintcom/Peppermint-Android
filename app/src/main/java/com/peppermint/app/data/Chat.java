@@ -43,12 +43,14 @@ public class Chat implements Serializable {
      * @throws SQLException
      */
     public static long insert(SQLiteDatabase db, Chat chat) throws SQLException {
-        Recipient.insertOrUpdate(db, chat.getMainRecipient());
-
         ContentValues cv = new ContentValues();
-        cv.put("main_recipient_id", chat.getMainRecipient().getId());
-        cv.put("last_message_ts", chat.getLastMessageTimestamp());
 
+        if(chat.getMainRecipient() != null) {
+            cv.put("main_recipient_id", chat.getMainRecipient().getId());
+        } else {
+            cv.putNull("main_recipient_id");
+        }
+        cv.put("last_message_ts", chat.getLastMessageTimestamp());
 
         long id = db.insert("tbl_chat", null, cv);
         if(id < 0) {
@@ -68,8 +70,12 @@ public class Chat implements Serializable {
      */
     public static void update(SQLiteDatabase db, Chat chat) throws SQLException {
         ContentValues cv = new ContentValues();
-        //cv.put("sending_request_uuid", message.getId().toString());
-        cv.put("main_recipient_id", chat.getMainRecipient().getId());
+
+        if(chat.getMainRecipient() != null) {
+            cv.put("main_recipient_id", chat.getMainRecipient().getId());
+        } else {
+            cv.putNull("main_recipient_id");
+        }
         cv.put("last_message_ts", chat.getLastMessageTimestamp());
 
         long id = db.update("tbl_chat", cv, "chat_id = " + chat.getId(), null);
@@ -86,10 +92,16 @@ public class Chat implements Serializable {
      * @throws SQLException
      */
     public static void insertOrUpdate(SQLiteDatabase db, Chat chat) throws  SQLException {
-        Chat searchedChat = getByMainRecipient(db, chat.getMainRecipient().getId());
+        Chat searchedChat = null;
+
+        if(chat.getMainRecipient() != null && chat.getMainRecipient().getId() > 0) {
+            searchedChat = getByMainRecipient(db, chat.getMainRecipient().getId());
+        }
+
         if (searchedChat == null) {
             insert(db, chat);
             return;
+
         }
         chat.setId(searchedChat.getId());
         update(db, chat);

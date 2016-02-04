@@ -823,4 +823,20 @@ public class Utils {
 
         return bytes;
     }
+
+    public static String joinString(String separator, String... strs) {
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        for (String str : strs) {
+            if(str != null) {
+                if (first) {
+                    first = false;
+                } else {
+                    sb.append(separator);
+                }
+                sb.append(str);
+            }
+        }
+        return sb.toString();
+    }
 }

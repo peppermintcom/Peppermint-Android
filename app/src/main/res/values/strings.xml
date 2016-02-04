@@ -155,4 +155,7 @@
     <string name="account_settings">Account Settings</string>
     <string name="account_settings_desc">Your name, message channels, and more</string>
 
+    <!-- CHAT -->
+    <string name="record_a_message">Record a Message</string>
+
 </resources>

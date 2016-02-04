@@ -1,14 +1,16 @@
 package com.peppermint.app.ui.chat;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
+import com.peppermint.app.data.Recipient;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.views.NavigationItem;
+import com.peppermint.app.ui.views.RoundImageView;
+import com.peppermint.app.ui.views.simple.CustomFontTextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +22,14 @@ import java.util.List;
  */
 public class ChatActivity extends CustomActionBarActivity {
 
-    private Button mBtnSave;
+    private static final String TAG = ChatActivity.class.getSimpleName();
+
+    // UI
+    private CustomFontTextView mTxtChatName, mTxtChatVia;
+    private RoundImageView mImgAvatar;
+
+    // DATA
+    private Recipient mRecipient;
 
     @Override
     protected List<NavigationItem> getNavigationItems() {
@@ -35,18 +44,19 @@ public class ChatActivity extends CustomActionBarActivity {
         PeppermintApp app = (PeppermintApp) getApplication();
 
         // inflate custom action bar
-        View v = getLayoutInflater().inflate(R.layout.v_newcontact_actionbar, null, false);
+        View v = getLayoutInflater().inflate(R.layout.v_chat_actionbar, null, false);
 
-        TextView txtTitle = ((TextView) v.findViewById(R.id.txtTitle));
-        txtTitle.setTypeface(app.getFontSemibold());
+        mTxtChatName = (CustomFontTextView) v.findViewById(R.id.txtChatName);
+        mTxtChatVia = (CustomFontTextView) v.findViewById(R.id.txtChatVia);
+        mImgAvatar = (RoundImageView) v.findViewById(R.id.imgChatAvatar);
 
-        mBtnSave = (Button) v.findViewById(R.id.btnSave);
-        mBtnSave.setTypeface(app.getFontSemibold());
+        getCustomActionBar().setContents(v, true);
+    }
 
-        getCustomActionBar().setContents(v, false);
-
-        // cancel new contact icon
-        getCustomActionBar().getMenuButton().setImageResource(R.drawable.ic_cancel_14dp);
+    protected void setActionBarData(String recipientName, String recipientVia, String recipientPhotoUri) {
+        mTxtChatName.setText(recipientName);
+        mTxtChatVia.setText(recipientVia);
+        mImgAvatar.setImageURI(Uri.parse(recipientPhotoUri));
     }
 
 }

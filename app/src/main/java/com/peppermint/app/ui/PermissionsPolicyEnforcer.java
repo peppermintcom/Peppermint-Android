@@ -47,7 +47,7 @@ public class PermissionsPolicyEnforcer {
     }
 
     public void addPermission(String permission, boolean optional) {
-        addPermission(permission, optional, null);
+        addPermission(permission, optional, (String[]) null);
     }
 
     public void addPermission(String permission, boolean optional, String... requiredFeatures) {

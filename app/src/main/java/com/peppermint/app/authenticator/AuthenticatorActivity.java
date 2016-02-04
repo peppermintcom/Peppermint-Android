@@ -36,7 +36,6 @@ import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.gcm.RegistrationIntentService;
 import com.peppermint.app.sending.SenderSupportListener;
 import com.peppermint.app.sending.SenderSupportTask;
 import com.peppermint.app.sending.api.PeppermintApi;
@@ -208,10 +207,6 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
 
     private void finishAuthentication(String accessToken) {
         mAuthenticatorUtils.createAccount(accessToken, mSelectedAccount, mPassword, mDeviceServerId, mDeviceId, mDeviceKey, mAccountType);
-
-        // register to GCM
-        Intent gcmIntent = new Intent(this, RegistrationIntentService.class);
-        startService(gcmIntent);
 
         final Intent intent = new Intent();
         intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, AuthenticatorConstants.ACCOUNT_NAME);

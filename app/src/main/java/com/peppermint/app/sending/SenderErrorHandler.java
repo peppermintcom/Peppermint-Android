@@ -326,23 +326,23 @@ public class SenderErrorHandler extends SenderObject {
     }
 
     protected void checkRetries(SenderUploadTask failedSendingTask) {
-        UUID sendingRequestId = failedSendingTask.getMessage().getId();
+        UUID taskUuid = failedSendingTask.getId();
 
-        if(!mRetryMap.containsKey(sendingRequestId)) {
-            mRetryMap.put(sendingRequestId, 1);
+        if(!mRetryMap.containsKey(taskUuid)) {
+            mRetryMap.put(taskUuid, 1);
         } else {
-            mRetryMap.put(sendingRequestId, mRetryMap.get(sendingRequestId) + 1);
+            mRetryMap.put(taskUuid, mRetryMap.get(taskUuid) + 1);
         }
 
         // if it has failed MAX_RETRIES times, do not try it anymore
-        int retryNum = mRetryMap.get(sendingRequestId);
+        int retryNum = mRetryMap.get(taskUuid);
         if(retryNum > MAX_RETRIES) {
-            mRetryMap.remove(sendingRequestId);
+            mRetryMap.remove(taskUuid);
             doNotRecover(failedSendingTask);
             return;
         }
 
-        mTrackerManager.log("Retry #" + retryNum + " for Message " + sendingRequestId);
+        mTrackerManager.log("Retry #" + retryNum + " for Task " + taskUuid);
 
         // just try again for MAX_RETRIES times tops
         doRecover(failedSendingTask, false);

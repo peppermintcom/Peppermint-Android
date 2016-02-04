@@ -29,18 +29,31 @@ public class Message {
      */
     public static Message getFromCursor(SQLiteDatabase db, Cursor cursor) {
         Message message = new Message();
-        message.setId(UUID.fromString(cursor.getString(cursor.getColumnIndex("message_uuid"))));
+        message.setId(cursor.getLong(cursor.getColumnIndex("message_id")));
+
         message.setEmailSubject(cursor.getString(cursor.getColumnIndex("email_subject")));
         message.setEmailBody(cursor.getString(cursor.getColumnIndex("email_body")));
-        message.setServerShortUrl(cursor.getString(cursor.getColumnIndex("short_url")));
-        message.setServerCanonicalUrl(cursor.getString(cursor.getColumnIndex("canonical_url")));
+
         if(db != null) {
-            message.setChat(Chat.get(db, cursor.getLong(cursor.getColumnIndex("chat_id"))));
-            message.setRecipient(Recipient.get(db, cursor.getLong(cursor.getColumnIndex("recipient_id"))));
-            message.setRecording(Recording.get(db, cursor.getLong(cursor.getColumnIndex("recording_id"))));
+            if(!cursor.isNull(cursor.getColumnIndex("chat_id"))) {
+                message.setChat(Chat.get(db, cursor.getLong(cursor.getColumnIndex("chat_id"))));
+            }
+            if(!cursor.isNull(cursor.getColumnIndex("recipient_id"))) {
+                message.setRecipient(Recipient.get(db, cursor.getLong(cursor.getColumnIndex("recipient_id"))));
+            }
+            if(!cursor.isNull(cursor.getColumnIndex("recording_id"))) {
+                message.setRecording(Recording.get(db, cursor.getLong(cursor.getColumnIndex("recording_id"))));
+            }
         }
+
+        message.setServerId(cursor.getString(cursor.getColumnIndex("server_message_id")));
+        message.setServerShortUrl(cursor.getString(cursor.getColumnIndex("server_short_url")));
+        message.setServerCanonicalUrl(cursor.getString(cursor.getColumnIndex("server_canonical_url")));
+        message.setServerTranscriptionUrl(cursor.getString(cursor.getColumnIndex("server_transcription_url")));
+
         message.setRegistrationTimestamp(cursor.getString(cursor.getColumnIndex("registration_ts")));
         message.setSent(cursor.getInt(cursor.getColumnIndex("sent")) > 0);
+
         return message;
     }
 
@@ -52,30 +65,40 @@ public class Message {
      * @throws SQLException
      */
     public static long insert(SQLiteDatabase db, Message message) throws SQLException {
-        Chat.insertOrUpdate(db, message.getChat());
-        Recipient.insert(db, message.getRecipient());
-        Recording.insert(db, message.getRecording());
-
         ContentValues cv = new ContentValues();
-        cv.put("message_uuid", message.getId().toString());
+
         cv.put("email_subject", message.getEmailSubject());
         cv.put("email_body", message.getEmailBody());
+
+        if(message.getChat() != null) {
+            cv.put("chat_id", message.getChat().getId());
+        } else {
+            cv.putNull("chat_id");
+        }
+        if(message.getRecipient() != null) {
+            cv.put("recipient_id", message.getRecipient().getId());
+        } else {
+            cv.putNull("recipient_id");
+        }
         if(message.getRecording() != null) {
             cv.put("recording_id", message.getRecording().getId());
         } else {
             cv.putNull("recording_id");
         }
-        cv.put("recipient_id", message.getRecipient().getId());
-        cv.put("chat_id", message.getChat().getId());
-        cv.put("registration_ts", message.getRegistrationTimestamp());
+
+        cv.put("server_message_id", message.getServerId());
+        cv.put("server_short_url", message.getServerShortUrl());
+        cv.put("server_canonical_url", message.getServerCanonicalUrl());
+        cv.put("server_transcription_url", message.getServerTranscriptionUrl());
+
         cv.put("sent", message.isSent() ? 1 : 0);
-        cv.put("short_url", message.getServerShortUrl());
-        cv.put("canonical_url", message.getServerCanonicalUrl());
 
         long id = db.insert("tbl_message", null, cv);
         if(id < 0) {
             throw new SQLException("Unable to insert message!");
         }
+
+        message.setId(id);
         return id;
     }
 
@@ -88,26 +111,35 @@ public class Message {
      * @throws SQLException
      */
     public static long update(SQLiteDatabase db, Message message) throws SQLException {
-        Chat.insertOrUpdate(db, message.getChat());
-        Recipient.update(db, message.getRecipient());
-        Recording.update(db, message.getRecording());
-
         ContentValues cv = new ContentValues();
-        //cv.put("sending_request_uuid", message.getId().toString());
+
         cv.put("email_subject", message.getEmailSubject());
         cv.put("email_body", message.getEmailBody());
+
+        if(message.getChat() != null) {
+            cv.put("chat_id", message.getChat().getId());
+        } else {
+            cv.putNull("chat_id");
+        }
+        if(message.getRecipient() != null) {
+            cv.put("recipient_id", message.getRecipient().getId());
+        } else {
+            cv.putNull("recipient_id");
+        }
         if(message.getRecording() != null) {
             cv.put("recording_id", message.getRecording().getId());
         } else {
             cv.putNull("recording_id");
         }
-        cv.put("recipient_id", message.getRecipient().getId());
-        cv.put("chat_id", message.getChat().getId());
-        cv.put("short_url", message.getServerShortUrl());
-        cv.put("canonical_url", message.getServerCanonicalUrl());
+
+        cv.put("server_message_id", message.getServerId());
+        cv.put("server_short_url", message.getServerShortUrl());
+        cv.put("server_canonical_url", message.getServerCanonicalUrl());
+        cv.put("server_transcription_url", message.getServerTranscriptionUrl());
+
         cv.put("sent", message.isSent() ? 1 : 0);
 
-        long id = db.update("tbl_message", cv, "message_uuid = ?", new String[]{message.getId().toString()});
+        long id = db.update("tbl_message", cv, "message_id = " + message.getId(), null);
         if(id < 0) {
             throw new SQLException("Unable to update message!");
         }
@@ -122,9 +154,16 @@ public class Message {
      * @throws SQLException
      */
     public static long insertOrUpdate(SQLiteDatabase db, Message message) throws  SQLException {
-        if(get(db, message.getId()) == null) {
+
+        Message foundMessage = null;
+        if(message.getId() > 0 || message.getServerId() != null) {
+            foundMessage = getByIdOrServerId(db, message.getId(), message.getServerId());
+        }
+
+        if(foundMessage == null) {
             return insert(db, message);
         }
+        message.setId(foundMessage.getId());
         return update(db, message);
     }
 
@@ -133,18 +172,15 @@ public class Message {
      * An SQLException is thrown if the message UUID does not exist in the database.
      *
      * @param db the local database connection
-     * @param message the message
+     * @param id the message id
      * @throws SQLException
      */
-    public static long delete(SQLiteDatabase db, Message message) throws SQLException {
-        Recipient.delete(db, message.getRecipient());
-        Recording.delete(db, message.getRecording());
-
-        long id = db.delete("tbl_message", "message_uuid = ?", new String[]{message.getId().toString()});
-        if(id < 0) {
+    public static long delete(SQLiteDatabase db, long id) throws SQLException {
+        long retId = db.delete("tbl_message", "message_id = " + id, null);
+        if(retId < 0) {
             throw new SQLException("Unable to delete message!");
         }
-        return id;
+        return retId;
     }
 
     public static void deleteByChat(SQLiteDatabase db, long chatId) throws SQLException {
@@ -158,23 +194,24 @@ public class Message {
      * Obtains the message cursor with the supplied UUID from the database.
      *
      * @param db the local database connection
-     * @param uuid the message UUID
+     * @param id the message UUID
      * @return the cursor instance with all data
      */
-    public static Cursor getCursor(SQLiteDatabase db, UUID uuid) {
-        return db.rawQuery("SELECT * FROM tbl_message WHERE message_uuid = ?;", new String[]{uuid.toString()});
+    public static Cursor getCursorByIdOrServerId(SQLiteDatabase db, long id, String serverId) {
+        String where = Utils.joinString(" OR ", id > 0 ? "message_id = " + id : null, serverId != null ? "server_message_id = ?" : null);
+        return db.rawQuery("SELECT * FROM tbl_message WHERE " + where + ";", serverId != null ? new String[]{serverId} : null);
     }
 
     /**
      * Obtains the message with the supplied UUID from the database.
      *
      * @param db the local database connection
-     * @param uuid the message UUID
+     * @param id the message UUID
      * @return the message instance with all data
      */
-    public static Message get(SQLiteDatabase db, UUID uuid) {
+    public static Message getByIdOrServerId(SQLiteDatabase db, long id, String serverId) {
         Message message = null;
-        Cursor cursor = getCursor(db, uuid);
+        Cursor cursor = getCursorByIdOrServerId(db, id, serverId);
         if(cursor != null && cursor.moveToFirst()) {
             message = getFromCursor(db, cursor);
         }
@@ -208,7 +245,8 @@ public class Message {
         return list;
     }
 
-    private UUID mId = UUID.randomUUID();
+    private UUID mUUID = UUID.randomUUID();
+    private long mId;
 
     private Chat mChat;
     private Recording mRecording;
@@ -216,10 +254,12 @@ public class Message {
 
     private String mEmailSubject;
     private String mEmailBody;
+
     private String mRegistrationTimestamp = Utils.getCurrentTimestamp();
     private boolean mSent = false;
 
-    private String mServerCanonicalUrl, mServerShortUrl;
+    private String mServerId;
+    private String mServerCanonicalUrl, mServerShortUrl, mServerTranscriptionUrl;
 
     // extra parameters about the message that can be stored by/feed to senders
     private Map<String, Object> mParameters = new HashMap<>();
@@ -237,6 +277,21 @@ public class Message {
         this.mRecording = recording;
         this.mEmailSubject = emailSubject;
         this.mEmailBody = emailBody;
+    }
+
+    public Message(long mId, Chat mChat, Recording mRecording, Recipient mRecipient, String mEmailSubject, String mEmailBody, String mRegistrationTimestamp, boolean mSent, String mServerId, String mServerCanonicalUrl, String mServerShortUrl, String mServerTranscriptionUrl) {
+        this.mId = mId;
+        this.mChat = mChat;
+        this.mRecording = mRecording;
+        this.mRecipient = mRecipient;
+        this.mEmailSubject = mEmailSubject;
+        this.mEmailBody = mEmailBody;
+        this.mRegistrationTimestamp = mRegistrationTimestamp;
+        this.mSent = mSent;
+        this.mServerId = mServerId;
+        this.mServerCanonicalUrl = mServerCanonicalUrl;
+        this.mServerShortUrl = mServerShortUrl;
+        this.mServerTranscriptionUrl = mServerTranscriptionUrl;
     }
 
     public Recording getRecording() {
@@ -279,12 +334,13 @@ public class Message {
         this.mChat = mChat;
     }
 
-    public UUID getId() {
+    public long getId() {
         return mId;
     }
 
-    public void setId(UUID mId) {
+    public void setId(long mId) {
         this.mId = mId;
+        this.mUUID = new UUID(mId, mId);
     }
 
     public String getRegistrationTimestamp() {
@@ -301,6 +357,22 @@ public class Message {
 
     public void setSent(boolean mSent) {
         this.mSent = mSent;
+    }
+
+    public String getServerTranscriptionUrl() {
+        return mServerTranscriptionUrl;
+    }
+
+    public void setServerTranscriptionUrl(String mServerTranscriptionUrl) {
+        this.mServerTranscriptionUrl = mServerTranscriptionUrl;
+    }
+
+    public String getServerId() {
+        return mServerId;
+    }
+
+    public void setServerId(String mServerId) {
+        this.mServerId = mServerId;
     }
 
     public Map<String, Object> getParameters() {
@@ -340,6 +412,18 @@ public class Message {
         this.mServerCanonicalUrl = mServerCanonicalUrl;
     }
 
+    public UUID getUUID() {
+        return mUUID;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if(o instanceof Message) {
+            return ((Message) o).getUUID().equals(mUUID);
+        }
+        return super.equals(o);
+    }
+
     @Override
     public String toString() {
         return "Message{" +
@@ -351,8 +435,10 @@ public class Message {
                 ", mEmailBody='" + mEmailBody + '\'' +
                 ", mRegistrationTimestamp='" + mRegistrationTimestamp + '\'' +
                 ", mSent=" + mSent +
+                ", mServerId='" + mServerId + '\'' +
                 ", mServerCanonicalUrl='" + mServerCanonicalUrl + '\'' +
                 ", mServerShortUrl='" + mServerShortUrl + '\'' +
+                ", mServerTranscriptionUrl='" + mServerTranscriptionUrl + '\'' +
                 ", mParameters=" + mParameters +
                 '}';
     }

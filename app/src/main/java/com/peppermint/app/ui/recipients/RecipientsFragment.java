@@ -45,11 +45,13 @@ import com.peppermint.app.R;
 import com.peppermint.app.RecordService;
 import com.peppermint.app.RecordServiceManager;
 import com.peppermint.app.authenticator.AuthenticationData;
+import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientType;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.ui.AnimatorBuilder;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.canvas.loading.LoadingView;
@@ -62,8 +64,6 @@ import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.ui.views.dialogs.PopupDialog;
 import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.ui.views.simple.CustomVisibilityListView;
-import com.peppermint.app.ui.AnimatorBuilder;
-import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.NoMicDataIOException;
 import com.peppermint.app.utils.Utils;
@@ -730,7 +730,8 @@ public class RecipientsFragment extends ListFragment implements AdapterView.OnIt
         mLytSenderControl = (SenderControlLayout) v.findViewById(R.id.lytStatus);
         mLytSenderControl.setSenderManager(mMessagesServiceManager);
         mLytSenderControl.setTypeface(app.getFontSemibold());
-        mMessagesServiceManager.setListener(mLytSenderControl);
+        mMessagesServiceManager.setSenderListener(mLytSenderControl);
+        mMessagesServiceManager.setServiceListener(mLytSenderControl);
 
         // avoid showing "no contacts" for a split second, right after creation
         setListShownNoAnimation(false);

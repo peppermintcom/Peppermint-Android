@@ -23,6 +23,8 @@ import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
+import com.peppermint.app.gcm.RegistrationIntentService;
+import com.peppermint.app.sending.ReceiverEvent;
 import com.peppermint.app.sending.SenderEvent;
 import com.peppermint.app.sending.SenderManager;
 import com.peppermint.app.sending.SenderPreferences;
@@ -57,8 +59,6 @@ public class MessagesService extends Service {
     public static final String PARAM_MESSAGE_SEND_CHAT = TAG + "_paramMessageSendChat";
 
     public static final String PARAM_MESSAGE_SEND_RECIPIENT = TAG + "_paramMessageSendRecipient";
-
-    public static final String PARAM_MESSAGE_SEND_AUTHORIZE = TAG + "_paramMessageSendAuthorize";
 
     public static final String PARAM_MESSAGE_RECEIVE_DATA = TAG + "_paramMessageReceiveData";
 
@@ -98,12 +98,12 @@ public class MessagesService extends Service {
         }
 
         /**
-         * Cancel the send request with the specified {@link UUID}.
-         * <b>If the send request is ongoing, it might get sent anyway.</b>
-         * @param sendingRequestUuid the UUID of the send request returned by {@link #send(Chat, Recipient, Recording)}
+         * Cancel the message with the specified {@link UUID}.
+         * <b>If the message is being sent, it might get sent anyway.</b>
+         * @param message the UUID of the message returned by {@link #send(Chat, Recipient, Recording)}
          */
-        boolean cancel(UUID sendingRequestUuid) {
-            return MessagesService.this.cancel(sendingRequestUuid);
+        boolean cancel(Message message) {
+            return MessagesService.this.cancel(message);
         }
         boolean cancel() {
             return MessagesService.this.cancel(null);
@@ -120,11 +120,9 @@ public class MessagesService extends Service {
         boolean isSending() {
             return MessagesService.this.isSending(null);
         }
-        boolean isSending(UUID sendingRequestUuid) {
-            return MessagesService.this.isSending(sendingRequestUuid);
+        boolean isSending(Message message) {
+            return MessagesService.this.isSending(message);
         }
-
-        void authorize() { MessagesService.this.authorize(); }
     }
 
     private TrackerManager mTrackerManager;
@@ -132,6 +130,7 @@ public class MessagesService extends Service {
     private EventBus mEventBus;
     private SenderManager mSenderManager;
     private DatabaseHelper mDatabaseHelper;
+    private boolean mGcmRegistrationOk = false;
 
     private Handler mHandler = new Handler();
     private final Runnable mNotificationRunnable = new Runnable() {
@@ -159,6 +158,8 @@ public class MessagesService extends Service {
             // the lack of internet connectivity
             try {
                 if (Utils.isInternetAvailable(MessagesService.this)) {
+                    doGcmRegistration();
+
                     SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
                     List<Message> queued = Message.getQueued(db);
                     db.close();
@@ -166,7 +167,7 @@ public class MessagesService extends Service {
                         // try to resend all queued recordings..
                         for (Message message : queued) {
                             Log.d(TAG, "Re-trying queued request " + message.getId() + " to " + message.getRecipient().getName());
-                            if(!mSenderManager.isSending(message.getId())) {
+                            if(!mSenderManager.isSending(message)) {
                                 mSenderManager.send(message);
                             }
                         }
@@ -193,6 +194,32 @@ public class MessagesService extends Service {
         mMaintenanceFuture = mScheduledExecutor.scheduleAtFixedRate(mMaintenanceRunnable, 10, 3600, TimeUnit.SECONDS);
     }
 
+    // handles GCM registration broadcasts
+    private BroadcastReceiver mGcmRegistrationReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "GCM registration performed...");
+
+            Throwable error = (Throwable) intent.getSerializableExtra(RegistrationIntentService.PARAM_REGISTRATION_ERROR);
+            if(error != null) {
+                Log.e(TAG, "Problem with GCM registration!", error);
+            } else {
+                synchronized (this) {
+                    mGcmRegistrationOk = true;
+                }
+            }
+        }
+    };
+    private final IntentFilter mGcmRegistrationReceiverFilter = new IntentFilter(RegistrationIntentService.REGISTRATION_COMPLETE_ACTION);
+
+    private synchronized void doGcmRegistration() {
+        // register to GCM, and always try until it goes alright
+        if (!mGcmRegistrationOk) {
+            Intent gcmIntent = new Intent(this, RegistrationIntentService.class);
+            startService(gcmIntent);
+        }
+    }
+
     public MessagesService() {
         mEventBus = new EventBus();
 
@@ -217,22 +244,63 @@ public class MessagesService extends Service {
         mHandler.postDelayed(mNotificationRunnable, 180000); // after 3mins.
 
         registerReceiver(mConnectivityChangeReceiver, mConnectivityChangeFilter);
+        registerReceiver(mGcmRegistrationReceiver, mGcmRegistrationReceiverFilter);
         rescheduleMaintenance();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
+        doGcmRegistration();
+
         if(intent != null) {
             if(intent.hasExtra(PARAM_MESSAGE_SEND_RECORDING) && intent.hasExtra(PARAM_MESSAGE_SEND_RECIPIENT)) {
                 Chat chat = (Chat) intent.getSerializableExtra(PARAM_MESSAGE_SEND_CHAT);
                 Recording recording = (Recording) intent.getSerializableExtra(PARAM_MESSAGE_SEND_RECORDING);
                 Recipient recipient = (Recipient) intent.getSerializableExtra(PARAM_MESSAGE_SEND_RECIPIENT);
                 send(chat, recipient, recording);
-            } else if(intent.hasExtra(PARAM_MESSAGE_SEND_AUTHORIZE) && intent.getBooleanExtra(PARAM_MESSAGE_SEND_AUTHORIZE, false)) {
-                authorize();
             } else if(intent.hasExtra(PARAM_MESSAGE_RECEIVE_DATA)) {
                 Bundle receivedMessageData = intent.getBundleExtra(PARAM_MESSAGE_RECEIVE_DATA);
-                Log.d(TAG, "" + receivedMessageData);
+                String audioUrl = receivedMessageData.getString("audio_url");
+                String transcriptionUrl = receivedMessageData.getString("transcription_url");
+                String receiverEmail = receivedMessageData.getString("receiver_email");
+                String senderEmail = receivedMessageData.getString("sender_email");
+                String senderName = receivedMessageData.getString("sender_name");
+
+                if(audioUrl == null || senderEmail == null) {
+                    mTrackerManager.log("Invalid GCM notification received! Either or both audio URL and sender email are null.");
+                } else {
+                    Recipient recipient = new Recipient();
+                    recipient.setVia(senderEmail);
+                    recipient.setName(senderName);
+
+                    Chat chat = new Chat();
+                    chat.setMainRecipient(recipient);
+
+                    Message message = new Message();
+                    message.setSent(true);
+                    message.setServerShortUrl(audioUrl);
+                    message.setServerTranscriptionUrl(transcriptionUrl);
+                    message.setChat(chat);
+                    message.setRecipient(recipient);
+
+                    SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
+                    try {
+                        Recipient.insertOrUpdate(db, recipient);
+                        Chat.insertOrUpdate(db, chat);
+                        Message.insert(db, message);
+                    } catch(SQLException e) {
+                        mTrackerManager.logException(e);
+                    }
+                    db.close();
+
+                    ReceiverEvent ev = new ReceiverEvent();
+                    ev.setReceiverEmail(receiverEmail);
+                    ev.setMessage(message);
+                    mEventBus.post(ev);
+
+                    Log.d(TAG, "" + ev);
+                }
             }
         }
 
@@ -255,6 +323,7 @@ public class MessagesService extends Service {
             mMaintenanceFuture.cancel(true);
         }
         unregisterReceiver(mConnectivityChangeReceiver);
+        unregisterReceiver(mGcmRegistrationReceiver);
 
         mHandler.removeCallbacks(mNotificationRunnable);
 
@@ -267,11 +336,8 @@ public class MessagesService extends Service {
         super.onDestroy();
     }
 
-    private void authorize() {
-        mSenderManager.authorize();
-    }
-
     public void onEventMainThread(SenderEvent event) {
+        Message message = event.getSenderTask().getMessage();
         SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
         switch (event.getType()) {
             case SenderEvent.EVENT_STARTED:
@@ -286,7 +352,9 @@ public class MessagesService extends Service {
                 break;
             case SenderEvent.EVENT_CANCELLED:
                 try {
-                    Message.delete(db, event.getSenderTask().getMessage());
+                    // discard recording as well
+                    Recording.delete(db, message.getRecording().getId());
+                    Message.delete(db, message.getId());
                 } catch (SQLException e) {
                     mTrackerManager.logException(e);
                 }
@@ -294,8 +362,8 @@ public class MessagesService extends Service {
             case SenderEvent.EVENT_FINISHED:
                 // sending request has finished, so update the saved data and mark as sent
                 try {
-                    event.getSenderTask().getMessage().setSent(true);
-                    Message.insertOrUpdate(db, event.getSenderTask().getMessage());
+                    message.setSent(true);
+                    Message.insertOrUpdate(db, message);
                 } catch (SQLException e) {
                     mTrackerManager.logException(e);
                 }
@@ -327,6 +395,9 @@ public class MessagesService extends Service {
 
         SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
         try {
+            Chat.insertOrUpdate(db, chat);
+            Recipient.insertOrUpdate(db, recipient);
+            Recording.insertOrUpdate(db, recording);
             Message.insertOrUpdate(db, message);
         } catch (SQLException e) {
             mTrackerManager.logException(e);
@@ -338,16 +409,16 @@ public class MessagesService extends Service {
         return message;
     }
 
-    private boolean cancel(UUID sendingRequestUuid) {
-        if(sendingRequestUuid != null) {
-            return mSenderManager.cancel(sendingRequestUuid);
+    private boolean cancel(Message message) {
+        if(message != null) {
+            return mSenderManager.cancel(message);
         }
         return mSenderManager.cancel();
     }
 
-    private boolean isSending(UUID sendingRequestUuid) {
-        if(sendingRequestUuid != null) {
-            return mSenderManager.isSending(sendingRequestUuid);
+    private boolean isSending(Message message) {
+        if(message != null) {
+            return mSenderManager.isSending(message);
         }
         return mSenderManager.isSending();
     }
