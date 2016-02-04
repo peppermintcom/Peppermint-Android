@@ -10,11 +10,12 @@ import android.support.annotation.NonNull;
 import android.widget.Toast;
 
 import com.peppermint.app.ui.CustomActionBarActivity;
+import com.peppermint.app.ui.PermissionsPolicyEnforcer;
 import com.peppermint.app.ui.about.AboutActivity;
+import com.peppermint.app.ui.chat.ChatListActivity;
 import com.peppermint.app.ui.recipients.RecipientsFragment;
 import com.peppermint.app.ui.settings.SettingsActivity;
 import com.peppermint.app.ui.views.NavigationItem;
-import com.peppermint.app.ui.PermissionsPolicyEnforcer;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
@@ -42,6 +43,13 @@ public class MainActivity extends CustomActionBarActivity {
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
         navItems.add(new NavigationItem(getString(R.string.drawer_menu_contacts), R.drawable.ic_drawer_contacts, RecipientsFragment.class, false, false));
+        navItems.add(new NavigationItem(getString(R.string.chats), R.drawable.ic_drawer_chats, new Runnable() {
+            @Override
+            public void run() {
+                Intent intent = new Intent(MainActivity.this, ChatListActivity.class);
+                startActivity(intent);
+            }
+        }, true));
         navItems.add(new NavigationItem(getString(R.string.drawer_menu_settings), R.drawable.ic_drawer_settings, new Runnable() {
             @Override
             public void run() {

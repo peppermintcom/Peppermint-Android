@@ -44,7 +44,7 @@ public class Recording implements Serializable {
      * @param recording the recording
      * @throws SQLException
      */
-    public static void insert(SQLiteDatabase db, Recording recording) throws SQLException {
+    public static long insert(SQLiteDatabase db, Recording recording) throws SQLException {
         ContentValues cv = new ContentValues();
         cv.put("file_path", recording.getFilePath());
         cv.put("duration_millis", recording.getDurationMillis());
@@ -59,6 +59,7 @@ public class Recording implements Serializable {
         }
 
         recording.setId(id);
+        return id;
     }
 
     /**
@@ -104,11 +105,11 @@ public class Recording implements Serializable {
      * An SQLException is thrown if the recording ID does not exist in the database.
      *
      * @param db the local database connection
-     * @param recording the recording
+     * @param recordingId the recording id
      * @throws SQLException
      */
-    public static void delete(SQLiteDatabase db, Recording recording) throws SQLException {
-        long id = db.delete("tbl_recording", "recording_id = " + recording.getId(), null);
+    public static void delete(SQLiteDatabase db, long recordingId) throws SQLException {
+        long id = db.delete("tbl_recording", "recording_id = " + recordingId, null);
         if(id < 0) {
             throw new SQLException("Unable to delete the recording!");
         }
@@ -124,9 +125,10 @@ public class Recording implements Serializable {
     public static Recording get(SQLiteDatabase db, long id) {
         Recording recording = null;
         Cursor cursor = db.rawQuery("SELECT * FROM tbl_recording WHERE recording_id = " + id, null);
-        if(cursor != null && cursor.moveToFirst()) {
+        if(cursor.moveToFirst()) {
             recording = getFromCursor(cursor);
         }
+        cursor.close();
         return recording;
     }
 

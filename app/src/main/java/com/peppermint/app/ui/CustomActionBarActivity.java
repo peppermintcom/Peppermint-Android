@@ -23,14 +23,15 @@ import android.widget.TextView;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
+import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.views.CustomActionBarView;
 import com.peppermint.app.ui.views.NavigationItem;
 import com.peppermint.app.ui.views.NavigationListAdapter;
-import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.utils.Utils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -58,6 +59,8 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     private AuthenticationPolicyEnforcer mAuthenticationPolicyEnforcer;
     private AuthenticationData mAuthenticationData;
 
+    private List<View.OnTouchListener> mTouchEventInterceptorList = new ArrayList<>();
+
     protected List<NavigationItem> getNavigationItems() {
         return null;
     }
@@ -83,7 +86,7 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
         mPreferences = new SenderPreferences(this);
 
         mTrackerManager = TrackerManager.getInstance(getApplicationContext());
-        mOverlayManager = new OverlayManager(this, R.id.lytOverlay);
+        mOverlayManager = new OverlayManager(this, null, R.id.lytOverlay);
         mAuthenticationPolicyEnforcer = new AuthenticationPolicyEnforcer(this, savedInstanceState);
         mAuthenticationPolicyEnforcer.addAuthenticationDoneCallback(new AuthenticationPolicyEnforcer.AuthenticationDoneCallback() {
             @Override
@@ -205,6 +208,7 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
 
     @Override
     protected void onDestroy() {
+        mOverlayManager.destroyAllOverlays();
         mPreferences.getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
         super.onDestroy();
     }
@@ -249,6 +253,14 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
             }
             fragment.setArguments(bundle);
         }
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        for(View.OnTouchListener listener : mTouchEventInterceptorList) {
+            listener.onTouch(null, ev);
+        }
+        return super.dispatchTouchEvent(ev);
     }
 
     protected void refreshFragment(Intent intent) {
@@ -369,8 +381,16 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
         return getFragmentManager().findFragmentById(R.id.container);
     }
 
-    public View getTouchInterceptor() {
+    /*public View getTouchInterceptor() {
         return findViewById(R.id.touchInterceptor);
+    }*/
+
+    public void addTouchEventInterceptor(View.OnTouchListener interceptor) {
+        mTouchEventInterceptorList.add(interceptor);
+    }
+
+    public boolean removeTouchEventInterceptor(View.OnTouchListener mTouchEventInterceptor) {
+        return mTouchEventInterceptorList.remove(mTouchEventInterceptor);
     }
 
     public TrackerManager getTrackerManager() {
@@ -383,5 +403,9 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
 
     public AuthenticationPolicyEnforcer getAuthenticationPolicyEnforcer() {
         return mAuthenticationPolicyEnforcer;
+    }
+
+    public SenderPreferences getPreferences() {
+        return mPreferences;
     }
 }

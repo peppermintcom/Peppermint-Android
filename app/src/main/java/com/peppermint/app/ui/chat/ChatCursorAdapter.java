@@ -1,0 +1,97 @@
+package com.peppermint.app.ui.chat;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.CursorAdapter;
+
+import com.peppermint.app.PeppermintApp;
+import com.peppermint.app.R;
+import com.peppermint.app.data.Chat;
+import com.peppermint.app.data.Message;
+import com.peppermint.app.data.Recipient;
+import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
+import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
+import com.peppermint.app.ui.views.simple.CustomFontTextView;
+
+/**
+ * Created by Nuno Luz on 27/08/2015.
+ *
+ * ArrayAdapter to show recipients in a ListView.<br />
+ * Uses the {@link RecipientAdapterUtils#getView(PeppermintApp, Context, Recipient, View, ViewGroup)}
+ * to fill the view of each item.
+ */
+public class ChatCursorAdapter extends CursorAdapter {
+
+    private static final int MARGIN_BALLOON_DP = 80;
+
+    private Context mContext;
+    private SQLiteDatabase mDb;
+
+    public ChatCursorAdapter(Context context, Cursor cursor, SQLiteDatabase db) {
+        super(context, cursor, 0);
+        this.mContext = context;
+        this.mDb = db;
+    }
+
+    @Override
+    public View newView(Context context, Cursor cursor, ViewGroup parent) {
+        return LayoutInflater.from(mContext).inflate(R.layout.i_chat_layout, parent, false);
+    }
+
+    @Override
+    public void bindView(View view, Context context, Cursor cursor) {
+        Chat chat = getChat(cursor);
+        Recipient recipient = chat.getMainRecipient();
+
+        AnimatedAvatarView imgPhoto = (AnimatedAvatarView) view.findViewById(R.id.imgPhoto);
+        CustomFontTextView txtName = (CustomFontTextView) view.findViewById(R.id.txtName);
+        CustomFontTextView txtContact = (CustomFontTextView) view.findViewById(R.id.txtContact);
+
+        if(recipient != null && recipient.getPhotoUri() != null) {
+            imgPhoto.setStaticDrawable(Uri.parse(recipient.getPhotoUri()));
+            imgPhoto.setShowStaticAvatar(true);
+        } else {
+            imgPhoto.setShowStaticAvatar(false);
+        }
+
+        if(recipient != null) {
+            txtName.setText(recipient.getName());
+            txtContact.setText(recipient.getVia());
+        }
+
+        CustomFontTextView txtUnreadMessages = (CustomFontTextView) view.findViewById(R.id.txtUnreadMessages);
+        CustomFontTextView txtLastMessageDate = (CustomFontTextView) view.findViewById(R.id.txtLastMessageDate);
+
+        txtLastMessageDate.setText(chat.getLastMessageTimestamp());
+
+        int unreadAmount = Message.getUnopenedCountByChat(mDb, chat.getId());
+        if(unreadAmount > 0) {
+            txtUnreadMessages.setText(String.valueOf(unreadAmount));
+            txtUnreadMessages.setVisibility(View.VISIBLE);
+        } else {
+            txtUnreadMessages.setVisibility(View.GONE);
+        }
+    }
+
+    public Chat getChat(Cursor cursor) {
+        return Chat.getFromCursor(mDb, cursor);
+    }
+
+    public Chat getChat(int position) {
+        Cursor cursor = (Cursor) getItem(position);
+        return getChat(cursor);
+    }
+
+    public SQLiteDatabase getDatabase() {
+        return mDb;
+    }
+
+    public void setDatabase(SQLiteDatabase mDb) {
+        this.mDb = mDb;
+    }
+}

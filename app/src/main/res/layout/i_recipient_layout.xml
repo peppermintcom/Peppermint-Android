@@ -34,6 +34,7 @@
         android:id="@+id/txtName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:singleLine="true"
         android:textSize="18dp"
         android:textColor="@color/color_black_to_white_pressed" />
 
@@ -55,6 +56,7 @@
                 android:id="@+id/txtContact"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:singleLine="true"
                 android:textColor="@color/color_green_to_white_pressed"
                 android:textStyle="bold" />
         </LinearLayout>

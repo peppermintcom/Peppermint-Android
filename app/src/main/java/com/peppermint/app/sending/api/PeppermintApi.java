@@ -43,7 +43,7 @@ public class PeppermintApi implements Serializable {
     public static final int ACCOUNT_TYPE_GOOGLE = 2;
     public static final int ACCOUNT_TYPE_FACEBOOK = 3;
 
-    private static final String API_KEY = "abc123";
+    private static final String API_KEY = "la8H4E6Iw5teA6nelVZWgZWqVJh7kWc6Gn1rj21hsYcTP7y7JAmDDQ";
     protected static final String BASE_ENDPOINT_URL = "https://qdkkavugcd.execute-api.us-west-2.amazonaws.com/prod/v1/";
 
     protected static final String ACCOUNTS_ENDPOINT = BASE_ENDPOINT_URL + "accounts";

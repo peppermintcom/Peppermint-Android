@@ -12,8 +12,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.peppermint.app.R;
 import com.peppermint.app.MessagesServiceManager;
+import com.peppermint.app.R;
 import com.peppermint.app.sending.SenderEvent;
 import com.peppermint.app.sending.mail.nativemail.IntentMailSenderTask;
 import com.peppermint.app.sending.nativesms.IntentSMSSenderTask;
@@ -22,7 +22,7 @@ import com.peppermint.app.ui.AnimatorBuilder;
 /**
  * Created by Nuno Luz on 17-09-2015.
  */
-public class SenderControlLayout extends FrameLayout implements View.OnClickListener, MessagesServiceManager.Listener {
+public class SenderControlLayout extends FrameLayout implements View.OnClickListener, MessagesServiceManager.SenderListener, MessagesServiceManager.ServiceListener {
 
     private static final int DURATION = 4000;
 

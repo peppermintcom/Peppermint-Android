@@ -17,7 +17,7 @@ import com.peppermint.app.sending.api.exceptions.PeppermintApiRecipientNoAppExce
 import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
 import com.peppermint.app.sending.exceptions.TryAgainException;
 import com.peppermint.app.sending.mail.MailUtils;
-import com.peppermint.app.utils.Utils;
+import com.peppermint.app.utils.DateContainer;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -75,6 +75,7 @@ public class GmailSenderTask extends SenderUploadTask {
         AuthenticationData data = setupPeppermintAuthentication();
         uploadPeppermintMessage();
         String url = getMessage().getServerShortUrl();
+        String canonicalUrl = getMessage().getServerCanonicalUrl();
 
         long now = android.os.SystemClock.uptimeMillis();
         String fullName = getSenderPreferences().getFullName();
@@ -94,7 +95,7 @@ public class GmailSenderTask extends SenderUploadTask {
 
             Date emailDate = new Date();
             try {
-                emailDate = Utils.parseTimestamp(getMessage().getRegistrationTimestamp());
+                emailDate = DateContainer.parseTimestamp(getMessage().getRegistrationTimestamp());
             } catch(ParseException e) {
                 getTrackerManager().logException(e);
             }
@@ -113,7 +114,7 @@ public class GmailSenderTask extends SenderUploadTask {
 
             if(!isCancelled()) {
                 try {
-                    getPeppermintApi().sendMessage(null, url, data.getEmail(), getMessage().getRecipient().getVia());
+                    getPeppermintApi().sendMessage(null, canonicalUrl, data.getEmail(), getMessage().getRecipient().getVia());
                 } catch(PeppermintApiRecipientNoAppException e) {
                     getTrackerManager().log("Unable to send through Peppermint", e);
                 } catch(Throwable e) {

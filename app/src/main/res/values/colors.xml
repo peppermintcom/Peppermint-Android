@@ -10,6 +10,7 @@
     <color name="background0">#edf3f1</color>
     <color name="background1">#68c4a3</color>
     <color name="background2">#2fbdb2</color>
+    <color name="background3">#dce8e4</color>
 
     <color name="record_progress_empty">#d7e4e1</color>
     <color name="record_progress_fill">#1f8479</color>

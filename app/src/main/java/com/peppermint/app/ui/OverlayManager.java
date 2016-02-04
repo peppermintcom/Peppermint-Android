@@ -6,14 +6,18 @@ import android.app.Activity;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Handler;
-import android.view.LayoutInflater;
+import android.util.Log;
 import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
+import com.peppermint.app.tracking.TrackerManager;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -22,33 +26,35 @@ import java.util.Set;
  */
 public class OverlayManager {
 
-    private class OverlayHideAnimatorListener extends AnimatorListenerAdapter {
-        private OverlayWrapper ow;
-        private boolean isCancel = false;
+    public interface OverlayVisibilityChangeListener {
+        void onOverlayShown(Overlay overlay);
+        void onOverlayHidden(Overlay overlay, boolean wasCancelled);
+    }
 
-        public OverlayHideAnimatorListener(OverlayWrapper ow, boolean isCancel) {
-            this.ow = ow;
-            this.isCancel = isCancel;
+    private class OverlayHideAnimatorListener extends AnimatorListenerAdapter {
+        private Overlay mOverlay;
+        private boolean mCancel = false;
+
+        public OverlayHideAnimatorListener(Overlay overlay, boolean cancel) {
+            this.mOverlay = overlay;
+            this.mCancel = cancel;
         }
 
         @Override
         public void onAnimationEnd(Animator animation) {
-            ow.view.setVisibility(View.INVISIBLE);
-            mOverlayHidding.remove(ow.view.getTag());
-            if(ow.disableAllTouch) {
+            mOverlay.getView().setVisibility(View.INVISIBLE);
+            mOverlayHidding.remove(mOverlay.getId());
+            if(mOverlay.isDisableAllTouch()) {
                 enableDisableAllTouch(true);
             }
-            if(ow.disableAutoScreenRotation) {
-                mActivity.setRequestedOrientation(ow.requestedOrientation);
+            if(mOverlay.isDisableAutoScreenRotation()) {
+                //noinspection ResourceType
+                mActivity.setRequestedOrientation(mOverlay.getRequestedOrientation());
             }
-            if(isCancel && ow.onOverlayCancel != null) {
-                ow.onOverlayCancel.run();
-            }
-            ow.onOverlayCancel = null;
 
             boolean allHidden = true;
-            for(Map.Entry<String, OverlayWrapper> entry : mOverlayMap.entrySet()) {
-                if(entry.getValue().view.getVisibility() == View.VISIBLE) {
+            for(Map.Entry<String, Overlay> entry : mOverlayMap.entrySet()) {
+                if(entry.getValue().isVisible()) {
                     allHidden = false;
                 }
             }
@@ -56,15 +62,18 @@ public class OverlayManager {
                 //setFullscreen(false);
                 mLytOverlayContainer.setVisibility(View.GONE);
             }
+
+            if(mOverlay.getId() != null && mRootScreenId != null) {
+                TrackerManager.getInstance(mActivity.getApplicationContext()).trackScreenView(mRootScreenId);
+            }
+
+            for(OverlayVisibilityChangeListener listener : mOverlayVisibilityChangeListenerList) {
+                listener.onOverlayHidden(mOverlay, mCancel);
+            }
         }
     }
 
-    private class OverlayWrapper {
-        View view; boolean disableAllTouch, disableAutoScreenRotation;
-        int requestedOrientation;
-        Runnable onOverlayCancel;
-    }
-
+    private String mRootScreenId;
     private Activity mActivity;
     private AnimatorBuilder mAnimatorBuilder;
     private Handler mDelayHandler = new Handler();
@@ -72,102 +81,103 @@ public class OverlayManager {
     private FrameLayout mLytOverlayContainer;
     private int mCachedScreenOrientation;
 
-    private Map<String, OverlayWrapper> mOverlayMap = new HashMap<>();
+    private Map<String, Overlay> mOverlayMap = new HashMap<>();
     private Set<String> mOverlayHidding = new HashSet<>();
 
-    public OverlayManager(Activity activityWithOverlays) {
+    private List<OverlayVisibilityChangeListener> mOverlayVisibilityChangeListenerList = new ArrayList<>();
+
+    public OverlayManager(Activity activityWithOverlays, String rootScreenId) {
         this.mActivity = activityWithOverlays;
         this.mAnimatorBuilder = new AnimatorBuilder();
+        this.mRootScreenId = rootScreenId;
     }
 
-    public OverlayManager(Activity activityWithOverlays, int overlayContainerResId) {
-        this(activityWithOverlays);
+    public OverlayManager(Activity activityWithOverlays, String rootScreenId, int overlayContainerResId) {
+        this(activityWithOverlays, rootScreenId);
         this.mLytOverlayContainer = (FrameLayout) activityWithOverlays.findViewById(overlayContainerResId);
     }
 
     /**
      * Create the overlay layout (inflated from the layout resource id)
      * @param layoutRes the layout resource id
-     * @param tag the tag of the overlay
+     * @param id the id of the overlay
      * @return the root view containing the inflated layout
      */
-    public View createOverlay(int layoutRes, String tag, boolean disableAllTouch, boolean disableAutoScreenRotation) {
-        if(mOverlayMap.containsKey(tag)) {
-            return mOverlayMap.get(tag).view;
-        }
-
-        LayoutInflater layoutInflater = mActivity.getLayoutInflater();
-        View overlayView =  layoutInflater.inflate(layoutRes, null);
-        return createOverlay(overlayView, tag, disableAllTouch, disableAutoScreenRotation);
+    public Overlay createOverlay(int layoutRes, String id, boolean disableAllTouch, boolean disableAutoScreenRotation) {
+        return createOverlay(new Overlay(id, layoutRes, disableAllTouch, disableAutoScreenRotation));
     }
 
-    public View createOverlay(View overlayView, String tag, boolean disableAllTouch, boolean disableAutoScreenRotation) {
-        if(mOverlayMap.containsKey(tag)) {
-            return mOverlayMap.get(tag).view;
+    public Overlay createOverlay(Overlay overlay) {
+        if(mOverlayMap.containsKey(overlay.getId())) {
+            Log.d(overlay.getId(), "Overlay already exists! Ignoring createOverlay()...");
+            Overlay oldOverlay = mOverlayMap.get(overlay.getId());
+            oldOverlay.assimilateFrom(overlay);
+            return oldOverlay;
         }
 
-        overlayView.setTag(tag);
-        overlayView.setVisibility(View.INVISIBLE);
+        overlay.setOverlayManager(this);
+        mOverlayMap.put(overlay.getId(), overlay);
 
-        OverlayWrapper ow = new OverlayWrapper();
-        ow.view = overlayView;
-        ow.disableAllTouch = disableAllTouch;
-        ow.disableAutoScreenRotation = disableAutoScreenRotation;
+        View v = overlay.create(mActivity);
+        v.setVisibility(View.INVISIBLE);
 
-        mOverlayMap.put(tag, ow);
-
-        mLytOverlayContainer.addView(overlayView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-        return overlayView;
+        mLytOverlayContainer.addView(v, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        return overlay;
     }
 
     /**
      * Sets the overlay associated with the tag to visible
      * @return true if the visibility of the overlay changed
      */
-    public boolean showOverlay(String tag, boolean animated, Runnable onOverlayCancel) {
-        if(!mOverlayMap.containsKey(tag)) {
-            throw new RuntimeException("Overlay with tag " + tag + " does not exist!");
+    public boolean showOverlay(String id, boolean animated) {
+        if(!mOverlayMap.containsKey(id)) {
+            throw new RuntimeException("Overlay " + id + " does not exist!");
         }
 
-        OverlayWrapper ow = mOverlayMap.get(tag);
-        ow.onOverlayCancel = onOverlayCancel;
-        if(ow.view.getVisibility() == View.VISIBLE) {
+        Overlay overlay = mOverlayMap.get(id);
+        if(overlay.isVisible()) {
             return false;
         }
 
-        // setFullscreen(true);
         mLytOverlayContainer.setVisibility(View.VISIBLE);
-        ow.view.setVisibility(View.VISIBLE);
+        overlay.getView().setVisibility(View.VISIBLE);
 
-        if(ow.disableAllTouch) {
+        if(overlay.isDisableAllTouch()) {
             enableDisableAllTouch(false);
         }
 
-        if(ow.disableAutoScreenRotation) {
-            ow.requestedOrientation = mActivity.getRequestedOrientation();
+        if(overlay.isDisableAutoScreenRotation()) {
+            overlay.setRequestedOrientation(mActivity.getRequestedOrientation());
             //noinspection ResourceType
             mActivity.setRequestedOrientation(getActivityInfoOrientation());
         }
 
         if(animated) {
-            Animator anim = mAnimatorBuilder.buildFadeInAnimator(ow.view);
+            Animator anim = mAnimatorBuilder.buildFadeInAnimator(overlay.getView());
             anim.setDuration(400);
             anim.start();
+        }
+
+        if(overlay.getId() != null) {
+            TrackerManager.getInstance(mActivity.getApplicationContext()).trackScreenView(overlay.getId());
+        }
+
+        for(OverlayVisibilityChangeListener listener : mOverlayVisibilityChangeListenerList) {
+            listener.onOverlayShown(overlay);
         }
 
         return true;
     }
 
     /**
-     * Shows all overlays. See {@link #showOverlay(String, boolean, Runnable)} for more information.
+     * Shows all overlays. See {@link #showOverlay(String, boolean)} for more information.
      * @return true if at least one overlay was shown; false otherwise
      */
-    public boolean showAllOverlays(boolean animated, Runnable onOverlayCancel) {
+    public boolean showAllOverlays(boolean animated) {
         boolean changed = false;
 
-        for(String tag : mOverlayMap.keySet()) {
-            if(showOverlay(tag, animated, onOverlayCancel)) {
+        for(String id : mOverlayMap.keySet()) {
+            if(showOverlay(id, animated)) {
                 changed = true;
             }
         }
@@ -179,28 +189,28 @@ public class OverlayManager {
      * Sets the overlay associated with the tag to invisible
      * @return true if the visibility of the overlay changed
      */
-    public boolean hideOverlay(String tag, long delay, final boolean animated) {
-        return hideOverlay(tag, delay, animated, false);
+    public boolean hideOverlay(String id, long delay, final boolean animated) {
+        return hideOverlay(id, delay, animated, false);
     }
 
-    protected boolean hideOverlay(String tag, long delay, final boolean animated, boolean isCancel) {
-        if(!mOverlayMap.containsKey(tag)) {
-            throw new RuntimeException("Overlay with tag " + tag + " does not exist!");
+    protected boolean hideOverlay(String id, long delay, final boolean animated, boolean isCancel) {
+        if(!mOverlayMap.containsKey(id)) {
+            throw new RuntimeException("Overlay " + id + " does not exist!");
         }
 
-        final OverlayWrapper ow = mOverlayMap.get(tag);
-        if(ow.view.getVisibility() == View.INVISIBLE || mOverlayHidding.contains(tag)) {
+        final Overlay overlay = mOverlayMap.get(id);
+        if(!overlay.isVisible() || mOverlayHidding.contains(overlay.getId())) {
             return false;
         }
 
-        final OverlayHideAnimatorListener overlayListener = new OverlayHideAnimatorListener(ow, isCancel);
-        mOverlayHidding.add(tag);
+        final OverlayHideAnimatorListener overlayListener = new OverlayHideAnimatorListener(overlay, isCancel);
+        mOverlayHidding.add(overlay.getId());
 
         mDelayHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 if(animated) {
-                    Animator anim = mAnimatorBuilder.buildFadeOutAnimator(ow.view);
+                    Animator anim = mAnimatorBuilder.buildFadeOutAnimator(overlay.getView());
                     anim.setDuration(400);
                     anim.addListener(overlayListener);
                     anim.start();
@@ -225,8 +235,8 @@ public class OverlayManager {
     public boolean hideAllOverlays(long delay, boolean animated, boolean isCancel) {
         boolean changed = false;
 
-        for(String tag : mOverlayMap.keySet()) {
-            if(hideOverlay(tag, delay, animated, isCancel)) {
+        for(String id : mOverlayMap.keySet()) {
+            if(hideOverlay(id, delay, animated, isCancel)) {
                 changed = true;
             }
         }
@@ -236,18 +246,26 @@ public class OverlayManager {
 
     /**
      * Destroys the overlay associated with the tag
-     * @param tag the tag of the overlay
+     * @param id the tag of the overlay
      */
-    public void destroyOverlay(String tag) {
-        if(!mOverlayMap.containsKey(tag)) {
-            throw new RuntimeException("Overlay view with tag " + tag + " does not exist!");
+    public void destroyOverlay(String id) {
+        if(!mOverlayMap.containsKey(id)) {
+            throw new RuntimeException("Overlay " + id + " does not exist!");
         }
 
-        View v = mOverlayMap.get(tag).view;
-        mOverlayMap.remove(tag);
-        mOverlayHidding.remove(tag);
+        View v = mOverlayMap.get(id).getView();
+        Overlay overlay = mOverlayMap.remove(id);
+        mOverlayHidding.remove(id);
 
         mLytOverlayContainer.removeView(v);
+
+        overlay.destroy();
+    }
+
+    public void destroyAllOverlays() {
+        for(String id : mOverlayMap.keySet()) {
+            destroyOverlay(id);
+        }
     }
 
     protected void lockOrientation() {
@@ -300,13 +318,19 @@ public class OverlayManager {
         }
     }
 
-    /*private void setFullscreen(boolean fullscreen) {
-        WindowManager.LayoutParams attrs = getWindow().getAttributes();
-        if (fullscreen) {
-            attrs.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
-        } else {
-            attrs.flags &= ~WindowManager.LayoutParams.FLAG_FULLSCREEN;
-        }
-        getWindow().setAttributes(attrs);
-    }*/
+    public void addOverlayVisibilityChangeListener(OverlayVisibilityChangeListener listener) {
+        mOverlayVisibilityChangeListenerList.add(listener);
+    }
+
+    public boolean removeOverlayVisibilityChangeListener(OverlayVisibilityChangeListener listener) {
+        return mOverlayVisibilityChangeListenerList.remove(listener);
+    }
+
+    public String getRootScreenId() {
+        return mRootScreenId;
+    }
+
+    public void setRootScreenId(String mRootScreenId) {
+        this.mRootScreenId = mRootScreenId;
+    }
 }

@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.views;
+package com.peppermint.app.ui.chat;
 
 import android.animation.Animator;
 import android.animation.AnimatorSet;
@@ -26,9 +26,9 @@ import com.peppermint.app.utils.Utils;
  * The recording overlay that shows up while recording.
  *
  */
-public class RecordingOverlayView extends FrameLayout {
+public class ChatRecordOverlayView extends FrameLayout {
 
-    private TextView mTxtRecordingFor, mTxtDuration, mTxtSwipe;
+    private TextView mTxtRecordingFor, mTxtDuration;
     private LinearLayout mLytContainer;
     private LinearLayout mLytMicContainer;
     private LinearLayout mLytTip;
@@ -43,23 +43,23 @@ public class RecordingOverlayView extends FrameLayout {
     private Point mScreenSize;
     private int mStatusBarHeight;
 
-    public RecordingOverlayView(Context context) {
+    public ChatRecordOverlayView(Context context) {
         super(context);
         init(context, null);
     }
 
-    public RecordingOverlayView(Context context, AttributeSet attrs) {
+    public ChatRecordOverlayView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context, attrs);
     }
 
-    public RecordingOverlayView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public ChatRecordOverlayView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context, attrs);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public RecordingOverlayView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public ChatRecordOverlayView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         init(context, attrs);
     }
@@ -78,14 +78,13 @@ public class RecordingOverlayView extends FrameLayout {
         mImgMic = (ImageView) findViewById(R.id.imgMic);
         mLytMicContainer = (LinearLayout) findViewById(R.id.lytMicContainer);
         mLytTip = (LinearLayout) findViewById(R.id.lytTip);
-        mTxtSwipe = (TextView) findViewById(R.id.txtSwipe);
 
         mShadowSize = Utils.dpToPx(context, 12);
         mScreenSize = Utils.getScreenSize(context);
         mStatusBarHeight = Utils.getStatusBarHeight(context);
     }
 
-    public void start() {
+    public void doSlideIn() {
         if(mSlideAnimator != null) {
             mSlideAnimator.cancel();
         }
@@ -98,17 +97,11 @@ public class RecordingOverlayView extends FrameLayout {
         Animator fadeInAnimator = mAnimatorBuilder.buildFadeInAnimator(mImgMic, mLytTip);
 
         ((AnimatorSet) mSlideAnimator).playTogether(slideInAnimator, fadeInAnimator);
+        mLytContainer.setAlpha(1f);
         mSlideAnimator.start();
-        /*
-        mRecordView.resetAnimations();
-        mRecordView.startAnimations();
-        mRecordView.startDrawingThread();*/
     }
 
-    public void stop() {/*
-        mRecordView.stopDrawingThread();
-        mRecordView.stopAnimations();*/
-
+    public void doSlideOut() {
         if(mSlideAnimator != null) {
             mSlideAnimator.cancel();
         }
@@ -122,10 +115,20 @@ public class RecordingOverlayView extends FrameLayout {
         mSlideAnimator.start();
     }
 
+    public void doFadeOut() {
+        if(mSlideAnimator != null) {
+            mSlideAnimator.cancel();
+        }
+
+        mSlideAnimator = new AnimatorSet();
+        Animator fadeOutAnimator = mAnimatorBuilder.buildFadeOutAnimator(mImgMic, mLytTip, mLytContainer);
+        ((AnimatorSet) mSlideAnimator).playTogether(fadeOutAnimator);
+        mSlideAnimator.start();
+    }
+
     public void setMillis(float millis) {
         this.mMillis = millis;
         float duration = millis / 1000f;
-        //mRecordView.setSeconds(duration);
 
         long mins = (long) (duration / 60);
         long secs = (long) (duration % 60);
@@ -137,27 +140,20 @@ public class RecordingOverlayView extends FrameLayout {
         mTxtDuration.setText((hours > 0 ? hours + ":" : "") + mins + ":" + (secs < 10 ? "0" : "") + secs);
     }
 
-    public void pushAmplitude(float... values) {
-        float value = values[0];
-
-        if(value > mMaxAmplitude) {
-            mMaxAmplitude = value;
+    public void setAmplitude(float amplitude) {
+        if(amplitude > mMaxAmplitude) {
+            mMaxAmplitude = amplitude;
         }
-        if(value < mMinAmplitude) {
-            mMinAmplitude = value;
+        if(amplitude < mMinAmplitude) {
+            mMinAmplitude = amplitude;
         }
 
-        value /= (mMaxAmplitude - mMinAmplitude);
-        value *= 0.09f;
+        amplitude /= (mMaxAmplitude - mMinAmplitude);
+        amplitude *= 0.09f;
 
-        /*mRecordView.getBars().pushAmplitude(values);*/
-        mImgMic.setScaleX(1f + value);
-        mImgMic.setScaleY(1f + value);
+        mImgMic.setScaleX(1f + amplitude);
+        mImgMic.setScaleY(1f + amplitude);
     }
-
-    /*public float getSeconds() {
-        return mRecordView.getSeconds();
-    }*/
 
     public float getMillis() {
         return mMillis;
@@ -172,7 +168,6 @@ public class RecordingOverlayView extends FrameLayout {
     }
 
     public void setContentPosition(Rect rect) {
-
         int factor = 0;
 
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {

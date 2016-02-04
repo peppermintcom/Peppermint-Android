@@ -36,7 +36,6 @@ import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.gcm.RegistrationIntentService;
 import com.peppermint.app.sending.SenderSupportListener;
 import com.peppermint.app.sending.SenderSupportTask;
 import com.peppermint.app.sending.api.PeppermintApi;
@@ -209,10 +208,6 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     private void finishAuthentication(String accessToken) {
         mAuthenticatorUtils.createAccount(accessToken, mSelectedAccount, mPassword, mDeviceServerId, mDeviceId, mDeviceKey, mAccountType);
 
-        // register to GCM
-        Intent gcmIntent = new Intent(this, RegistrationIntentService.class);
-        startService(gcmIntent);
-
         final Intent intent = new Intent();
         intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, AuthenticatorConstants.ACCOUNT_NAME);
         intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, AuthenticatorConstants.ACCOUNT_TYPE);
@@ -222,6 +217,16 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         setResult(RESULT_OK, intent);
         finish();
     }
+
+    private View.OnTouchListener mTouchInterceptor = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            if(event.getAction() == MotionEvent.ACTION_DOWN) {
+                Utils.hideKeyboard(AuthenticatorActivity.this, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+            }
+            return false;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -245,15 +250,6 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         getCustomActionBar().getMenuButton().setVisibility(View.GONE);
 
         // init layout components
-        // global touch interceptor to hide keyboard
-        getTouchInterceptor().setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                Utils.hideKeyboard(AuthenticatorActivity.this, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
-                return false;
-            }
-        });
-
         mBtnAddAccount = (Button) findViewById(R.id.btnAddAccount);
         mBtnAddAccount.setOnClickListener(this);
 
@@ -284,6 +280,20 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         }
 
         super.onDestroy();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // global touch interceptor to hide keyboard
+        addTouchEventInterceptor(mTouchInterceptor);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // global touch interceptor to hide keyboard
+        removeTouchEventInterceptor(mTouchInterceptor);
     }
 
     @Override

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:gravity="center_vertical"
+        android:background="@drawable/background_white_to_solid_pressed">
+
+        <com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView
+            android:id="@+id/imgPhoto"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginRight="16dp"
+            custom:cornerRadius="10dp"
+            custom:borderWidth="2dp"
+            custom:borderColor="@color/white" />
+
+        <LinearLayout
+            android:id="@+id/lytChatStats"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="right|center_vertical"
+            android:orientation="vertical">
+
+            <com.peppermint.app.ui.views.simple.CustomFontTextView
+                android:id="@+id/txtLastMessageDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                custom:textFont="@string/font_semibold"
+                android:textSize="14dp"
+                android:text="Oct 18"
+                android:textColor="@color/grey_text"
+                />
+
+            <com.peppermint.app.ui.views.simple.CustomFontTextView
+                android:id="@+id/txtUnreadMessages"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right"
+                android:layout_marginTop="5dp"
+                custom:textFont="@string/font_semibold"
+                android:textSize="14dp"
+                android:text="2"
+                android:textColor="@color/white"
+                android:background="@drawable/background_indicator_green"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_toRightOf="@id/imgPhoto"
+            android:layout_toLeftOf="@id/lytChatStats"
+            android:layout_centerVertical="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <com.peppermint.app.ui.views.simple.CustomFontTextView
+                android:id="@+id/txtName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                custom:textFont="@string/font_semibold"
+                android:textSize="18dp"
+                android:textColor="@color/color_black_to_white_pressed" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <com.peppermint.app.ui.views.simple.CustomFontTextView
+                    android:id="@+id/txtVia"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    custom:textFont="@string/font_regular"
+                    android:text="@string/via"
+                    android:textColor="@color/color_grey_to_white_pressed"
+                    android:layout_marginRight="5dp" />
+
+                <com.peppermint.app.ui.views.simple.CustomFontTextView
+                    android:id="@+id/txtContact"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:singleLine="true"
+                    custom:textFont="@string/font_semibold"
+                    android:textColor="@color/color_green_to_white_pressed"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+
+    </RelativeLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_gravity="bottom"
+        android:src="@color/divider_dark_grey"/>
+
+</LinearLayout>

@@ -4,6 +4,8 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.peppermint.app.utils.Utils;
+
 import java.io.Serializable;
 import java.sql.SQLException;
 
@@ -39,7 +41,7 @@ public class Recipient implements Serializable {
      * @param recipient the recipient
      * @throws SQLException
      */
-    public static void insert(SQLiteDatabase db, Recipient recipient) throws SQLException {
+    public static long insert(SQLiteDatabase db, Recipient recipient) throws SQLException {
         ContentValues cv = new ContentValues();
         cv.put("mime_type", recipient.getMimeType());
         cv.put("photo_uri", recipient.getPhotoUri());
@@ -53,6 +55,7 @@ public class Recipient implements Serializable {
         }
 
         recipient.setId(id);
+        return id;
     }
 
     /**
@@ -85,10 +88,17 @@ public class Recipient implements Serializable {
      * @throws SQLException
      */
     public static void insertOrUpdate(SQLiteDatabase db, Recipient recipient) throws  SQLException {
-        if(recipient.getId() <= 0) {
+        Recipient foundRecipient = null;
+        if(recipient.getId() > 0 || recipient.getVia() != null) {
+            foundRecipient = getByViaOrId(db, recipient.getVia(), recipient.getId());
+        }
+
+        if(foundRecipient == null) {
             insert(db, recipient);
             return;
         }
+
+        recipient.setId(foundRecipient.getId());
         update(db, recipient);
     }
 
@@ -117,9 +127,10 @@ public class Recipient implements Serializable {
     public static Recipient get(SQLiteDatabase db, long id) {
         Recipient recipient = null;
         Cursor cursor = db.rawQuery("SELECT * FROM tbl_recipient WHERE recipient_id = " + id, null);
-        if(cursor != null && cursor.moveToFirst()) {
+        if(cursor.moveToFirst()) {
             recipient = getFromCursor(cursor);
         }
+        cursor.close();
         return recipient;
     }
 
@@ -129,12 +140,15 @@ public class Recipient implements Serializable {
      * @param via the via value
      * @return the recipient instance with all data
      */
-    public static Recipient getByVia(SQLiteDatabase db, String via) {
+    public static Recipient getByViaOrId(SQLiteDatabase db, String via, long id) {
+        String where = Utils.joinString(" OR ", via != null ? "via = ?" : null, id > 0 ? "recipient_id = " + id : null);
+
         Recipient recipient = null;
-        Cursor cursor = db.rawQuery("SELECT * FROM tbl_recipient WHERE via = ?;", new String[]{ via });
-        if(cursor != null && cursor.moveToFirst()) {
+        Cursor cursor = db.rawQuery("SELECT * FROM tbl_recipient WHERE " + where + ";", via != null ? new String[]{ via } : null);
+        if(cursor.moveToFirst()) {
             recipient = getFromCursor(cursor);
         }
+        cursor.close();
         return recipient;
     }
 

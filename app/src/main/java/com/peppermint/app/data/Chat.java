@@ -4,7 +4,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.peppermint.app.utils.Utils;
+import com.peppermint.app.utils.DateContainer;
 
 import java.io.Serializable;
 import java.sql.SQLException;
@@ -43,12 +43,14 @@ public class Chat implements Serializable {
      * @throws SQLException
      */
     public static long insert(SQLiteDatabase db, Chat chat) throws SQLException {
-        Recipient.insertOrUpdate(db, chat.getMainRecipient());
-
         ContentValues cv = new ContentValues();
-        cv.put("main_recipient_id", chat.getMainRecipient().getId());
-        cv.put("last_message_ts", chat.getLastMessageTimestamp());
 
+        if(chat.getMainRecipient() != null) {
+            cv.put("main_recipient_id", chat.getMainRecipient().getId());
+        } else {
+            cv.putNull("main_recipient_id");
+        }
+        cv.put("last_message_ts", chat.getLastMessageTimestamp());
 
         long id = db.insert("tbl_chat", null, cv);
         if(id < 0) {
@@ -68,8 +70,12 @@ public class Chat implements Serializable {
      */
     public static void update(SQLiteDatabase db, Chat chat) throws SQLException {
         ContentValues cv = new ContentValues();
-        //cv.put("sending_request_uuid", message.getId().toString());
-        cv.put("main_recipient_id", chat.getMainRecipient().getId());
+
+        if(chat.getMainRecipient() != null) {
+            cv.put("main_recipient_id", chat.getMainRecipient().getId());
+        } else {
+            cv.putNull("main_recipient_id");
+        }
         cv.put("last_message_ts", chat.getLastMessageTimestamp());
 
         long id = db.update("tbl_chat", cv, "chat_id = " + chat.getId(), null);
@@ -86,10 +92,16 @@ public class Chat implements Serializable {
      * @throws SQLException
      */
     public static void insertOrUpdate(SQLiteDatabase db, Chat chat) throws  SQLException {
-        Chat searchedChat = getByMainRecipient(db, chat.getMainRecipient().getId());
+        Chat searchedChat = null;
+
+        if(chat.getMainRecipient() != null && chat.getMainRecipient().getId() > 0) {
+            searchedChat = getByMainRecipient(db, chat.getMainRecipient().getId());
+        }
+
         if (searchedChat == null) {
             insert(db, chat);
             return;
+
         }
         chat.setId(searchedChat.getId());
         update(db, chat);
@@ -133,9 +145,10 @@ public class Chat implements Serializable {
     public static Chat get(SQLiteDatabase db, long id) {
         Chat chat = null;
         Cursor cursor = getCursor(db, id);
-        if(cursor != null && cursor.moveToFirst()) {
+        if(cursor.moveToFirst()) {
             chat = getFromCursor(db, cursor);
         }
+        cursor.close();
         return chat;
     }
 
@@ -146,9 +159,10 @@ public class Chat implements Serializable {
     public static Chat getByMainRecipient(SQLiteDatabase db, long mainRecipientId) {
         Chat chat = null;
         Cursor cursor = getMainRecipientCursor(db, mainRecipientId);
-        if(cursor != null && cursor.moveToFirst()) {
+        if(cursor.moveToFirst()) {
             chat = getFromCursor(db, cursor);
         }
+        cursor.close();
         return chat;
     }
 
@@ -159,7 +173,7 @@ public class Chat implements Serializable {
      * @return the cursor with all chats
      */
     public static Cursor getAllCursor(SQLiteDatabase db) {
-        return db.rawQuery("SELECT * FROM tbl_chat ORDER BY last_message_ts DESC", null);
+        return db.rawQuery("SELECT tbl_chat.*, tbl_chat.chat_id as _id FROM tbl_chat ORDER BY last_message_ts DESC", null);
     }
 
     /**
@@ -171,18 +185,19 @@ public class Chat implements Serializable {
     public static List<Chat> getAll(SQLiteDatabase db) {
         List<Chat> list = new ArrayList<>();
         Cursor cursor = getAllCursor(db);
-        if(cursor != null && cursor.moveToFirst()) {
+        if(cursor.moveToFirst()) {
             do {
                 list.add(getFromCursor(db, cursor));
             } while(cursor.moveToNext());
         }
+        cursor.close();
         return list;
     }
 
     private long mId;
 
     private Recipient mMainRecipient;
-    private String mLastMessageTimestamp = Utils.getCurrentTimestamp();
+    private String mLastMessageTimestamp = DateContainer.getCurrentTimestamp();
 
     public Chat() {
     }

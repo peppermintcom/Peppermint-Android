@@ -148,33 +148,24 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
     }
 
     /**
-     * Requests authorization for senders that require it.
-     */
-    public void authorize() {
-        /*if(mRootSender != null) {
-            mRootSender.getSenderErrorHandler().authorizePeppermint(null, null);
-        }*/
-    }
-
-    /**
      * Tries to execute the specified sending request using one of the available {@link Sender}s.
      * @param message the sending request
      * @return the UUID of the sending request
      */
-    public UUID send(Message message) {
-        return send(message, null);
+    public void send(Message message) {
+        send(message, null);
     }
 
-    public UUID send(Message message, SenderUploadTask previousFailedTask) {
+    public void send(Message message, SenderUploadTask previousFailedTask) {
         String mimeType = message.getRecipient().getMimeType();
 
         // check if there's a sender for the specified recipient mime type
         if(!mSenderMap.containsKey(mimeType)) {
-            throw new NullPointerException("SenderManager for mime type " + mimeType + " not found!");
+            throw new NullPointerException("Sender for mime type " + mimeType + " not found!");
         }
 
         Sender sender = mSenderMap.get(mimeType);
-        return send(message, sender, previousFailedTask);
+        send(message, sender, previousFailedTask);
     }
 
     /**
@@ -183,7 +174,7 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
      * @param sender the sender
      * @return the UUID of the sending request
      */
-    private UUID send(Message message, Sender sender, SenderUploadTask previousFailedTask) {
+    private void send(Message message, Sender sender, SenderUploadTask previousFailedTask) {
         while(sender != null && (sender.getPreferences() != null && !sender.getPreferences().isEnabled())) {
             sender = sender.getFailureChainSender();
         }
@@ -201,20 +192,22 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
         task.setRecovering(previousFailedTask != null);
         mTaskMap.put(task.getId(), task);
         task.executeOnExecutor(mExecutor);
-        return message.getId();
     }
 
     /**
      * Cancels the sending task executing the sending request with the specified UUID.
-     * @param uuid the UUID
+     * @param message the UUID
      * @return true if a sending task was cancelled; false otherwise
      */
-    public boolean cancel(UUID uuid) {
-        if(mTaskMap.containsKey(uuid)) {
-            mTaskMap.get(uuid).cancel(true);
-            return true;
+    public boolean cancel(Message message) {
+        boolean cancelled = false;
+        for(SenderTask senderTask : mTaskMap.values()) {
+            if(senderTask.getMessage().equals(message)) {
+                cancelled = true;
+                senderTask.cancel(true);
+            }
         }
-        return false;
+        return cancelled;
     }
 
     /**
@@ -222,8 +215,8 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
      */
     public boolean cancel() {
         boolean canceledSome = false;
-        for(UUID uuid : mTaskMap.keySet()) {
-            if(mTaskMap.get(uuid).cancel(true)) {
+        for(SenderTask senderTask : mTaskMap.values()) {
+            if(senderTask.cancel(true)) {
                 canceledSome = true;
             }
         }
@@ -232,11 +225,16 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
 
     /**
      * Checks if there's a sending task executing a sending request with the specified UUID.
-     * @param uuid the UUID
+     * @param message the UUID
      * @return true if sending/executing; false otherwise
      */
-    public boolean isSending(UUID uuid) {
-        return mTaskMap.containsKey(uuid) && !mTaskMap.get(uuid).isCancelled();
+    public boolean isSending(Message message) {
+        for(SenderTask senderTask : mTaskMap.values()) {
+            if(!senderTask.isCancelled() && senderTask.getMessage().equals(message)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -249,9 +247,9 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
         }
 
         boolean someOngoing = false;
-        Iterator<Map.Entry<UUID, SenderTask>> it = mTaskMap.entrySet().iterator();
+        Iterator<SenderTask> it = mTaskMap.values().iterator();
         while(it.hasNext() && !someOngoing) {
-            if(!it.next().getValue().isCancelled()) {
+            if(!it.next().isCancelled()) {
                 someOngoing = true;
             }
         }
