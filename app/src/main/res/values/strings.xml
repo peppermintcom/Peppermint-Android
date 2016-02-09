@@ -133,6 +133,7 @@
     <string name="msg_authentication_error">It was not possible to sign in. Please try again later.</string>
     <string name="msg_google_api_denied">Google sign in is required to continue.</string>
     <string name="msg_invalid_credentials">Invalid credentials.</string>
+    <string name="msg_no_internet_try_again">No internet connection. Please check your connectivity settings and try again.</string>
 
     <!-- AUTHENTICATION/NEW CONTACT -->
     <string name="msg_insert_first_name">Please enter a valid first name</string>

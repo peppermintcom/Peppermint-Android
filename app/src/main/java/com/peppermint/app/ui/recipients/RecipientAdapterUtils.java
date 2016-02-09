@@ -83,6 +83,30 @@ public class RecipientAdapterUtils {
                 args.toArray(new String[args.size()]), DISPLAY_NAME + " COLLATE NOCASE");
     }
 
+    public static boolean fillRecipientDetails(Context context, Recipient recipient) {
+        Recipient result = null;
+
+        Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, null,
+                ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(recipient.getMimeType()) +
+                        " AND " + ContactsContract.Data.DATA1 + "=" + DatabaseUtils.sqlEscapeString(recipient.getVia()),
+                        null, null);
+
+        if(cursor.moveToNext()) {
+            result = getRecipient(cursor);
+        }
+
+        cursor.close();
+
+        if(result != null) {
+            recipient.setPhotoUri(result.getPhotoUri());
+            recipient.setContactId(result.getContactId());
+            recipient.setRawId(result.getRawId());
+            return true;
+        }
+
+        return false;
+    }
+
     public static Recipient getMainEmailRecipient(Context context, Recipient recipient) {
         Recipient result = null;
 

@@ -14,10 +14,12 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.provider.ContactsContract;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.peppermint.app.authenticator.AuthenticatorConstants;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.Message;
@@ -277,6 +279,8 @@ public class MessagesService extends Service {
                     Recipient recipient = new Recipient();
                     recipient.setVia(senderEmail);
                     recipient.setName(senderName);
+                    recipient.setMimeType(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
+                    recipient.setType(AuthenticatorConstants.ACCOUNT_TYPE);
 
                     Recording recording = new Recording();
                     recording.setContentType(Recording.CONTENT_TYPE_AUDIO);

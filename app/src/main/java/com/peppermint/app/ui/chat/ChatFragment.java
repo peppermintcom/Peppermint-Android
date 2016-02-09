@@ -19,6 +19,7 @@ import com.peppermint.app.data.Recording;
 import com.peppermint.app.sending.ReceiverEvent;
 import com.peppermint.app.sending.SenderEvent;
 import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
@@ -89,6 +90,11 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
             if(foundRecipient != null) {
                 mRecipient.setId(foundRecipient.getId());
             }
+        }
+
+        // try to get additional recipient data from contacts
+        if(mRecipient.getContactId() <= 0 || mRecipient.getRawId() <= 0 || mRecipient.getPhotoUri() == null) {
+            RecipientAdapterUtils.fillRecipientDetails(mActivity, mRecipient);
         }
 
         // create new chat instance if there's none

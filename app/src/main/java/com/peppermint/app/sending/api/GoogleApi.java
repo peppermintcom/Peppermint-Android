@@ -150,11 +150,11 @@ public class GoogleApi implements Serializable {
 
     public synchronized String refreshAccessToken() throws GoogleApiNoAuthorizationException, GooglePlayServicesAvailabilityException, GoogleAuthException, IOException {
 
-        if(mAccessToken != null) {
-            GoogleAuthUtil.clearToken(mContext, mAccessToken);
-        }
-
         try {
+            if(mAccessToken == null) {
+                mAccessToken = mCredential.getToken();
+            }
+            GoogleAuthUtil.clearToken(mContext, mAccessToken);
             this.mAccessToken = mCredential.getToken();
         } catch (UserRecoverableAuthException e) {
             throw new GoogleApiNoAuthorizationException(e);

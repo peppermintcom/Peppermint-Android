@@ -19,17 +19,13 @@ package com.peppermint.app.authenticator;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -46,7 +42,6 @@ import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomAuthenticatorActivity;
 import com.peppermint.app.ui.views.simple.CustomNoScrollListView;
-import com.peppermint.app.utils.Utils;
 
 import javax.net.ssl.SSLException;
 
@@ -60,6 +55,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     private static final int NEW_ACCOUNT_CODE = 1234;
     private static final int AUTHORIZATION_CODE = 1235;
 
+    private static final String KEY_DO_AUTH = TAG + "_DoAuth";
     private static final String KEY_SEL_ACCOUNT = TAG + "_SelectedAccount";
 
     private static final String KEY_DEVICE_ID = TAG + "_DeviceId";
@@ -88,11 +84,12 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     private Button mBtnAddAccount;
 
     // authentication
-    private ProgressDialog mProgressDialog = null;
+    private ProgressDialog mProgressDialog;
 
     private AuthenticationPeppermintTask mAuthenticationPeppermintTask;
     private AuthenticationGoogleApiTask mAuthenticationGoogleApiTask;
 
+    private boolean mDoingAuth = false;
     private String mDeviceId, mDeviceKey;
     private String mPassword;
     private int mAccountType = PeppermintApi.ACCOUNT_TYPE_GOOGLE;
@@ -101,10 +98,12 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     private final SenderSupportListener mGoogleApiTaskListener = new SenderSupportListener() {
         @Override
         public void onSendingSupportStarted(SenderSupportTask supportTask) {
+            mDoingAuth = true;
         }
 
         @Override
         public void onSendingSupportCancelled(SenderSupportTask supportTask) {
+            mDoingAuth = false;
             hideProgress();
         }
 
@@ -118,6 +117,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
 
         @Override
         public void onSendingSupportError(SenderSupportTask supportTask, Throwable error) {
+            mDoingAuth = false;
             handleError(error);
         }
 
@@ -128,23 +128,27 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     private final SenderSupportListener mPeppermintTaskListener = new SenderSupportListener() {
         @Override
         public void onSendingSupportStarted(SenderSupportTask supportTask) {
+            mDoingAuth = true;
         }
 
         @Override
         public void onSendingSupportCancelled(SenderSupportTask supportTask) {
+            mDoingAuth = false;
             hideProgress();
         }
 
         @Override
         public void onSendingSupportFinished(SenderSupportTask supportTask) {
             AuthenticationPeppermintTask task = (AuthenticationPeppermintTask) supportTask;
-            hideProgress();
             mDeviceServerId = task.getDeviceServerId();
             finishAuthentication(task.getAccessToken());
+            mDoingAuth = false;
+            hideProgress();
         }
 
         @Override
         public void onSendingSupportError(SenderSupportTask supportTask, Throwable error) {
+            mDoingAuth = false;
             handleError(error);
         }
 
@@ -184,10 +188,11 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
 
         if(error instanceof GoogleApiDeniedAuthorizationException) {
             Toast.makeText(AuthenticatorActivity.this, R.string.msg_google_api_denied, Toast.LENGTH_LONG).show();
+            return;
         }
 
         if(error instanceof NoInternetConnectionException) {
-            Toast.makeText(AuthenticatorActivity.this, R.string.sender_msg_no_internet, Toast.LENGTH_LONG).show();
+            Toast.makeText(AuthenticatorActivity.this, R.string.msg_no_internet_try_again, Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -217,16 +222,6 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         setResult(RESULT_OK, intent);
         finish();
     }
-
-    private View.OnTouchListener mTouchInterceptor = new View.OnTouchListener() {
-        @Override
-        public boolean onTouch(View v, MotionEvent event) {
-            if(event.getAction() == MotionEvent.ACTION_DOWN) {
-                Utils.hideKeyboard(AuthenticatorActivity.this, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
-            }
-            return false;
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -258,6 +253,22 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
 
         mListView.setOnItemClickListener(this);
 
+        mProgressDialog = new ProgressDialog(this);
+        mProgressDialog.setMessage(getText(R.string.authenticating_));
+        mProgressDialog.setIndeterminate(true);
+        mProgressDialog.setCancelable(true);
+        mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            public void onCancel(DialogInterface dialog) {
+                mDoingAuth = false;
+                if (mAuthenticationPeppermintTask != null) {
+                    mAuthenticationPeppermintTask.cancel(true);
+                }
+                if (mAuthenticationGoogleApiTask != null) {
+                    mAuthenticationGoogleApiTask.cancel(true);
+                }
+            }
+        });
+
         if(savedInstanceState != null) {
             mSelectedAccount = savedInstanceState.getString(KEY_SEL_ACCOUNT);
             mDeviceKey = savedInstanceState.getString(KEY_DEVICE_KEY);
@@ -265,6 +276,11 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
             mPassword = savedInstanceState.getString(KEY_PASSWORD);
             mAccountType = savedInstanceState.getInt(KEY_ACCOUNT_TYPE, PeppermintApi.ACCOUNT_TYPE_GOOGLE);
             mDeviceServerId = savedInstanceState.getString(KEY_DEVICE_SERVER_ID);
+            mDoingAuth = savedInstanceState.getBoolean(KEY_DO_AUTH);
+        }
+
+        if(mDoingAuth) {
+            startGoogleAuthentication();
         }
     }
 
@@ -283,20 +299,6 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        // global touch interceptor to hide keyboard
-        addTouchEventInterceptor(mTouchInterceptor);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        // global touch interceptor to hide keyboard
-        removeTouchEventInterceptor(mTouchInterceptor);
-    }
-
-    @Override
     public void onBackPressed() {
         // only return RESULT_OK if successful (check AuthFragment)
         setResult(Activity.RESULT_CANCELED);
@@ -312,6 +314,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         outState.putString(KEY_PASSWORD, mPassword);
         outState.putInt(KEY_ACCOUNT_TYPE, mAccountType);
         outState.putString(KEY_DEVICE_SERVER_ID, mDeviceServerId);
+        outState.putBoolean(KEY_DO_AUTH, mDoingAuth);
         super.onSaveInstanceState(outState);
     }
 
@@ -393,38 +396,13 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         startGoogleAuthentication();
     }
 
-    /*
-     * {@inheritDoc}
-     */
-    @Override
-    protected Dialog onCreateDialog(int id, Bundle args) {
-        final ProgressDialog dialog = new ProgressDialog(this);
-        dialog.setMessage(getText(R.string.authenticating_));
-        dialog.setIndeterminate(true);
-        dialog.setCancelable(true);
-        dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            public void onCancel(DialogInterface dialog) {
-                Log.i(TAG, "user cancelling authentication");
-                if(mAuthenticationPeppermintTask != null) {
-                    mAuthenticationPeppermintTask.cancel(true);
-                }
-                if(mAuthenticationGoogleApiTask != null) {
-                    mAuthenticationGoogleApiTask.cancel(true);
-                }
-            }
-        });
-        // We save off the progress dialog in a field so that we can dismiss
-        // it later. We can't just call dismissDialog(0) because the system
-        // can lose track of our dialog if there's an orientation change.
-        mProgressDialog = dialog;
-        return dialog;
-    }
-
     /**
      * Shows the progress UI for a lengthy operation.
      */
     private void showProgress() {
-        showDialog(0);
+        if(mProgressDialog != null) {
+            mProgressDialog.show();
+        }
     }
 
     /**
@@ -433,7 +411,6 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     private void hideProgress() {
         if (mProgressDialog != null) {
             mProgressDialog.dismiss();
-            mProgressDialog = null;
         }
     }
 
