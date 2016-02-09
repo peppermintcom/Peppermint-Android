@@ -1,7 +1,6 @@
 package com.peppermint.app.ui.views;
 
 import android.content.Context;
-import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,13 +21,11 @@ public class NavigationListAdapter extends BaseAdapter {
 
     protected Context mContext;
     protected List<NavigationItem> mList;
-    protected Typeface mFont;
     protected List<NavigationItem> mHiddenList;
 
-    public NavigationListAdapter(Context context, List<NavigationItem> list, Typeface font) {
+    public NavigationListAdapter(Context context, List<NavigationItem> list) {
         this.mContext = context;
         this.mList = list;
-        this.mFont = font;
     }
 
     @Override
@@ -60,8 +57,6 @@ public class NavigationListAdapter extends BaseAdapter {
 
         TextView titleView = (TextView) view.findViewById(R.id.txtName);
         ImageView iconView = (ImageView) view.findViewById(R.id.imgIcon);
-
-        titleView.setTypeface(mFont);
 
         titleView.setText(mList.get(position).getTitle());
         iconView.setImageResource(mList.get(position).getIconResId());

@@ -13,6 +13,8 @@ import com.peppermint.app.data.Recording;
 import com.peppermint.app.sending.ReceiverEvent;
 import com.peppermint.app.sending.SenderEvent;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -78,19 +80,17 @@ public class MessagesServiceManager {
 
     private Context mContext;
     private MessagesService.SendRecordServiceBinder mService;
-    private SenderListener mSenderListener;
-    private ReceiverListener mReceiverListener;
-    private ServiceListener mServiceListener;
+    private List<SenderListener> mSenderListenerList = new ArrayList<>();
+    private List<ReceiverListener> mReceiverListenerList = new ArrayList<>();
+    private List<ServiceListener> mServiceListenerList = new ArrayList<>();
     protected boolean mIsBound = false;                                         // if the manager is bound to the service
 
     public void onEventMainThread(ReceiverEvent event) {
-        if(mReceiverListener == null) {
-            return;
-        }
-
         switch(event.getType()) {
             case ReceiverEvent.EVENT_RECEIVED:
-                mReceiverListener.onReceivedMessage(event);
+                for(ReceiverListener listener : mReceiverListenerList) {
+                    listener.onReceivedMessage(event);
+                }
                 break;
         }
     }
@@ -100,29 +100,27 @@ public class MessagesServiceManager {
      * @param event the event (see {@link RecordService.Event})
      */
     public void onEventMainThread(SenderEvent event) {
-        if(mSenderListener == null) {
-            return;
-        }
-
-        switch (event.getType()) {
-            case SenderEvent.EVENT_STARTED:
-                mSenderListener.onSendStarted(event);
-                break;
-            case SenderEvent.EVENT_ERROR:
-                mSenderListener.onSendError(event);
-                break;
-            case SenderEvent.EVENT_CANCELLED:
-                mSenderListener.onSendCancelled(event);
-                break;
-            case SenderEvent.EVENT_FINISHED:
-                mSenderListener.onSendFinished(event);
-                break;
-            case SenderEvent.EVENT_PROGRESS:
-                mSenderListener.onSendProgress(event);
-                break;
-            case SenderEvent.EVENT_QUEUED:
-                mSenderListener.onSendQueued(event);
-                break;
+        for(SenderListener listener : mSenderListenerList) {
+            switch (event.getType()) {
+                case SenderEvent.EVENT_STARTED:
+                    listener.onSendStarted(event);
+                    break;
+                case SenderEvent.EVENT_ERROR:
+                    listener.onSendError(event);
+                    break;
+                case SenderEvent.EVENT_CANCELLED:
+                    listener.onSendCancelled(event);
+                    break;
+                case SenderEvent.EVENT_FINISHED:
+                    listener.onSendFinished(event);
+                    break;
+                case SenderEvent.EVENT_PROGRESS:
+                    listener.onSendProgress(event);
+                    break;
+                case SenderEvent.EVENT_QUEUED:
+                    listener.onSendQueued(event);
+                    break;
+            }
         }
     }
 
@@ -134,8 +132,8 @@ public class MessagesServiceManager {
             mService = (MessagesService.SendRecordServiceBinder) binder;
             mService.register(MessagesServiceManager.this);
 
-            if(mServiceListener != null) {
-                mServiceListener.onBoundSendService();
+            for(ServiceListener listener : mServiceListenerList) {
+                listener.onBoundSendService();
             }
         }
 
@@ -211,6 +209,10 @@ public class MessagesServiceManager {
         }
     }
 
+    public boolean isBound() {
+        return mIsBound;
+    }
+
     /**
      * Sends the supplied file to the supplied recipient.
      * Can only be used if the manager is bound to the service.
@@ -220,6 +222,10 @@ public class MessagesServiceManager {
      */
     public Message send(Chat chat, Recipient recipient, Recording recording) {
         return mService.send(chat, recipient, recording);
+    }
+
+    public boolean retry(Message message) {
+        return mService.retry(message);
     }
 
     /**
@@ -242,27 +248,27 @@ public class MessagesServiceManager {
         return mService.isSending();
     }
 
-    public SenderListener getSenderListener() {
-        return mSenderListener;
+    public void addServiceListener(ServiceListener listener) {
+        mServiceListenerList.add(listener);
     }
 
-    public void setSenderListener(SenderListener mSenderListener) {
-        this.mSenderListener = mSenderListener;
+    public boolean removeServiceListener(ServiceListener listener) {
+        return mServiceListenerList.remove(listener);
     }
 
-    public ServiceListener getServiceListener() {
-        return mServiceListener;
+    public void addReceiverListener(ReceiverListener listener) {
+        mReceiverListenerList.add(listener);
     }
 
-    public void setServiceListener(ServiceListener mServiceListener) {
-        this.mServiceListener = mServiceListener;
+    public boolean removeReceiverListener(ReceiverListener listener) {
+        return mReceiverListenerList.remove(listener);
     }
 
-    public ReceiverListener getmReceiverListener() {
-        return mReceiverListener;
+    public void addSenderListener(SenderListener listener) {
+        mSenderListenerList.add(listener);
     }
 
-    public void setReceiverListener(ReceiverListener mReceiverListener) {
-        this.mReceiverListener = mReceiverListener;
+    public boolean removeSenderListener(SenderListener listener) {
+        return mSenderListenerList.remove(listener);
     }
 }

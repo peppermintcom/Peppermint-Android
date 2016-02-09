@@ -99,6 +99,10 @@ public class MessagesService extends Service {
             return MessagesService.this.send(chat, recipient, recording);
         }
 
+        boolean retry(Message message) {
+            return MessagesService.this.retry(message);
+        }
+
         /**
          * Cancel the message with the specified {@link UUID}.
          * <b>If the message is being sent, it might get sent anyway.</b>
@@ -355,9 +359,9 @@ public class MessagesService extends Service {
         Message message = event.getSenderTask().getMessage();
         SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
         switch (event.getType()) {
-            case SenderEvent.EVENT_STARTED:
+            /*case SenderEvent.EVENT_STARTED:
                 updateNotification();
-                break;
+                break;*/
             case SenderEvent.EVENT_ERROR:
                 Toast.makeText(this, String.format(getString(R.string.sender_msg_send_error), event.getSenderTask().getMessage().getRecipient().getName()), Toast.LENGTH_SHORT).show();
             case SenderEvent.EVENT_QUEUED:
@@ -388,14 +392,27 @@ public class MessagesService extends Service {
                 mHandler.removeCallbacks(mNotificationRunnable);
                 dismissFirstAudioMessageNotification();
 
-                if (mSenderManager.isSending()) {
+                /*if (mSenderManager.isSending()) {
                     removeNotification();
                 } else {
                     updateNotification();
-                }
+                }*/
                 break;
         }
         db.close();
+    }
+
+    private boolean retry(Message message) {
+        if(isSending(message)) {
+            return false;
+        }
+
+        SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
+        message = Message.getByIdOrServerId(db, message.getId(), message.getServerId());
+        db.close();
+
+        mSenderManager.send(message);
+        return true;
     }
 
     private Message send(Chat chat, Recipient recipient, Recording recording) {
@@ -426,6 +443,15 @@ public class MessagesService extends Service {
 
     private boolean cancel(Message message) {
         if(message != null) {
+            if(!isSending(message)) {
+                SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
+                try {
+                    Message.delete(db, message.getId());
+                } catch (SQLException e) {
+                    mTrackerManager.logException(e);
+                }
+                db.close();
+            }
             return mSenderManager.cancel(message);
         }
         return mSenderManager.cancel();

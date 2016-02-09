@@ -158,6 +158,9 @@
 
     <!-- CHAT -->
     <string name="record_a_message">Record a Message</string>
+    <string name="retry">Retry</string>
+    <string name="delete">Delete</string>
+    <string name="unable_to_send_message">Unable to Send Message</string>
 
     <!-- CHAT LIST -->
     <string name="loading_chats">Loading\\nConversations…</string>

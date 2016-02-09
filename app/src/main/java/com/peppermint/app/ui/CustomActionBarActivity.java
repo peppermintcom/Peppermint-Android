@@ -131,7 +131,7 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
             });
         } else {
             mLstDrawer = (ListView) findViewById(R.id.list);
-            NavigationListAdapter adapter = new NavigationListAdapter(this, mNavigationItemList, app.getFontSemibold());
+            NavigationListAdapter adapter = new NavigationListAdapter(this, mNavigationItemList);
             mLstDrawer.setAdapter(adapter);
 
             // Drawer Item click listeners

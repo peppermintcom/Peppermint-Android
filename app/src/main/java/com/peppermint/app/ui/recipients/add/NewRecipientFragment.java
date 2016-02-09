@@ -28,7 +28,6 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.sending.SenderPreferences;
@@ -538,8 +537,6 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        PeppermintApp app = (PeppermintApp) mActivity.getApplication();
-
         mAvatarOptions = new ArrayList<>();
         mAvatarOptions.add(new NavigationItem(getString(R.string.take_photo), R.drawable.ic_drawer_camera, null, true));
         mAvatarOptions.add(new NavigationItem(getString(R.string.choose_photo), R.drawable.ic_drawer_collections, null, true));
@@ -555,7 +552,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         });
         mNewAvatarDialog.setTitleText(R.string.select_photo);
         mNewAvatarDialog.setListOnItemClickListener(this);
-        mAvatarAdapter = new NavigationListAdapter(mActivity, mAvatarOptions, app.getFontSemibold());
+        mAvatarAdapter = new NavigationListAdapter(mActivity, mAvatarOptions);
         mNewAvatarDialog.setListAdapter(mAvatarAdapter);
 
         mBtnSave = (Button) mActivity.getCustomActionBar().findViewById(R.id.btnSave);

@@ -120,9 +120,9 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
         });
 
         mMessagesServiceManager = new MessagesServiceManager(mActivity);
-        mMessagesServiceManager.setServiceListener(this);
-        mMessagesServiceManager.setSenderListener(this);
-        mMessagesServiceManager.setReceiverListener(this);
+        mMessagesServiceManager.addServiceListener(this);
+        mMessagesServiceManager.addSenderListener(this);
+        mMessagesServiceManager.addReceiverListener(this);
     }
 
     @Override
@@ -204,6 +204,9 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
 
     @Override
     public void onDestroy() {
+        mMessagesServiceManager.removeReceiverListener(this);
+        mMessagesServiceManager.removeSenderListener(this);
+        mMessagesServiceManager.removeServiceListener(this);
         mActivity = null;
         super.onDestroy();
     }

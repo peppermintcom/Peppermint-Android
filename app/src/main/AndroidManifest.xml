@@ -48,13 +48,6 @@
             </intent-filter>
         </service>
         <service
-            android:name=".gcm.TestService"
-            android:exported="false" >
-            <intent-filter>
-                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
-            </intent-filter>
-        </service>
-        <service
             android:name=".gcm.PeppermintInstanceIDListenerService"
             android:exported="false">
             <intent-filter>

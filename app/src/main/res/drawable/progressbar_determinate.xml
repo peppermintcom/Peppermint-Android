@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+<!--
+    <item android:drawable="@drawable/ic_play_15dp"
+        android:left="5dp"
+        android:right="5dp"
+        android:top="5dp"
+        android:bottom="5dp">
+    </item>
+-->
+
+    <item android:id="@android:id/background">
+        <shape
+            android:innerRadiusRatio="3"
+            android:shape="ring"
+            android:useLevel="false"
+            android:angle="0"
+            android:type="sweep"
+            android:thicknessRatio="10.0">
+            <solid android:color="#d1dcdb"/>
+        </shape>
+    </item>
+
+    <item android:id="@android:id/progress">
+
+            <shape
+                android:innerRadiusRatio="3"
+                android:shape="ring"
+                android:angle="0"
+                android:type="sweep"
+                android:thicknessRatio="10.0">
+                <solid android:color="#85a09d"/>
+            </shape>
+
+    </item>
+</layer-list>

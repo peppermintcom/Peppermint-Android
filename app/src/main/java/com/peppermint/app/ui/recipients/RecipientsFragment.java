@@ -19,7 +19,6 @@ import android.os.SystemClock;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -31,7 +30,6 @@ import android.widget.Button;
 import android.widget.CursorAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
@@ -103,14 +101,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         }
     };
 
-    private PopupWindow mHoldPopup;
     private Point mLastTouchPoint = new Point();
-    private Runnable mDismissPopupRunnable = new Runnable() {
-        @Override
-        public void run() {
-            dismissPopup();
-        }
-    };
 
     // the custom action bar (with recipient type filter and recipient search)
     private SearchListBarView mSearchListBarView;
@@ -428,7 +419,6 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
                     getView().requestFocus();
                 }
 
-                dismissPopup();
                 mLastTouchPoint.set((int) event.getX(), (int) event.getY());
                 mTipPopup.dismiss();
             }
@@ -453,18 +443,6 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         PeppermintApp app = (PeppermintApp) getCustomActionBarActivity().getApplication();
 
         getCustomActionBarActivity().getAuthenticationPolicyEnforcer().addAuthenticationDoneCallback(mAuthenticationDoneCallback);
-
-        // hold popup
-        mHoldPopup = new PopupWindow(getCustomActionBarActivity());
-        mHoldPopup.setContentView(inflater.inflate(R.layout.v_recipients_popup, null));
-        //noinspection deprecation
-        // although this is deprecated, it is required for versions  < 22/23, otherwise the popup doesn't show up
-        mHoldPopup.setWindowLayoutMode(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        mHoldPopup.setBackgroundDrawable(Utils.getDrawable(getCustomActionBarActivity(), R.drawable.img_popup));
-        mHoldPopup.setAnimationStyle(R.style.Peppermint_PopupAnimation);
-        // do not let the popup get in the way of user interaction
-        mHoldPopup.setFocusable(false);
-        mHoldPopup.setTouchable(false);
 
         mTipPopup = new PopupDialog(getCustomActionBarActivity()) {
             @Override
@@ -787,19 +765,4 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
         return false;
     }
-
-    private void dismissPopup() {
-        if(mHoldPopup.isShowing() && !isDetached() && getCustomActionBarActivity() != null) {
-            mHoldPopup.dismiss();
-            mHandler.removeCallbacks(mDismissPopupRunnable);
-        }
-    }
-
-    // the method that displays the img_popup.
-    private void showPopup(final Activity context, View parent) {
-        dismissPopup();
-        mHoldPopup.showAtLocation(parent, Gravity.NO_GRAVITY, mLastTouchPoint.x - Utils.dpToPx(getCustomActionBarActivity(), 80), mLastTouchPoint.y + Utils.dpToPx(getCustomActionBarActivity(), 10));
-        mHandler.postDelayed(mDismissPopupRunnable, 6000);
-    }
-
 }
