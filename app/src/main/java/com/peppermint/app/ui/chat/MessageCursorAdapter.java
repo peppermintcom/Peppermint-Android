@@ -30,6 +30,7 @@ import com.peppermint.app.ui.views.simple.CustomFontTextView;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
@@ -227,7 +228,7 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
                 CustomFontTextView txtTime = (CustomFontTextView) mRootView.findViewById(R.id.txtTime);
                 try {
                     DateContainer curTime = new DateContainer(DateContainer.TYPE_TIME, message.getRegistrationTimestamp().substring(11));
-                    txtTime.setText(curTime.getAsString());
+                    txtTime.setText(curTime.getAsString(DateContainer.FRIENDLY_AMPM_TIME_FORMAT).replace(".", ""));
                 } catch(ParseException e) {
                     txtTime.setText(message.getRegistrationTimestamp());
                     mTrackerManager.logException(e);
@@ -246,13 +247,17 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
                 txtDay.setVisibility(View.VISIBLE);
                 try {
                     DateContainer curDate = new DateContainer(DateContainer.TYPE_DATE, message.getRegistrationTimestamp().substring(0, 10));
-                    txtDay.setText(curDate.getAsString());
 
                     if(prevMessage != null) {
                         DateContainer prevDate = new DateContainer(DateContainer.TYPE_DATE, prevMessage.getRegistrationTimestamp().substring(0, 10));
                         if(prevDate.equals(curDate)) {
                             txtDay.setVisibility(View.GONE);
                         }
+                    }
+
+                    if(txtDay.getVisibility() == View.VISIBLE) {
+                        String dayLabel = DateContainer.getRelativeLabelToToday(mContext, curDate);
+                        txtDay.setText(dayLabel);
                     }
                 } catch(ParseException e) {
                     txtDay.setVisibility(View.GONE);
@@ -410,6 +415,15 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
         if(cursor.moveToPrevious()) {
             prevMessage = getMessage(cursor);
             cursor.moveToNext();
+        }
+
+        if(!message.isPlayed()) {
+            message.setPlayed(true);
+            try {
+                Message.update(mDb, message);
+            } catch (SQLException e) {
+                mTrackerManager.logException(e);
+            }
         }
 
         if(view.getTag() != null) {

@@ -14,9 +14,13 @@ import com.peppermint.app.R;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recipient;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
 import com.peppermint.app.ui.views.simple.CustomFontTextView;
+import com.peppermint.app.utils.DateContainer;
+
+import java.text.ParseException;
 
 /**
  * Created by Nuno Luz on 27/08/2015.
@@ -27,15 +31,15 @@ import com.peppermint.app.ui.views.simple.CustomFontTextView;
  */
 public class ChatCursorAdapter extends CursorAdapter {
 
-    private static final int MARGIN_BALLOON_DP = 80;
-
     private Context mContext;
     private SQLiteDatabase mDb;
+    private TrackerManager mTrackerManager;
 
-    public ChatCursorAdapter(Context context, Cursor cursor, SQLiteDatabase db) {
+    public ChatCursorAdapter(Context context, Cursor cursor, SQLiteDatabase db, TrackerManager mTrackerManager) {
         super(context, cursor, 0);
         this.mContext = context;
         this.mDb = db;
+        this.mTrackerManager = mTrackerManager;
     }
 
     @Override
@@ -67,7 +71,15 @@ public class ChatCursorAdapter extends CursorAdapter {
         CustomFontTextView txtUnreadMessages = (CustomFontTextView) view.findViewById(R.id.txtUnreadMessages);
         CustomFontTextView txtLastMessageDate = (CustomFontTextView) view.findViewById(R.id.txtLastMessageDate);
 
-        txtLastMessageDate.setText(chat.getLastMessageTimestamp());
+        if(chat.getLastMessageTimestamp() != null) {
+            try {
+                DateContainer lastMessageDate = new DateContainer(DateContainer.TYPE_DATE, chat.getLastMessageTimestamp().substring(0, 10));
+                txtLastMessageDate.setText(DateContainer.getRelativeLabelToToday(mContext, lastMessageDate));
+            } catch (ParseException e) {
+                mTrackerManager.logException(e);
+                txtLastMessageDate.setText(chat.getLastMessageTimestamp());
+            }
+        }
 
         int unreadAmount = Message.getUnopenedCountByChat(mDb, chat.getId());
         if(unreadAmount > 0) {

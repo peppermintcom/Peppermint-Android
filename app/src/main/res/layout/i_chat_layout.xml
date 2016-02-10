@@ -29,28 +29,28 @@
         <LinearLayout
             android:id="@+id/lytChatStats"
             android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="right|center_vertical"
+            android:gravity="right|top"
             android:orientation="vertical">
 
             <com.peppermint.app.ui.views.simple.CustomFontTextView
                 android:id="@+id/txtLastMessageDate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="right"
+                android:layout_gravity="right|top"
                 custom:textFont="@string/font_semibold"
                 android:textSize="14dp"
                 android:text="Oct 18"
-                android:textColor="@color/grey_text"
+                android:padding="0dp"
+                android:textColor="@color/color_grey_to_white_pressed"
                 />
 
             <com.peppermint.app.ui.views.simple.CustomFontTextView
                 android:id="@+id/txtUnreadMessages"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="right"
+                android:layout_gravity="right|top"
                 android:layout_marginTop="5dp"
                 custom:textFont="@string/font_semibold"
                 android:textSize="14dp"

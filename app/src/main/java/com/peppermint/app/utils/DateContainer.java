@@ -1,5 +1,9 @@
 package com.peppermint.app.utils;
 
+import android.content.Context;
+
+import com.peppermint.app.R;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -10,6 +14,11 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
 	public static final String DATE_FORMAT = "yyyy-MM-dd";
     public static final String TIME_FORMAT = "HH:mm:ss";
     public static final String DATETIME_FORMAT = "yyyy-MM-dd' 'HH:mm:ss";
+
+    public static final String FRIENDLY_AMPM_TIME_FORMAT = "K:mm a";
+    public static final String FRIENDLY_FULL_DATE_FORMAT = "d MMM yyyy";
+    public static final String FRIENDLY_MONTH_DATE_FORMAT = "d MMM";
+    public static final String FRIENDLY_WEEK_DATE_FORMAT = "EEEE";
 
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 	private static final SimpleDateFormat timeFormat = new SimpleDateFormat(TIME_FORMAT);
@@ -173,5 +182,38 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
      */
     public static Date parseTimestamp(String ts) throws ParseException {
         return dateTimeFormat.parse(ts);
+    }
+
+    public static String getRelativeLabelToToday(Context context, DateContainer date) {
+        return getDateAsStringRelativeTo(context, date, new DateContainer());
+    }
+
+    public static String getDateAsStringRelativeTo(Context context, DateContainer date, DateContainer relativeToDate) {
+        int oldDateType = date.getType();
+        date.setType(TYPE_DATE);
+        DateContainer tmpDate = new DateContainer(TYPE_DATE, (Calendar) relativeToDate.getCalendar().clone());
+
+        String label = date.getAsString(FRIENDLY_FULL_DATE_FORMAT);
+
+        if(date.equals(tmpDate)) {
+            label = context.getString(R.string.date_today);
+        } else {
+            tmpDate.getCalendar().add(Calendar.HOUR, -24);
+            if(date.equals(tmpDate)) {
+                label = context.getString(R.string.date_yesterday);
+            } else {
+                tmpDate.getCalendar().add(Calendar.HOUR, -144); // go 1 week back
+                if(date.compareTo(tmpDate) < 0) {
+                    if(date.getCalendar().get(Calendar.YEAR) == tmpDate.getCalendar().get(Calendar.YEAR)) {
+                        label = date.getAsString(FRIENDLY_MONTH_DATE_FORMAT);
+                    }
+                } else {
+                    label = date.getAsString(FRIENDLY_WEEK_DATE_FORMAT);
+                }
+            }
+        }
+
+        date.setType(oldDateType);
+        return label;
     }
 }

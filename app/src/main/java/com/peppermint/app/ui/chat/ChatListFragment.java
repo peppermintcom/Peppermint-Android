@@ -61,8 +61,6 @@ public class ChatListFragment extends ListFragment implements AdapterView.OnItem
         if(savedInstanceState != null) {
         }
 
-        refreshList();
-
         return v;
     }
 
@@ -75,6 +73,7 @@ public class ChatListFragment extends ListFragment implements AdapterView.OnItem
     @Override
     public void onResume() {
         super.onResume();
+        refreshList();
         TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
     }
 
@@ -152,7 +151,7 @@ public class ChatListFragment extends ListFragment implements AdapterView.OnItem
     private void refreshList() {
         Cursor cursor = Chat.getAllCursor(getDatabase());
         if(mAdapter == null) {
-            mAdapter = new ChatCursorAdapter(mActivity, cursor, getDatabase());
+            mAdapter = new ChatCursorAdapter(mActivity, cursor, getDatabase(), mActivity.getTrackerManager());
             setListAdapter(mAdapter);
         } else {
             mAdapter.swapCursor(cursor);
