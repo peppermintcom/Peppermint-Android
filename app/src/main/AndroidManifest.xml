@@ -162,6 +162,17 @@
             android:name=".MessagesService"
             android:enabled="true"
             android:exported="false" >
+            <intent-filter>
+                <action android:name="com.peppermint.app.PlayerService.PLAY" />
+                <action android:name="com.peppermint.app.PlayerService.PAUSE" />
+            </intent-filter>
+        </service>
+
+        <!-- SERV: PLAYER -->
+        <service
+            android:name=".PlayerService"
+            android:enabled="true"
+            android:exported="false" >
         </service>
 
         <!-- UI: AUTHENTICATION -->

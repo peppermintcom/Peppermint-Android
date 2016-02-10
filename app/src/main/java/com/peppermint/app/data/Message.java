@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
+import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,7 +20,7 @@ import java.util.UUID;
  *
  * Represents an audio message from/to a particular recipient.
  */
-public class Message {
+public class Message implements Serializable {
 
     /**
      * Gets the message data inside the Cursor's current position and puts it in an instance

@@ -3,10 +3,6 @@ package com.peppermint.app.ui.chat;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.media.MediaPlayer.OnErrorListener;
-import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +15,8 @@ import android.widget.SeekBar;
 
 import com.peppermint.app.MessagesServiceManager;
 import com.peppermint.app.PeppermintApp;
+import com.peppermint.app.PlayerEvent;
+import com.peppermint.app.PlayerServiceManager;
 import com.peppermint.app.R;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recipient;
@@ -47,93 +45,32 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
         void onClick(View v, long messageId);
     }
 
-    private Handler mHandler = new Handler();
     private MessageController mPlayingController;
     private Map<Long, MessageController> mControllers = new HashMap<>();
 
-    private Runnable mProgressRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if(mPlayingController != null) {
-                mPlayingController.updateProgress();
-                scheduleProgressMonitoring();
-            }
-        }
-    };
+    private class MessageController implements View.OnClickListener, SeekBar.OnSeekBarChangeListener, PlayerServiceManager.PlayerListener {
 
-    private void scheduleProgressMonitoring() {
-        mHandler.removeCallbacks(mProgressRunnable);
-        mHandler.postDelayed(mProgressRunnable, 100);
-    }
-
-    private class MessageController implements View.OnClickListener, SeekBar.OnSeekBarChangeListener, MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnBufferingUpdateListener, OnErrorListener {
-
-        private long mMessageId;
-        private String mAudioUrl;
-        private long mDuration, mProgress;
+        private Message mMessage;
         private View mRootView;
-        private MediaPlayer mMediaPlayer;
 
-        private MessageController(long mMessageId, String mAudioUrl, long mDuration) {
-            this.mMessageId = mMessageId;
-            this.mAudioUrl = mAudioUrl;
-            this.mDuration = mDuration;
-        }
-
-        private void setVisibility(int playVisibility, int pauseVisibility, int progressVisibility) {
-            if(mRootView != null) {
-                ImageButton btnPlay = (ImageButton) mRootView.findViewById(R.id.btnPlay);
-                ImageButton btnPause = (ImageButton) mRootView.findViewById(R.id.btnPause);
-                ProgressBar progressBar = (ProgressBar) mRootView.findViewById(R.id.progressBar);
-                btnPlay.setVisibility(playVisibility);
-                btnPause.setVisibility(pauseVisibility);
-                progressBar.setVisibility(progressVisibility);
-            }
+        private MessageController(Message mMessage) {
+            this.mMessage = mMessage;
+            mPlayerServiceManager.addPlayerListener(this);
         }
 
         private void pause(boolean resetSeekbar) {
-            if(mMediaPlayer != null && mMediaPlayer.isPlaying()) {
-                mMediaPlayer.pause();
-                if(resetSeekbar) {
-                    mMediaPlayer.seekTo(0);
-                }
-            }
-
-            if(mRootView != null) {
-                ImageButton btnPlay = (ImageButton) mRootView.findViewById(R.id.btnPlay);
-                ImageButton btnPause = (ImageButton) mRootView.findViewById(R.id.btnPause);
-                ProgressBar progressBar = (ProgressBar) mRootView.findViewById(R.id.progressBar);
-                btnPlay.setVisibility(View.VISIBLE);
-                btnPause.setVisibility(View.GONE);
-                progressBar.setVisibility(View.GONE);
-
-                if(resetSeekbar) {
-                    resetSeekBar();
-                }
-            }
+            setVisibility(View.VISIBLE, View.GONE, View.GONE);
+            mPlayerServiceManager.pause(mMessage, resetSeekbar);
         }
 
         private void play() {
-            if(mMediaPlayer != null) {
-                onPrepared(mMediaPlayer);
-            } else {
-                mMediaPlayer = new MediaPlayer();
-                mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                try {
-                    mMediaPlayer.setDataSource(mAudioUrl);
-                } catch (Throwable e) {
-                    mTrackerManager.logException(e);
-                }
-
-                mMediaPlayer.setOnBufferingUpdateListener(this);
-                mMediaPlayer.setOnCompletionListener(this);
-                mMediaPlayer.setOnPreparedListener(this);
-                mMediaPlayer.setOnErrorListener(this);
-
-                setVisibility(View.GONE, View.GONE, View.VISIBLE);
-
-                mMediaPlayer.prepareAsync();
+            setVisibility(View.GONE, View.GONE, View.VISIBLE);
+            int startPercent = 0;
+            if(mRootView != null) {
+                SeekBar seekBar = (SeekBar) this.mRootView.findViewById(R.id.seekBar);
+                startPercent = seekBar.getProgress();
             }
+            mPlayerServiceManager.play(mMessage, startPercent);
         }
 
         @Override
@@ -144,7 +81,7 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
                     mPlayingController.pause(false);
                     // release resources to avoid memory consumption
                     if (!mPlayingController.equals(this)) {
-                        mPlayingController.release();
+                        mPlayingController.destroy();
                     }
                 }
 
@@ -158,15 +95,13 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
 
             // cancel control
             if(v.getId() == R.id.btnCancel) {
-                Message msg = new Message();
-                msg.setId(mMessageId);
-                mMessagesServiceManager.cancel(msg);
+                mMessagesServiceManager.cancel(mMessage);
                 return;
             }
 
             if(v.getId() == R.id.btnExclamation) {
                 if(mExclamationClickListener != null) {
-                    mExclamationClickListener.onClick(v, mMessageId);
+                    mExclamationClickListener.onClick(v, mMessage.getId());
                 }
                 return;
             }
@@ -182,49 +117,50 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
 
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
-            if(mMediaPlayer != null) {
-                int ms = Math.round(((float) seekBar.getProgress() / 100f) * (float) mMediaPlayer.getDuration());
-                mMediaPlayer.seekTo(ms);
-            }
-            mProgress = seekBar.getProgress();
-            updateProgress();
-        }
-
-        private void updateProgress() {
-            long ms = 0;
-
-            if(mMediaPlayer != null && mMediaPlayer.isPlaying()) {
-                ms = mMediaPlayer.getCurrentPosition();
-                mProgress = Math.round((float) ms / (float) mMediaPlayer.getDuration() * 100f);
-            } else {
-                ms = Math.round(((float) mProgress / 100f) * (float) mDuration);
-            }
-
-            if(mRootView != null) {
-                CustomFontTextView txtDuration = (CustomFontTextView) mRootView.findViewById(R.id.txtDuration);
-                SeekBar seekBar = (SeekBar) mRootView.findViewById(R.id.seekBar);
-                txtDuration.setText(Utils.getFriendlyDuration(ms));
-                seekBar.setProgress((int) mProgress);
-            }
-        }
-
-        public View getRootView() {
-            return mRootView;
+            mPlayerServiceManager.setPosition(mMessage, seekBar.getProgress());
         }
 
         public void setRootView(View mRootView, Message message, Message prevMessage) {
+            if(mRootView == null && this.mRootView != null) {
+                ImageButton btnPlay = (ImageButton) this.mRootView.findViewById(R.id.btnPlay);
+                ImageButton btnPause = (ImageButton) this.mRootView.findViewById(R.id.btnPause);
+                SeekBar seekBar = (SeekBar) this.mRootView.findViewById(R.id.seekBar);
+
+                CustomFontButton btnCancel = (CustomFontButton) this.mRootView.findViewById(R.id.btnCancel);
+                ImageView btnExclamation = (ImageView) this.mRootView.findViewById(R.id.btnExclamation);
+
+                // listeners setup
+                btnPlay.setOnClickListener(null);
+                btnPause.setOnClickListener(null);
+                seekBar.setOnSeekBarChangeListener(null);
+
+                btnCancel.setOnClickListener(null);
+                btnExclamation.setOnClickListener(null);
+            }
+
             this.mRootView = mRootView;
 
             if(mRootView != null) {
-                // init view
-                updateProgress();
+                RelativeLayout lytBalloon = (RelativeLayout) mRootView.findViewById(R.id.lytBalloon);
 
-                // play/pause controls
-                mRootView.findViewById(R.id.btnPlay).setOnClickListener(this);
-                mRootView.findViewById(R.id.btnPause).setOnClickListener(this);
+                ImageButton btnPlay = (ImageButton) mRootView.findViewById(R.id.btnPlay);
+                ImageButton btnPause = (ImageButton) mRootView.findViewById(R.id.btnPause);
+                CustomFontTextView txtTime = (CustomFontTextView) mRootView.findViewById(R.id.txtTime);
+                CustomFontTextView txtDuration = (CustomFontTextView) mRootView.findViewById(R.id.txtDuration);
+                CustomFontTextView txtDay = (CustomFontTextView) mRootView.findViewById(R.id.txtDay);
+                SeekBar seekBar = (SeekBar) mRootView.findViewById(R.id.seekBar);
+
+                CustomFontButton btnCancel = (CustomFontButton) mRootView.findViewById(R.id.btnCancel);
+                ImageView btnExclamation = (ImageView) mRootView.findViewById(R.id.btnExclamation);
+
+                // play/pause buttons
+                if(mPlayerServiceManager.isPlaying(mMessage)) {
+                    setVisibility(View.GONE, View.VISIBLE, View.GONE);
+                } else {
+                    setVisibility(View.VISIBLE, View.GONE, View.GONE);
+                }
 
                 // time received/sent
-                CustomFontTextView txtTime = (CustomFontTextView) mRootView.findViewById(R.id.txtTime);
                 try {
                     DateContainer curTime = new DateContainer(DateContainer.TYPE_TIME, message.getRegistrationTimestamp().substring(11));
                     txtTime.setText(curTime.getAsString(DateContainer.FRIENDLY_AMPM_TIME_FORMAT).replace(".", ""));
@@ -234,7 +170,6 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
                 }
 
                 // total duration of the message / current position of the playing message
-                CustomFontTextView txtDuration = (CustomFontTextView) mRootView.findViewById(R.id.txtDuration);
                 if(message.getRecording() != null) {
                     txtDuration.setText(Utils.getFriendlyDuration(message.getRecording().getDurationMillis()));
                 } else {
@@ -242,7 +177,6 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
                 }
 
                 // day of the message separator
-                CustomFontTextView txtDay = (CustomFontTextView) mRootView.findViewById(R.id.txtDay);
                 txtDay.setVisibility(View.VISIBLE);
                 try {
                     DateContainer curDate = new DateContainer(DateContainer.TYPE_DATE, message.getRegistrationTimestamp().substring(0, 10));
@@ -264,18 +198,9 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
                 }
 
                 // seekbar
-                SeekBar seekBar = (SeekBar) mRootView.findViewById(R.id.seekBar);
-                seekBar.setOnSeekBarChangeListener(this);
                 seekBar.setProgress(0);
 
                 // distinctions between received/sent message
-                CustomFontButton btnCancel = (CustomFontButton) mRootView.findViewById(R.id.btnCancel);
-                ImageView btnExclamation = (ImageView) mRootView.findViewById(R.id.btnExclamation);
-                RelativeLayout lytBalloon = (RelativeLayout) mRootView.findViewById(R.id.lytBalloon);
-
-                btnCancel.setOnClickListener(this);
-                btnExclamation.setOnClickListener(this);
-
                 if(message.isReceived()) {
                     btnCancel.setVisibility(View.GONE);
                     btnExclamation.setVisibility(View.GONE);
@@ -294,63 +219,39 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
                         setStatusError();
                     }
                 }
+
+                // listeners setup
+                btnPlay.setOnClickListener(this);
+                btnPause.setOnClickListener(this);
+                seekBar.setOnSeekBarChangeListener(this);
+
+                btnCancel.setOnClickListener(this);
+                btnExclamation.setOnClickListener(this);
             }
         }
 
-        @Override
-        public void onCompletion(MediaPlayer mp) {
-            pause(true);
-        }
-
-        @Override
-        public void onPrepared(MediaPlayer mp) {
-            if(mMediaPlayer != null) {
-                setVisibility(View.GONE, View.VISIBLE, View.GONE);
-                mMediaPlayer.start();
-                scheduleProgressMonitoring();
-            }
-        }
-
-        @Override
-        public void onBufferingUpdate(MediaPlayer mp, int percent) {
+        private void setVisibility(int playVisibility, int pauseVisibility, int progressVisibility) {
             if(mRootView != null) {
+                ImageButton btnPlay = (ImageButton) mRootView.findViewById(R.id.btnPlay);
+                ImageButton btnPause = (ImageButton) mRootView.findViewById(R.id.btnPause);
                 ProgressBar progressBar = (ProgressBar) mRootView.findViewById(R.id.progressBar);
-                progressBar.setProgress(percent);
+                btnPlay.setVisibility(playVisibility);
+                btnPause.setVisibility(pauseVisibility);
+                progressBar.setVisibility(progressVisibility);
             }
         }
 
-        private void resetSeekBar() {
-            if(mRootView != null) {
-                mProgress = 0;
+        private void destroy() {
+            // release some memory in case of lots of messages
+            if(mRootView == null) {
+                mPlayerServiceManager.removePlayerListener(this);
+                mControllers.remove(mMessage.getId());
+            } else {
                 SeekBar seekBar = (SeekBar) mRootView.findViewById(R.id.seekBar);
                 seekBar.setProgress(0);
                 CustomFontTextView txtDuration = (CustomFontTextView) mRootView.findViewById(R.id.txtDuration);
-                txtDuration.setText(Utils.getFriendlyDuration(mDuration));
+                txtDuration.setText(Utils.getFriendlyDuration(mMessage.getRecording().getDurationMillis()));
             }
-        }
-
-        private void release() {
-            resetSeekBar();
-
-            if(mMediaPlayer != null) {
-                if(mMediaPlayer.isPlaying()) {
-                    mMediaPlayer.stop();
-                }
-                mMediaPlayer.release();
-                mMediaPlayer = null;
-            }
-
-            // release some memory in case of lots of messages
-            if(mRootView == null) {
-                mControllers.remove(mMessageId);
-            }
-        }
-
-        @Override
-        public boolean onError(MediaPlayer mp, int what, int extra) {
-            pause(true);
-            release();
-            return false;
         }
 
         public void setStatusSending() {
@@ -372,11 +273,45 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
         }
 
         public void setStatusError() {
-            if(mRootView != null) {
+           if(mRootView != null) {
                 CustomFontButton btnCancel = (CustomFontButton) mRootView.findViewById(R.id.btnCancel);
                 ImageView btnExclamation = (ImageView) mRootView.findViewById(R.id.btnExclamation);
                 btnCancel.setVisibility(View.GONE);
                 btnExclamation.setVisibility(View.VISIBLE);
+            }
+        }
+
+        @Override
+        public void onPlayerEvent(PlayerEvent event) {
+            if(!event.getMessage().equals(mMessage)) {
+                return;
+            }
+
+            switch(event.getType()) {
+                case PlayerEvent.EVENT_STARTED:
+                    setVisibility(View.GONE, View.VISIBLE, View.GONE);
+                    break;
+                case PlayerEvent.EVENT_BUFFERING_UPDATE:
+                    if(mRootView != null) {
+                        ProgressBar progressBar = (ProgressBar) mRootView.findViewById(R.id.progressBar);
+                        progressBar.setProgress(event.getPercent());
+                    }
+                    break;
+                case PlayerEvent.EVENT_PROGRESS:
+                    if(mRootView != null) {
+                        CustomFontTextView txtDuration = (CustomFontTextView) mRootView.findViewById(R.id.txtDuration);
+                        SeekBar seekBar = (SeekBar) mRootView.findViewById(R.id.seekBar);
+                        txtDuration.setText(Utils.getFriendlyDuration(event.getCurrentMs()));
+                        seekBar.setProgress(event.getPercent());
+                    }
+                    break;
+                case PlayerEvent.EVENT_COMPLETED:
+                    pause(true);
+                    break;
+                case PlayerEvent.EVENT_ERROR:
+                    pause(true);
+                    destroy();
+                    break;
             }
         }
     }
@@ -387,16 +322,18 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
     private SQLiteDatabase mDb;
     private TrackerManager mTrackerManager;
     private MessagesServiceManager mMessagesServiceManager;
+    private PlayerServiceManager mPlayerServiceManager;
     private ExclamationClickListener mExclamationClickListener;
 
     private int mBalloonMargin;
 
-    public MessageCursorAdapter(Context context, MessagesServiceManager messagesServiceManager, Cursor cursor, SQLiteDatabase db, TrackerManager trackerManager) {
+    public MessageCursorAdapter(Context context, MessagesServiceManager messagesServiceManager, PlayerServiceManager mPlayerServiceManager, Cursor cursor, SQLiteDatabase db, TrackerManager trackerManager) {
         super(context, cursor, 0);
         this.mDb = db;
         this.mContext = context;
         this.mTrackerManager = trackerManager;
         this.mMessagesServiceManager = messagesServiceManager;
+        this.mPlayerServiceManager = mPlayerServiceManager;
         this.mBalloonMargin = Utils.dpToPx(context, MARGIN_BALLOON_DP);
 
         mMessagesServiceManager.addSenderListener(this);
@@ -428,7 +365,7 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
         view.setTag(message.getId());
         MessageController controller = mControllers.get(message.getId());
         if(controller == null) {
-            controller = new MessageController(message.getId(), message.getRecording().getFilePath() != null ? message.getRecording().getFilePath() : message.getServerCanonicalUrl(), message.getRecording().getDurationMillis());
+            controller = new MessageController(message);
             mControllers.put(message.getId(), controller);
         }
         controller.setRootView(view, message, prevMessage);
@@ -452,7 +389,7 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
 
         if(mPlayingController != null) {
             mPlayingController.pause(true);
-            mPlayingController.release();
+            mPlayingController.destroy();
         }
         mControllers.clear();
     }

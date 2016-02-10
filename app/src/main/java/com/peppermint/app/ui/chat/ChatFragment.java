@@ -310,7 +310,7 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
 
         Cursor cursor = Message.getByChatCursor(getDatabase(), mChat.getId());
         if(mAdapter == null) {
-            mAdapter = new MessageCursorAdapter(mActivity, getMessagesServiceManager(), cursor, getDatabase(), mActivity.getTrackerManager());
+            mAdapter = new MessageCursorAdapter(mActivity, getMessagesServiceManager(), getPlayerServiceManager(), cursor, getDatabase(), mActivity.getTrackerManager());
             mAdapter.setExclamationClickListener(new MessageCursorAdapter.ExclamationClickListener() {
                 @Override
                 public void onClick(View v, long messageId) {

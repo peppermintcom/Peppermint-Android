@@ -11,6 +11,8 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.peppermint.app.MessagesServiceManager;
+import com.peppermint.app.PlayerEvent;
+import com.peppermint.app.PlayerServiceManager;
 import com.peppermint.app.R;
 import com.peppermint.app.RecordService;
 import com.peppermint.app.authenticator.AuthenticationData;
@@ -29,7 +31,7 @@ import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.utils.Utils;
 
-public class ChatRecordOverlayFragment extends ListFragment implements ChatRecordOverlay.OnRecordingFinishedCallback, MessagesServiceManager.ReceiverListener, MessagesServiceManager.SenderListener, MessagesServiceManager.ServiceListener {
+public class ChatRecordOverlayFragment extends ListFragment implements ChatRecordOverlay.OnRecordingFinishedCallback, MessagesServiceManager.ReceiverListener, MessagesServiceManager.SenderListener, MessagesServiceManager.ServiceListener, PlayerServiceManager.PlayerListener, PlayerServiceManager.PlayServiceListener {
 
     public static final int REQUEST_NEWCONTACT_AND_SEND = 223;
 
@@ -42,6 +44,7 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
     private CustomActionBarActivity mActivity;
     private SenderPreferences mPreferences;
     private MessagesServiceManager mMessagesServiceManager;
+    private PlayerServiceManager mPlayerServiceManager;
 
     private ChatRecordOverlay mChatRecordOverlay;
 
@@ -123,6 +126,10 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
         mMessagesServiceManager.addServiceListener(this);
         mMessagesServiceManager.addSenderListener(this);
         mMessagesServiceManager.addReceiverListener(this);
+
+        mPlayerServiceManager = new PlayerServiceManager(mActivity);
+        mPlayerServiceManager.addServiceListener(this);
+        mPlayerServiceManager.addPlayerListener(this);
     }
 
     @Override
@@ -130,6 +137,7 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
         super.onViewCreated(view, savedInstanceState);
 
         mMessagesServiceManager.start();
+        mPlayerServiceManager.start();
 
         if (savedInstanceState != null) {
             if (savedInstanceState.containsKey(RECORDING_FINAL_EVENT_KEY)) {
@@ -186,6 +194,7 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
     public void onStart() {
         super.onStart();
         mMessagesServiceManager.bind();
+        mPlayerServiceManager.bind();
         mChatRecordOverlay.bindService();
     }
 
@@ -198,6 +207,7 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
     @Override
     public void onStop() {
         mChatRecordOverlay.unbindService();
+        mPlayerServiceManager.unbind();
         mMessagesServiceManager.unbind();
         super.onStop();
     }
@@ -207,6 +217,8 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
         mMessagesServiceManager.removeReceiverListener(this);
         mMessagesServiceManager.removeSenderListener(this);
         mMessagesServiceManager.removeServiceListener(this);
+        mPlayerServiceManager.removePlayerListener(this);
+        mPlayerServiceManager.removeServiceListener(this);
         mActivity = null;
         super.onDestroy();
     }
@@ -299,6 +311,10 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
         return mMessagesServiceManager;
     }
 
+    public PlayerServiceManager getPlayerServiceManager() {
+        return mPlayerServiceManager;
+    }
+
     @Override
     public void onReceivedMessage(ReceiverEvent event) {
     }
@@ -335,6 +351,16 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
 
     @Override
     public void onBoundSendService() {
+
+    }
+
+    @Override
+    public void onPlayerEvent(PlayerEvent event) {
+
+    }
+
+    @Override
+    public void onBoundPlayService() {
 
     }
 }
