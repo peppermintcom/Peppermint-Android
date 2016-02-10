@@ -132,6 +132,8 @@ public class MessagesServiceManager {
             mService = (MessagesService.SendRecordServiceBinder) binder;
             mService.register(MessagesServiceManager.this);
 
+            mIsBound = true;
+
             for(ServiceListener listener : mServiceListenerList) {
                 listener.onBoundSendService();
             }
@@ -140,6 +142,7 @@ public class MessagesServiceManager {
         public void onServiceDisconnected(ComponentName className) {
             // this is called when the connection with the service has been unexpectedly disconnected - process crashed.
             mService = null;
+            mIsBound = false;
         }
     };
 
@@ -191,7 +194,6 @@ public class MessagesServiceManager {
      */
     public void bind() {
         mContext.bindService(new Intent(mContext, MessagesService.class), mConnection, Context.BIND_AUTO_CREATE);
-        mIsBound = true;
     }
 
     /**

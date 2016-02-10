@@ -44,6 +44,7 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
     private static final String STATE_DIALOG = TAG + "_stateDialog";
     private static final String STATE_MESSAGE_ID_WITH_ERROR = TAG + "_messageIdWithError";
 
+    public static final String PARAM_AUTO_PLAY_MESSAGE_ID = TAG + "_paramAutoPlayMessageId";
     public static final String PARAM_RECIPIENT = TAG + "_paramRecipient";
     public static final String PARAM_CHAT = TAG + "_paramChat";
 
@@ -60,6 +61,7 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
     // DATA
     private Chat mChat;
     private Recipient mRecipient;
+    private long mAutoPlayMessageId;
 
     private MessageCursorAdapter mAdapter;
 
@@ -167,6 +169,7 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
         if(args != null) {
             mRecipient = (Recipient) args.getSerializable(PARAM_RECIPIENT);
             mChat = (Chat) args.getSerializable(PARAM_CHAT);
+            mAutoPlayMessageId = args.getLong(PARAM_AUTO_PLAY_MESSAGE_ID);
         }
 
         // check if there's the mandatory recipient data
@@ -294,6 +297,11 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
     }
 
     @Override
+    public void onBoundPlayService() {
+        refreshList();
+    }
+
+    @Override
     public void onBoundSendService() {
         refreshList();
     }
@@ -304,7 +312,7 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
     }
 
     private void refreshList() {
-        if(!getMessagesServiceManager().isBound()) {
+        if(!getMessagesServiceManager().isBound() || !getPlayerServiceManager().isBound()) {
             return;
         }
 
@@ -321,6 +329,23 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
         } else {
             mAdapter.swapCursor(cursor);
             mAdapter.notifyDataSetChanged();
+        }
+
+        if(mAutoPlayMessageId > 0) {
+            int count = mAdapter.getCount();
+            Message chosenMessage = null;
+            int chosenIndex = -1;
+            for(int i=count-1; i>=0 && chosenMessage == null; i--) {
+                Message message = mAdapter.getMessage(i);
+                if(message.getId() == mAutoPlayMessageId) {
+                    chosenMessage = message;
+                    chosenIndex = i;
+                }
+            }
+            mAutoPlayMessageId = 0;
+
+            getListView().setSelection(chosenIndex);
+            getPlayerServiceManager().play(chosenMessage, 0);
         }
     }
 

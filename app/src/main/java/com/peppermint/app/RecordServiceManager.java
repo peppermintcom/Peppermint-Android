@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
-import android.util.Log;
 
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
@@ -111,16 +110,17 @@ public class RecordServiceManager {
             mService = (RecordService.RecordServiceBinder) binder;
             mService.register(RecordServiceManager.this);
 
+            mIsBound = true;
+
             if(mListener != null) {
                 mListener.onBoundRecording(mService.getCurrentRecording(), mService.getCurrentRecipient(), mService.getCurrentLoudness());
             }
-            Log.d(TAG, "onServiceConnected");
         }
 
         public void onServiceDisconnected(ComponentName className) {
             // this is called when the connection with the service has been unexpectedly disconnected - process crashed.
             mService = null;
-            Log.d(TAG, "onServiceDisconnected");
+            mIsBound = false;
         }
     };
 
@@ -157,7 +157,6 @@ public class RecordServiceManager {
      */
     public void bind() {
         mContext.bindService(new Intent(mContext, RecordService.class), mConnection, Context.BIND_AUTO_CREATE);
-        mIsBound = true;
     }
 
     /**

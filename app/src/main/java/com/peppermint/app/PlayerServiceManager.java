@@ -55,6 +55,8 @@ public class PlayerServiceManager {
             mService = (PlayerService.PlayerServiceBinder) binder;
             mService.register(PlayerServiceManager.this);
 
+            mIsBound = true;
+
             for(PlayServiceListener listener : mServiceListenerList) {
                 listener.onBoundPlayService();
             }
@@ -63,6 +65,7 @@ public class PlayerServiceManager {
         public void onServiceDisconnected(ComponentName className) {
             // this is called when the connection with the service has been unexpectedly disconnected - process crashed.
             mService = null;
+            mIsBound = false;
         }
     };
 
@@ -121,7 +124,6 @@ public class PlayerServiceManager {
      */
     public void bind() {
         mContext.bindService(new Intent(mContext, PlayerService.class), mConnection, Context.BIND_AUTO_CREATE);
-        mIsBound = true;
     }
 
     /**

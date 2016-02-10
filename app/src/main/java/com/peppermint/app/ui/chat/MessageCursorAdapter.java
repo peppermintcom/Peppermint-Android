@@ -307,6 +307,10 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
                     break;
                 case PlayerEvent.EVENT_COMPLETED:
                     pause(true);
+                    if(mRootView != null) {
+                        SeekBar seekBar = (SeekBar) mRootView.findViewById(R.id.seekBar);
+                        seekBar.setProgress(0);
+                    }
                     break;
                 case PlayerEvent.EVENT_ERROR:
                     pause(true);
@@ -373,6 +377,11 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
 
     public Message getMessage(Cursor cursor) {
         return Message.getFromCursor(mDb, cursor);
+    }
+
+    public Message getMessage(int position) {
+        Cursor cursor = (Cursor) getItem(position);
+        return getMessage(cursor);
     }
 
     public SQLiteDatabase getDatabase() {

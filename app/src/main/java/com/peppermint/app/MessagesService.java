@@ -510,8 +510,9 @@ public class MessagesService extends Service {
 
     private Notification getNotification(Message message) {
         Intent notificationIntent = new Intent(MessagesService.this, ChatActivity.class);
+        /*notificationIntent.putExtra(ChatFragment.PARAM_AUTO_PLAY_MESSAGE_ID, message.getId());*/
         notificationIntent.putExtra(ChatFragment.PARAM_RECIPIENT, message.getRecipient());
-        PendingIntent pendingIntent = PendingIntent.getActivity(MessagesService.this, 0, notificationIntent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(MessagesService.this, (int) message.getId(), notificationIntent, 0);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(MessagesService.this)
                 .setSmallIcon(R.drawable.ic_mail_36dp)
