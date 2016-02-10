@@ -49,6 +49,7 @@ public class ChatListFragment extends ListFragment implements AdapterView.OnItem
         mActivity = (CustomActionBarActivity) context;
         mDatabaseHelper = new DatabaseHelper(context);
         mMessagesServiceManager = new MessagesServiceManager(mActivity);
+        mMessagesServiceManager.addServiceListener(mServiceListener);
         mMessagesServiceManager.addSenderListener(mSenderListener);
         mMessagesServiceManager.addReceiverListener(mReceiverListener);
     }
@@ -109,6 +110,13 @@ public class ChatListFragment extends ListFragment implements AdapterView.OnItem
         super.onDestroy();
     }
 
+    private MessagesServiceManager.ServiceListener mServiceListener = new MessagesServiceManager.ServiceListener() {
+        @Override
+        public void onBoundSendService() {
+            mMessagesServiceManager.removeAllNotifications();
+        }
+    };
+
     private MessagesServiceManager.SenderListener mSenderListener = new MessagesServiceManager.SenderListener() {
         @Override
         public void onSendStarted(SenderEvent event) {
@@ -145,6 +153,7 @@ public class ChatListFragment extends ListFragment implements AdapterView.OnItem
         @Override
         public void onReceivedMessage(ReceiverEvent event) {
             refreshList();
+            event.setDoNotShowNotification(true);
         }
     };
 

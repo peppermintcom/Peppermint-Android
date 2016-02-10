@@ -30,7 +30,6 @@ import com.peppermint.app.ui.views.simple.CustomFontTextView;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
-import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
@@ -417,14 +416,7 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
             cursor.moveToNext();
         }
 
-        if(!message.isPlayed()) {
-            message.setPlayed(true);
-            try {
-                Message.update(mDb, message);
-            } catch (SQLException e) {
-                mTrackerManager.logException(e);
-            }
-        }
+        mMessagesServiceManager.markAsPlayed(message);
 
         if(view.getTag() != null) {
             MessageController prevController = mControllers.get(view.getTag());

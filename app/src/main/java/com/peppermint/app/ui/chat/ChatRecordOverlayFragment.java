@@ -301,7 +301,6 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
 
     @Override
     public void onReceivedMessage(ReceiverEvent event) {
-
     }
 
     @Override

@@ -75,6 +75,8 @@
     <string name="uploading">Uploading…</string>
     <string name="you_have_installed_peppermint">You have installed Peppermint</string>
     <string name="now_send_your_first_audio_message">Now send your first audio message!</string>
+    <string name="new_message">New Message</string>
+    <string name="sent_you_a_message">sent you a message</string>
 
     <!-- CUSTOM VIEWS -->
     <string name="cancel">Cancel</string>

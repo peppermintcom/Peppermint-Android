@@ -224,6 +224,14 @@ public class MessagesServiceManager {
         return mService.send(chat, recipient, recording);
     }
 
+    public void removeAllNotifications() {
+        mService.removeAllNotifications();
+    }
+
+    public void markAsPlayed(Message message) {
+        mService.markAsPlayed(message);
+    }
+
     public boolean retry(Message message) {
         return mService.retry(message);
     }

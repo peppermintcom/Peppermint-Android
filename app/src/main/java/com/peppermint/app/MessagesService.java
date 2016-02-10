@@ -10,11 +10,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
@@ -31,8 +33,11 @@ import com.peppermint.app.sending.SenderEvent;
 import com.peppermint.app.sending.SenderManager;
 import com.peppermint.app.sending.SenderPreferences;
 import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.ui.chat.ChatActivity;
+import com.peppermint.app.ui.chat.ChatFragment;
 import com.peppermint.app.utils.Utils;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
@@ -128,6 +133,14 @@ public class MessagesService extends Service {
         }
         boolean isSending(Message message) {
             return MessagesService.this.isSending(message);
+        }
+
+        void markAsPlayed(Message message) {
+            MessagesService.this.markAsPlayed(message);
+        }
+
+        void removeAllNotifications() {
+            MessagesService.this.removeAllNotifications();
         }
     }
 
@@ -226,6 +239,14 @@ public class MessagesService extends Service {
         }
     }
 
+    private Object mNotificationEventReceiver = new Object() {
+        public void onEventMainThread(ReceiverEvent event) {
+            if(!event.doNotShowNotification()) {
+                showNotification(event.getMessage());
+            }
+        }
+    };
+
     public MessagesService() {
         mEventBus = new EventBus();
 
@@ -241,6 +262,7 @@ public class MessagesService extends Service {
         mTrackerManager = TrackerManager.getInstance(getApplicationContext());
 
         mEventBus.register(this, Integer.MAX_VALUE);
+        mEventBus.register(mNotificationEventReceiver, Integer.MIN_VALUE);
 
         mPreferences = new SenderPreferences(this);
 
@@ -402,6 +424,26 @@ public class MessagesService extends Service {
         db.close();
     }
 
+    private void markAsPlayed(Message message) {
+        if(!message.isPlayed()) {
+            SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
+            message.setPlayed(true);
+            try {
+                Message.update(db, message);
+            } catch (SQLException e) {
+                mTrackerManager.logException(e);
+            }
+            db.close();
+        }
+
+        removeNotification(message);
+    }
+
+    private void removeAllNotifications() {
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.cancelAll();
+    }
+
     private boolean retry(Message message) {
         if(isSending(message)) {
             return false;
@@ -466,29 +508,36 @@ public class MessagesService extends Service {
 
     // UPDATE NOTIFICATION
 
-    private Notification getNotification() {
-        Intent notificationIntent = new Intent(MessagesService.this, MainActivity.class);
+    private Notification getNotification(Message message) {
+        Intent notificationIntent = new Intent(MessagesService.this, ChatActivity.class);
+        notificationIntent.putExtra(ChatFragment.PARAM_RECIPIENT, message.getRecipient());
         PendingIntent pendingIntent = PendingIntent.getActivity(MessagesService.this, 0, notificationIntent, 0);
 
-        // TODO add cancel action to notification perhaps?
-        // TODO add progress percentage to the notification whenever possible (depends on sender)
         NotificationCompat.Builder builder = new NotificationCompat.Builder(MessagesService.this)
                 .setSmallIcon(R.drawable.ic_mail_36dp)
-                .setContentTitle(getString(R.string.app_name))
-                .setContentText(getString(R.string.uploading))
+                .setContentTitle(getString(R.string.new_message))
+                .setContentText(message.getRecipient().getName() + " " + getString(R.string.sent_you_a_message))
                 .setContentIntent(pendingIntent);
+
+        if(message.getRecipient().getPhotoUri() != null) {
+            try {
+                builder.setLargeIcon(MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.parse(message.getRecipient().getPhotoUri())));
+            } catch (IOException e) {
+                mTrackerManager.log("Unable to use photo URI as notification large icon!", e);
+            }
+        }
 
         return builder.build();
     }
 
-    private void removeNotification() {
+    private void removeNotification(Message message) {
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.cancel(MessagesService.class.hashCode());
+        mNotificationManager.cancel(message.getServerId(), (int) message.getId());
     }
 
-    private void updateNotification() {
+    private void showNotification(Message message) {
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(MessagesService.class.hashCode(), getNotification());
+        mNotificationManager.notify(message.getServerId(), (int) message.getId(), getNotification(message));
     }
 
     // FIRST INSTALL/USE NOTIFICATION

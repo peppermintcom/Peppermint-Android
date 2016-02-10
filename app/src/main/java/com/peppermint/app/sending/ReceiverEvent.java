@@ -14,6 +14,7 @@ public class ReceiverEvent {
     private int mType;
     private String mReceiverEmail;
     private Message mMessage;
+    private boolean mDoNotShowNotification = false;
 
     public ReceiverEvent() {
         mType = EVENT_RECEIVED;
@@ -47,6 +48,14 @@ public class ReceiverEvent {
 
     public void setMessage(Message mMessage) {
         this.mMessage = mMessage;
+    }
+
+    public boolean doNotShowNotification() {
+        return mDoNotShowNotification;
+    }
+
+    public void setDoNotShowNotification(boolean mDoNotShowNotification) {
+        this.mDoNotShowNotification = mDoNotShowNotification;
     }
 
     @Override

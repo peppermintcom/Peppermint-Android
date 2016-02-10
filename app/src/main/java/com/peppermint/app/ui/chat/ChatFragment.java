@@ -288,6 +288,9 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
     @Override
     public void onReceivedMessage(ReceiverEvent event) {
         refreshList();
+        if(event.getMessage().getRecipient().getId() == mRecipient.getId()) {
+            event.setDoNotShowNotification(true);
+        }
     }
 
     @Override
