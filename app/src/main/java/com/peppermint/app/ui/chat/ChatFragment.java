@@ -15,12 +15,12 @@ import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 
 import com.peppermint.app.R;
+import com.peppermint.app.cloud.ReceiverEvent;
+import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recipient;
-import com.peppermint.app.cloud.ReceiverEvent;
-import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
 import com.peppermint.app.ui.views.NavigationItem;
@@ -270,6 +270,7 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
             mAdapter.destroy();
         }
         dismissErrorDialog();
+        mActivity = null;
         super.onDestroy();
     }
 

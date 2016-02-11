@@ -30,7 +30,6 @@ import android.widget.Toast;
 
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
-import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
@@ -322,7 +321,6 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     private static final int CHOOSE_PHOTO_CODE = 124;
 
     private CustomActionBarActivity mActivity;
-    private SenderPreferences mPreferences;
 
     private ImageView mBtnAddAvatar;
     private CustomValidatedEditText mTxtFirstName, mTxtLastName, mTxtPhone, mTxtMail;
@@ -532,7 +530,6 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     public void onAttach(Activity context) {
         super.onAttach(context);
         mActivity = (CustomActionBarActivity) context;
-        mPreferences = new SenderPreferences(context);
     }
 
     @Override
@@ -662,6 +659,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         if(mNewAvatarDialog != null && mNewAvatarDialog.isShowing()) {
             mNewAvatarDialog.dismiss();
         }
+        mActivity = null;
         super.onDestroy();
     }
 

@@ -14,10 +14,10 @@ import android.widget.Toast;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.SignOutPeppermintTask;
+import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
 import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.cloud.senders.SenderSupportListener;
 import com.peppermint.app.cloud.senders.SenderSupportTask;
-import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
@@ -114,6 +114,8 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                 ((CustomDialogPreference) pref).onActivityDestroy();
             }
         }
+
+        mActivity = null;
 
         super.onDestroy();
     }

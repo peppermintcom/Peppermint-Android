@@ -32,12 +32,13 @@ import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.cloud.senders.SenderSupportListener;
-import com.peppermint.app.cloud.senders.SenderSupportTask;
+import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.apis.PeppermintApi;
 import com.peppermint.app.cloud.apis.exceptions.GoogleApiDeniedAuthorizationException;
 import com.peppermint.app.cloud.apis.exceptions.GoogleApiNoAuthorizationException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
+import com.peppermint.app.cloud.senders.SenderSupportListener;
+import com.peppermint.app.cloud.senders.SenderSupportTask;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomAuthenticatorActivity;
@@ -220,6 +221,10 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
 
         setResult(RESULT_OK, intent);
         finish();
+
+        // start the service so that we can receive GCM notifications
+        MessagesServiceManager messagesServiceManager = new MessagesServiceManager(this);
+        messagesServiceManager.start();
     }
 
     @Override

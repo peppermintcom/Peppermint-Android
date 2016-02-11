@@ -2,7 +2,6 @@ package com.peppermint.app;
 
 import android.app.Application;
 import android.graphics.Typeface;
-import android.util.Log;
 
 import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.tracking.TrackerManager;
@@ -30,8 +29,6 @@ public class PeppermintApp extends Application {
         // start the service so that we can receive GCM notifications
         MessagesServiceManager messagesServiceManager = new MessagesServiceManager(this);
         messagesServiceManager.start();
-
-        Log.d("PeppermintApp", "App has started!");
     }
 
     public Typeface getFontSemibold() {

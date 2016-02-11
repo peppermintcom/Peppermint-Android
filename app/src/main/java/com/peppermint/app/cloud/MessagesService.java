@@ -215,6 +215,7 @@ public class MessagesService extends Service {
         // register to GCM, and always try until it goes alright
         String gcmToken = null;
         try {
+            mAuthenticatorUtils.refreshAccount();
             gcmToken = mAuthenticatorUtils.getAccountData().getGcmRegistration();
         } catch (PeppermintApiNoAccountException e) {
             mTrackerManager.log("No account when getting GCM registration token...", e);
