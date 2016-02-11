@@ -149,6 +149,7 @@
     <!-- SETTINGS -->
     <string name="msg_gmail_disabled">Please enable in-app Gmail before picking a Gmail account</string>
     <string name="msg_insert_name">Please enter a valid name</string>
+    <string name="sign_out">Sign Out</string>
 
     <!-- ABOUT LAYOUT -->
     <string name="about">About</string>

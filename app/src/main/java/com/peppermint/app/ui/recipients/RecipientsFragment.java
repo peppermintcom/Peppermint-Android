@@ -19,6 +19,7 @@ import android.os.SystemClock;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -503,14 +504,6 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
         if (savedInstanceState != null) {
             mHasSavedInstanceState = true;
-        } else {
-            // default view is all contacts
-            int selectedItemPosition = 0;
-            if(!hasRecents()) {
-                // select "all contacts" in case there are not fav/recent contacts
-                selectedItemPosition = 1;
-            }
-            mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
         }
 
         getCustomActionBarActivity().getCustomActionBar().setContents(mSearchListBarView, false);
@@ -612,6 +605,16 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
         // global touch interceptor to hide keyboard
         getCustomActionBarActivity().addTouchEventInterceptor(mTouchInterceptor);
+
+        if(!mHasSavedInstanceState) {
+            // default view is all contacts
+            int selectedItemPosition = 0;
+            if(!hasRecents()) {
+                // select "all contacts" in case there are not fav/recent contacts
+                selectedItemPosition = 1;
+            }
+            mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
+        }
 
         onSearch(mSearchListBarView.getSearchText());
         mSearchListBarView.setOnSearchListener(this);
@@ -739,6 +742,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         Recipient tappedRecipient = mRecipientAdapter instanceof RecipientCursorAdapter ?
                 ((RecipientCursorAdapter) mRecipientAdapter).getRecipient(position) :
                 ((RecipientArrayAdapter) mRecipientAdapter).getItem(position);
+        Log.d("CUROSR", tappedRecipient.toString());
         return triggerRecording(view, tappedRecipient);
     }
 

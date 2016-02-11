@@ -13,16 +13,24 @@ import android.widget.Toast;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
+import com.peppermint.app.authenticator.SignOutPeppermintTask;
 import com.peppermint.app.sending.SenderPreferences;
+import com.peppermint.app.sending.SenderSupportListener;
+import com.peppermint.app.sending.SenderSupportTask;
+import com.peppermint.app.sending.api.exceptions.PeppermintApiInvalidAccessTokenException;
+import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.utils.Utils;
 
-public class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
+import javax.net.ssl.SSLException;
+
+public class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener, SenderSupportListener {
 
     private static final String TAG = SettingsFragment.class.getSimpleName();
     private static final String SCREEN_ID = "Settings";
 
+    private static final String PREF_SIGN_OUT_KEY = "signOut";
     private static final String PREF_DISPLAY_NAME_KEY = "displayName";
     private static final String PREF_GMAIL_ENABLED_KEY = "GmailSenderPreferences_isEnabled";
 
@@ -63,6 +71,17 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         });
 
         mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+
+        findPreference(PREF_SIGN_OUT_KEY).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                SignOutPeppermintTask task = new SignOutPeppermintTask(mActivity, SettingsFragment.this);
+                task.getIdentity().setTrackerManager(mActivity.getTrackerManager());
+                task.getIdentity().setPreferences(mPreferences);
+                task.execute((Void) null);
+                return false;
+            }
+        });
     }
 
     @Override
@@ -113,5 +132,47 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
             }
             mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
         }
+    }
+
+    @Override
+    public void onSendingSupportStarted(SenderSupportTask supportTask) {
+
+    }
+
+    @Override
+    public void onSendingSupportCancelled(SenderSupportTask supportTask) {
+
+    }
+
+    @Override
+    public void onSendingSupportFinished(SenderSupportTask supportTask) {
+        mActivity.finish();
+    }
+
+    @Override
+    public void onSendingSupportError(SenderSupportTask supportTask, Throwable error) {
+        if(error instanceof NoInternetConnectionException) {
+            Toast.makeText(mActivity, R.string.msg_no_internet_try_again, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if(error.getCause() != null && error.getCause() instanceof SSLException) {
+            Toast.makeText(mActivity, R.string.msg_secure_connection, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if(error instanceof PeppermintApiInvalidAccessTokenException) {
+            Toast.makeText(mActivity, R.string.msg_invalid_credentials, Toast.LENGTH_LONG).show();
+            mActivity.finish();
+            return;
+        }
+
+        Toast.makeText(mActivity, R.string.msg_authentication_error, Toast.LENGTH_LONG).show();
+        mActivity.getTrackerManager().logException(error);
+    }
+
+    @Override
+    public void onSendingSupportProgress(SenderSupportTask supportTask, float progressValue) {
+
     }
 }

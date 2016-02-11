@@ -221,6 +221,12 @@ public class SenderPreferences {
         return mGmailSenderPreferences;
     }
 
+    public void clearAll() {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.clear();
+        editor.commit();
+    }
+
     public Context getContext() {
         return mContext;
     }

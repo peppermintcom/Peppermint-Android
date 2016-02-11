@@ -266,7 +266,9 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
 
     @Override
     public void onDestroy() {
-        mAdapter.destroy();
+        if(mAdapter != null) {
+            mAdapter.destroy();
+        }
         dismissErrorDialog();
         super.onDestroy();
     }

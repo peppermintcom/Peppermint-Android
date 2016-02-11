@@ -22,6 +22,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.peppermint.app.authenticator.AuthenticatorConstants;
+import com.peppermint.app.authenticator.AuthenticatorUtils;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.Message;
@@ -32,9 +33,11 @@ import com.peppermint.app.sending.ReceiverEvent;
 import com.peppermint.app.sending.SenderEvent;
 import com.peppermint.app.sending.SenderManager;
 import com.peppermint.app.sending.SenderPreferences;
+import com.peppermint.app.sending.api.exceptions.PeppermintApiNoAccountException;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.chat.ChatActivity;
 import com.peppermint.app.ui.chat.ChatFragment;
+import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
 import com.peppermint.app.utils.Utils;
 
 import java.io.IOException;
@@ -149,6 +152,7 @@ public class MessagesService extends Service {
     private EventBus mEventBus;
     private SenderManager mSenderManager;
     private DatabaseHelper mDatabaseHelper;
+    private AuthenticatorUtils mAuthenticatorUtils;
     private boolean mGcmRegistrationOk = false;
 
     private Handler mHandler = new Handler();
@@ -260,6 +264,7 @@ public class MessagesService extends Service {
 
         mDatabaseHelper = new DatabaseHelper(this);
         mTrackerManager = TrackerManager.getInstance(getApplicationContext());
+        mAuthenticatorUtils = new AuthenticatorUtils(this);
 
         mEventBus.register(this, Integer.MAX_VALUE);
         mEventBus.register(mNotificationEventReceiver, Integer.MIN_VALUE);
@@ -294,53 +299,71 @@ public class MessagesService extends Service {
 
                 String audioUrl = receivedMessageData.getString("audio_url");
                 String transcriptionUrl = receivedMessageData.getString("transcription_url");
-                String receiverEmail = receivedMessageData.getString("receiver_email");
+                String receiverEmail = receivedMessageData.getString("recipient_email");
                 String senderEmail = receivedMessageData.getString("sender_email");
                 String senderName = receivedMessageData.getString("sender_name");
                 String createdTs = receivedMessageData.getString("created");
 
-                if(audioUrl == null || senderEmail == null) {
+                if(audioUrl == null || senderEmail == null || receiverEmail == null) {
                     mTrackerManager.log("Invalid GCM notification received! Either or both audio URL and sender email are null.");
                 } else {
-                    Recipient recipient = new Recipient();
-                    recipient.setVia(senderEmail);
-                    recipient.setName(senderName);
-                    recipient.setMimeType(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
-                    recipient.setType(AuthenticatorConstants.ACCOUNT_TYPE);
-
-                    Recording recording = new Recording();
-                    recording.setContentType(Recording.CONTENT_TYPE_AUDIO);
-                    recording.setRecordedTimestamp(createdTs);
-                    // TODO missing duration!
-
-                    Chat chat = new Chat();
-                    chat.setMainRecipient(recipient);
-
-                    Message message = new Message();
-                    message.setSent(false);
-                    message.setReceived(true);
-                    message.setServerCanonicalUrl(audioUrl);
-                    message.setServerTranscriptionUrl(transcriptionUrl);
-                    message.setChat(chat);
-                    message.setRecipient(recipient);
-                    message.setRecording(recording);
-                    message.setRegistrationTimestamp(createdTs);
-
-                    SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
+                    String emailAddress = null;
                     try {
-                        Recording.insertOrUpdate(db, recording);
-                        Recipient.insertOrUpdate(db, recipient);
-                        Chat.insertOrUpdate(db, chat);
-                        Message.insert(db, message);
-                    } catch(SQLException e) {
-                        mTrackerManager.logException(e);
+                        emailAddress = mAuthenticatorUtils.getAccountData().getEmail();
+                    } catch (PeppermintApiNoAccountException e) {
+                        mTrackerManager.log("No account when receiving message...", e);
                     }
-                    db.close();
 
-                    ReceiverEvent ev = new ReceiverEvent();
-                    ev.setReceiverEmail(receiverEmail);
-                    ev.setMessage(message);
-                    mEventBus.post(ev);
+                    if(emailAddress != null && emailAddress.compareToIgnoreCase(receiverEmail.trim()) == 0) {
+                        Recipient recipient = new Recipient();
+                        recipient.setVia(senderEmail);
+                        recipient.setName(senderName);
+                        recipient.setMimeType(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
+                        recipient.setType(AuthenticatorConstants.ACCOUNT_TYPE);
+                        RecipientAdapterUtils.fillRecipientDetails(this, recipient);
+
+                        Recording recording = new Recording();
+                        recording.setContentType(Recording.CONTENT_TYPE_AUDIO);
+                        recording.setRecordedTimestamp(createdTs);
+                        // TODO missing duration!
+
+                        SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
+
+                        Chat chat = new Chat();
+                        chat.setMainRecipient(recipient);
+                        chat.setLastMessageTimestamp(createdTs);
+
+                        Message message = new Message();
+                        message.setSent(false);
+                        message.setReceived(true);
+                        message.setServerCanonicalUrl(audioUrl);
+                        message.setServerTranscriptionUrl(transcriptionUrl);
+                        message.setChat(chat);
+                        message.setRecipient(recipient);
+                        message.setRecording(recording);
+                        message.setRegistrationTimestamp(createdTs);
+
+                        try {
+                            Recording.insertOrUpdate(db, recording);
+                            Recipient.insertOrUpdate(db, recipient);
+                            Chat foundChat = Chat.getByMainRecipient(db, recipient.getId());
+                            if(foundChat != null && foundChat.getLastMessageTimestamp() != null && foundChat.getLastMessageTimestamp().compareToIgnoreCase(createdTs) > 0) {
+                                chat.setLastMessageTimestamp(foundChat.getLastMessageTimestamp());
+                            }
+                            Chat.insertOrUpdate(db, chat);
+                            Message.insert(db, message);
+                        } catch (SQLException e) {
+                            mTrackerManager.logException(e);
+                        }
+                        db.close();
+
+                        ReceiverEvent ev = new ReceiverEvent();
+                        ev.setReceiverEmail(receiverEmail);
+                        ev.setMessage(message);
+                        mEventBus.post(ev);
+                    } else if(emailAddress != null) {
+                        mTrackerManager.log("Received wrong message from GCM! Should have gone to email " + receiverEmail);
+                    }
                 }
             }
         }

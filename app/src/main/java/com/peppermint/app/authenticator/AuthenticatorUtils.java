@@ -4,6 +4,7 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.OperationCanceledException;
 import android.content.Context;
+import android.os.Build;
 
 import com.peppermint.app.sending.api.exceptions.PeppermintApiNoAccountException;
 import com.peppermint.app.tracking.TrackerManager;
@@ -74,6 +75,21 @@ public class AuthenticatorUtils {
         invalidateAccessToken();
     }
 
+    public void signOut() throws PeppermintApiNoAccountException {
+        if(mAccount == null) {
+            throw new PeppermintApiNoAccountException();
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            mAccountManager.removeAccountExplicitly(getAccount());
+        } else {
+            mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_EMAIL, null);
+            mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_TYPE, null);
+            mAccountManager.setPassword(mAccount, null);
+            mAccountManager.setAuthToken(mAccount, AuthenticatorConstants.FULL_TOKEN_TYPE, null);
+        }
+    }
+
     public void createAccount(String accessToken, AuthenticationData data) {
         createAccount(accessToken, data.getEmail(), data.getPassword(), data.getDeviceServerId(), data.getDeviceId(), data.getDeviceKey(), data.getAccountType());
     }
@@ -120,4 +136,5 @@ public class AuthenticatorUtils {
     public AccountManager getAccountManager() {
         return mAccountManager;
     }
+
 }

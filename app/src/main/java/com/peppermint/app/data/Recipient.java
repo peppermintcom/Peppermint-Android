@@ -26,6 +26,7 @@ public class Recipient implements Serializable {
     private static Recipient getFromCursor(Cursor cursor) {
         Recipient recipient = new Recipient();
         recipient.setId(cursor.getLong(cursor.getColumnIndex("recipient_id")));
+        recipient.setContactId(cursor.getLong(cursor.getColumnIndex("contact_id")));
         recipient.setMimeType(cursor.getString(cursor.getColumnIndex("mime_type")));
         recipient.setPhotoUri(cursor.getString(cursor.getColumnIndex("photo_uri")));
         recipient.setName(cursor.getString(cursor.getColumnIndex("name")));
@@ -43,6 +44,7 @@ public class Recipient implements Serializable {
      */
     public static long insert(SQLiteDatabase db, Recipient recipient) throws SQLException {
         ContentValues cv = new ContentValues();
+        cv.put("contact_id", recipient.getContactId());
         cv.put("mime_type", recipient.getMimeType());
         cv.put("photo_uri", recipient.getPhotoUri());
         cv.put("name", recipient.getName());
@@ -68,6 +70,34 @@ public class Recipient implements Serializable {
      */
     public static void update(SQLiteDatabase db, Recipient recipient) throws SQLException {
         ContentValues cv = new ContentValues();
+        if(recipient.getContactId() > 0) {
+            cv.put("contact_id", recipient.getContactId());
+        }
+        if(recipient.getMimeType() != null) {
+            cv.put("mime_type", recipient.getMimeType());
+        }
+        if(recipient.getPhotoUri() != null) {
+            cv.put("photo_uri", recipient.getPhotoUri());
+        }
+        if(recipient.getName() != null) {
+            cv.put("name", recipient.getName());
+        }
+        if(recipient.getVia() != null) {
+            cv.put("via", recipient.getVia());
+        }
+        if(recipient.getType() != null) {
+            cv.put("account_type", recipient.getType());
+        }
+
+        long id = db.update("tbl_recipient", cv, "recipient_id = " + recipient.getId(), null);
+        if(id < 0) {
+            throw new SQLException("Unable to update recipient!");
+        }
+    }
+
+    public static void updateSetNulls(SQLiteDatabase db, Recipient recipient) throws SQLException {
+        ContentValues cv = new ContentValues();
+        cv.put("contact_id", recipient.getContactId());
         cv.put("mime_type", recipient.getMimeType());
         cv.put("photo_uri", recipient.getPhotoUri());
         cv.put("name", recipient.getName());

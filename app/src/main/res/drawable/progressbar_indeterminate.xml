@@ -28,6 +28,6 @@
         </rotate>
     </item>
 
-    <item android:drawable="@drawable/ic_play_6dp" android:gravity="center" android:left="1dp">
+    <item android:drawable="@drawable/ic_play_6dp" android:gravity="center">
     </item>
 </layer-list>
