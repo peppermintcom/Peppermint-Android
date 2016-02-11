@@ -28,8 +28,7 @@ public class MailUtils {
 
         String friendlyDuration = Utils.getFriendlyDuration(durationInMillis);
         if(isHtml) {
-            friendlyDuration = friendlyDuration.substring(0, 1) + "<span>&#8203;</span>" +
-                    friendlyDuration.substring(1, 4) + "<span>&#8203;</span>" + friendlyDuration.substring(4);
+            friendlyDuration = friendlyDuration.replaceAll(".(?=.)", "$0<span>&#8203;</span>");
         }
 
         ScriptFileReader templateReader = new ScriptFileReader(context, templateResId);
