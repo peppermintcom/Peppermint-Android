@@ -7,20 +7,21 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 
-import com.peppermint.app.MessagesServiceManager;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.PlayerEvent;
 import com.peppermint.app.PlayerServiceManager;
 import com.peppermint.app.R;
+import com.peppermint.app.cloud.MessagesServiceManager;
+import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recipient;
-import com.peppermint.app.sending.SenderEvent;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
 import com.peppermint.app.ui.views.simple.CustomFontButton;
@@ -141,7 +142,7 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
             this.mRootView = mRootView;
 
             if(mRootView != null) {
-                RelativeLayout lytBalloon = (RelativeLayout) mRootView.findViewById(R.id.lytBalloon);
+                FrameLayout lytBalloon = (FrameLayout) mRootView.findViewById(R.id.lytBalloon);
 
                 ImageButton btnPlay = (ImageButton) mRootView.findViewById(R.id.btnPlay);
                 ImageButton btnPause = (ImageButton) mRootView.findViewById(R.id.btnPause);

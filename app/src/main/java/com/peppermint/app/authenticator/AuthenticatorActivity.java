@@ -32,13 +32,13 @@ import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.sending.SenderSupportListener;
-import com.peppermint.app.sending.SenderSupportTask;
-import com.peppermint.app.sending.api.PeppermintApi;
-import com.peppermint.app.sending.api.exceptions.GoogleApiDeniedAuthorizationException;
-import com.peppermint.app.sending.api.exceptions.GoogleApiNoAuthorizationException;
-import com.peppermint.app.sending.api.exceptions.PeppermintApiInvalidAccessTokenException;
-import com.peppermint.app.sending.exceptions.NoInternetConnectionException;
+import com.peppermint.app.cloud.senders.SenderSupportListener;
+import com.peppermint.app.cloud.senders.SenderSupportTask;
+import com.peppermint.app.cloud.apis.PeppermintApi;
+import com.peppermint.app.cloud.apis.exceptions.GoogleApiDeniedAuthorizationException;
+import com.peppermint.app.cloud.apis.exceptions.GoogleApiNoAuthorizationException;
+import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
+import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomAuthenticatorActivity;
 import com.peppermint.app.ui.views.simple.CustomNoScrollListView;
@@ -46,7 +46,7 @@ import com.peppermint.app.ui.views.simple.CustomNoScrollListView;
 import javax.net.ssl.SSLException;
 
 /**
- * Activity which displays login screen to the user.
+ * Activity which displays the sign in screen to the user.
  */
 public class AuthenticatorActivity extends CustomAuthenticatorActivity implements View.OnClickListener, AdapterView.OnItemClickListener {
 
@@ -80,15 +80,14 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     private Account[] mAccounts;
     private String mSelectedAccount;
 
-    // buttons
     private Button mBtnAddAccount;
-
-    // authentication
     private ProgressDialog mProgressDialog;
 
+    // authentication process tasks
     private AuthenticationPeppermintTask mAuthenticationPeppermintTask;
     private AuthenticationGoogleApiTask mAuthenticationGoogleApiTask;
 
+    // authentication process status variables
     private boolean mDoingAuth = false;
     private String mDeviceId, mDeviceKey;
     private String mPassword;
@@ -352,8 +351,6 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        // although this code is also at onResume() and is executed
-        // only after adding it here the list is properly refreshed with the new account
         if(requestCode == NEW_ACCOUNT_CODE && resultCode == Activity.RESULT_OK) {
             refreshAccountList();
             return;
@@ -373,9 +370,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     @Override
     public void onResume() {
         super.onResume();
-
         refreshAccountList();
-
         mTrackerManager.trackScreenView(SCREEN_ID);
     }
 
@@ -396,22 +391,15 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         startGoogleAuthentication();
     }
 
-    /**
-     * Shows the progress UI for a lengthy operation.
-     */
     private void showProgress() {
         if(mProgressDialog != null) {
             mProgressDialog.show();
         }
     }
 
-    /**
-     * Hides the progress UI for a lengthy operation.
-     */
     private void hideProgress() {
         if (mProgressDialog != null) {
             mProgressDialog.dismiss();
         }
     }
-
 }

@@ -14,18 +14,18 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.sending.api.PeppermintApi;
-import com.peppermint.app.sending.api.data.JWTsResponse;
-import com.peppermint.app.sending.api.exceptions.PeppermintApiInvalidAccessTokenException;
-import com.peppermint.app.sending.api.exceptions.PeppermintApiNoAccountException;
-import com.peppermint.app.sending.api.exceptions.PeppermintApiResponseCodeException;
-import com.peppermint.app.sending.api.exceptions.PeppermintApiTooManyRequestsException;
+import com.peppermint.app.cloud.apis.PeppermintApi;
+import com.peppermint.app.cloud.apis.data.JWTsResponse;
+import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
+import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
+import com.peppermint.app.cloud.apis.exceptions.PeppermintApiResponseCodeException;
+import com.peppermint.app.cloud.apis.exceptions.PeppermintApiTooManyRequestsException;
 import com.peppermint.app.tracking.TrackerManager;
 
 /**
  * Created by Nuno Luz on 26-01-2016.
  *
- * Authenticator class for Peppermint.
+ * Authenticator class for Peppermint accounts.
  *
  */
 class Authenticator extends AbstractAccountAuthenticator {
@@ -37,7 +37,6 @@ class Authenticator extends AbstractAccountAuthenticator {
 
     private final PeppermintApi mPeppermintApi;
     private final AuthenticatorUtils mAuthenticatorUtils;
-
 
     public Authenticator(Context context) {
         super(context);
@@ -51,6 +50,7 @@ class Authenticator extends AbstractAccountAuthenticator {
     public Bundle addAccount(AccountAuthenticatorResponse response, String accountType, String authTokenType, String[] requiredFeatures, Bundle options) throws NetworkErrorException {
         mAuthenticatorUtils.refreshAccount();
         if(mAuthenticatorUtils.getAccount() != null) {
+            // allow only one Peppermint account on the device
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -74,7 +74,6 @@ class Authenticator extends AbstractAccountAuthenticator {
     @Override
     public Bundle getAuthToken(AccountAuthenticatorResponse response, Account account, String authTokenType, Bundle options)
             throws NetworkErrorException {
-        Log.d(TAG, "getAuthToken()");
 
         try {
             // if the caller requested an authToken type we don't support, then return an error
@@ -89,6 +88,7 @@ class Authenticator extends AbstractAccountAuthenticator {
             String authToken = mAuthenticatorUtils.peekAccessToken();
 
             if (!TextUtils.isEmpty(authToken)) {
+                // use the already existent access token
                 final Bundle result = new Bundle();
                 result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
                 result.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type);
@@ -108,7 +108,7 @@ class Authenticator extends AbstractAccountAuthenticator {
                     return result;
                 }
             } catch (PeppermintApiInvalidAccessTokenException e) {
-                Log.w(TAG, "Invalid credentials", e);
+                Log.w(TAG, "Invalid credentials!", e);
             } catch (PeppermintApiResponseCodeException e) {
                 throw new NetworkErrorException(e);
             } catch (PeppermintApiTooManyRequestsException e) {
@@ -123,8 +123,8 @@ class Authenticator extends AbstractAccountAuthenticator {
             throw e;
         }
 
-        // if we get here, then we need to re-prompt them for their credentials.
-        // We do that by creating an intent to display our AuthenticatorActivity.
+        // if we get here, then we need to re-prompt the user for credentials.
+        // we do that by creating an intent to display the AuthenticatorActivity.
         final Intent intent = new Intent(mContext, AuthenticatorActivity.class);
         intent.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
         final Bundle bundle = new Bundle();
@@ -133,9 +133,8 @@ class Authenticator extends AbstractAccountAuthenticator {
     }
 
     @Override
-    public Bundle hasFeatures(
-            AccountAuthenticatorResponse response, Account account, String[] features) {
-        // This call is used to query whether the Authenticator supports
+    public Bundle hasFeatures(AccountAuthenticatorResponse response, Account account, String[] features) {
+        // this call is used to query whether the Authenticator supports
         // specific features. We don't expect to get called, so we always
         // return false (no) for any queries.
         final Bundle result = new Bundle();

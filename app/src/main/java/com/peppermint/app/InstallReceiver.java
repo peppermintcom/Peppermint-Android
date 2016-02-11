@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import com.peppermint.app.cloud.MessagesService;
+
 /**
  * Created by Nuno Luz on 05-01-2016.
  */

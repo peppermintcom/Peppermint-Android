@@ -156,10 +156,10 @@ public class Message implements Serializable {
     }
 
     /**
-     * If a message UUID is supplied it performs an update, otherwise, it inserts the sending request.
+     * If a message id is supplied it performs an update, otherwise, it inserts the message.
      *
      * @param db the local database connection
-     * @param message the sending request
+     * @param message the message
      * @throws SQLException
      */
     public static long insertOrUpdate(SQLiteDatabase db, Message message) throws  SQLException {
@@ -177,8 +177,8 @@ public class Message implements Serializable {
     }
 
     /**
-     * Deletes the supplied message data (UUID must be supplied).
-     * An SQLException is thrown if the message UUID does not exist in the database.
+     * Deletes the supplied message data (id must be supplied).
+     * An SQLException is thrown if the message id does not exist in the database.
      *
      * @param db the local database connection
      * @param id the message id
@@ -200,10 +200,11 @@ public class Message implements Serializable {
     }
 
     /**
-     * Obtains the message cursor with the supplied UUID from the database.
+     * Obtains the message cursor with the supplied id or server id from the database.
      *
      * @param db the local database connection
-     * @param id the message UUID
+     * @param id the message id
+     * @param serverId the message server id
      * @return the cursor instance with all data
      */
     public static Cursor getCursorByIdOrServerId(SQLiteDatabase db, long id, String serverId) {
@@ -212,10 +213,11 @@ public class Message implements Serializable {
     }
 
     /**
-     * Obtains the message with the supplied UUID from the database.
+     * Obtains the message with the supplied id or server id from the database.
      *
      * @param db the local database connection
-     * @param id the message UUID
+     * @param id the message id
+     * @param serverId the message server id
      * @return the message instance with all data
      */
     public static Message getByIdOrServerId(SQLiteDatabase db, long id, String serverId) {

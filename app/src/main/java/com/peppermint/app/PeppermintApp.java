@@ -4,6 +4,7 @@ import android.app.Application;
 import android.graphics.Typeface;
 import android.util.Log;
 
+import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.tracking.TrackerManager;
 
 /**

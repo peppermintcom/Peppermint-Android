@@ -115,10 +115,4 @@
 
     </LinearLayout>
 
-    <com.peppermint.app.ui.recipients.SenderControlLayout
-        android:id="@+id/lytStatus"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true" />
-
 </RelativeLayout>

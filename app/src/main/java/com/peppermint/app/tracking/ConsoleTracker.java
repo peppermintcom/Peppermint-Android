@@ -49,18 +49,12 @@ public class ConsoleTracker extends TrackerApi {
     }
 
     @Override
-    public void setUserEmail(String email) {
-
-    }
+    public void setUserEmail(String email) { }
 
     @Override
-    public void setScreen(String screenId) {
-
-    }
+    public void setScreen(String screenId) { }
 
     @Override
-    public void set(String key, String value) {
-
-    }
+    public void set(String key, String value) { }
 
 }

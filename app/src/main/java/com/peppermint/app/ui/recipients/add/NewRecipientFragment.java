@@ -30,7 +30,7 @@ import android.widget.Toast;
 
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
-import com.peppermint.app.sending.SenderPreferences;
+import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.recipients.RecipientAdapterUtils;

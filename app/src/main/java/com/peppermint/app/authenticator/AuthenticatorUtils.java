@@ -6,11 +6,14 @@ import android.accounts.OperationCanceledException;
 import android.content.Context;
 import android.os.Build;
 
-import com.peppermint.app.sending.api.exceptions.PeppermintApiNoAccountException;
+import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
 import com.peppermint.app.tracking.TrackerManager;
 
 /**
  * Created by Nuno Luz on 02-02-2016.
+ * <p>
+ *     Helper/utility class for Peppermint Authentication.
+ * </p>
  */
 public class AuthenticatorUtils {
 
@@ -25,12 +28,20 @@ public class AuthenticatorUtils {
         refreshAccount();
     }
 
+    /**
+     * Check the {@link AccountManager} and get an updated Peppermint account instance.
+     */
     public void refreshAccount() {
         mAccountManager = AccountManager.get(mContext);
         Account[] accounts = mAccountManager.getAccountsByType(AuthenticatorConstants.ACCOUNT_TYPE);
         mAccount = accounts != null && accounts.length > 0 ? accounts[0] : null;
     }
 
+    /**
+     * Get the current access token associated with the Peppermint account.
+     * @return the access token or null if there's none
+     * @throws PeppermintApiNoAccountException if no Peppermint account is found
+     */
     public String peekAccessToken() throws PeppermintApiNoAccountException {
         if(mAccount == null) {
             throw new PeppermintApiNoAccountException();
@@ -38,10 +49,20 @@ public class AuthenticatorUtils {
         return mAccountManager.peekAuthToken(mAccount, AuthenticatorConstants.FULL_TOKEN_TYPE);
     }
 
+    /**
+     * Invalidate the current Peppermint account access token.
+     * @throws PeppermintApiNoAccountException if no Peppermint account is found
+     */
     public void invalidateAccessToken() throws PeppermintApiNoAccountException {
         mAccountManager.invalidateAuthToken(AuthenticatorConstants.FULL_TOKEN_TYPE, peekAccessToken());
     }
 
+    /**
+     * Get an access token for the Peppermint account. <strong>This is a blocking operation</strong>
+     * and will retrieve an access token from the server if necessary.
+     * @return the access token or null if credentials are invalid
+     * @throws PeppermintApiNoAccountException if no Peppermint account is found
+     */
     public String getAccessToken() throws PeppermintApiNoAccountException {
         if(mAccount == null) {
             throw new PeppermintApiNoAccountException();
@@ -58,6 +79,11 @@ public class AuthenticatorUtils {
         }
     }
 
+    /**
+     * Save the device's GCM registration token in the local Peppermint account data.
+     * @param gcmRegistration the GCM registration token
+     * @throws PeppermintApiNoAccountException if no Peppermint account is found
+     */
     public void updateAccountGcmRegistration(String gcmRegistration) throws PeppermintApiNoAccountException {
         if(mAccount == null) {
             throw new PeppermintApiNoAccountException();
@@ -66,6 +92,11 @@ public class AuthenticatorUtils {
         mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_GCM_REG, gcmRegistration);
     }
 
+    /**
+     * Set a new password for the local Peppermint account. <b>This will invalidate the current access token.</b>
+     * @param password the new password
+     * @throws PeppermintApiNoAccountException if no Peppermint account is found
+     */
     public void updateAccountPassword(String password) throws PeppermintApiNoAccountException {
         if(mAccount == null) {
             throw new PeppermintApiNoAccountException();
@@ -75,6 +106,10 @@ public class AuthenticatorUtils {
         invalidateAccessToken();
     }
 
+    /**
+     * Sign out from Peppermint. This will remove the local Peppermint account from the device.
+     * @throws PeppermintApiNoAccountException if no Peppermint account is found
+     */
     public void signOut() throws PeppermintApiNoAccountException {
         if(mAccount == null) {
             throw new PeppermintApiNoAccountException();
@@ -90,10 +125,25 @@ public class AuthenticatorUtils {
         }
     }
 
+    /**
+     * Create a local Peppermint account with the specified data (see also {@link #createAccount(String, String, String, String, String, String, int)}).
+     * @param accessToken the registered account access token
+     * @param data the account data
+     */
     public void createAccount(String accessToken, AuthenticationData data) {
         createAccount(accessToken, data.getEmail(), data.getPassword(), data.getDeviceServerId(), data.getDeviceId(), data.getDeviceKey(), data.getAccountType());
     }
 
+    /**
+     * Create a local Peppermint account with the specified data (see also {@link #createAccount(String, AuthenticationData)}).
+     * @param accessToken the registered account access token
+     * @param email the account email
+     * @param password the account password
+     * @param deviceServerId the device id from the server
+     * @param deviceId the local device id
+     * @param deviceKey the device key/password
+     * @param accountType the account type
+     */
     public void createAccount(String accessToken, String email, String password, String deviceServerId, String deviceId, String deviceKey, int accountType) {
         if(mAccount == null) {
             mAccount = new Account(AuthenticatorConstants.ACCOUNT_NAME, AuthenticatorConstants.ACCOUNT_TYPE);
@@ -112,6 +162,11 @@ public class AuthenticatorUtils {
         }
     }
 
+    /**
+     * Get the Peppermint account data in the {@link AuthenticationData} wrapper class.
+     * @return the {@link AuthenticationData} instance with the account data
+     * @throws PeppermintApiNoAccountException if no Peppermint account is found
+     */
     public AuthenticationData getAccountData() throws PeppermintApiNoAccountException {
         if(mAccount == null) {
             throw new PeppermintApiNoAccountException();

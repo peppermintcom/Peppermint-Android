@@ -2,19 +2,17 @@ package com.peppermint.app.authenticator;
 
 import android.content.Context;
 
-import com.peppermint.app.sending.SenderSupportListener;
-import com.peppermint.app.sending.SenderSupportTask;
-import com.peppermint.app.sending.api.data.JWTsResponse;
+import com.peppermint.app.cloud.senders.SenderSupportListener;
+import com.peppermint.app.cloud.senders.SenderSupportTask;
+import com.peppermint.app.cloud.apis.data.JWTsResponse;
 
 /**
  * Created by Nuno Luz on 28-01-2016.
  * <p>
- *     Peppermint API authorization support task.
+ *     Authentication task for the Peppermint API.
  * </p>
  */
 public class AuthenticationPeppermintTask extends SenderSupportTask {
-
-    private static final String TAG = AuthenticationPeppermintTask.class.getSimpleName();
 
     private String mDeviceServerId;
     private String mDeviceId, mDeviceKey;
@@ -29,14 +27,18 @@ public class AuthenticationPeppermintTask extends SenderSupportTask {
         mAccountType = accountType;
         mDeviceId = deviceId;
         mDeviceKey = deviceKey;
+        // override to set the context
         getIdentity().setContext(context);
     }
 
     @Override
     protected void execute() throws Throwable {
         checkInternetConnection();
+
         String fullName = getSenderPreferences().getFullName();
+
         JWTsResponse response = getPeppermintApi().authOrRegister(mEmail, mPassword, mAccountType, mDeviceId, mDeviceKey, fullName, getTrackerManager());
+
         mAccessToken = response.getAccessToken();
         mDeviceServerId = response.getRecorder().getRecorderId();
     }

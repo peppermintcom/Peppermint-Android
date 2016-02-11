@@ -24,7 +24,7 @@ import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
-import com.peppermint.app.sending.SenderPreferences;
+import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.views.CustomActionBarView;
 import com.peppermint.app.ui.views.NavigationItem;

@@ -9,6 +9,11 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+/**
+ * Created by Nuno Luz on 14-09-2015.
+ *
+ * Calendar wrapper with formatting and manipulation methods.
+ */
 public class DateContainer implements Comparable<DateContainer>, Cloneable {
 
 	public static final String DATE_FORMAT = "yyyy-MM-dd";
@@ -153,6 +158,9 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
         throw new IllegalArgumentException("Invalid date type " + mType);
     }
 
+    /**
+     * Zero the time part of the timestamp only (hours, minutes, seconds and ms)
+     */
     public void zeroTime() {
         mCalendar.set(Calendar.MILLISECOND, 0);
         mCalendar.set(Calendar.SECOND, 0);
@@ -160,6 +168,10 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
         mCalendar.set(Calendar.HOUR_OF_DAY, 0);
     }
 
+    /**
+     * Get the amount of ms since 00:00 for the current time.
+     * @return the ms
+     */
     public long getMillisOfDay() {
 		return mCalendar.get(Calendar.MILLISECOND) + (((long) mCalendar.get(Calendar.SECOND)
 				+ ((long) mCalendar.get(Calendar.MINUTE) * 60l)
@@ -184,10 +196,32 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
         return dateTimeFormat.parse(ts);
     }
 
+    /**
+     * Same as getDateAsStringRelativeTo(context, date, todayDate)
+     * See {@link #getDateAsStringRelativeTo(Context, DateContainer, DateContainer)}
+     * @param context the app context to get friendly label strings
+     * @param date the date
+     * @return the friendly label
+     */
     public static String getRelativeLabelToToday(Context context, DateContainer date) {
         return getDateAsStringRelativeTo(context, date, new DateContainer());
     }
 
+    /**
+     * Get a relative friendly label for the supplied date, relative to the relativeDate.
+     * For instance:
+     *
+     * date = 2015-12-12, relativeToDate = 2015-12-12, the result = "Today"
+     * date = 2015-12-11, relativeToDate = 2015-12-12, the result = "Yesterday"
+     * date = 2015-12-09, relativeToDate = 2015-12-12, the result = "Wednesday"
+     * date = 2015-12-01, relativeToDate = 2015-12-12, the result = "1 Dec"
+     * date = 2015-11-11, relativeToDate = 2016-01-10, the result = "11 Nov 2015"
+     *
+     * @param context the app context to get friendly label strings
+     * @param date the date
+     * @param relativeToDate the relative to date
+     * @return the friendly label
+     */
     public static String getDateAsStringRelativeTo(Context context, DateContainer date, DateContainer relativeToDate) {
         int oldDateType = date.getType();
         date.setType(TYPE_DATE);

@@ -41,20 +41,20 @@
             </intent-filter>
         </receiver>
         <service
-            android:name=".gcm.PeppermintGcmListenerService"
+            android:name=".cloud.gcm.PeppermintGcmListenerService"
             android:exported="false" >
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
             </intent-filter>
         </service>
         <service
-            android:name=".gcm.PeppermintInstanceIDListenerService"
+            android:name=".cloud.gcm.PeppermintInstanceIDListenerService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.android.gms.iid.InstanceID" />
             </intent-filter>
         </service>
-        <service android:name=".gcm.RegistrationIntentService" android:exported="false">
+        <service android:name=".cloud.gcm.RegistrationIntentService" android:exported="false">
         </service>
         <!-- EO GCM Components -->
         
@@ -146,7 +146,7 @@
         <!-- UI: HELPER GET RESULT (utilitary invisible activity that allows services to
             launch other activities and obtain a result through "onActivityResult") -->
         <activity
-            android:name=".sending.GetResultActivity"
+            android:name=".cloud.senders.GetResultActivity"
             android:theme="@style/Theme.Transparent" >
         </activity>
 
@@ -159,7 +159,7 @@
 
         <!-- SERV: SENDING -->
         <service
-            android:name=".MessagesService"
+            android:name=".cloud.MessagesService"
             android:enabled="true"
             android:exported="false" >
             <intent-filter>

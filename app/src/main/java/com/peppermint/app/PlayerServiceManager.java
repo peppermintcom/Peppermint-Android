@@ -7,7 +7,6 @@ import android.content.ServiceConnection;
 import android.os.IBinder;
 
 import com.peppermint.app.data.Message;
-import com.peppermint.app.sending.SenderEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,8 +14,7 @@ import java.util.List;
 /**
  * Created by Nuno Luz on 28/08/2015.
  *
- * Manages the Android Service that sends files through different methods.
- * Allows sending multiple files concurrently.
+ * Manages the Android Service that plays {@link Message}s.
  * It allows an easier interaction with the Android Service API.
  */
 public class PlayerServiceManager {
@@ -28,9 +26,6 @@ public class PlayerServiceManager {
         void onBoundPlayService();
     }
 
-    /**
-     * Listener for file send events (see {@link SenderEvent}).
-     */
     public interface PlayerListener {
         void onPlayerEvent(PlayerEvent event);
     }
@@ -39,7 +34,7 @@ public class PlayerServiceManager {
     private PlayerService.PlayerServiceBinder mService;
     private List<PlayerListener> mPlayerListenerList = new ArrayList<>();
     private List<PlayServiceListener> mServiceListenerList = new ArrayList<>();
-    protected boolean mIsBound = false;                                         // if the manager is bound to the service
+    protected boolean mIsBound = false;
 
     public void onEventMainThread(PlayerEvent event) {
         for(PlayerListener listener : mPlayerListenerList) {
@@ -74,8 +69,9 @@ public class PlayerServiceManager {
     }
 
     /**
-     * Starts the service and sends an intent to start sending the supplied file to the supplied recipient.
-     * @param message the recipient of the file
+     * Starts the service and plays the supplied message.
+     * @param message the message
+     * @param startProgress the starting point in percentage of the total duration of the message
      */
     public void startAndPlay(Message message, int startProgress) {
         Intent intent = new Intent(mContext, PlayerService.class);
@@ -145,12 +141,6 @@ public class PlayerServiceManager {
         return mIsBound;
     }
 
-    /**
-     * Sends the supplied file to the supplied recipient.
-     * Can only be used if the manager is bound to the service.
-     * @param message the recipient of the file
-     * @return the {@link Message} of the send file request/task
-     */
     public void play(Message message, int startPercent) {
         mService.play(message, startPercent);
     }

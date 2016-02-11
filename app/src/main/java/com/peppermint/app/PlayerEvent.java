@@ -5,7 +5,7 @@ import com.peppermint.app.data.Message;
 /**
  * Created by Nuno Luz on 01-10-2015.
  *
- * Represents an event dispatched by the {@link com.peppermint.app.MessagesService} related to received messages.
+ * Represents an event dispatched by the {@link PlayerService}.
  */
 public class PlayerEvent {
 

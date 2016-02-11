@@ -803,6 +803,12 @@ public class Utils {
         return bytes;
     }
 
+    /**
+     * Joins the supplied strings into a single string, adding the separator string in-between.
+     * @param separator the separator/divider
+     * @param strs the set of strings to join
+     * @return the joined string
+     */
     public static String joinString(String separator, String... strs) {
         StringBuilder sb = new StringBuilder();
         boolean first = true;
@@ -831,6 +837,10 @@ public class Utils {
         }
     }
 
+    /**
+     * Deletes all app files in app data directory.
+     * @param context the app context
+     */
     public static void clearApplicationData(Context context) {
         File cache = context.getCacheDir();
         File appDir = new File(cache.getParent());

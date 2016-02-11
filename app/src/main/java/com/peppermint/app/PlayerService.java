@@ -11,12 +11,10 @@ import android.os.IBinder;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.tracking.TrackerManager;
 
-import java.util.UUID;
-
 import de.greenrobot.event.EventBus;
 
 /**
- * Service that allows the background_gradient sending of files through different methods.
+ * Service that plays {@link Message}s. Can be controlled and used from any other app component.
  */
 public class PlayerService extends Service {
 
@@ -53,30 +51,36 @@ public class PlayerService extends Service {
         }
 
         /**
-         * Start a send file request/task that will send the file at the supplied location to the specified recipient.
+         * Play the message starting at startPercent of the total duration.
          * @param message the message
-         * @return the {@link UUID} of the send file request/task
+         * @param startPercent the starting point in percentage of the total duration
          */
         void play(Message message, int startPercent) {
             PlayerService.this.play(message, startPercent);
         }
 
         /**
-         * Cancel the message with the specified {@link UUID}.
-         * <b>If the message is being sent, it might get sent anyway.</b>
-         * @param message the UUID of the message returned by {@link #pause(Message, boolean)}
+         * Pause playing the message (if it's the one playing).
+         * @param message the message
+         * @param resetProgress true to reset the player progress
+         * @return true if the message was playing and was paused; false otherwise
          */
         boolean pause(Message message, boolean resetProgress) {
             return PlayerService.this.pause(message, resetProgress);
         }
 
+        /**
+         * Set the current position of the player in percentage of the total duration of the message.
+         * @param message the message
+         * @param percent the position in percentage of the total duration
+         * @return true if the message was playing and position was updated; false otherwise
+         */
         boolean setPosition(Message message, int percent) {
             return PlayerService.this.setPosition(message, percent);
         }
 
         /**
-         * Cancel all pending and ongoing send requests.
-         * <b>If a send request is ongoing, it might get sent anyway.</b>
+         * Stop and release player + shutdown the service.
          */
         void shutdown() {
             stopSelf();
@@ -193,10 +197,7 @@ public class PlayerService extends Service {
 
     @Override
     public void onDestroy() {
-        // unregister before deinit() to avoid removing cancelled messages
-        // must retry these after reboot
         mEventBus.unregister(this);
-
         super.onDestroy();
     }
 

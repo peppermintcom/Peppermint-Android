@@ -4,6 +4,9 @@ import java.io.Serializable;
 
 /**
  * Created by Nuno Luz on 02-02-2016.
+ * <p>
+ *      Wrapper class for data saved in a Peppermint Android account.
+ * </p>
  */
 public class AuthenticationData implements Serializable {
     private String mEmail, mPassword;

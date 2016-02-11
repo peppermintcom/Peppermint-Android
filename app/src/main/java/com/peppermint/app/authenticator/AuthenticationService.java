@@ -21,8 +21,11 @@ import android.content.Intent;
 import android.os.IBinder;
 
 /**
- * Service to handle Account authentication. It instantiates the authenticator
- * and returns its IBinder.
+ * Created by Nuno Luz on 26-01-2016.
+ * <p>
+ *      Authenticator service to handle Peppermint accounts.
+ *      It instantiates the authenticator and returns its IBinder.
+ * </p>
  */
 public class AuthenticationService extends Service {
 

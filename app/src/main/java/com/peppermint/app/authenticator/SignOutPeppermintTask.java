@@ -2,14 +2,14 @@ package com.peppermint.app.authenticator;
 
 import android.content.Context;
 
-import com.peppermint.app.sending.SenderSupportListener;
-import com.peppermint.app.sending.SenderSupportTask;
+import com.peppermint.app.cloud.senders.SenderSupportListener;
+import com.peppermint.app.cloud.senders.SenderSupportTask;
 import com.peppermint.app.utils.Utils;
 
 /**
  * Created by Nuno Luz on 28-01-2016.
  * <p>
- *     Peppermint API authorization support task.
+ *     Sign out task for the Peppermint API and local account.
  * </p>
  */
 public class SignOutPeppermintTask extends SenderSupportTask {

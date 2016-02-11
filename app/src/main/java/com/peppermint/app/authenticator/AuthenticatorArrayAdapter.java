@@ -12,8 +12,9 @@ import com.peppermint.app.R;
 
 /**
  * Created by Nuno Luz on 27/08/2015.
- *
- * ArrayAdapter to show accounts in a ListView.
+ * <p>
+ *      ArrayAdapter to show accounts in a ListView.
+ * </p>
  */
 public class AuthenticatorArrayAdapter extends ArrayAdapter<Account> {
 

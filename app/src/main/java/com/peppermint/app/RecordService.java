@@ -24,7 +24,7 @@ import java.io.Serializable;
 import de.greenrobot.event.EventBus;
 
 /**
- * Service that allows the background_gradient recording audio/video files.
+ * Service that records audio messages.
  */
 public class RecordService extends Service {
 
@@ -35,11 +35,13 @@ public class RecordService extends Service {
         recording right after starting.
      **/
     public static final String INTENT_DATA_DOSTART = "RecordService_DoStart";
+
     /**
         Intent extra key for a string with the filename prefix for the recorded file.
         This should be supplied if the DOSTART flag is true.
      **/
     public static final String INTENT_DATA_FILEPREFIX = "RecordService_FilePrefix";
+
     /**
         Intent extra key for the {@link Recipient} of the recorded file.
         This service doesn't handle the sending of files but the recipient is required to
@@ -47,6 +49,7 @@ public class RecordService extends Service {
         This <b>must</b> be supplied if the DOSTART flag is true.
      **/
     public static final String INTENT_DATA_RECIPIENT = "RecordService_Recipient";
+
     /**
      Intent extra key for a long with the max duration for the recorded file in millis.
      This should be supplied if the DOSTART flag is true.
@@ -421,23 +424,10 @@ public class RecordService extends Service {
     }
 
     private Notification getNotification() {
-        /*Intent notificationIntent = new Intent(this, RecordingActivity.class);
-        notificationIntent.putExtra(RecordingFragment.INTENT_RECIPIENT_EXTRA, mRecipient);
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        // make sure that the main activity of the app is present in the backstack
-        stackBuilder.addParentStack(RecordingActivity.class);
-        stackBuilder.addNextIntent(notificationIntent);
-        PendingIntent pendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);*/
-
-        // FIXME use proper icons for these notifications
-        // TODO add pause/resume + send + discard? actions to notification perhaps?
-        // TODO add progress in time and perhaps also the recipient's name to notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(RecordService.this)
                 .setSmallIcon(R.drawable.ic_mic_24dp)
                 .setContentTitle(getString(R.string.app_name))
                 .setContentText(getString(mBinder.isPaused() ? R.string.paused : R.string.recording));
-                //.setContentIntent(pendingIntent);
-
         return builder.build();
     }
 

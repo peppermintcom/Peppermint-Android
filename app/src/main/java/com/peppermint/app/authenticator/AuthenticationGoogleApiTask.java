@@ -2,21 +2,19 @@ package com.peppermint.app.authenticator;
 
 import android.content.Context;
 
-import com.peppermint.app.sending.SenderSupportListener;
-import com.peppermint.app.sending.SenderSupportTask;
-import com.peppermint.app.sending.api.GoogleApi;
-import com.peppermint.app.sending.mail.gmail.GmailSender;
+import com.peppermint.app.cloud.senders.SenderSupportListener;
+import com.peppermint.app.cloud.senders.SenderSupportTask;
+import com.peppermint.app.cloud.apis.GoogleApi;
+import com.peppermint.app.cloud.senders.mail.gmail.GmailSender;
 import com.peppermint.app.utils.Utils;
 
 /**
  * Created by Nuno Luz on 28-01-2016.
  * <p>
- *     Peppermint API authorization support task.
+ *     Authentication task for the Google API.
  * </p>
  */
 public class AuthenticationGoogleApiTask extends SenderSupportTask {
-
-    private static final String TAG = AuthenticationGoogleApiTask.class.getSimpleName();
 
     private String mGoogleToken;
     private String mEmail;
@@ -24,16 +22,19 @@ public class AuthenticationGoogleApiTask extends SenderSupportTask {
     public AuthenticationGoogleApiTask(Context context, String email, SenderSupportListener senderSupportListener) {
         super(null, null, senderSupportListener);
         this.mEmail = email;
+        // override to set the context
         getIdentity().setContext(context);
     }
 
     @Override
     protected void execute() throws Throwable {
         checkInternetConnection();
-        // try to authorize Google API
+
+        // try to authorize and get the token from the Google API
         GoogleApi googleApi = getGoogleApi(mEmail);
         googleApi.refreshAccessToken();
 
+        // get the user name from the Google API
         GoogleApi.UserInfoResponse response = googleApi.getUserInfo();
 
         String firstName = response.getFirstName();
@@ -49,7 +50,7 @@ public class AuthenticationGoogleApiTask extends SenderSupportTask {
             getSenderPreferences().setLastName(names[1]);
         }
 
-        mGoogleToken = googleApi.getCredential().getToken();
+        mGoogleToken = googleApi.getAccessToken();
     }
 
     public String getGoogleToken() {

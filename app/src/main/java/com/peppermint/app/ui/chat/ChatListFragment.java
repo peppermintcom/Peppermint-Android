@@ -12,12 +12,12 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 
-import com.peppermint.app.MessagesServiceManager;
+import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.R;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.DatabaseHelper;
-import com.peppermint.app.sending.ReceiverEvent;
-import com.peppermint.app.sending.SenderEvent;
+import com.peppermint.app.cloud.ReceiverEvent;
+import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.utils.Utils;

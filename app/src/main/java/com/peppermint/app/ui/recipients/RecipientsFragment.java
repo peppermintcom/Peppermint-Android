@@ -85,6 +85,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
     private AnimatorBuilder mAnimatorBuilder;
     private boolean mHasSavedInstanceState = false;
+    private boolean mOnActivityResult = false;
 
     // the recipient list
     private View mRecipientListContainer;
@@ -606,14 +607,18 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         // global touch interceptor to hide keyboard
         getCustomActionBarActivity().addTouchEventInterceptor(mTouchInterceptor);
 
-        if(!mHasSavedInstanceState) {
-            // default view is all contacts
-            int selectedItemPosition = 0;
-            if(!hasRecents()) {
-                // select "all contacts" in case there are not fav/recent contacts
-                selectedItemPosition = 1;
+        if(!mOnActivityResult) {
+            if (!mHasSavedInstanceState) {
+                // default view is all contacts
+                int selectedItemPosition = 0;
+                if (!hasRecents()) {
+                    // select "all contacts" in case there are not fav/recent contacts
+                    selectedItemPosition = 1;
+                }
+                mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
             }
-            mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
+        } else {
+            mOnActivityResult = false;
         }
 
         onSearch(mSearchListBarView.getSearchText());
@@ -676,6 +681,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == REQUEST_NEWCONTACT) {
+            mOnActivityResult = true;
             if(resultCode == Activity.RESULT_OK) {
                 mSearchListBarView.setSearchText(data.getStringExtra(NewRecipientFragment.KEY_NAME));
             } else {
