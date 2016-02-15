@@ -6,7 +6,6 @@ import android.view.View;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
-import com.peppermint.app.data.Recipient;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.views.NavigationItem;
 import com.peppermint.app.ui.views.RoundImageView;
@@ -22,14 +21,9 @@ import java.util.List;
  */
 public class ChatActivity extends CustomActionBarActivity {
 
-    private static final String TAG = ChatActivity.class.getSimpleName();
-
     // UI
     private CustomFontTextView mTxtChatName, mTxtChatVia;
     private RoundImageView mImgAvatar;
-
-    // DATA
-    private Recipient mRecipient;
 
     @Override
     protected List<NavigationItem> getNavigationItems() {

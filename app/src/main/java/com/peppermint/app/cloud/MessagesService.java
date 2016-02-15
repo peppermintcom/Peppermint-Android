@@ -509,7 +509,7 @@ public class MessagesService extends Service {
 
     private Notification getNotification(Message message) {
         Intent notificationIntent = new Intent(MessagesService.this, ChatActivity.class);
-        /*notificationIntent.putExtra(ChatFragment.PARAM_AUTO_PLAY_MESSAGE_ID, message.getId());*/
+        notificationIntent.putExtra(ChatFragment.PARAM_AUTO_PLAY_MESSAGE_ID, message.getId());
         notificationIntent.putExtra(ChatFragment.PARAM_RECIPIENT, message.getRecipient());
         PendingIntent pendingIntent = PendingIntent.getActivity(MessagesService.this, (int) message.getId(), notificationIntent, 0);
 
