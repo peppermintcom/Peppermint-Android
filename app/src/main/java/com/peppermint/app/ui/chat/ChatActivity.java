@@ -50,7 +50,7 @@ public class ChatActivity extends CustomActionBarActivity {
         mTxtChatVia = (CustomFontTextView) v.findViewById(R.id.txtChatVia);
         mImgAvatar = (RoundImageView) v.findViewById(R.id.imgChatAvatar);
 
-        getCustomActionBar().setContents(v, true);
+        getCustomActionBar().setContents(v, false);
     }
 
     protected void setActionBarData(String recipientName, String recipientVia, String recipientPhotoUri) {
