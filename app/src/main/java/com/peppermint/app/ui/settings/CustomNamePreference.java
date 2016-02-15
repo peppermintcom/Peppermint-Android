@@ -233,6 +233,18 @@ public class CustomNamePreference extends CustomDialogPreference {
      * @return The current preference value.
      */
     public String getFullName() {
+        if(mLastName == null && mFirstName == null) {
+            return "";
+        }
+
+        if(mLastName == null) {
+            return Utils.capitalizeFully(mFirstName);
+        }
+
+        if(mFirstName == null) {
+            return Utils.capitalizeFully(mLastName);
+        }
+
         return Utils.capitalizeFully(mFirstName + " " + mLastName);
     }
 

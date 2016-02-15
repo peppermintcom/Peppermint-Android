@@ -119,7 +119,6 @@ public class AuthenticatorUtils {
             mAccountManager.removeAccountExplicitly(getAccount());
         } else {
             mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_EMAIL, null);
-            mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_TYPE, null);
             mAccountManager.setPassword(mAccount, null);
             mAccountManager.setAuthToken(mAccount, AuthenticatorConstants.FULL_TOKEN_TYPE, null);
         }
@@ -172,9 +171,14 @@ public class AuthenticatorUtils {
             throw new PeppermintApiNoAccountException();
         }
 
+        String email = mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_EMAIL);
+        if(email == null) {
+            throw new PeppermintApiNoAccountException();
+        }
+
         AuthenticationData data = new AuthenticationData();
         data.setGcmRegistration(mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_GCM_REG));
-        data.setEmail(mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_EMAIL));
+        data.setEmail(email);
         data.setDeviceServerId(mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_DEVICE_SERVER_ID));
         data.setDeviceId(mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_DEVICE_ID));
         data.setDeviceKey(mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_DEVICE_KEY));
