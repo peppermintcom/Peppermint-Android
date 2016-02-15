@@ -197,7 +197,7 @@ public class Chat implements Serializable {
     private long mId;
 
     private Recipient mMainRecipient;
-    private String mLastMessageTimestamp = DateContainer.getCurrentTimestamp();
+    private String mLastMessageTimestamp = DateContainer.getCurrentUTCTimestamp();
 
     public Chat() {
     }

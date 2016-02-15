@@ -191,7 +191,9 @@ public class RecordService extends Service {
     }
 
     private static Recording newRecording(ExtendedAudioRecorder recorder) {
-        return new Recording(recorder.getFilePath(), recorder.getFullDuration(), recorder.getFullSize(), false);
+        Recording recording = new Recording(recorder.getFilePath(), recorder.getFullDuration(), recorder.getFullSize(), false);
+        recording.setRecordedTimestamp(recorder.getStartTimestamp());
+        return recording;
     }
 
     /**
@@ -245,7 +247,7 @@ public class RecordService extends Service {
     private final ExtendedAudioRecorder.Listener mAudioRecorderListener = new ExtendedAudioRecorder.Listener() {
 
         @Override
-        public void onStart(String filePath, long durationInMillis, float sizeKbs, int amplitude) {
+        public void onStart(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp) {
             updateLoudness();
 
             if(mIsInForegroundMode) {
@@ -260,7 +262,7 @@ public class RecordService extends Service {
         }
 
         @Override
-        public void onPause(String filePath, long durationInMillis, float sizeKbs, int amplitude) {
+        public void onPause(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp) {
             updateNotification();
 
             Event e = new Event(newRecording(mRecorder), mRecipient, amplitude, EVENT_PAUSE);
@@ -268,7 +270,7 @@ public class RecordService extends Service {
         }
 
         @Override
-        public void onResume(String filePath, long durationInMillis, float sizeKbs, int amplitude) {
+        public void onResume(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp) {
             updateLoudness();
             updateNotification();
 
@@ -277,7 +279,7 @@ public class RecordService extends Service {
         }
 
         @Override
-        public void onStop(String filePath, long durationInMillis, float sizeKbs, int amplitude) {
+        public void onStop(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp) {
             if(mIsInForegroundMode) {
                 stopForeground(true);
                 mIsInForegroundMode = false;
@@ -287,7 +289,7 @@ public class RecordService extends Service {
         }
 
         @Override
-        public void onError(String filePath, long durationInMillis, float sizeKbs, int amplitude, Throwable t) {
+        public void onError(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp, Throwable t) {
             if(mIsInForegroundMode) {
                 stopForeground(true);
                 mIsInForegroundMode = false;

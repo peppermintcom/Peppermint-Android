@@ -95,7 +95,7 @@ public class GmailSenderTask extends SenderUploadTask {
 
             Date emailDate = new Date();
             try {
-                emailDate = DateContainer.parseTimestamp(getMessage().getRegistrationTimestamp());
+                emailDate = DateContainer.parseUTCTimestamp(getMessage().getRegistrationTimestamp()).toDate();
             } catch(ParseException e) {
                 getTrackerManager().logException(e);
             }

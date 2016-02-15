@@ -282,7 +282,7 @@ public class Message implements Serializable {
     private String mEmailSubject;
     private String mEmailBody;
 
-    private String mRegistrationTimestamp = DateContainer.getCurrentTimestamp();
+    private String mRegistrationTimestamp = DateContainer.getCurrentUTCTimestamp();
     private boolean mSent = false;
     private boolean mReceived = false;
     private boolean mPlayed = false;

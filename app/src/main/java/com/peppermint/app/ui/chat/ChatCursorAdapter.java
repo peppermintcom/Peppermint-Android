@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +19,8 @@ import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
 import com.peppermint.app.ui.views.simple.CustomFontTextView;
 import com.peppermint.app.utils.DateContainer;
+
+import org.joda.time.DateTimeZone;
 
 import java.text.ParseException;
 
@@ -75,11 +76,13 @@ public class ChatCursorAdapter extends CursorAdapter {
         if(chat.getLastMessageTimestamp() != null) {
             try {
                 DateContainer lastMessageDate = new DateContainer(DateContainer.TYPE_DATE, chat.getLastMessageTimestamp().substring(0, 10));
-                txtLastMessageDate.setText(DateContainer.getRelativeLabelToToday(mContext, lastMessageDate));
+                txtLastMessageDate.setText(DateContainer.getRelativeLabelToToday(mContext, lastMessageDate, DateTimeZone.getDefault()));
             } catch (ParseException e) {
                 mTrackerManager.logException(e);
                 txtLastMessageDate.setText(chat.getLastMessageTimestamp());
             }
+        } else {
+            txtLastMessageDate.setText("");
         }
 
         int unreadAmount = Message.getUnopenedCountByChat(mDb, chat.getId());

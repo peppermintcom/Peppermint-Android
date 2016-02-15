@@ -196,7 +196,7 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
         if(mChat == null) {
             mChat = Chat.getByMainRecipient(getDatabase(), mRecipient.getId());
             if(mChat == null) {
-                mChat = new Chat(mRecipient, DateContainer.getCurrentTimestamp());
+                mChat = new Chat(mRecipient, DateContainer.getCurrentUTCTimestamp());
             }
         }
 

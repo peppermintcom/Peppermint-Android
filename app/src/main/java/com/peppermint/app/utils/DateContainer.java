@@ -4,10 +4,12 @@ import android.content.Context;
 
 import com.peppermint.app.R;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 
 /**
  * Created by Nuno Luz on 14-09-2015.
@@ -25,27 +27,29 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
     public static final String FRIENDLY_MONTH_DATE_FORMAT = "d MMM";
     public static final String FRIENDLY_WEEK_DATE_FORMAT = "EEEE";
 
-	private static final SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
-	private static final SimpleDateFormat timeFormat = new SimpleDateFormat(TIME_FORMAT);
-	private static final SimpleDateFormat dateTimeFormat = new SimpleDateFormat(DATETIME_FORMAT);
+	private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormat.forPattern(DATE_FORMAT);
+	private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormat.forPattern(TIME_FORMAT);
+	private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormat.forPattern(DATETIME_FORMAT);
 
     public static final int TYPE_DATE = 1;
     public static final int TYPE_TIME = 2;
     public static final int TYPE_DATETIME = 3;
 
 	private int mType = TYPE_DATE;
-	private Calendar mCalendar = Calendar.getInstance();
+	private DateTime mInputCalendar;
 
 	public DateContainer() {
+        mInputCalendar = new DateTime(DateTimeZone.UTC);
 	}
 
     public DateContainer(int mType) {
+        this();
         this.mType = mType;
     }
 
     public DateContainer(DateContainer dateContainer) {
         mType = dateContainer.getType();
-        mCalendar = (Calendar) dateContainer.getCalendar().clone();
+        mInputCalendar = new DateTime(dateContainer.mInputCalendar);
     }
 
     public DateContainer(int mType, String dateTimeStr) throws ParseException {
@@ -53,61 +57,60 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
         setFromString(dateTimeStr);
     }
 
-	public DateContainer(int mType, Calendar mCalendar) {
+	public DateContainer(int mType, DateTime mDateTime) {
         this.mType = mType;
-		this.mCalendar = mCalendar;
+		this.mInputCalendar = mDateTime;
 	}
 
 	public void setFromString(String dateTimeStr) throws ParseException {
         switch (mType) {
         case TYPE_DATE:
-            mCalendar.setTime(dateFormat.parse(dateTimeStr));
+            mInputCalendar = DateTime.parse(dateTimeStr, DATE_FORMATTER);
             break;
         case TYPE_DATETIME:
-            mCalendar.setTime(dateTimeFormat.parse(dateTimeStr));
+            mInputCalendar = DateTime.parse(dateTimeStr, DATE_TIME_FORMATTER);
             break;
         case TYPE_TIME:
-            mCalendar.setTime(timeFormat.parse(dateTimeStr));
+            mInputCalendar = DateTime.parse(dateTimeStr, TIME_FORMATTER);
             break;
         }
 	}
 
 	@Override
 	public String toString() {
-		return getAsString();
+		return getAsString(DateTimeZone.UTC);
 	}
 
-	public String getAsString() {
+	public String getAsString(DateTimeZone timeZone) {
         String dateTimeStr = null;
 		switch (mType) {
 		case TYPE_DATE:
-            dateTimeStr = dateFormat.format(mCalendar.getTime());
+            dateTimeStr = mInputCalendar.withZone(timeZone).toString(DATE_FORMATTER);
 			break;
 		case TYPE_DATETIME:
-            dateTimeStr = dateTimeFormat.format(mCalendar.getTime());
+            dateTimeStr = mInputCalendar.withZone(timeZone).toString(DATE_TIME_FORMATTER);
 			break;
 		case TYPE_TIME:
-            dateTimeStr = timeFormat.format(mCalendar.getTime());
+            dateTimeStr = mInputCalendar.withZone(timeZone).toString(TIME_FORMATTER);
 			break;
 		}
         return dateTimeStr;
 	}
 
-	public String getAsString(String customPattern) {
+	public String getAsString(String customPattern, DateTimeZone timeZone) {
         if(customPattern == null) {
-            return getAsString();
+            return getAsString(timeZone);
         }
-
-		SimpleDateFormat f = new SimpleDateFormat(customPattern);
-		return f.format(mCalendar.getTime());
+        DateTimeFormatter formatter = DateTimeFormat.forPattern(customPattern);
+		return mInputCalendar.withZone(timeZone).toString(formatter);
 	}
 
-    public Calendar getCalendar() {
-        return mCalendar;
+    public DateTime getDateTime() {
+        return mInputCalendar;
     }
 
-    public void setCalendar(Calendar mCalendar) {
-        this.mCalendar = mCalendar;
+    public void setDateTime(DateTime mDateTime) {
+        this.mInputCalendar = mDateTime;
     }
 
     public int getType() {
@@ -125,16 +128,16 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
 
     @Override
     public boolean equals(Object o) {
-        DateContainer dateContainer = null;
+        DateTime dateTime = null;
 
         if(o instanceof DateContainer) {
-            dateContainer = (DateContainer) o;
-        } else if(o instanceof Calendar) {
-            dateContainer = new DateContainer(TYPE_DATETIME, (Calendar) o);
+            dateTime = ((DateContainer) o).getDateTime();
+        } else if(o instanceof DateTime) {
+            dateTime = (DateTime) o;
         }
 
-        if(dateContainer != null) {
-            return compareTo(dateContainer) == 0;
+        if(dateTime != null) {
+            return mInputCalendar.compareTo(dateTime) == 0;
         }
 
         return super.equals(o);
@@ -150,9 +153,9 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
                 tmpOtherDateContainer.zeroTime();
                 DateContainer tmpThisDateContainer = new DateContainer(this);
                 tmpThisDateContainer.zeroTime();
-                return tmpThisDateContainer.getCalendar().compareTo(tmpOtherDateContainer.getCalendar());
+                return tmpThisDateContainer.getDateTime().compareTo(tmpOtherDateContainer.getDateTime());
             case TYPE_DATETIME:
-                return mCalendar.compareTo(dateContainer.getCalendar());
+                return mInputCalendar.compareTo(dateContainer.getDateTime());
         }
 
         throw new IllegalArgumentException("Invalid date type " + mType);
@@ -162,10 +165,7 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
      * Zero the time part of the timestamp only (hours, minutes, seconds and ms)
      */
     public void zeroTime() {
-        mCalendar.set(Calendar.MILLISECOND, 0);
-        mCalendar.set(Calendar.SECOND, 0);
-        mCalendar.set(Calendar.MINUTE, 0);
-        mCalendar.set(Calendar.HOUR_OF_DAY, 0);
+        mInputCalendar = mInputCalendar.millisOfDay().setCopy(0);
     }
 
     /**
@@ -173,17 +173,15 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
      * @return the ms
      */
     public long getMillisOfDay() {
-		return mCalendar.get(Calendar.MILLISECOND) + (((long) mCalendar.get(Calendar.SECOND)
-				+ ((long) mCalendar.get(Calendar.MINUTE) * 60l)
-				+ ((long) mCalendar.get(Calendar.HOUR_OF_DAY) * 3600l)) * 1000l);
+        return mInputCalendar.getMillisOfDay();
 	}
 
     /**
      * Get current timestamp in the "yyyy-MM-dd HH-mm-ss" format.
      * @return the current timestamp
      */
-    public static String getCurrentTimestamp() {
-        return dateTimeFormat.format(Calendar.getInstance().getTime());
+    public static String getCurrentUTCTimestamp() {
+        return (new DateTime(DateTimeZone.UTC)).toString(DATE_TIME_FORMATTER);
     }
 
     /**
@@ -192,8 +190,8 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
      * @return the timestamp date instance
      * @throws ParseException
      */
-    public static Date parseTimestamp(String ts) throws ParseException {
-        return dateTimeFormat.parse(ts);
+    public static DateTime parseUTCTimestamp(String ts) throws ParseException {
+        return DateTime.parse(ts, DATE_TIME_FORMATTER);
     }
 
     /**
@@ -203,8 +201,8 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
      * @param date the date
      * @return the friendly label
      */
-    public static String getRelativeLabelToToday(Context context, DateContainer date) {
-        return getDateAsStringRelativeTo(context, date, new DateContainer());
+    public static String getRelativeLabelToToday(Context context, DateContainer date, DateTimeZone timeZone) {
+        return getDateAsStringRelativeTo(context, date, new DateContainer(), timeZone);
     }
 
     /**
@@ -222,27 +220,29 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
      * @param relativeToDate the relative to date
      * @return the friendly label
      */
-    public static String getDateAsStringRelativeTo(Context context, DateContainer date, DateContainer relativeToDate) {
+    public static String getDateAsStringRelativeTo(Context context, DateContainer date, DateContainer relativeToDate, DateTimeZone timeZone) {
         int oldDateType = date.getType();
         date.setType(TYPE_DATE);
-        DateContainer tmpDate = new DateContainer(TYPE_DATE, (Calendar) relativeToDate.getCalendar().clone());
+        DateTime tmpDate = new DateTime(relativeToDate.getDateTime());
 
-        String label = date.getAsString(FRIENDLY_FULL_DATE_FORMAT);
+        String label = date.getAsString(FRIENDLY_FULL_DATE_FORMAT, timeZone);
 
-        if(date.equals(tmpDate)) {
+        boolean isSameDay = date.getDateTime().getDayOfYear() == tmpDate.getDayOfYear() && date.getDateTime().getYear() == tmpDate.getYear();
+        if(isSameDay) {
             label = context.getString(R.string.date_today);
         } else {
-            tmpDate.getCalendar().add(Calendar.HOUR, -24);
-            if(date.equals(tmpDate)) {
+            tmpDate = tmpDate.hourOfDay().addToCopy(-24);
+            isSameDay = date.getDateTime().getDayOfYear() == tmpDate.getDayOfYear() && date.getDateTime().getYear() == tmpDate.getYear();
+            if(isSameDay) {
                 label = context.getString(R.string.date_yesterday);
             } else {
-                tmpDate.getCalendar().add(Calendar.HOUR, -144); // go 1 week back
-                if(date.compareTo(tmpDate) < 0) {
-                    if(date.getCalendar().get(Calendar.YEAR) == tmpDate.getCalendar().get(Calendar.YEAR)) {
-                        label = date.getAsString(FRIENDLY_MONTH_DATE_FORMAT);
+                tmpDate = tmpDate.hourOfDay().addToCopy(-144); // go 1 week back
+                if(date.getDateTime().compareTo(tmpDate) < 0) {
+                    if(date.getDateTime().getYear() == tmpDate.getYear()) {
+                        label = date.getAsString(FRIENDLY_MONTH_DATE_FORMAT, timeZone);
                     }
                 } else {
-                    label = date.getAsString(FRIENDLY_WEEK_DATE_FORMAT);
+                    label = date.getAsString(FRIENDLY_WEEK_DATE_FORMAT, timeZone);
                 }
             }
         }

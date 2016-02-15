@@ -33,11 +33,11 @@ import java.util.Calendar;
 public class ExtendedAudioRecorder {
 
     public interface Listener {
-        void onStart(String filePath, long durationInMillis, float sizeKbs, int amplitude);
-        void onPause(String filePath, long durationInMillis, float sizeKbs, int amplitude);
-        void onResume(String filePath, long durationInMillis, float sizeKbs, int amplitude);
-        void onStop(String filePath, long durationInMillis, float sizeKbs, int amplitude);
-        void onError(String filePath, long durationInMillis, float sizeKbs, int amplitude, Throwable t);
+        void onStart(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp);
+        void onPause(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp);
+        void onResume(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp);
+        void onStop(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp);
+        void onError(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp, Throwable t);
     }
 
     private static final String TAG = ExtendedAudioRecorder.class.getSimpleName();
@@ -58,6 +58,7 @@ public class ExtendedAudioRecorder {
     private long mFullDuration = 0;
     private float mFullSize = 0;
     private int mAmplitude = 0;
+    private String mStartTimestamp;
 
     // external event listener
     private Listener mListener;
@@ -91,9 +92,9 @@ public class ExtendedAudioRecorder {
 
             if(mListener != null) {
                 if (error != null) {
-                    mListener.onError(mFilePath, mFullDuration, mFullSize, mAmplitude, error);
+                    mListener.onError(mFilePath, mFullDuration, mFullSize, mAmplitude, mStartTimestamp, error);
                 } else {
-                    mListener.onStop(mFilePath, mFullDuration, mFullSize, mAmplitude);
+                    mListener.onStop(mFilePath, mFullDuration, mFullSize, mAmplitude, mStartTimestamp);
                 }
             }
         }
@@ -177,12 +178,12 @@ public class ExtendedAudioRecorder {
                         if(!(error instanceof NoMicDataIOException)) {
                             TrackerManager.getInstance(mContext.getApplicationContext()).logException(error);
                         }
-                        mListener.onError(mFilePath, mFullDuration, mFullSize, mAmplitude, error);
+                        mListener.onError(mFilePath, mFullDuration, mFullSize, mAmplitude, mStartTimestamp, error);
                     } else {
                         if (mPaused) {
-                            mListener.onPause(mFilePath, mFullDuration, mFullSize, mAmplitude);
+                            mListener.onPause(mFilePath, mFullDuration, mFullSize, mAmplitude, mStartTimestamp);
                         } else {
-                            mListener.onStop(mFilePath, mFullDuration, mFullSize, mAmplitude);
+                            mListener.onStop(mFilePath, mFullDuration, mFullSize, mAmplitude, mStartTimestamp);
                         }
                     }
                 }
@@ -414,9 +415,10 @@ public class ExtendedAudioRecorder {
 
         if(mListener != null) {
             if(isResume) {
-                mListener.onResume(mFilePath, mFullDuration, mFullSize, mAmplitude);
+                mListener.onResume(mFilePath, mFullDuration, mFullSize, mAmplitude, mStartTimestamp);
             } else {
-                mListener.onStart(mFilePath, mFullDuration, mFullSize, mAmplitude);
+                mStartTimestamp = DateContainer.getCurrentUTCTimestamp();
+                mListener.onStart(mFilePath, mFullDuration, mFullSize, mAmplitude, mStartTimestamp);
             }
         }
 
@@ -472,6 +474,10 @@ public class ExtendedAudioRecorder {
 
     public int getAmplitude() {
         return mAmplitude;
+    }
+
+    public String getStartTimestamp() {
+        return mStartTimestamp;
     }
 
     public Listener getListener() {

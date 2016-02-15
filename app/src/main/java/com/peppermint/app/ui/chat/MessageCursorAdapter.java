@@ -29,6 +29,8 @@ import com.peppermint.app.ui.views.simple.CustomFontTextView;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
+import org.joda.time.DateTimeZone;
+
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
@@ -164,7 +166,7 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
                 // time received/sent
                 try {
                     DateContainer curTime = new DateContainer(DateContainer.TYPE_TIME, message.getRegistrationTimestamp().substring(11));
-                    txtTime.setText(curTime.getAsString(DateContainer.FRIENDLY_AMPM_TIME_FORMAT).replace(".", ""));
+                    txtTime.setText(curTime.getAsString(DateContainer.FRIENDLY_AMPM_TIME_FORMAT, DateTimeZone.getDefault()).replace(".", ""));
                 } catch(ParseException e) {
                     txtTime.setText(message.getRegistrationTimestamp());
                     mTrackerManager.logException(e);
@@ -190,7 +192,7 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
                     }
 
                     if(txtDay.getVisibility() == View.VISIBLE) {
-                        String dayLabel = DateContainer.getRelativeLabelToToday(mContext, curDate);
+                        String dayLabel = DateContainer.getRelativeLabelToToday(mContext, curDate, DateTimeZone.getDefault());
                         txtDay.setText(dayLabel);
                     }
                 } catch(ParseException e) {

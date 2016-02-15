@@ -36,7 +36,7 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
     private static final long MIN_DURATION_MILLIS = 2000;
     private static final long MAX_DURATION_MILLIS = 300000; // 5min
 
-    private static final int MIN_SWIPE_DISTANCE_DP = 130;        // min swipe distance
+    private static final int MIN_SWIPE_DISTANCE_DP = 90;        // min swipe distance
     private static final int MAX_SWIPE_DURATION = 300;        // max swipe duration
 
     private CustomActionBarActivity mActivity;

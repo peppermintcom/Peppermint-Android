@@ -6,6 +6,8 @@ import android.graphics.Typeface;
 import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.tracking.TrackerManager;
 
+import net.danlew.android.joda.JodaTimeAndroid;
+
 /**
  * Created by Nuno Luz on 15-09-2015.
  *
@@ -18,6 +20,8 @@ public class PeppermintApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        JodaTimeAndroid.init(this);
 
         // init tracker apis
         TrackerManager.getInstance(this);
