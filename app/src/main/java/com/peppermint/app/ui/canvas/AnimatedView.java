@@ -14,7 +14,6 @@ import android.graphics.SurfaceTexture;
 import android.os.Build;
 import android.os.SystemClock;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.TextureView;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
@@ -560,8 +559,7 @@ public class AnimatedView extends TextureView {
             stopDrawingThread();
             super.onDetachedFromWindow();
         } catch (Throwable e) {
-            Log.e(TAG, "Error on detaching view!", e);
-            TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
+            TrackerManager.getInstance(getContext().getApplicationContext()).log("Error detaching view! Probable bug of Android 4", e);
         }
     }
 }

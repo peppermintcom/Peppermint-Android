@@ -381,12 +381,14 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
 
     // the method that displays the img_popup.
     private void showPopup() {
-        mHandler.removeCallbacks(mShowPopupRunnable);
-        dismissPopup();
-        int[] location = new int[2];
-        mRecordLayout.getLocationOnScreen(location);
-        mHoldPopup.showAtLocation(mRecordLayout, Gravity.LEFT | Gravity.TOP, mRecordLayout.getWidth() - Utils.dpToPx(mActivity, 270), location[1] - Utils.dpToPx(mActivity, 30));
-        mHandler.postDelayed(mDismissPopupRunnable, 6000);
+        if(!mHoldPopup.isShowing() && !isDetached() && mActivity != null) {
+            mHandler.removeCallbacks(mShowPopupRunnable);
+            dismissPopup();
+            int[] location = new int[2];
+            mRecordLayout.getLocationOnScreen(location);
+            mHoldPopup.showAtLocation(mRecordLayout, Gravity.LEFT | Gravity.TOP, mRecordLayout.getWidth() - Utils.dpToPx(mActivity, 270), location[1] - Utils.dpToPx(mActivity, 30));
+            mHandler.postDelayed(mDismissPopupRunnable, 6000);
+        }
     }
 
 }

@@ -26,6 +26,7 @@ public class BitmapLayer extends LayerBase implements Layer {
     private Paint mPaint, mBorderPaint;
 
     private int mBorderWidth, mCornerRadius;
+    private Rect mPrevBounds;
 
     public BitmapLayer(Context context, int bitmapRes, Paint paint) {
         super(context);
@@ -36,6 +37,7 @@ public class BitmapLayer extends LayerBase implements Layer {
 
     private synchronized void initDrawable() {
         mDrawable = (BitmapDrawable) Utils.getDrawable(getContext(), mBitmapRes);
+        mPrevBounds = null;
         initShader();
     }
 
@@ -43,6 +45,12 @@ public class BitmapLayer extends LayerBase implements Layer {
         if(getBounds() == null || getBounds().width() <= 0 || getBounds().height() <= 0) {
             return;
         }
+
+        if(mPrevBounds != null && mPrevBounds.equals(getBounds())) {
+            return;
+        }
+
+        mPrevBounds = getBounds();
 
         if(mDrawable != null) {
             BitmapShader shader = new BitmapShader(Bitmap.createScaledBitmap(mDrawable.getBitmap(), getBounds().width(), getBounds().height(), false), Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
@@ -93,6 +101,7 @@ public class BitmapLayer extends LayerBase implements Layer {
 
     public void setBitmapDrawable(BitmapDrawable mDrawable) {
         this.mDrawable = mDrawable;
+        mPrevBounds = null;
         initShader();
     }
 

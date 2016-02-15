@@ -10,18 +10,18 @@ import android.provider.ContactsContract;
 import android.view.View;
 import android.widget.Toast;
 
-import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.PlayerEvent;
 import com.peppermint.app.PlayerServiceManager;
 import com.peppermint.app.R;
 import com.peppermint.app.RecordService;
 import com.peppermint.app.authenticator.AuthenticationData;
-import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.Recipient;
-import com.peppermint.app.data.Recording;
+import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.ReceiverEvent;
 import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.cloud.senders.SenderPreferences;
+import com.peppermint.app.data.Chat;
+import com.peppermint.app.data.Recipient;
+import com.peppermint.app.data.Recording;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
 import com.peppermint.app.ui.recipients.add.NewRecipientActivity;
@@ -226,7 +226,7 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == REQUEST_NEWCONTACT_AND_SEND) {
-            if(resultCode == Activity.RESULT_OK) {
+            if(resultCode == Activity.RESULT_OK && mFinalEvent != null) {
                 Recipient emailRecipient = RecipientAdapterUtils.getMainEmailRecipient(mActivity, mFinalEvent.getRecipient());
                 if(emailRecipient == null) {
                     CustomToast.makeText(mActivity, R.string.msg_no_email_address, Toast.LENGTH_LONG).show();
