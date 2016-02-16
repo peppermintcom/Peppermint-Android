@@ -2,9 +2,9 @@ package com.peppermint.app.authenticator;
 
 import android.content.Context;
 
+import com.peppermint.app.cloud.apis.data.JWTsResponse;
 import com.peppermint.app.cloud.senders.SenderSupportListener;
 import com.peppermint.app.cloud.senders.SenderSupportTask;
-import com.peppermint.app.cloud.apis.data.JWTsResponse;
 
 /**
  * Created by Nuno Luz on 28-01-2016.
@@ -17,6 +17,7 @@ public class AuthenticationPeppermintTask extends SenderSupportTask {
     private String mDeviceServerId;
     private String mDeviceId, mDeviceKey;
     private String mEmail, mPassword;
+    private String mAccountServerId;
     private int mAccountType;
     private String mAccessToken;
 
@@ -40,6 +41,7 @@ public class AuthenticationPeppermintTask extends SenderSupportTask {
         JWTsResponse response = getPeppermintApi().authOrRegister(mEmail, mPassword, mAccountType, mDeviceId, mDeviceKey, fullName, getTrackerManager());
 
         mAccessToken = response.getAccessToken();
+        mAccountServerId = response.getAccount().getAccountId();
         mDeviceServerId = response.getRecorder().getRecorderId();
     }
 
@@ -69,5 +71,9 @@ public class AuthenticationPeppermintTask extends SenderSupportTask {
 
     public String getDeviceServerId() {
         return mDeviceServerId;
+    }
+
+    public String getAccountServerId() {
+        return mAccountServerId;
     }
 }

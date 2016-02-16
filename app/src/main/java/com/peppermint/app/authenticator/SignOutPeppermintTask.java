@@ -24,10 +24,10 @@ public class SignOutPeppermintTask extends SenderSupportTask {
 
     @Override
     protected void execute() throws Throwable {
-        // TODO DELETE Recorder-Account Rel.
-        /*checkInternetConnection();
-        AuthenticationData data = setupPeppermintAuthentication();
-        getPeppermintApi().updateRecorder(data.getDeviceId(), "");*/
+        setupPeppermintAuthentication();
+        AuthenticationData data = setupPeppermintAuthentication(true);
+
+        getPeppermintApi().removeReceiverRecorder(data.getAccountServerId(), data.getDeviceServerId());
 
         Utils.clearApplicationData(getContext());
         getSenderPreferences().clearAll();

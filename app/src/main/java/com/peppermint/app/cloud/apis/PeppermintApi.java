@@ -306,6 +306,34 @@ public class PeppermintApi implements Serializable {
         return response;
     }
 
+    /**
+     * Deletes the relationship between an account and a recorder/device.
+     *
+     * @param accountId the account server id
+     * @param recorderId the recorder server id
+     * @return the HTTP response
+     * @throws PeppermintApiResponseCodeException a status code different from 2XX was returned
+     * @throws PeppermintApiInvalidAccessTokenException
+     */
+    public HttpResponse removeReceiverRecorder(String accountId, String recorderId) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException {
+        HttpRequest request = new HttpRequest(ACCOUNTS_REL_ENDPOINT.replace("{account_id}", accountId), HttpRequest.METHOD_DELETE);
+        request.setHeaderParam("Authorization", "Bearer " + getAccessToken());
+        request.setHeaderParam("X-Api-Key", API_KEY);
+        request.setHeaderParam("Content-Type", CONTENT_TYPE_JSON);
+        request.setBody("{ \"data\": [ { \"id\":\"" + recorderId + "\", \"type\":\"recorders\" } ] }");
+        HttpResponse response = new HttpResponse();
+        request.execute(response);
+
+        if(response.getCode() == 401 || response.getCode() == 404) {
+            throw new PeppermintApiInvalidAccessTokenException(request.toString());
+        }
+        if((response.getCode() / 100) != 2) {
+            throw new PeppermintApiResponseCodeException(response.getCode(), request.toString());
+        }
+
+        return response;
+    }
+
     // RECORDER
 
     /**

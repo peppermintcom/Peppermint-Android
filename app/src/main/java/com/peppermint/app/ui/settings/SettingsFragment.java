@@ -1,6 +1,8 @@
 package com.peppermint.app.ui.settings;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
@@ -36,6 +38,9 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
     private CustomActionBarActivity mActivity;
     private SenderPreferences mPreferences;
+
+    private ProgressDialog mProgressDialog;
+    private SignOutPeppermintTask mSignOutTask;
 
     public SettingsFragment() {
     }
@@ -75,11 +80,25 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         findPreference(PREF_SIGN_OUT_KEY).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                SignOutPeppermintTask task = new SignOutPeppermintTask(mActivity, SettingsFragment.this);
-                task.getIdentity().setTrackerManager(mActivity.getTrackerManager());
-                task.getIdentity().setPreferences(mPreferences);
-                task.execute((Void) null);
+                showProgress();
+                mSignOutTask = new SignOutPeppermintTask(mActivity, SettingsFragment.this);
+                mSignOutTask.getIdentity().setTrackerManager(mActivity.getTrackerManager());
+                mSignOutTask.getIdentity().setPreferences(mPreferences);
+                mSignOutTask.execute((Void) null);
                 return false;
+            }
+        });
+
+        mProgressDialog = new ProgressDialog(mActivity);
+        mProgressDialog.setMessage(getText(R.string.signing_out_));
+        mProgressDialog.setIndeterminate(true);
+        mProgressDialog.setCancelable(false);
+        mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            public void onCancel(DialogInterface dialog) {
+                if (mSignOutTask != null) {
+                    mSignOutTask.cancel(true);
+                    mSignOutTask = null;
+                }
             }
         });
     }
@@ -103,6 +122,13 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
     @Override
     public void onDestroy() {
+        hideProgress();
+
+        if (mSignOutTask != null) {
+            mSignOutTask.cancel(true);
+            mSignOutTask = null;
+        }
+
         mPreferences.getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
 
         // custom dialog preferences can't listen to activity events
@@ -143,16 +169,19 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
     @Override
     public void onSendingSupportCancelled(SenderSupportTask supportTask) {
-
+        hideProgress();
     }
 
     @Override
     public void onSendingSupportFinished(SenderSupportTask supportTask) {
+        hideProgress();
         mActivity.finish();
     }
 
     @Override
     public void onSendingSupportError(SenderSupportTask supportTask, Throwable error) {
+        hideProgress();
+
         if(error instanceof NoInternetConnectionException) {
             Toast.makeText(mActivity, R.string.msg_no_internet_try_again, Toast.LENGTH_LONG).show();
             return;
@@ -176,5 +205,17 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     @Override
     public void onSendingSupportProgress(SenderSupportTask supportTask, float progressValue) {
 
+    }
+
+    private void showProgress() {
+        if(mProgressDialog != null) {
+            mProgressDialog.show();
+        }
+    }
+
+    private void hideProgress() {
+        if (mProgressDialog != null) {
+            mProgressDialog.dismiss();
+        }
     }
 }

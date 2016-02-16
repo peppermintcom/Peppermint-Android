@@ -100,6 +100,10 @@ class Authenticator extends AbstractAccountAuthenticator {
             try {
                 JWTsResponse authResponse = mPeppermintApi.authBoth(data.getEmail(), data.getPassword(), data.getDeviceId(), data.getDeviceKey(), data.getAccountType());
 
+                // TODO temporary code for build 1.1.1
+                mAuthenticatorUtils.updateAccountServerId(authResponse.getAccount().getAccountId());
+                // EO temporary code
+
                 if (!TextUtils.isEmpty(authResponse.getAccessToken())) {
                     final Bundle result = new Bundle();
                     result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
@@ -164,6 +168,12 @@ class Authenticator extends AbstractAccountAuthenticator {
         final Bundle bundle = new Bundle();
         bundle.putParcelable(AccountManager.KEY_INTENT, intent);
         return bundle;
+    }
+
+    public Bundle getAccountRemovalAllowed(AccountAuthenticatorResponse response, Account account) {
+        Bundle result = new Bundle();
+        result.putBoolean(AccountManager.KEY_BOOLEAN_RESULT, false);
+        return result;
     }
 
 }

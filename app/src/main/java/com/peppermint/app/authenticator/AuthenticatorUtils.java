@@ -92,6 +92,14 @@ public class AuthenticatorUtils {
         mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_GCM_REG, gcmRegistration);
     }
 
+    public void updateAccountServerId(String accountServerId) throws PeppermintApiNoAccountException {
+        if(mAccount == null) {
+            throw new PeppermintApiNoAccountException();
+        }
+
+        mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_ACCOUNT_SERVER_ID, accountServerId);
+    }
+
     /**
      * Set a new password for the local Peppermint account. <b>This will invalidate the current access token.</b>
      * @param password the new password
@@ -125,12 +133,12 @@ public class AuthenticatorUtils {
     }
 
     /**
-     * Create a local Peppermint account with the specified data (see also {@link #createAccount(String, String, String, String, String, String, int)}).
+     * Create a local Peppermint account with the specified data (see also {@link #createAccount(String, String, String, String, String, String, String, int)}).
      * @param accessToken the registered account access token
      * @param data the account data
      */
     public void createAccount(String accessToken, AuthenticationData data) {
-        createAccount(accessToken, data.getEmail(), data.getPassword(), data.getDeviceServerId(), data.getDeviceId(), data.getDeviceKey(), data.getAccountType());
+        createAccount(accessToken, data.getEmail(), data.getAccountServerId(), data.getPassword(), data.getDeviceServerId(), data.getDeviceId(), data.getDeviceKey(), data.getAccountType());
     }
 
     /**
@@ -143,12 +151,13 @@ public class AuthenticatorUtils {
      * @param deviceKey the device key/password
      * @param accountType the account type
      */
-    public void createAccount(String accessToken, String email, String password, String deviceServerId, String deviceId, String deviceKey, int accountType) {
+    public void createAccount(String accessToken, String email, String accountServerId, String password, String deviceServerId, String deviceId, String deviceKey, int accountType) {
         if(mAccount == null) {
             mAccount = new Account(AuthenticatorConstants.ACCOUNT_NAME, AuthenticatorConstants.ACCOUNT_TYPE);
             mAccountManager.addAccountExplicitly(mAccount, password, null);
         }
 
+        mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_ACCOUNT_SERVER_ID, accountServerId);
         mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_EMAIL, email);
         mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_DEVICE_SERVER_ID, deviceServerId);
         mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_DEVICE_ID, deviceId);
@@ -178,6 +187,7 @@ public class AuthenticatorUtils {
 
         AuthenticationData data = new AuthenticationData();
         data.setGcmRegistration(mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_GCM_REG));
+        data.setAccountServerId(mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_ACCOUNT_SERVER_ID));
         data.setEmail(email);
         data.setDeviceServerId(mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_DEVICE_SERVER_ID));
         data.setDeviceId(mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_DEVICE_ID));

@@ -65,6 +65,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     private static final String KEY_PASSWORD = TAG + "_Password";
     private static final String KEY_ACCOUNT_TYPE = TAG + "_AccountType";
     private static final String KEY_DEVICE_SERVER_ID = TAG + "_DeviceServerId";
+    private static final String KEY_ACCOUNT_SERVER_ID = TAG + "_AccountServerId";
 
     // the ID of the screen for the Tracker API
     private static final String SCREEN_ID = "Authentication";
@@ -93,7 +94,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     private String mDeviceId, mDeviceKey;
     private String mPassword;
     private int mAccountType = PeppermintApi.ACCOUNT_TYPE_GOOGLE;
-    private String mDeviceServerId;
+    private String mDeviceServerId, mAccountServerId;
 
     private final SenderSupportListener mGoogleApiTaskListener = new SenderSupportListener() {
         @Override
@@ -141,6 +142,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         public void onSendingSupportFinished(SenderSupportTask supportTask) {
             AuthenticationPeppermintTask task = (AuthenticationPeppermintTask) supportTask;
             mDeviceServerId = task.getDeviceServerId();
+            mAccountServerId = task.getAccountServerId();
             finishAuthentication(task.getAccessToken());
             mDoingAuth = false;
             hideProgress();
@@ -211,7 +213,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     }
 
     private void finishAuthentication(String accessToken) {
-        mAuthenticatorUtils.createAccount(accessToken, mSelectedAccount, mPassword, mDeviceServerId, mDeviceId, mDeviceKey, mAccountType);
+        mAuthenticatorUtils.createAccount(accessToken, mSelectedAccount, mAccountServerId, mPassword, mDeviceServerId, mDeviceId, mDeviceKey, mAccountType);
 
         final Intent intent = new Intent();
         intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, AuthenticatorConstants.ACCOUNT_NAME);
@@ -280,6 +282,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
             mPassword = savedInstanceState.getString(KEY_PASSWORD);
             mAccountType = savedInstanceState.getInt(KEY_ACCOUNT_TYPE, PeppermintApi.ACCOUNT_TYPE_GOOGLE);
             mDeviceServerId = savedInstanceState.getString(KEY_DEVICE_SERVER_ID);
+            mAccountServerId = savedInstanceState.getString(KEY_ACCOUNT_SERVER_ID);
             mDoingAuth = savedInstanceState.getBoolean(KEY_DO_AUTH);
         }
 
@@ -318,6 +321,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         outState.putString(KEY_PASSWORD, mPassword);
         outState.putInt(KEY_ACCOUNT_TYPE, mAccountType);
         outState.putString(KEY_DEVICE_SERVER_ID, mDeviceServerId);
+        outState.putString(KEY_ACCOUNT_SERVER_ID, mAccountServerId);
         outState.putBoolean(KEY_DO_AUTH, mDoingAuth);
         super.onSaveInstanceState(outState);
     }

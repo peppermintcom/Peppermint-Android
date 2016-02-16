@@ -14,6 +14,7 @@ public class AuthenticatorConstants {
     public static final String FULL_TOKEN_TYPE = "com.peppermint.jwts";
 
     // account data
+    public static final String ACCOUNT_PARAM_ACCOUNT_SERVER_ID = "accountServerId";
     public static final String ACCOUNT_PARAM_EMAIL = "email";
     public static final String ACCOUNT_PARAM_DEVICE_SERVER_ID = "deviceServerId";
     public static final String ACCOUNT_PARAM_DEVICE_ID = "deviceId";

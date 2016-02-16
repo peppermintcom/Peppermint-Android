@@ -9,6 +9,7 @@ import java.io.Serializable;
  * </p>
  */
 public class AuthenticationData implements Serializable {
+    private String mAccountServerId;
     private String mEmail, mPassword;
     private String mDeviceId, mDeviceKey;
     private int mAccountType;
@@ -18,7 +19,8 @@ public class AuthenticationData implements Serializable {
     public AuthenticationData() {
     }
 
-    public AuthenticationData(String mEmail, String mPassword, String mDeviceServerId, String mDeviceId, String mDeviceKey, int mAccountType, String mGcmRegistration) {
+    public AuthenticationData(String mAccountServerId, String mEmail, String mPassword, String mDeviceServerId, String mDeviceId, String mDeviceKey, int mAccountType, String mGcmRegistration) {
+        this.mAccountServerId = mAccountServerId;
         this.mEmail = mEmail;
         this.mPassword = mPassword;
         this.mDeviceId = mDeviceId;
@@ -84,10 +86,19 @@ public class AuthenticationData implements Serializable {
         this.mGcmRegistration = mGcmRegistration;
     }
 
+    public String getAccountServerId() {
+        return mAccountServerId;
+    }
+
+    public void setAccountServerId(String mAccountServerId) {
+        this.mAccountServerId = mAccountServerId;
+    }
+
     @Override
     public String toString() {
         return "AuthenticationData{" +
-                "mEmail='" + mEmail + '\'' +
+                "mAccountServerId='" + mAccountServerId + '\'' +
+                ", mEmail='" + mEmail + '\'' +
                 ", mPassword='" + mPassword + '\'' +
                 ", mDeviceId='" + mDeviceId + '\'' +
                 ", mDeviceKey='" + mDeviceKey + '\'' +
