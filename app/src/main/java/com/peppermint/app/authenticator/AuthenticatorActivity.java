@@ -77,12 +77,12 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     // account list
     private CustomNoScrollListView mListView;
     private AuthenticatorArrayAdapter mAdapter;
-    private ViewGroup mLytEmpty;
+    private ViewGroup mLytEmpty, mLytBottom;
 
     private Account[] mAccounts;
     private String mSelectedAccount;
 
-    private Button mBtnAddAccount;
+    private Button mBtnSignIn;
     private ProgressDialog mProgressDialog;
 
     // authentication process tasks
@@ -251,11 +251,14 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         getCustomActionBar().getMenuButton().setVisibility(View.GONE);
 
         // init layout components
-        mBtnAddAccount = (Button) findViewById(R.id.btnAddAccount);
-        mBtnAddAccount.setOnClickListener(this);
+        mBtnSignIn = (Button) findViewById(R.id.btnSignIn);
+        mBtnSignIn.setOnClickListener(this);
 
         mListView = (CustomNoScrollListView) findViewById(android.R.id.list);
         mLytEmpty = (ViewGroup) findViewById(android.R.id.empty);
+        mLytBottom = (ViewGroup) findViewById(R.id.lytBottom);
+        mLytEmpty.setOnClickListener(this);
+        mLytBottom.setOnClickListener(this);
 
         mListView.setOnItemClickListener(this);
 
@@ -334,6 +337,12 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         if(mAccounts != null && mAccounts.length > 0) {
             mListView.setVisibility(View.VISIBLE);
             mLytEmpty.setVisibility(View.GONE);
+            mLytBottom.setVisibility(View.VISIBLE);
+            if(mAccounts.length > 1) {
+                mBtnSignIn.setVisibility(View.GONE);
+            } else {
+                mBtnSignIn.setVisibility(View.VISIBLE);
+            }
             int pos = 0;
 
             if(mSelectedAccount != null) {
@@ -353,6 +362,8 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         } else {
             mListView.setVisibility(View.GONE);
             mLytEmpty.setVisibility(View.VISIBLE);
+            mBtnSignIn.setVisibility(View.GONE);
+            mLytBottom.setVisibility(View.GONE);
         }
     }
 
@@ -385,7 +396,13 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
 
     @Override
     public void onClick(View v) {
-        if(v.equals(mBtnAddAccount)) {
+        if(v.getId() == mBtnSignIn.getId()) {
+            mSelectedAccount = mAccounts[0].name;
+            startGoogleAuthentication();
+            return;
+        }
+
+        if(v.getId() == mLytBottom.getId() || v.getId() == mLytEmpty.getId()) {
             Intent intent = new Intent(Settings.ACTION_ADD_ACCOUNT);
             intent.putExtra(Settings.EXTRA_ACCOUNT_TYPES, new String[] {"com.google"});
             startActivityForResult(intent, NEW_ACCOUNT_CODE);

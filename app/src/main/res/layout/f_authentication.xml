@@ -1,119 +1,150 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_height="wrap_content"
     android:layout_width="match_parent">
 
-    <LinearLayout
+    <RelativeLayout android:id="@+id/lytBottom"
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="15dp"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/background_ripple">
+
+        <com.peppermint.app.ui.views.simple.CustomFontTextView
+            android:id="@+id/txtDontWantAccount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            custom:textFont="@string/font_semibold"
+            android:textColor="@color/grey_text"
+            android:textSize="14dp"
+            android:text="@string/dont_want_to_use_account"/>
+
+        <com.peppermint.app.ui.views.simple.CustomFontTextView
+            android:layout_below="@id/txtDontWantAccount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingBottom="15dp"
+            custom:textFont="@string/font_semibold"
+            android:textColor="@color/green_text"
+            android:textSize="14dp"
+            android:text="@string/sign_up_new_google_account"/>
+
+    </RelativeLayout>
+
+    <ScrollView android:layout_above="@id/lytBottom"
+        android:layout_height="match_parent"
         android:layout_width="match_parent"
-        android:orientation="vertical">
+        android:fillViewport="true">
 
         <LinearLayout
-            android:id="@+id/lytTop"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="15dp"
             android:orientation="vertical">
 
-            <com.peppermint.app.ui.views.simple.CustomFontTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="5dp"
-                android:gravity="center_vertical"
-                custom:textFont="@string/font_semibold"
-                android:textColor="@color/black"
-                android:textSize="16dp"
-                android:text="@string/pick_account" />
-
-            <com.peppermint.app.ui.views.simple.CustomFontTextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                custom:textFont="@string/font_semibold"
-                android:textColor="@color/grey_text"
-                android:textSize="14dp"
-                android:text="@string/this_account_will_be_used" />
-
-        </LinearLayout>
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <com.peppermint.app.ui.views.simple.CustomNoScrollListView
-                android:id="@id/android:list"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
             <LinearLayout
-                android:id="@id/android:empty"
+                android:id="@+id/lytTop"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="20dp"
-                android:orientation="vertical"
-                android:gravity="center">
+                android:layout_marginLeft="15dp"
+                android:layout_marginBottom="15dp"
+                android:layout_marginRight="15dp"
+                android:orientation="vertical">
 
                 <com.peppermint.app.ui.views.simple.CustomFontTextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="10dp"
-                    android:gravity="center"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="5dp"
+                    android:gravity="center_vertical"
                     custom:textFont="@string/font_semibold"
                     android:textColor="@color/black"
-                    android:textSize="18dp"
-                    android:text="@string/no_google_accounts_found" />
+                    android:textSize="16dp"
+                    android:text="@string/pick_account" />
 
                 <com.peppermint.app.ui.views.simple.CustomFontTextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
+                    android:gravity="center_vertical"
                     custom:textFont="@string/font_semibold"
                     android:textColor="@color/grey_text"
-                    android:textSize="16dp"
-                    android:text="@string/add_account_to_start"/>
+                    android:textSize="14dp"
+                    android:text="@string/this_account_will_be_used" />
 
             </LinearLayout>
 
-        </FrameLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
-        <com.peppermint.app.ui.views.simple.CustomFontButton
-            android:id="@+id/btnAddAccount"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="left|center_vertical"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp"
-            custom:textFont="@string/font_regular"
-            android:textSize="16dp"
-            android:text="@string/link_another_gmail"
-            android:textAllCaps="false"
-            android:textColor="@color/color_green_to_white_pressed"
-            android:background="@drawable/background_white_to_solid_border_top_and_bottom_pressed"
-            style="?android:attr/borderlessButtonStyle" />
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
 
- <!--       <com.peppermint.app.ui.views.simple.CustomFontButton
-            android:id="@+id/btnNext"
-            android:layout_gravity="center_horizontal"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="20dp"
-            android:paddingTop="5dp"
-            android:paddingLeft="60dp"
-            android:paddingRight="60dp"
-            android:paddingBottom="8dp"
-            custom:textFont="@string/font_semibold"
-            android:textSize="18dp"
-            android:text="@string/next"
-            android:textAllCaps="false"
-            android:textColor="@color/color_white_to_grey_disabled"
-            android:background="@drawable/background_btn_alt"
-            android:enabled="false"
-            style="?android:attr/borderlessButtonStyle" />-->
+                    <com.peppermint.app.ui.views.simple.CustomNoScrollListView
+                        android:id="@id/android:list"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/background_border_bottom"
+                        android:paddingBottom="1dp" />
 
-    </LinearLayout>
+                    <LinearLayout
+                        android:id="@id/android:empty"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_margin="20dp"
+                        android:orientation="vertical"
+                        android:gravity="center">
 
-</ScrollView>
+                        <com.peppermint.app.ui.views.simple.CustomFontTextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="10dp"
+                            android:gravity="center"
+                            custom:textFont="@string/font_semibold"
+                            android:textColor="@color/black"
+                            android:textSize="18dp"
+                            android:text="@string/no_google_accounts_found" />
+
+                        <com.peppermint.app.ui.views.simple.CustomFontTextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            custom:textFont="@string/font_semibold"
+                            android:textColor="@color/green_text"
+                            android:textSize="16dp"
+                            android:text="@string/add_account_to_start"
+                            />
+
+                    </LinearLayout>
+
+                </FrameLayout>
+
+                <com.peppermint.app.ui.views.simple.CustomFontButton
+                    android:id="@+id/btnSignIn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:layout_marginLeft="15dp"
+                    android:gravity="center"
+                    android:paddingLeft="50dp"
+                    android:paddingRight="50dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="10dp"
+                    custom:textFont="@string/font_semibold"
+                    android:textSize="16dp"
+                    android:text="@string/sign_in"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:background="@drawable/background_btn_alt"
+                    style="?android:attr/borderlessButtonStyle" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>

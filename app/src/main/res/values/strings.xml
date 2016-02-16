@@ -128,7 +128,7 @@
     <string name="pick_account">Pick a Google Account</string>
     <string name="this_account_will_be_used">This account will be used for authentication and to send email messages</string>
     <string name="no_google_accounts_found">No Google accounts found!</string>
-    <string name="add_account_to_start">Add a Google account to your device to start using Peppermint</string>
+    <string name="add_account_to_start"><u>Sign in with a new Google account to start using Peppermint</u></string>
     <string name="your_name_">Your Name</string>
     <string name="next">Next</string>
     <string name="link_another_gmail">Add Google Account</string>
@@ -139,6 +139,9 @@
     <string name="msg_google_api_denied">Google sign in is required to continue.</string>
     <string name="msg_invalid_credentials">Invalid credentials.</string>
     <string name="msg_no_internet_try_again">No internet connection. Please check your connectivity settings and try again.</string>
+    <string name="dont_want_to_use_account">Don\'t want to use any of these accounts?</string>
+    <string name="sign_up_new_google_account"><u>Sign in with a New Google Account</u></string>
+    <string name="sign_in">Sign In</string>
 
     <!-- AUTHENTICATION/NEW CONTACT -->
     <string name="msg_insert_first_name">Please enter a valid first name</string>
@@ -173,5 +176,7 @@
     <string name="loading_chats">Loading\\nConversations…</string>
     <string name="msg_no_conversations">No conversations have been found</string>
     <string name="chats">Conversations</string>
+
+
 
 </resources>
