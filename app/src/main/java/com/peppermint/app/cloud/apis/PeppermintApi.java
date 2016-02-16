@@ -316,11 +316,9 @@ public class PeppermintApi implements Serializable {
      * @throws PeppermintApiInvalidAccessTokenException
      */
     public HttpResponse removeReceiverRecorder(String accountId, String recorderId) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException {
-        HttpRequest request = new HttpRequest(ACCOUNTS_REL_ENDPOINT.replace("{account_id}", accountId), HttpRequest.METHOD_DELETE);
+        HttpRequest request = new HttpRequest(ACCOUNTS_REL_ENDPOINT.replace("{account_id}", accountId) + "/" + recorderId, HttpRequest.METHOD_DELETE);
         request.setHeaderParam("Authorization", "Bearer " + getAccessToken());
         request.setHeaderParam("X-Api-Key", API_KEY);
-        request.setHeaderParam("Content-Type", CONTENT_TYPE_JSON);
-        request.setBody("{ \"data\": [ { \"id\":\"" + recorderId + "\", \"type\":\"recorders\" } ] }");
         HttpResponse response = new HttpResponse();
         request.execute(response);
 
