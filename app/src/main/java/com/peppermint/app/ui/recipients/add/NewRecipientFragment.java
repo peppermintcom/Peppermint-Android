@@ -36,8 +36,9 @@ import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
 import com.peppermint.app.ui.views.NavigationItem;
 import com.peppermint.app.ui.views.NavigationListAdapter;
 import com.peppermint.app.ui.views.dialogs.CustomListDialog;
+import com.peppermint.app.ui.views.simple.CustomFontEditText;
 import com.peppermint.app.ui.views.simple.CustomToast;
-import com.peppermint.app.ui.views.simple.CustomValidatedEditText;
+import com.peppermint.app.ui.views.simple.EditTextValidatorLayout;
 import com.peppermint.app.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
@@ -48,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Created by Nuno Luz on 10-11-2015.
@@ -323,7 +325,9 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     private CustomActionBarActivity mActivity;
 
     private ImageView mBtnAddAvatar;
-    private CustomValidatedEditText mTxtFirstName, mTxtLastName, mTxtPhone, mTxtMail;
+    private CustomFontEditText mTxtPhone, mTxtMail;
+    private CustomFontEditText mTxtFirstName, mTxtLastName;
+    private EditTextValidatorLayout mNameValidatorLayout, mEmailValidatorLayout, mPhoneValidatorLayout;
     private Button mBtnSave;
 
     private CustomListDialog mNewAvatarDialog;
@@ -331,40 +335,33 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     private List<NavigationItem> mAvatarOptions;
     private Uri mAvatarUrl, mAvatarInProgressUrl;
 
-    private CustomValidatedEditText.Validator mFirstNameValidator = new CustomValidatedEditText.Validator() {
+    private EditTextValidatorLayout.Validator mNameValidator = new EditTextValidatorLayout.Validator() {
         @Override
-        public String getValidatorMessage(CharSequence text) {
-            String name = text.toString().trim();
-            if(!Utils.isValidName(name)) {
+        public String getValidatorMessage(Set<Integer> indicesWithError, CharSequence[] text) {
+            String firstName = text[0].toString().trim();
+            String lastName = text[1].toString().trim();
+            String fullName = (firstName + " " + lastName).trim();
+
+            if(!Utils.isValidName(fullName)) {
                 mBtnSave.setEnabled(false);
-                return getString(R.string.msg_insert_first_name);
+                indicesWithError.add(0);
+                indicesWithError.add(1);
+                return getString(R.string.msg_insert_name);
             }
 
             return null;
         }
     };
 
-    private CustomValidatedEditText.Validator mLastNameValidator = new CustomValidatedEditText.Validator() {
+    private EditTextValidatorLayout.Validator mEmailValidator = new EditTextValidatorLayout.Validator() {
         @Override
-        public String getValidatorMessage(CharSequence text) {
-            String name = text.toString().trim();
-            if(!Utils.isValidNameMaybeEmpty(name)) {
-                mBtnSave.setEnabled(false);
-                return getString(R.string.msg_insert_last_name);
-            }
-
-            return null;
-        }
-    };
-
-    private CustomValidatedEditText.Validator mEmailValidator = new CustomValidatedEditText.Validator() {
-        @Override
-        public String getValidatorMessage(CharSequence text) {
+        public String getValidatorMessage(Set<Integer> indicesWithError, CharSequence[] text) {
             String email = mTxtMail.getText().toString().trim();
             String phone = mTxtPhone.getText().toString().trim();
 
             if(!Utils.isValidEmail(email) && !(TextUtils.isEmpty(email) && Utils.isValidPhoneNumber(phone))) {
                 mBtnSave.setEnabled(false);
+                indicesWithError.add(0);
                 return getString(R.string.msg_insert_mail);
             }
 
@@ -372,14 +369,15 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         }
     };
 
-    private CustomValidatedEditText.Validator mPhoneValidator = new CustomValidatedEditText.Validator() {
+    private EditTextValidatorLayout.Validator mPhoneValidator = new EditTextValidatorLayout.Validator() {
         @Override
-        public String getValidatorMessage(CharSequence text) {
+        public String getValidatorMessage(Set<Integer> indicesWithError, CharSequence[] text) {
             String email = mTxtMail.getText().toString().trim();
             String phone = mTxtPhone.getText().toString().trim();
 
             if(!Utils.isValidPhoneNumber(phone) && !(TextUtils.isEmpty(phone) && Utils.isValidEmail(email))) {
                 mBtnSave.setEnabled(false);
+                indicesWithError.add(0);
                 return getString(R.string.msg_insert_phone);
             }
 
@@ -387,7 +385,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         }
     };
 
-    private CustomValidatedEditText.OnValidityChangeListener mValidityChangeListener = new CustomValidatedEditText.OnValidityChangeListener() {
+    private EditTextValidatorLayout.OnValidityChangeListener mValidityChangeListener = new EditTextValidatorLayout.OnValidityChangeListener() {
         @Override
         public void onValidityChange(boolean isValid) {
             if(mValidityChecker.areValid()) {
@@ -398,7 +396,7 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         }
     };
 
-    private CustomValidatedEditText.ValidityChecker mValidityChecker;
+    private EditTextValidatorLayout.ValidityChecker mValidityChecker;
 
     private View.OnClickListener mAvatarClickListener = new View.OnClickListener() {
         @Override
@@ -561,27 +559,24 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         mBtnAddAvatar = (ImageView) v.findViewById(R.id.imgAddAvatar);
         mBtnAddAvatar.setOnClickListener(mAvatarClickListener);
 
-        mTxtFirstName = (CustomValidatedEditText) v.findViewById(R.id.txtFirstName);
-        mTxtLastName = (CustomValidatedEditText) v.findViewById(R.id.txtLastName);
-        mTxtMail = (CustomValidatedEditText) v.findViewById(R.id.txtEmail);
-        mTxtPhone = (CustomValidatedEditText) v.findViewById(R.id.txtPhoneNumber);
+        mNameValidatorLayout = (EditTextValidatorLayout) v.findViewById(R.id.lytNameValidator);
+        mTxtFirstName = (CustomFontEditText) v.findViewById(R.id.txtFirstName);
+        mTxtLastName = (CustomFontEditText) v.findViewById(R.id.txtLastName);
+        mTxtMail = (CustomFontEditText) v.findViewById(R.id.txtEmail);
+        mTxtPhone = (CustomFontEditText) v.findViewById(R.id.txtPhoneNumber);
+        mEmailValidatorLayout = (EditTextValidatorLayout) v.findViewById(R.id.lytEmailValidator);
+        mPhoneValidatorLayout = (EditTextValidatorLayout) v.findViewById(R.id.lytPhoneValidator);
 
-        mTxtFirstName.setBackgroundResource(R.drawable.background_border_bottom);
-        mTxtMail.setBackgroundResource(R.drawable.background_border_bottom);
-        mTxtPhone.setBackgroundResource(R.drawable.background_border_bottom);
+        mNameValidatorLayout.setValidator(mNameValidator);
+        mEmailValidatorLayout.setValidator(mEmailValidator);
+        mPhoneValidatorLayout.setValidator(mPhoneValidator);
+        mEmailValidatorLayout.setLinkedEditTextValidatorLayout(mPhoneValidatorLayout);
 
-        mTxtFirstName.setValidator(mFirstNameValidator);
-        mTxtLastName.setValidator(mLastNameValidator);
-        mTxtMail.setValidator(mEmailValidator);
-        mTxtPhone.setValidator(mPhoneValidator);
-        mTxtMail.setLinkedEditText(mTxtPhone);
+        mNameValidatorLayout.setOnValidityChangeListener(mValidityChangeListener);
+        mEmailValidatorLayout.setOnValidityChangeListener(mValidityChangeListener);
+        mPhoneValidatorLayout.setOnValidityChangeListener(mValidityChangeListener);
 
-        mTxtFirstName.setOnValidityChangeListener(mValidityChangeListener);
-        mTxtLastName.setOnValidityChangeListener(mValidityChangeListener);
-        mTxtMail.setOnValidityChangeListener(mValidityChangeListener);
-        mTxtPhone.setOnValidityChangeListener(mValidityChangeListener);
-
-        mValidityChecker = new CustomValidatedEditText.ValidityChecker(mTxtFirstName, mTxtLastName, mTxtMail, mTxtPhone);
+        mValidityChecker = new EditTextValidatorLayout.ValidityChecker(mNameValidatorLayout, mEmailValidatorLayout, mPhoneValidatorLayout);
 
         Bundle args = getArguments();
         if(args != null) {
@@ -639,10 +634,9 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
     public void onResume() {
         super.onResume();
 
-        mTxtFirstName.validate();
-        mTxtLastName.validate();
-        mTxtMail.validate();
-        mTxtPhone.validate();
+        mNameValidatorLayout.validate();
+        mEmailValidatorLayout.validate();
+        mPhoneValidatorLayout.validate();
 
         Utils.showKeyboard(mActivity, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
