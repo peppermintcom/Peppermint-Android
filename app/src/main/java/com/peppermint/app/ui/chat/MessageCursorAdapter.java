@@ -220,6 +220,7 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
                         setStatusNormal();
                     } else {
                         setStatusError();
+                        ((RelativeLayout.LayoutParams) lytBalloon.getLayoutParams()).setMargins(mBalloonMarginWithExclamation, 0, 0, 0);
                     }
                 }
 
@@ -324,6 +325,7 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
     }
 
     private static final int MARGIN_BALLOON_DP = 80;
+    private static final int MARGIN_BALLOON_WITH_EXCLAMATION_DP = 20;
 
     private Context mContext;
     private SQLiteDatabase mDb;
@@ -332,7 +334,7 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
     private PlayerServiceManager mPlayerServiceManager;
     private ExclamationClickListener mExclamationClickListener;
 
-    private int mBalloonMargin;
+    private int mBalloonMargin, mBalloonMarginWithExclamation;
 
     public MessageCursorAdapter(Context context, MessagesServiceManager messagesServiceManager, PlayerServiceManager mPlayerServiceManager, Cursor cursor, SQLiteDatabase db, TrackerManager trackerManager) {
         super(context, cursor, 0);
@@ -342,6 +344,7 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
         this.mMessagesServiceManager = messagesServiceManager;
         this.mPlayerServiceManager = mPlayerServiceManager;
         this.mBalloonMargin = Utils.dpToPx(context, MARGIN_BALLOON_DP);
+        this.mBalloonMarginWithExclamation = Utils.dpToPx(context, MARGIN_BALLOON_WITH_EXCLAMATION_DP);
 
         mMessagesServiceManager.addSenderListener(this);
     }

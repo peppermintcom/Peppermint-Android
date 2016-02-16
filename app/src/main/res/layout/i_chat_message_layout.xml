@@ -28,8 +28,7 @@
             android:layout_toLeftOf="@+id/btnExclamation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/img_message_base_sent"
-            android:layout_marginLeft="80dp">
+            android:background="@drawable/img_message_base_sent">
 
             <RelativeLayout
                 android:layout_width="match_parent"
