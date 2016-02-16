@@ -72,7 +72,6 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
     private long mMessageIdWithError;
 
     // hold to record, release to send popup
-    private boolean mFirstRun = true;
     private Handler mHandler = new Handler();
     private PopupWindow mHoldPopup;
     private Runnable mShowPopupRunnable = new Runnable() {
@@ -234,9 +233,9 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
         super.onResume();
         TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
 
-        if(mFirstRun) {
+        if(!getPreferences().isChatTipShown()) {
             mHandler.postDelayed(mShowPopupRunnable, 100);
-            mFirstRun = false;
+            getPreferences().setChatTipShown(true);
         }
     }
 
