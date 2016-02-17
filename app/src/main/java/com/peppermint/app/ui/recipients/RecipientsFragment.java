@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -19,18 +20,17 @@ import android.os.SystemClock;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
-import android.widget.BaseAdapter;
 import android.widget.Button;
-import android.widget.CursorAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import com.crashlytics.android.Crashlytics;
@@ -38,6 +38,9 @@ import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
+import com.peppermint.app.cloud.ReceiverEvent;
+import com.peppermint.app.data.Chat;
+import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientType;
 import com.peppermint.app.data.Recording;
@@ -46,6 +49,7 @@ import com.peppermint.app.ui.AnimatorBuilder;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.canvas.loading.LoadingView;
 import com.peppermint.app.ui.chat.ChatActivity;
+import com.peppermint.app.ui.chat.ChatCursorAdapter;
 import com.peppermint.app.ui.chat.ChatFragment;
 import com.peppermint.app.ui.chat.ChatRecordOverlayFragment;
 import com.peppermint.app.ui.recipients.add.NewRecipientActivity;
@@ -59,13 +63,8 @@ import com.peppermint.app.utils.Utils;
 
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -92,7 +91,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     private View mRecipientLoadingContainer;
     private LoadingView mRecipientLoadingView;
     private boolean mRecipientListShown;
-    private BaseAdapter mRecipientAdapter;
+    private RecipientCursorAdapter mRecipientAdapter;
     private Button mBtnAddContact;
     private ImageView mImgListBorder;
     private PopupDialog mTipPopup;
@@ -104,6 +103,13 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     };
 
     private Point mLastTouchPoint = new Point();
+    private PopupWindow mHoldPopup;
+    private Runnable mDismissPopupRunnable = new Runnable() {
+        @Override
+        public void run() {
+            dismissPopup();
+        }
+    };
 
     // the custom action bar (with recipient type filter and recipient search)
     private SearchListBarView mSearchListBarView;
@@ -114,6 +120,17 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     private boolean mCreated = false;
     private GetRecipients mGetRecipientsTask;
     private static final Pattern mViaPattern = Pattern.compile("<([^\\s]*)>");
+
+    private DatabaseHelper mDatabaseHelper;
+    private SQLiteDatabase mDatabase;
+    private ChatCursorAdapter mChatAdapter;
+
+    private SQLiteDatabase getDatabase() {
+        if(mDatabase == null || !mDatabase.isOpen()) {
+            mDatabase = mDatabaseHelper.getReadableDatabase();
+        }
+        return mDatabase;
+    }
 
     private class GetRecipients extends AsyncTask<Void, Void, Object> {
         private RecipientType _recipientType;
@@ -144,44 +161,9 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
                 if (getCustomActionBarActivity() != null && ContextCompat.checkSelfPermission(getCustomActionBarActivity(),
                         Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
 
-                    PeppermintApp app = (PeppermintApp) getCustomActionBarActivity().getApplication();
-
                     if (_recipientType.isStarred() != null && _recipientType.isStarred()) {
-                        List<Long> recentList = getPreferences().getRecentContactUris();
-                        if(recentList == null) {
-                            // empty list to show no contacts
-                            recentList = new ArrayList<>();
-                        }
-
-                        // get recent contact list
-                        Map<Long, Recipient> recipientMap = new HashMap<>();
-
-                        if(recentList.size() > 0) {
-                            Cursor cursor = RecipientAdapterUtils.getRecipientsCursor(getCustomActionBarActivity(), recentList, null, null, null, null);
-                            Set<Long> allowedSet = new HashSet<>();
-                            while (cursor.moveToNext()) {
-                                Recipient recipient = RecipientAdapterUtils.getRecipient(cursor);
-                                // this if removes deleted/invalid contacts from the list
-                                if (recipient.getVia() != null && recipient.getVia().trim().length() > 0) {
-                                    recipientMap.put(recipient.getContactId(), recipient);
-                                    allowedSet.add(recipient.getContactId());
-                                }
-                            }
-                            cursor.close();
-
-                            // remove invalid contacts from recent list
-                            if (recentList.size() != allowedSet.size()) {
-                                Iterator<Long> it = recentList.iterator();
-                                while (it.hasNext()) {
-                                    if (!allowedSet.contains(it.next())) {
-                                        it.remove();
-                                    }
-                                }
-                                getPreferences().setRecentContactUris(recentList);
-                            }
-                        }
-
-                        return new RecipientArrayAdapter(app, getCustomActionBarActivity(), recipientMap, recentList);
+                        // show chat list / recent contacts
+                        return Chat.getAllCursor(getDatabase());
                     }
 
                     // get normal full, email or phone contact list
@@ -222,29 +204,33 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
             if(data != null && getCustomActionBarActivity() != null && mCreated) {
                 PeppermintApp app = (PeppermintApp) getCustomActionBarActivity().getApplication();
 
-                if (data instanceof Cursor) {
+                if (data instanceof FilteredCursor) {
                     // re-use adapter and replace cursor
-                    if (mRecipientAdapter != null && mRecipientAdapter instanceof CursorAdapter) {
-                        ((CursorAdapter) mRecipientAdapter).changeCursor((Cursor) data);
-                    } else {
-                        mRecipientAdapter = new RecipientCursorAdapter(app, getCustomActionBarActivity(), (Cursor) data);
+                    mRecipientAdapter.changeCursor((Cursor) data);
+                    mChatAdapter.changeCursor(null);
+
+                    if(getListView().getAdapter() != mRecipientAdapter) {
                         // sync. trying to avoid detachFromGLContext errors
-                        synchronized(mAnimationRunnable) {
+                        synchronized (mAnimationRunnable) {
                             getListView().setAdapter(mRecipientAdapter);
                         }
                     }
+
+                    mRecipientAdapter.notifyDataSetChanged();
                 } else {
                     // use new adapter
-                    if (mRecipientAdapter != null && mRecipientAdapter instanceof CursorAdapter) {
-                        ((CursorAdapter) mRecipientAdapter).changeCursor(null);
+                    mChatAdapter.changeCursor((Cursor) data);
+                    mRecipientAdapter.changeCursor(null);
+
+                    if(getListView().getAdapter() != mChatAdapter) {
+                        // sync. trying to avoid detachFromGLContext errors
+                        synchronized (mAnimationRunnable) {
+                            getListView().setAdapter(mChatAdapter);
+                        }
                     }
-                    mRecipientAdapter = (BaseAdapter) data;
-                    // sync. trying to avoid detachFromGLContext errors
-                    synchronized(mAnimationRunnable) {
-                        getListView().setAdapter(mRecipientAdapter);
-                    }
+
+                    mChatAdapter.notifyDataSetChanged();
                 }
-                mRecipientAdapter.notifyDataSetChanged();
             }
 
             handleAddContactButtonVisibility();
@@ -421,6 +407,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
                     getView().requestFocus();
                 }
 
+                dismissPopup();
                 mLastTouchPoint.set((int) event.getX(), (int) event.getY());
                 mTipPopup.dismiss();
             }
@@ -433,18 +420,29 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         mAnimatorBuilder = new AnimatorBuilder();
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
+        mDatabaseHelper = new DatabaseHelper(activity);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) getCustomActionBarActivity().getApplication();
 
+        mChatAdapter = new ChatCursorAdapter(getCustomActionBarActivity(), null, null, getCustomActionBarActivity().getTrackerManager());
+        mRecipientAdapter = new RecipientCursorAdapter(app, getCustomActionBarActivity(), null);
+
         getCustomActionBarActivity().getAuthenticationPolicyEnforcer().addAuthenticationDoneCallback(mAuthenticationDoneCallback);
+
+        // hold popup
+        mHoldPopup = new PopupWindow(getCustomActionBarActivity());
+        mHoldPopup.setContentView(inflater.inflate(R.layout.v_recipients_popup, null));
+        //noinspection deprecation
+        // although this is deprecated, it is required for versions  < 22/23, otherwise the popup doesn't show up
+        mHoldPopup.setWindowLayoutMode(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        mHoldPopup.setBackgroundDrawable(Utils.getDrawable(getCustomActionBarActivity(), R.drawable.img_popup));
+        mHoldPopup.setAnimationStyle(R.style.Peppermint_PopupAnimation);
+        // do not let the popup get in the way of user interaction
+        mHoldPopup.setFocusable(false);
+        mHoldPopup.setTouchable(false);
 
         mTipPopup = new PopupDialog(getCustomActionBarActivity()) {
             @Override
@@ -604,6 +602,8 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     public void onStart() {
         super.onStart();
 
+        mChatAdapter.setDatabase(getDatabase());
+
         // global touch interceptor to hide keyboard
         getCustomActionBarActivity().addTouchEventInterceptor(mTouchInterceptor);
 
@@ -611,8 +611,8 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
             if (!mHasSavedInstanceState) {
                 // default view is all contacts
                 int selectedItemPosition = 0;
-                if (!hasRecents()) {
-                    // select "all contacts" in case there are not fav/recent contacts
+                if (!getPreferences().hasRecentContactUris()) {
+                    // select "all contacts" in case there are no fav/recent contacts
                     selectedItemPosition = 1;
                 }
                 mSearchListBarView.setSelectedItemPosition(selectedItemPosition);
@@ -650,7 +650,6 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
     @Override
     public void onStop() {
-
         // global touch interceptor to hide keyboard
         getCustomActionBarActivity().removeTouchEventInterceptor(mTouchInterceptor);
 
@@ -662,16 +661,23 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
             mGetRecipientsTask.cancel(true);
         }
 
+        // close adapter cursors
+        mChatAdapter.changeCursor(null);
+        mRecipientAdapter.changeCursor(null);
+
+        if(mDatabase != null) {
+            mDatabase.close();
+            mDatabase = null;
+        }
+
+        dismissPopup();
+
         super.onStop();
     }
 
     @Override
     public void onDestroy() {
         mSearchListBarView.deinit();
-        if(mRecipientAdapter != null && mRecipientAdapter instanceof RecipientCursorAdapter) {
-            // this closes the cursor inside the adapter
-            ((RecipientCursorAdapter) mRecipientAdapter).changeCursor(null);
-        }
         mTipPopup.setOnDismissListener(null);
         mTipPopup.dismiss();
         super.onDestroy();
@@ -687,6 +693,14 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
             } else {
                 mSearchListBarView.clearSearch(0);
             }
+        }
+    }
+
+    @Override
+    public void onReceivedMessage(ReceiverEvent event) {
+        super.onReceivedMessage(event);
+        if(mSearchListBarView.getSelectedItemPosition() == 0) {
+            onSearch(mSearchListBarView.getSearchText());
         }
     }
 
@@ -737,18 +751,20 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     @Override
     public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
         Intent intent = new Intent(getCustomActionBarActivity(), ChatActivity.class);
-        intent.putExtra(ChatFragment.PARAM_RECIPIENT, mRecipientAdapter instanceof RecipientCursorAdapter ?
-                ((RecipientCursorAdapter) mRecipientAdapter).getRecipient(position) :
-                ((RecipientArrayAdapter) mRecipientAdapter).getItem(position));
-        startActivity(intent);
+
+        if(getListView().getAdapter() instanceof RecipientCursorAdapter) {
+            showPopup(view);
+        } else {
+            intent.putExtra(ChatFragment.PARAM_RECIPIENT, mChatAdapter.getChat(position).getMainRecipient());
+            startActivity(intent);
+        }
     }
 
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        Recipient tappedRecipient = mRecipientAdapter instanceof RecipientCursorAdapter ?
-                ((RecipientCursorAdapter) mRecipientAdapter).getRecipient(position) :
-                ((RecipientArrayAdapter) mRecipientAdapter).getItem(position);
-        Log.d("CUROSR", tappedRecipient.toString());
+        Recipient tappedRecipient = getListView().getAdapter() instanceof RecipientCursorAdapter ?
+                mRecipientAdapter.getRecipient(position) :
+                mChatAdapter.getChat(position).getMainRecipient();
         return triggerRecording(view, tappedRecipient);
     }
 
@@ -767,12 +783,19 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         mGetRecipientsTask.execute();
     }
 
-    private boolean hasRecents() {
-        List<Long> recentList = getPreferences().getRecentContactUris();
-        if(recentList != null && recentList.size() > 0) {
-            return true;
+    private void dismissPopup() {
+        if(mHoldPopup.isShowing() && !isDetached() && getCustomActionBarActivity() != null) {
+            mHoldPopup.dismiss();
+            mHandler.removeCallbacks(mDismissPopupRunnable);
         }
+    }
 
-        return false;
+    // the method that displays the img_popup.
+    private void showPopup(View parent) {
+        if(!mHoldPopup.isShowing() && !isDetached() && getCustomActionBarActivity() != null) {
+            dismissPopup();
+            mHoldPopup.showAtLocation(parent, Gravity.NO_GRAVITY, mLastTouchPoint.x - Utils.dpToPx(getCustomActionBarActivity(), 120), mLastTouchPoint.y + Utils.dpToPx(getCustomActionBarActivity(), 10));
+            mHandler.postDelayed(mDismissPopupRunnable, 6000);
+        }
     }
 }

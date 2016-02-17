@@ -342,6 +342,8 @@ public class MessagesService extends Service {
                         }
                         db.close();
 
+                        mPreferences.addRecentContactUri(recipient.getContactId());
+
                         ReceiverEvent ev = new ReceiverEvent();
                         ev.setReceiverEmail(receiverEmail);
                         ev.setMessage(message);
@@ -476,6 +478,8 @@ public class MessagesService extends Service {
             mTrackerManager.logException(e);
         }
         db.close();
+
+        mPreferences.addRecentContactUri(recipient.getContactId());
 
         mSenderManager.send(message);
 

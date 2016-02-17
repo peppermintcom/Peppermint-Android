@@ -282,7 +282,6 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
     }
 
     protected void sendMessage(Recipient recipient, Recording recording) {
-        mPreferences.addRecentContactUri(recipient.getContactId());
         mFinalEvent = null;
         mMessagesServiceManager.send(null, recipient, recording);
     }

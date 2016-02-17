@@ -96,6 +96,7 @@ public class ChatListFragment extends ListFragment implements AdapterView.OnItem
     @Override
     public void onStop() {
         mMessagesServiceManager.unbind();
+        mAdapter.changeCursor(null);
         if(mDatabase != null) {
             mDatabase.close();
             mDatabase = null;
@@ -164,7 +165,7 @@ public class ChatListFragment extends ListFragment implements AdapterView.OnItem
             mAdapter = new ChatCursorAdapter(mActivity, cursor, getDatabase(), mActivity.getTrackerManager());
             setListAdapter(mAdapter);
         } else {
-            mAdapter.swapCursor(cursor);
+            mAdapter.changeCursor(cursor);
             mAdapter.notifyDataSetChanged();
         }
     }

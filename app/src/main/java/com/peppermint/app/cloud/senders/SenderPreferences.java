@@ -3,6 +3,7 @@ package com.peppermint.app.cloud.senders;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 
 import com.peppermint.app.utils.Utils;
 
@@ -102,6 +103,11 @@ public class SenderPreferences {
         SharedPreferences.Editor editor = getSharedPreferences().edit();
         editor.putString(RECENT_CONTACT_URIS_KEY, contactsStr);
         editor.commit();
+    }
+
+    public boolean hasRecentContactUris() {
+        String contactsStr = getSharedPreferences().getString(RECENT_CONTACT_URIS_KEY, null);
+        return !TextUtils.isEmpty(contactsStr);
     }
 
     public ArrayList<Long> getRecentContactUris() {
