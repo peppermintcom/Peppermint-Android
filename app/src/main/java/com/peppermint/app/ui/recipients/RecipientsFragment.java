@@ -93,6 +93,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     private boolean mRecipientListShown;
     private RecipientCursorAdapter mRecipientAdapter;
     private Button mBtnAddContact;
+    private ViewGroup mLytAddContactContainer;
     private ImageView mImgListBorder;
     private PopupDialog mTipPopup;
     private final Runnable mShowLoadingRunnable = new Runnable() {
@@ -247,9 +248,9 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
         private void handleAddContactButtonVisibility() {
             if(mSearchListBarView.getSearchText() != null || mRecipientAdapter == null || mRecipientAdapter.getCount() <= 0) {
-                mBtnAddContact.setVisibility(View.VISIBLE);
+                mLytAddContactContainer.setVisibility(View.VISIBLE);
             } else {
-                mBtnAddContact.setVisibility(View.GONE);
+                mLytAddContactContainer.setVisibility(View.GONE);
             }
         }
     }
@@ -512,6 +513,8 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
         // init no recipients view
         mImgListBorder = (ImageView) v.findViewById(R.id.imgListBorder);
+
+        mLytAddContactContainer = (ViewGroup) v.findViewById(R.id.lytAddContactContainer);
 
         mBtnAddContact = (Button) v.findViewById(R.id.btnAddContact);
         mBtnAddContact.setTypeface(app.getFontSemibold());

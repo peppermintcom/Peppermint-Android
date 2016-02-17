@@ -10,35 +10,41 @@
         android:id="@+id/listContainer"
         android:layout_alignParentTop="true"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true">
+        android:layout_height="match_parent">
 
         <!-- To add new contact/recipient -->
-        <com.peppermint.app.ui.views.simple.CustomFontButton
-            android:id="@+id/btnAddContact"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"
+        <FrameLayout android:id="@+id/lytAddContactContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="15dp"
-            android:paddingTop="5dp"
-            android:paddingLeft="30dp"
-            android:paddingRight="30dp"
-            android:paddingBottom="8dp"
-            custom:textFont="@string/font_semibold"
-            android:textSize="16dp"
-            android:text="@string/add_contact"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:background="@drawable/background_btn_alt"
-            android:drawableLeft="@drawable/ic_plus_14dp"
-            android:drawablePadding="10dp"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
             android:visibility="gone"
-            style="?android:attr/borderlessButtonStyle" />
+            android:fitsSystemWindows="true">
+
+            <com.peppermint.app.ui.views.simple.CustomFontButton
+                android:id="@+id/btnAddContact"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="5dp"
+                android:paddingLeft="30dp"
+                android:paddingRight="30dp"
+                android:paddingBottom="8dp"
+                custom:textFont="@string/font_semibold"
+                android:textSize="16dp"
+                android:text="@string/add_contact"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:background="@drawable/background_btn_alt"
+                android:drawableLeft="@drawable/ic_plus_14dp"
+                android:drawablePadding="10dp"
+                style="?android:attr/borderlessButtonStyle" />
+
+        </FrameLayout>
 
         <FrameLayout android:id="@+id/lytContents"
             android:layout_alignParentTop="true"
-            android:layout_above="@id/btnAddContact"
+            android:layout_above="@id/lytAddContactContainer"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
