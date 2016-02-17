@@ -27,9 +27,9 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
     public static final String FRIENDLY_MONTH_DATE_FORMAT = "d MMM";
     public static final String FRIENDLY_WEEK_DATE_FORMAT = "EEEE";
 
-	private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormat.forPattern(DATE_FORMAT);
-	private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormat.forPattern(TIME_FORMAT);
-	private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormat.forPattern(DATETIME_FORMAT);
+	private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormat.forPattern(DATE_FORMAT).withZone(DateTimeZone.UTC);
+	private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormat.forPattern(TIME_FORMAT).withZone(DateTimeZone.UTC);
+	private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormat.forPattern(DATETIME_FORMAT).withZone(DateTimeZone.UTC);
 
     public static final int TYPE_DATE = 1;
     public static final int TYPE_TIME = 2;
@@ -39,7 +39,7 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
 	private DateTime mInputCalendar;
 
 	public DateContainer() {
-        mInputCalendar = new DateTime(DateTimeZone.UTC);
+        mInputCalendar = DateTime.now(DateTimeZone.UTC);
 	}
 
     public DateContainer(int mType) {
@@ -63,7 +63,7 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
 	}
 
 	public void setFromString(String dateTimeStr) throws ParseException {
-        switch (mType) {
+        /*switch (mType) {
         case TYPE_DATE:
             mInputCalendar = DateTime.parse(dateTimeStr, DATE_FORMATTER);
             break;
@@ -73,7 +73,8 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
         case TYPE_TIME:
             mInputCalendar = DateTime.parse(dateTimeStr, TIME_FORMATTER);
             break;
-        }
+        }*/
+        mInputCalendar = DateTime.parse(dateTimeStr, DATE_TIME_FORMATTER);
 	}
 
 	@Override
@@ -85,13 +86,13 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
         String dateTimeStr = null;
 		switch (mType) {
 		case TYPE_DATE:
-            dateTimeStr = mInputCalendar.withZone(timeZone).toString(DATE_FORMATTER);
+            dateTimeStr = mInputCalendar.withZone(timeZone).toString(DATE_FORMATTER.withZone(timeZone));
 			break;
 		case TYPE_DATETIME:
-            dateTimeStr = mInputCalendar.withZone(timeZone).toString(DATE_TIME_FORMATTER);
+            dateTimeStr = mInputCalendar.withZone(timeZone).toString(DATE_TIME_FORMATTER.withZone(timeZone));
 			break;
 		case TYPE_TIME:
-            dateTimeStr = mInputCalendar.withZone(timeZone).toString(TIME_FORMATTER);
+            dateTimeStr = mInputCalendar.withZone(timeZone).toString(TIME_FORMATTER.withZone(timeZone));
 			break;
 		}
         return dateTimeStr;
@@ -101,8 +102,8 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
         if(customPattern == null) {
             return getAsString(timeZone);
         }
-        DateTimeFormatter formatter = DateTimeFormat.forPattern(customPattern);
-		return mInputCalendar.withZone(timeZone).toString(formatter);
+        DateTimeFormatter formatter = DateTimeFormat.forPattern(customPattern).withZone(timeZone);
+        return mInputCalendar.withZone(timeZone).toString(formatter);
 	}
 
     public DateTime getDateTime() {
@@ -128,16 +129,12 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
 
     @Override
     public boolean equals(Object o) {
-        DateTime dateTime = null;
-
         if(o instanceof DateContainer) {
-            dateTime = ((DateContainer) o).getDateTime();
-        } else if(o instanceof DateTime) {
-            dateTime = (DateTime) o;
+            return compareTo((DateContainer) o) == 0;
         }
 
-        if(dateTime != null) {
-            return mInputCalendar.compareTo(dateTime) == 0;
+        if(o instanceof DateTime) {
+            return mInputCalendar.compareTo((DateTime) o) == 0;
         }
 
         return super.equals(o);

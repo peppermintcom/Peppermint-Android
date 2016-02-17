@@ -3,6 +3,7 @@ package com.peppermint.app.ui.chat;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -165,7 +166,7 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
 
                 // time received/sent
                 try {
-                    DateContainer curTime = new DateContainer(DateContainer.TYPE_TIME, message.getRegistrationTimestamp().substring(11));
+                    DateContainer curTime = new DateContainer(DateContainer.TYPE_TIME, message.getRegistrationTimestamp());
                     txtTime.setText(curTime.getAsString(DateContainer.FRIENDLY_AMPM_TIME_FORMAT, DateTimeZone.getDefault()).replace(".", ""));
                 } catch(ParseException e) {
                     txtTime.setText(message.getRegistrationTimestamp());
@@ -182,10 +183,10 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
                 // day of the message separator
                 txtDay.setVisibility(View.VISIBLE);
                 try {
-                    DateContainer curDate = new DateContainer(DateContainer.TYPE_DATE, message.getRegistrationTimestamp().substring(0, 10));
+                    DateContainer curDate = new DateContainer(DateContainer.TYPE_DATE, message.getRegistrationTimestamp());
 
                     if(prevMessage != null) {
-                        DateContainer prevDate = new DateContainer(DateContainer.TYPE_DATE, prevMessage.getRegistrationTimestamp().substring(0, 10));
+                        DateContainer prevDate = new DateContainer(DateContainer.TYPE_DATE, prevMessage.getRegistrationTimestamp());
                         if(prevDate.equals(curDate)) {
                             txtDay.setVisibility(View.GONE);
                         }

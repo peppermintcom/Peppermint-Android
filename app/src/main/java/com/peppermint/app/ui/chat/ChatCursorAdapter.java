@@ -75,7 +75,7 @@ public class ChatCursorAdapter extends CursorAdapter {
 
         if(chat.getLastMessageTimestamp() != null) {
             try {
-                DateContainer lastMessageDate = new DateContainer(DateContainer.TYPE_DATE, chat.getLastMessageTimestamp().substring(0, 10));
+                DateContainer lastMessageDate = new DateContainer(DateContainer.TYPE_DATE, chat.getLastMessageTimestamp());
                 txtLastMessageDate.setText(DateContainer.getRelativeLabelToToday(mContext, lastMessageDate, DateTimeZone.getDefault()));
             } catch (ParseException e) {
                 mTrackerManager.logException(e);
