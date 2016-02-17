@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
 import android.view.Surface;
@@ -148,8 +149,13 @@ public class OverlayManager {
 
         if(overlay.isDisableAutoScreenRotation()) {
             overlay.setRequestedOrientation(mActivity.getRequestedOrientation());
-            //noinspection ResourceType
-            mActivity.setRequestedOrientation(getActivityInfoOrientation());
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+            } else {
+                //noinspection ResourceType
+                mActivity.setRequestedOrientation(getActivityInfoOrientation() | ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
+            }
         }
 
         if(animated) {
@@ -270,8 +276,13 @@ public class OverlayManager {
 
     protected void lockOrientation() {
         mCachedScreenOrientation = mActivity.getRequestedOrientation();
-        //noinspection ResourceType
-        mActivity.setRequestedOrientation(getActivityInfoOrientation());
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+        } else {
+            //noinspection ResourceType
+            mActivity.setRequestedOrientation(getActivityInfoOrientation() | ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
+        }
     }
 
     protected void unlockOrientation() {
