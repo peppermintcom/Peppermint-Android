@@ -93,7 +93,7 @@ public class SMSConfirmationDialog extends CustomConfirmationDialog implements V
                 mTxtEmailVia.setText(R.string.must_add_an_email_address_first);
                 mTxtEmailValue.setVisibility(View.GONE);
             } else {
-                mTxtEmailValue.setText(mEmailRecipient.getVia());
+                mTxtEmailValue.setText(mEmailRecipient.getEmail().getVia());
                 mTxtEmailVia.setText(R.string.via);
                 mTxtEmailValue.setVisibility(View.VISIBLE);
             }

@@ -6,8 +6,8 @@ import android.provider.ContactsContract;
 import com.peppermint.app.cloud.senders.exceptions.ElectableForQueueingException;
 import com.peppermint.app.cloud.senders.mail.gmail.GmailSender;
 import com.peppermint.app.cloud.senders.mail.nativemail.IntentMailSender;
-import com.peppermint.app.cloud.senders.sms.nativesms.IntentSMSSender;
 import com.peppermint.app.cloud.senders.sms.directsms.SMSSender;
+import com.peppermint.app.cloud.senders.sms.nativesms.IntentSMSSender;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.tracking.TrackerManager;
@@ -148,7 +148,9 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
      * @param previousFailedTask the previously failed upload task
      */
     public void send(Message message, SenderUploadTask previousFailedTask) {
-        String mimeType = message.getRecipient().getMimeType();
+        String mimeType = message.getRecipientParameter().getEmail() != null ?
+                message.getRecipientParameter().getEmail().getMimeType() :
+                message.getRecipientParameter().getPhone().getMimeType();
 
         // check if there's a sender for the specified recipient mime type
         if(!mSenderMap.containsKey(mimeType)) {

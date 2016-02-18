@@ -41,7 +41,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
      * @throws Throwable
      */
     protected void uploadPeppermintMessage() throws Throwable {
-        File recordedFile = getMessage().getRecording().getValidatedFile();
+        File recordedFile = getMessage().getRecordingParameter().getValidatedFile();
 
         if(getMessage().getServerShortUrl() != null && getMessage().getServerCanonicalUrl() != null) {
             return;
@@ -50,7 +50,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         AuthenticationData data = getAuthenticationData();
 
         PeppermintApi api = getPeppermintApi();
-        String contentType = getMessage().getRecording().getContentType();
+        String contentType = getMessage().getRecordingParameter().getContentType();
         long now = android.os.SystemClock.uptimeMillis();
         String fullName = getSenderPreferences().getFullName();
         if(fullName == null) {

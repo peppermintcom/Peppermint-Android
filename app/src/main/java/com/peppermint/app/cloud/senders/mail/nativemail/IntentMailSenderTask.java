@@ -43,13 +43,13 @@ public class IntentMailSenderTask extends SenderUploadTask {
 
         // build the email body
         getMessage().setEmailBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_simple, url,
-                getMessage().getRecording().getDurationMillis(),
-                getMessage().getRecording().getContentType(),
+                getMessage().getRecordingParameter().getDurationMillis(),
+                getMessage().getRecordingParameter().getContentType(),
                 displayName, data.getEmail(), false));
 
-        File file = getMessage().getRecording().getFile();
+        File file = getMessage().getRecordingParameter().getFile();
 
-        Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + getMessage().getRecipient().getVia()));
+        Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + getMessage().getRecipientParameter().getEmail().getVia()));
         i.putExtra(Intent.EXTRA_SUBJECT, getMessage().getEmailSubject());
         i.putExtra(Intent.EXTRA_TEXT, Html.fromHtml(getMessage().getEmailBody()));
         Uri fileUri = FileProvider.getUriForFile(getContext(), "com.peppermint.app", file);

@@ -15,7 +15,6 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -23,7 +22,6 @@ import android.widget.Toast;
 
 import com.peppermint.app.MainActivity;
 import com.peppermint.app.R;
-import com.peppermint.app.authenticator.AuthenticatorConstants;
 import com.peppermint.app.authenticator.AuthenticatorUtils;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
 import com.peppermint.app.cloud.gcm.RegistrationIntentService;
@@ -31,14 +29,17 @@ import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.cloud.senders.SenderManager;
 import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.data.Chat;
+import com.peppermint.app.data.ChatManager;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.Message;
+import com.peppermint.app.data.MessageManager;
 import com.peppermint.app.data.Recipient;
+import com.peppermint.app.data.RecipientManager;
 import com.peppermint.app.data.Recording;
+import com.peppermint.app.data.RecordingManager;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.chat.ChatActivity;
 import com.peppermint.app.ui.chat.ChatFragment;
-import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
 import com.peppermint.app.utils.Utils;
 
 import java.io.IOException;
@@ -178,13 +179,13 @@ public class MessagesService extends Service {
                     doGcmRegistration();
 
                     SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
-                    List<Message> queued = Message.getQueued(db);
+                    List<Message> queued = MessageManager.getQueued(MessagesService.this, db);
                     db.close();
                     if (queued.size() > 0 && Utils.isInternetActive(MessagesService.this)) {
                         // try to resend all queued recordings..
                         for (Message message : queued) {
-                            Log.d(TAG, "Re-trying queued request " + message.getId() + " to " + message.getRecipient().getName());
                             if(!mSenderManager.isSending(message)) {
+                                Log.d(TAG, "Re-trying queued request " + message.getId() + " to " + message.getRecipientParameter().getDisplayName());
                                 mSenderManager.send(message);
                             }
                         }
@@ -288,6 +289,7 @@ public class MessagesService extends Service {
                 String senderEmail = receivedMessageData.getString("sender_email");
                 String senderName = receivedMessageData.getString("sender_name");
                 String createdTs = receivedMessageData.getString("created");
+                int durationSeconds = Integer.parseInt(receivedMessageData.getString("duration", "0"));
 
                 if(audioUrl == null || senderEmail == null || receiverEmail == null) {
                     mTrackerManager.log("Invalid GCM notification received! Either or both audio URL and sender email are null.");
@@ -299,23 +301,27 @@ public class MessagesService extends Service {
                         mTrackerManager.log("No account when receiving message...", e);
                     }
 
+                    Recipient recipient = null;
                     if(emailAddress != null && emailAddress.compareToIgnoreCase(receiverEmail.trim()) == 0) {
-                        Recipient recipient = new Recipient();
-                        recipient.setVia(senderEmail);
-                        recipient.setName(senderName);
-                        recipient.setMimeType(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
-                        recipient.setType(AuthenticatorConstants.ACCOUNT_TYPE);
-                        RecipientAdapterUtils.fillRecipientDetails(this, recipient);
+                        String[] names = Utils.getFirstAndLastNames(senderName);
+                        try {
+                            recipient = RecipientManager.insertOrUpdateRecipient(this, 0, names[0], names[1], null, senderEmail, null, emailAddress, true);
+                        } catch (RecipientManager.InvalidViaException | RecipientManager.InvalidNameException e) {
+                            mTrackerManager.log(senderName + " - " + senderEmail);
+                            mTrackerManager.logException(e);
+                        }
+                    } else if(emailAddress != null) {
+                        mTrackerManager.log("Received wrong message from GCM! Should have gone to email " + receiverEmail);
+                    }
 
+                    if(recipient != null) {
                         Recording recording = new Recording();
                         recording.setContentType(Recording.CONTENT_TYPE_AUDIO);
                         recording.setRecordedTimestamp(createdTs);
-                        // TODO missing duration!
-
-                        SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
+                        recording.setDurationMillis(durationSeconds * 1000l);
 
                         Chat chat = new Chat();
-                        chat.setMainRecipient(recipient);
+                        chat.setMainRecipientId(recipient.getContactId());
                         chat.setLastMessageTimestamp(createdTs);
 
                         Message message = new Message();
@@ -323,20 +329,23 @@ public class MessagesService extends Service {
                         message.setReceived(true);
                         message.setServerCanonicalUrl(audioUrl);
                         message.setServerTranscriptionUrl(transcriptionUrl);
-                        message.setChat(chat);
-                        message.setRecipient(recipient);
-                        message.setRecording(recording);
+                        message.setChatId(chat.getId());
+                        message.setRecipientId(recipient.getContactId());
+                        message.setRecipientParameter(recipient);
+                        message.setRecordingParameter(recording);
                         message.setRegistrationTimestamp(createdTs);
 
+                        SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
                         try {
-                            Recording.insertOrUpdate(db, recording);
-                            Recipient.insertOrUpdate(db, recipient);
-                            Chat foundChat = Chat.getByMainRecipient(db, recipient.getId());
+                            RecordingManager.insertOrUpdate(db, recording);
+                            Chat foundChat = ChatManager.getByMainRecipient(db, recipient.getContactId());
                             if(foundChat != null && foundChat.getLastMessageTimestamp() != null && foundChat.getLastMessageTimestamp().compareToIgnoreCase(createdTs) > 0) {
                                 chat.setLastMessageTimestamp(foundChat.getLastMessageTimestamp());
                             }
-                            Chat.insertOrUpdate(db, chat);
-                            Message.insert(db, message);
+                            ChatManager.insertOrUpdate(db, chat);
+                            message.setRecordingId(recording.getId());
+                            message.setChatId(chat.getId());
+                            MessageManager.insert(db, message);
                         } catch (SQLException e) {
                             mTrackerManager.logException(e);
                         }
@@ -348,8 +357,6 @@ public class MessagesService extends Service {
                         ev.setReceiverEmail(receiverEmail);
                         ev.setMessage(message);
                         mEventBus.post(ev);
-                    } else if(emailAddress != null) {
-                        mTrackerManager.log("Received wrong message from GCM! Should have gone to email " + receiverEmail);
                     }
                 }
             }
@@ -391,7 +398,7 @@ public class MessagesService extends Service {
         SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
         switch (event.getType()) {
             case SenderEvent.EVENT_ERROR:
-                Toast.makeText(this, String.format(getString(R.string.sender_msg_send_error), event.getSenderTask().getMessage().getRecipient().getName()), Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, String.format(getString(R.string.sender_msg_send_error), event.getSenderTask().getMessage().getRecipientParameter().getDisplayName()), Toast.LENGTH_SHORT).show();
             case SenderEvent.EVENT_QUEUED:
                 if (event.getError().getMessage() != null) {
                     Toast.makeText(this, event.getError().getMessage(), Toast.LENGTH_LONG).show();
@@ -401,8 +408,8 @@ public class MessagesService extends Service {
                 try {
                     // TODO actually delete the local file
                     // discard recording as well
-                    Recording.delete(db, message.getRecording().getId());
-                    Message.delete(db, message.getId());
+                    RecordingManager.delete(db, message.getRecordingId());
+                    MessageManager.delete(db, message.getId());
                 } catch (SQLException e) {
                     mTrackerManager.logException(e);
                 }
@@ -411,7 +418,7 @@ public class MessagesService extends Service {
                 // message sending has finished, so update the saved data and mark as sent
                 try {
                     message.setSent(true);
-                    Message.insertOrUpdate(db, message);
+                    MessageManager.insertOrUpdate(this, db, message);
                 } catch (SQLException e) {
                     mTrackerManager.logException(e);
                 }
@@ -430,7 +437,7 @@ public class MessagesService extends Service {
             SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
             message.setPlayed(true);
             try {
-                Message.update(db, message);
+                MessageManager.update(db, message);
             } catch (SQLException e) {
                 mTrackerManager.logException(e);
             }
@@ -451,7 +458,7 @@ public class MessagesService extends Service {
         }
 
         SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
-        message = Message.getByIdOrServerId(db, message.getId(), message.getServerId());
+        message = MessageManager.getByIdOrServerId(this, db, message.getId(), message.getServerId());
         db.close();
 
         mSenderManager.send(message);
@@ -461,19 +468,23 @@ public class MessagesService extends Service {
     private Message send(Chat chat, Recipient recipient, Recording recording) {
         // default body if no url is supplied (each sender is currently responsible for building its own message body)
         String body = getString(R.string.sender_default_message);
-        Message message = new Message(recording, recipient, getString(R.string.sender_default_mail_subject), body);
+        Message message = new Message(recording.getId(), recipient.getContactId(), getString(R.string.sender_default_mail_subject), body);
+        message.setRecipientParameter(recipient);
+        message.setRecordingParameter(recording);
 
         if(chat == null) {
-            chat = new Chat(recipient, recording.getRecordedTimestamp());
+            chat = new Chat(recipient.getContactId(), recording.getRecordedTimestamp());
         }
-        message.setChat(chat);
+        /*message.setChat(chat);*/
 
         SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
         try {
-            Recipient.insertOrUpdate(db, recipient);
-            Chat.insertOrUpdate(db, chat);
-            Recording.insertOrUpdate(db, recording);
-            Message.insertOrUpdate(db, message);
+            ChatManager.insertOrUpdate(db, chat);
+            RecordingManager.insertOrUpdate(db, recording);
+            message.setRecordingId(recording.getId());
+            message.setRecipientId(recipient.getContactId());
+            message.setChatId(chat.getId());
+            MessageManager.insertOrUpdate(this, db, message);
         } catch (SQLException e) {
             mTrackerManager.logException(e);
         }
@@ -491,7 +502,7 @@ public class MessagesService extends Service {
             if(!isSending(message)) {
                 SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
                 try {
-                    Message.delete(db, message.getId());
+                    MessageManager.delete(db, message.getId());
                 } catch (SQLException e) {
                     mTrackerManager.logException(e);
                 }
@@ -514,18 +525,18 @@ public class MessagesService extends Service {
     private Notification getNotification(Message message) {
         Intent notificationIntent = new Intent(MessagesService.this, ChatActivity.class);
         notificationIntent.putExtra(ChatFragment.PARAM_AUTO_PLAY_MESSAGE_ID, message.getId());
-        notificationIntent.putExtra(ChatFragment.PARAM_RECIPIENT, message.getRecipient());
+        notificationIntent.putExtra(ChatFragment.PARAM_RECIPIENT_ID, message.getRecipientId());
         PendingIntent pendingIntent = PendingIntent.getActivity(MessagesService.this, (int) message.getId(), notificationIntent, 0);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(MessagesService.this)
                 .setSmallIcon(R.drawable.ic_mail_36dp)
                 .setContentTitle(getString(R.string.new_message))
-                .setContentText(message.getRecipient().getName() + " " + getString(R.string.sent_you_a_message))
+                .setContentText(message.getRecipientParameter().getDisplayName() + " " + getString(R.string.sent_you_a_message))
                 .setContentIntent(pendingIntent);
 
-        if(message.getRecipient().getPhotoUri() != null) {
+        if(message.getRecipientParameter().getPhotoUri() != null) {
             try {
-                builder.setLargeIcon(MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.parse(message.getRecipient().getPhotoUri())));
+                builder.setLargeIcon(MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.parse(message.getRecipientParameter().getPhotoUri())));
             } catch (IOException e) {
                 mTrackerManager.log("Unable to use photo URI as notification large icon!", e);
             }

@@ -214,7 +214,7 @@ public class PlayerService extends Service {
             mMediaPlayer = new MediaPlayer();
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             try {
-                mMediaPlayer.setDataSource(message.getRecording().getFilePath() != null ? message.getRecording().getFilePath() : message.getServerCanonicalUrl());
+                mMediaPlayer.setDataSource(message.getRecordingParameter().getFilePath() != null ? message.getRecordingParameter().getFilePath() : message.getServerCanonicalUrl());
             } catch (Throwable e) {
                 mTrackerManager.logException(e);
             }

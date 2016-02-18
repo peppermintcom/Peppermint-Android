@@ -6,6 +6,4 @@ CREATE TABLE tbl_message (message_id INTEGER PRIMARY KEY AUTOINCREMENT, server_m
 
 CREATE TABLE tbl_recording (recording_id INTEGER PRIMARY KEY AUTOINCREMENT, file_path varchar(255), duration_millis bigint, size_kb float, has_video int, recorded_ts varchar(19), content_type varchar(150));
 
-CREATE TABLE tbl_recipient (recipient_id INTEGER PRIMARY KEY AUTOINCREMENT, contact_id bigint, mime_type varchar(255), photo_uri varchar(255), name varchar(255), via varchar(255), account_type varchar(255));
-
 CREATE TABLE tbl_sending (sender_id bigint, message_id bigint, sent int default 0, PRIMARY KEY(sender_id, message_id));

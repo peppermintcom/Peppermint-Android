@@ -125,6 +125,12 @@ public class SenderPreferences {
         return recentContactUris;
     }
 
+    public void clearRecentContactUris() {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.remove(RECENT_CONTACT_URIS_KEY);
+        editor.commit();
+    }
+
     public void setShownSmsConfirmation(boolean shown) {
         SharedPreferences.Editor editor = getSharedPreferences().edit();
         editor.putBoolean(SHOWN_SMS_CONFIRMATION_KEY, shown);

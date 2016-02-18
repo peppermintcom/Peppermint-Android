@@ -3,7 +3,6 @@ package com.peppermint.app.ui.chat;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +21,9 @@ import com.peppermint.app.R;
 import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.data.Message;
+import com.peppermint.app.data.MessageManager;
 import com.peppermint.app.data.Recipient;
+import com.peppermint.app.data.RecordingManager;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
 import com.peppermint.app.ui.views.simple.CustomFontButton;
@@ -174,8 +175,8 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
                 }
 
                 // total duration of the message / current position of the playing message
-                if(message.getRecording() != null) {
-                    txtDuration.setText(Utils.getFriendlyDuration(message.getRecording().getDurationMillis()));
+                if(message.getRecordingParameter() != null) {
+                    txtDuration.setText(Utils.getFriendlyDuration(message.getRecordingParameter().getDurationMillis()));
                 } else {
                     txtDuration.setText("");
                 }
@@ -255,7 +256,7 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
                 SeekBar seekBar = (SeekBar) mRootView.findViewById(R.id.seekBar);
                 seekBar.setProgress(0);
                 CustomFontTextView txtDuration = (CustomFontTextView) mRootView.findViewById(R.id.txtDuration);
-                txtDuration.setText(Utils.getFriendlyDuration(mMessage.getRecording().getDurationMillis()));
+                txtDuration.setText(Utils.getFriendlyDuration(mMessage.getRecordingParameter().getDurationMillis()));
             }
         }
 
@@ -383,7 +384,9 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
     }
 
     public Message getMessage(Cursor cursor) {
-        return Message.getFromCursor(mDb, cursor);
+        Message message = MessageManager.getFromCursor(cursor);
+        message.setRecordingParameter(RecordingManager.get(mDb, message.getRecordingId()));
+        return message;
     }
 
     public Message getMessage(int position) {

@@ -6,7 +6,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.view.View;
 import android.widget.Toast;
 
@@ -19,11 +18,10 @@ import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.ReceiverEvent;
 import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.cloud.senders.SenderPreferences;
-import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.Recipient;
+import com.peppermint.app.data.RecipientManager;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.ui.CustomActionBarActivity;
-import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
 import com.peppermint.app.ui.recipients.add.NewRecipientActivity;
 import com.peppermint.app.ui.recipients.add.NewRecipientFragment;
 import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
@@ -163,8 +161,8 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
     private void launchNewRecipientActivity(Recipient editRecipient, int requestCode) {
         Intent intent = new Intent(mActivity, NewRecipientActivity.class);
         if (editRecipient != null) {
-            intent.putExtra(NewRecipientFragment.KEY_VIA, editRecipient.getVia());
-            intent.putExtra(NewRecipientFragment.KEY_NAME, editRecipient.getName());
+            intent.putExtra(NewRecipientFragment.KEY_VIA, editRecipient.getEmail() != null ? editRecipient.getEmail().getVia() : editRecipient.getPhone().getVia());
+            intent.putExtra(NewRecipientFragment.KEY_NAME, editRecipient.getDisplayName());
             intent.putExtra(NewRecipientFragment.KEY_RAW_ID, editRecipient.getRawId());
             intent.putExtra(NewRecipientFragment.KEY_PHOTO_URL, editRecipient.getPhotoUri() == null ? null : Uri.parse(editRecipient.getPhotoUri()));
         }
@@ -227,7 +225,7 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == REQUEST_NEWCONTACT_AND_SEND) {
             if(resultCode == Activity.RESULT_OK && mFinalEvent != null) {
-                Recipient emailRecipient = RecipientAdapterUtils.getMainEmailRecipient(mActivity, mFinalEvent.getRecipient());
+                Recipient emailRecipient = RecipientManager.getRecipientMainEmail(mActivity, mFinalEvent.getRecipient().getRawId());
                 if(emailRecipient == null) {
                     CustomToast.makeText(mActivity, R.string.msg_no_email_address, Toast.LENGTH_LONG).show();
                 } else {
@@ -251,8 +249,7 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
 
         this.mRecipient = recipient;
 
-        if (mRecipient.getMimeType().compareTo(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE) == 0 &&
-                !Utils.isSimAvailable(mActivity)) {
+        if (mRecipient.getPhone() != null && !Utils.isSimAvailable(mActivity)) {
             if(!mSmsAddContactDialog.isShowing()) {
                 mSmsAddContactDialog.show();
             }
@@ -271,8 +268,8 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
     @Override
     public void onRecordingFinished(RecordService.Event event) {
         mFinalEvent = event;
-        if(!mPreferences.isShownSmsConfirmation() && event.getRecipient().getMimeType().equals(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)) {
-            Recipient emailRecipient = RecipientAdapterUtils.getMainEmailRecipient(mActivity, mFinalEvent.getRecipient());
+        if(!mPreferences.isShownSmsConfirmation() && event.getRecipient().getPhone() != null) {
+            Recipient emailRecipient = RecipientManager.getRecipientMainEmail(mActivity, mFinalEvent.getRecipient().getRawId());
             mSmsConfirmationDialog.setEmailRecipient(emailRecipient);
             mSmsConfirmationDialog.show();
         } else {
@@ -286,10 +283,9 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
         mMessagesServiceManager.send(null, recipient, recording);
     }
 
-    protected void launchChatActivity(Chat chat, Recipient recipient) {
+    protected void launchChatActivity(Recipient recipient) {
         Intent chatIntent = new Intent(mActivity, ChatActivity.class);
-        chatIntent.putExtra(ChatFragment.PARAM_RECIPIENT, recipient);
-        chatIntent.putExtra(ChatFragment.PARAM_CHAT, chat);
+        chatIntent.putExtra(ChatFragment.PARAM_RECIPIENT_ID, recipient.getContactId());
         startActivity(chatIntent);
     }
 

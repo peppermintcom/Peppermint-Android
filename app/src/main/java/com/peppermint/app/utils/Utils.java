@@ -811,7 +811,7 @@ public class Utils {
         StringBuilder sb = new StringBuilder();
         boolean first = true;
         for (String str : strs) {
-            if(str != null) {
+            if(str != null && str.length() > 0) {
                 if (first) {
                     first = false;
                 } else {
@@ -820,7 +820,44 @@ public class Utils {
                 sb.append(str);
             }
         }
-        return sb.toString();
+        String result = sb.toString();
+        if(result.length() <= 0) {
+            return "(1=1)";
+        }
+        return "(" + sb.toString() + ")";
+    }
+
+    /**
+     * Builds a string with a set of conditions in SQL syntax (e.g. the where part).
+     * @param field the restricted field
+     * @param allowed the set of allowed values
+     * @param args the set of allowed values in string format
+     * @param isAnd the separator between conditions (either AND or OR)
+     * @param <T> the allowed values type
+     * @return the conditions string
+     */
+    public static <T> String getSQLConditions(String field, List<T> allowed, List<String> args, boolean isAnd) {
+        if(allowed == null) {
+            return "1";
+        }
+
+        StringBuilder b = new StringBuilder();
+        for(int i=0; i<allowed.size(); i++) {
+            if(i != 0) {
+                b.append(isAnd ? " AND " : " OR ");
+            }
+
+            if(args != null) {
+                args.add(allowed.get(i).toString());
+                b.append(field);
+                b.append("=?");
+            } else {
+                b.append(field);
+                b.append("=");
+                b.append(allowed.get(i).toString());
+            }
+        }
+        return b.toString();
     }
 
     public static void logBundle(Bundle bundle, String parent) {

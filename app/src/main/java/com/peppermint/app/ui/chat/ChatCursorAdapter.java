@@ -12,8 +12,10 @@ import android.widget.CursorAdapter;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.Message;
+import com.peppermint.app.data.ChatManager;
+import com.peppermint.app.data.MessageManager;
 import com.peppermint.app.data.Recipient;
+import com.peppermint.app.data.RecipientManager;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
@@ -52,7 +54,7 @@ public class ChatCursorAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         Chat chat = getChat(cursor);
-        Recipient recipient = chat.getMainRecipient();
+        Recipient recipient = chat.getMainRecipientParameter();
 
         AnimatedAvatarView imgPhoto = (AnimatedAvatarView) view.findViewById(R.id.imgPhoto);
         CustomFontTextView txtName = (CustomFontTextView) view.findViewById(R.id.txtName);
@@ -66,8 +68,8 @@ public class ChatCursorAdapter extends CursorAdapter {
         }
 
         if(recipient != null) {
-            txtName.setText(recipient.getName());
-            txtContact.setText(recipient.getVia());
+            txtName.setText(recipient.getDisplayName());
+            txtContact.setText(recipient.getEmail() != null ? recipient.getEmail().getVia() : recipient.getPhone().getVia());
         }
 
         CustomFontTextView txtUnreadMessages = (CustomFontTextView) view.findViewById(R.id.txtUnreadMessages);
@@ -85,7 +87,7 @@ public class ChatCursorAdapter extends CursorAdapter {
             txtLastMessageDate.setText("");
         }
 
-        int unreadAmount = Message.getUnopenedCountByChat(mDb, chat.getId());
+        int unreadAmount = MessageManager.getUnopenedCountByChat(mDb, chat.getId());
         if(unreadAmount > 0) {
             txtUnreadMessages.setText(String.valueOf(unreadAmount));
             txtUnreadMessages.setVisibility(View.VISIBLE);
@@ -95,7 +97,9 @@ public class ChatCursorAdapter extends CursorAdapter {
     }
 
     public Chat getChat(Cursor cursor) {
-        return Chat.getFromCursor(mDb, cursor);
+        Chat chat = ChatManager.getFromCursor(cursor);
+        chat.setMainRecipientParameter(RecipientManager.getRecipientById(mContext, chat.getMainRecipientId()));
+        return chat;
     }
 
     public Chat getChat(int position) {

@@ -136,8 +136,8 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
             mRecordSoundPlayer.seekTo(0);
             mRecordSoundPlayer.start();
 
-            mView.setName(mRecipient.getName());
-            mView.setVia(mRecipient.getVia());
+            mView.setName(mRecipient.getDisplayName());
+            mView.setVia(mRecipient.getEmail() != null ? mRecipient.getEmail().getVia() : mRecipient.getPhone().getVia());
             String filename = mActivity.getString(R.string.filename_message_from) + Utils.normalizeAndCleanString(mSenderName);
 
             mRecordServiceManager.startRecording(filename, mRecipient, MAX_DURATION_MILLIS);

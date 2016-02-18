@@ -10,6 +10,7 @@ import android.widget.CursorAdapter;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.data.Recipient;
+import com.peppermint.app.data.RecipientManager;
 
 import java.util.List;
 
@@ -21,7 +22,7 @@ import java.util.List;
 public class RecipientCursorAdapter extends CursorAdapter {
 
     public static RecipientCursorAdapter get(PeppermintApp app, Context context, List<Long> allowedIds, String freeTextSearch, Boolean areStarred, List<String> allowedMimeTypes, String enforcedViaSearch) {
-        return new RecipientCursorAdapter(app, context, RecipientAdapterUtils.getRecipientsCursor(context, allowedIds, freeTextSearch, areStarred, allowedMimeTypes, enforcedViaSearch));
+        return new RecipientCursorAdapter(app, context, RecipientManager.get(context, allowedIds, freeTextSearch, areStarred, allowedMimeTypes, enforcedViaSearch));
     }
 
     private PeppermintApp mApp;
@@ -38,11 +39,11 @@ public class RecipientCursorAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        RecipientAdapterUtils.getView(mApp, context, RecipientAdapterUtils.getRecipient(cursor), view, null);
+        RecipientAdapterUtils.getView(mApp, context, RecipientManager.getRecipientFromCursor(cursor), view, null);
     }
 
     public Recipient getRecipient(int position) {
         Cursor cursor = (Cursor) getItem(position);
-        return RecipientAdapterUtils.getRecipient(cursor);
+        return RecipientManager.getRecipientFromCursor(cursor);
     }
 }

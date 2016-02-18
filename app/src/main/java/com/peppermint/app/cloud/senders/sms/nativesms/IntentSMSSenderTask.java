@@ -32,7 +32,7 @@ public class IntentSMSSenderTask extends SenderUploadTask {
         uploadPeppermintMessage();
         String url = getMessage().getServerShortUrl();
 
-        Intent sendIntent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("smsto", getMessage().getRecipient().getVia(), null));
+        Intent sendIntent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("smsto", getMessage().getRecipientParameter().getPhone().getVia(), null));
         sendIntent.putExtra("sms_body", String.format(getSender().getContext().getString(R.string.sender_default_sms_body), url));
         sendIntent.setType("vnd.android-dir/mms-sms");
         sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -44,7 +44,7 @@ public class IntentSMSSenderTask extends SenderUploadTask {
             sendIntent = new Intent(Intent.ACTION_SENDTO);
             sendIntent.addCategory(Intent.CATEGORY_DEFAULT);
             sendIntent.setType("vnd.android-dir/mms-sms");
-            sendIntent.setData(Uri.parse("sms:" + getMessage().getRecipient().getVia()));
+            sendIntent.setData(Uri.parse("sms:" + getMessage().getRecipientParameter().getPhone().getVia()));
             sendIntent.putExtra("sms_body", String.format(getSender().getContext().getString(R.string.sender_default_sms_body), url));
             sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             getSender().getContext().startActivity(sendIntent);

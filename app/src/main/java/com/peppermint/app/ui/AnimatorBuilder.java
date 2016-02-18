@@ -177,13 +177,13 @@ public class AnimatorBuilder {
      * @param views the set of target views
      * @return the animator
      */
-    public Animator buildFadeInAnimator(View... views) {
+    public Animator buildFadeInAnimator(long duration, View... views) {
         AnimatorSet set = new AnimatorSet();
         List<Animator> animatorList = new ArrayList<>();
 
         for(View v : views) {
             ObjectAnimator fadeAnimator = ObjectAnimator.ofFloat(v, "alpha", 0, 1);
-            fadeAnimator.setDuration(600);
+            fadeAnimator.setDuration(duration);
             fadeAnimator.setInterpolator(new LinearInterpolator());
             animatorList.add(fadeAnimator);
         }
@@ -192,24 +192,32 @@ public class AnimatorBuilder {
         return set;
     }
 
+    public Animator buildFadeInAnimator(View... views) {
+        return buildFadeInAnimator(600, views);
+    }
+
     /**
      * Builds an animator that simultaneously fades out all the target views.
      * @param views the set of target views
      * @return the animator
      */
-    public Animator buildFadeOutAnimator(View... views) {
+    public Animator buildFadeOutAnimator(long duration, View... views) {
         AnimatorSet set = new AnimatorSet();
         List<Animator> animatorList = new ArrayList<>();
 
         for(View v : views) {
             ObjectAnimator fadeAnimator = ObjectAnimator.ofFloat(v, "alpha", 1, 0);
-            fadeAnimator.setDuration(600);
+            fadeAnimator.setDuration(duration);
             fadeAnimator.setInterpolator(new LinearInterpolator());
             animatorList.add(fadeAnimator);
         }
 
         set.playTogether(animatorList);
         return set;
+    }
+
+    public Animator buildFadeOutAnimator(View... views) {
+        return buildFadeOutAnimator(600, views);
     }
 
     /**

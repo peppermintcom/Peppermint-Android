@@ -94,7 +94,7 @@ public class PeppermintApi implements Serializable {
      * @throws PeppermintApiTooManyRequestsException
      * @throws PeppermintApiRecipientNoAppException if the recipient doesn't have Peppermint installed
      */
-    public MessagesResponse sendMessage(String transcriptionUrl, String audioUrl, String senderEmail, String recipientEmail) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException, PeppermintApiTooManyRequestsException, PeppermintApiRecipientNoAppException {
+    public MessagesResponse sendMessage(String transcriptionUrl, String audioUrl, String senderEmail, String recipientEmail, int durationInSeconds) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException, PeppermintApiTooManyRequestsException, PeppermintApiRecipientNoAppException {
         HttpRequest request = new HttpRequest(MESSAGES_ENDPOINT, HttpRequest.METHOD_POST);
         request.setHeaderParam("Authorization", "Bearer " + getAccessToken());
         request.setHeaderParam("X-Api-Key", API_KEY);

@@ -82,12 +82,12 @@ public class GmailSenderTask extends SenderUploadTask {
 
         GoogleApi googleApi = getGoogleApi(data.getEmail());
         googleApi.setDisplayName(fullName);
-        File file = getMessage().getRecording().getFile();
+        File file = getMessage().getRecordingParameter().getFile();
 
         // build the email body
         getMessage().setEmailBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template, url,
-                getMessage().getRecording().getDurationMillis(),
-                getMessage().getRecording().getContentType(),
+                getMessage().getRecordingParameter().getDurationMillis(),
+                getMessage().getRecordingParameter().getContentType(),
                 fullName, data.getEmail(), true));
 
         try {
@@ -101,8 +101,8 @@ public class GmailSenderTask extends SenderUploadTask {
             }
 
             try {
-                GoogleApi.DraftResponse response = googleApi.createGmailDraft(getMessage().getEmailSubject(), getMessage().getEmailBody(), getMessage().getRecipient().getVia(),
-                        getMessage().getRecording().getContentType(), emailDate, file);
+                GoogleApi.DraftResponse response = googleApi.createGmailDraft(getMessage().getEmailSubject(), getMessage().getEmailBody(), getMessage().getRecipientParameter().getEmail().getVia(),
+                        getMessage().getRecordingParameter().getContentType(), emailDate, file);
                 draft = (Draft) response.getBody();
 
                 getTrackerManager().log("Gmail # Created Draft at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
@@ -114,7 +114,7 @@ public class GmailSenderTask extends SenderUploadTask {
 
             if(!isCancelled()) {
                 try {
-                    getPeppermintApi().sendMessage(null, canonicalUrl, data.getEmail(), getMessage().getRecipient().getVia());
+                    getPeppermintApi().sendMessage(null, canonicalUrl, data.getEmail(), getMessage().getRecipientParameter().getEmail().getVia(), (int) (getMessage().getRecordingParameter().getDurationMillis()/1000));
                 } catch(PeppermintApiRecipientNoAppException e) {
                     getTrackerManager().log("Unable to send through Peppermint", e);
                 } catch(Throwable e) {

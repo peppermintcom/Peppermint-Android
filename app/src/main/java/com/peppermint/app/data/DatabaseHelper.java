@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import com.peppermint.app.R;
+import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.utils.ScriptFileReader;
 
 /**
@@ -18,7 +19,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	private static final String TAG = DatabaseHelper.class.getSimpleName();
 	
 	private static final String DATABASE_NAME = "peppermint.db";    // database filename
-	public static final int DATABASE_VERSION = 14;                   // database version
+	public static final int DATABASE_VERSION = 15;                   // database version
 	private Context mContext;
 
 	public DatabaseHelper(Context context) {
@@ -87,5 +88,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	public void onUpgrade(SQLiteDatabase _db, int _oldVersion, int _newVersion) {
 		dropAll(_db);
 		onCreate(_db);
+		SenderPreferences prefs = new SenderPreferences(mContext);
+		prefs.clearRecentContactUris();
 	}
 }

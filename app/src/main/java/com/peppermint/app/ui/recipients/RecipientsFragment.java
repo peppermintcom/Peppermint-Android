@@ -39,13 +39,15 @@ import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.cloud.ReceiverEvent;
-import com.peppermint.app.data.Chat;
+import com.peppermint.app.data.ChatManager;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.Recipient;
+import com.peppermint.app.data.RecipientManager;
 import com.peppermint.app.data.RecipientType;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.AnimatorBuilder;
+import com.peppermint.app.ui.AnimatorChain;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.canvas.loading.LoadingView;
 import com.peppermint.app.ui.chat.ChatActivity;
@@ -65,6 +67,9 @@ import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -90,7 +95,6 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     private View mRecipientListContainer;
     private View mRecipientLoadingContainer;
     private LoadingView mRecipientLoadingView;
-    private boolean mRecipientListShown;
     private RecipientCursorAdapter mRecipientAdapter;
     private Button mBtnAddContact;
     private ViewGroup mLytAddContactContainer;
@@ -99,7 +103,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     private final Runnable mShowLoadingRunnable = new Runnable() {
         @Override
         public void run() {
-            setListShown(false);
+            doLoading();
         }
     };
 
@@ -126,6 +130,8 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     private SQLiteDatabase mDatabase;
     private ChatCursorAdapter mChatAdapter;
 
+    private ThreadPoolExecutor mGetRecipientsExecutor;
+
     private SQLiteDatabase getDatabase() {
         if(mDatabase == null || !mDatabase.isOpen()) {
             mDatabase = mDatabaseHelper.getReadableDatabase();
@@ -144,7 +150,8 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
         @Override
         protected void onPreExecute() {
-            mHandler.postDelayed(mShowLoadingRunnable, 250);
+            mHandler.postDelayed(mShowLoadingRunnable, 100);
+
             _recipientType = (RecipientType) mSearchListBarView.getSelectedItem();
 
             if(_filter == null) {
@@ -164,13 +171,14 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
                     if (_recipientType.isStarred() != null && _recipientType.isStarred()) {
                         // show chat list / recent contacts
-                        return Chat.getAllCursor(getDatabase());
+                        ChatManager.deleteMissingRecipientChats(getCustomActionBarActivity(), getDatabase());
+                        return ChatManager.getAllCursor(getDatabase());
                     }
 
                     // get normal full, email or phone contact list
-                    FilteredCursor cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(getCustomActionBarActivity(), null, _name, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
+                    FilteredCursor cursor = (FilteredCursor) RecipientManager.get(getCustomActionBarActivity(), null, _name, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
                     if(cursor.getOriginalCursor().getCount() <= 0 && _name != null && _via != null) {
-                        cursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(getCustomActionBarActivity(), null, null, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
+                        cursor = (FilteredCursor) RecipientManager.get(getCustomActionBarActivity(), null, null, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
                     }
                     cursor.filter();
 
@@ -203,7 +211,6 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         protected void onPostExecute(Object data) {
             // check if data is valid and activity has not been destroyed by the main thread
             if(data != null && getCustomActionBarActivity() != null && mCreated) {
-                PeppermintApp app = (PeppermintApp) getCustomActionBarActivity().getApplication();
 
                 if (data instanceof FilteredCursor) {
                     // re-use adapter and replace cursor
@@ -236,14 +243,15 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
             handleAddContactButtonVisibility();
             mHandler.removeCallbacks(mShowLoadingRunnable);
-            setListShown(true);
+            if(mLoadingAnimatorChain != null) {
+                mLoadingAnimatorChain.allowNext(false);
+            }
         }
 
         @Override
         protected void onCancelled(Object o) {
             handleAddContactButtonVisibility();
             mHandler.removeCallbacks(mShowLoadingRunnable);
-            setListShown(true);
         }
 
         private void handleAddContactButtonVisibility() {
@@ -295,27 +303,20 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     };
 
     // loading animation
-    private AnimatorSet mLoadingAnimator;
+    private AnimatorChain mLoadingAnimatorChain;
     private Animator.AnimatorListener mLoadingAnimatorListener = new Animator.AnimatorListener() {
         @Override
         public void onAnimationStart(Animator animation) {
-            if(mRecipientListShown) {
-                mRecipientListContainer.setVisibility(View.VISIBLE);
-            } else {
-                mRecipientLoadingView.startAnimations();
-                mRecipientLoadingView.startDrawingThread();
-                mRecipientLoadingContainer.setVisibility(View.VISIBLE);
-            }
+            mRecipientLoadingView.startAnimations();
+            mRecipientLoadingView.startDrawingThread();
+            mRecipientLoadingContainer.setVisibility(View.VISIBLE);
         }
         @Override
         public void onAnimationEnd(Animator animation) {
-            if(mRecipientListShown) {
-                mRecipientLoadingContainer.setVisibility(View.INVISIBLE);
-                mRecipientLoadingView.stopAnimations();
-                mRecipientLoadingView.stopDrawingThread();
-            } else {
-                mRecipientListContainer.setVisibility(View.INVISIBLE);
-            }
+            mRecipientLoadingContainer.setVisibility(View.INVISIBLE);
+            mRecipientLoadingView.stopAnimations();
+            mRecipientLoadingView.stopDrawingThread();
+            mLoadingAnimatorChain = null;
         }
         @Override
         public void onAnimationCancel(Animator animation) { }
@@ -340,6 +341,9 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     };
 
     public RecipientsFragment() {
+        this.mGetRecipientsExecutor = new ThreadPoolExecutor(1, 1,
+                60, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>());
     }
 
     private String[] getSearchData(String filter) {
@@ -375,15 +379,17 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
                     List<String> mimeTypes = new ArrayList<>();
                     mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
                     mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-                    FilteredCursor checkCursor = (FilteredCursor) RecipientAdapterUtils.getRecipientsCursor(getCustomActionBarActivity(), null, null, null, mimeTypes, mail);
+                    FilteredCursor checkCursor = (FilteredCursor) RecipientManager.get(getCustomActionBarActivity(), null, null, null, mimeTypes, mail);
                     boolean alreadyHasEmail = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
 
                     // if not, add the contact
                     if(!alreadyHasEmail) {
-                        Bundle bundle = NewRecipientFragment.insertRecipientContact(getCustomActionBarActivity(), 0, name, null, mail, null, data.getEmail());
-                        // will fail if there's no name or if the email is invalid
-                        if(!bundle.containsKey(NewRecipientFragment.KEY_ERROR)) {
-                            alreadyHasEmail = true;
+                        try {
+                            if(RecipientManager.insert(getCustomActionBarActivity(), 0, name, null, null, mail, null, data.getEmail(), false) != null) {
+                                alreadyHasEmail = true;
+                            }
+                        } catch (Exception e) {
+                            /* nothing to do here */
                         }
                     }
 
@@ -542,15 +548,11 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         txtEmpty1.setTypeface(app.getFontSemibold());
 
         // init loading recipients view
-        mRecipientListShown = true;
         mRecipientLoadingContainer = v.findViewById(R.id.progressContainer);
         mRecipientLoadingView = (LoadingView) v.findViewById(R.id.loading);
 
         // init recipient list view
         mRecipientListContainer =  v.findViewById(R.id.listContainer);
-
-        // avoid showing "no contacts" for a split second, right after creation
-        setListShownNoAnimation(false);
 
         return v;
     }
@@ -558,6 +560,10 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        // avoid showing "no contacts" for a split second, right after creation
+        /*setListShownNoAnimation(false);*/
+        doLoading();
 
         getCustomActionBarActivity().getOverlayManager().setRootScreenId(SCREEN_ID);
         getChatRecordOverlay().setViewToRemoveFocus(mSearchListBarView);
@@ -598,7 +604,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
             onSearch(mSearchListBarView.getSearchText());
         }
 
-        launchChatActivity(null, recipient);
+        launchChatActivity(recipient);
     }
 
     @Override
@@ -715,40 +721,24 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         return (mSearchListBarView.clearSearch(0) ? 1 : 0);
     }
 
-    protected void setListShown(boolean shown, boolean animate){
-        if (mRecipientListShown == shown) {
+    protected void doLoading() {
+        if(mLoadingAnimatorChain != null) {
             return;
         }
 
-        if(mLoadingAnimator != null && mLoadingAnimator.isRunning()) {
-            mLoadingAnimator.cancel();
-            mLoadingAnimator.removeAllListeners();
-            mLoadingAnimatorListener.onAnimationEnd(null);
-        }
+        Animator fadeOut = mAnimatorBuilder.buildFadeOutAnimator(400, mRecipientListContainer);
+        Animator fadeIn = mAnimatorBuilder.buildFadeInAnimator(400, mRecipientLoadingContainer);
+        AnimatorSet startLoadingSet = new AnimatorSet();
+        startLoadingSet.playTogether(fadeOut, fadeIn);
 
-        mRecipientListShown = shown;
+        fadeOut = mAnimatorBuilder.buildFadeOutAnimator(600, mRecipientLoadingContainer);
+        fadeIn = mAnimatorBuilder.buildFadeInAnimator(600, mRecipientListContainer);
+        AnimatorSet stopLoadingSet = new AnimatorSet();
+        stopLoadingSet.playTogether(fadeOut, fadeIn);
 
-        if (animate && getCustomActionBarActivity() != null) {
-            Animator fadeOut = mAnimatorBuilder.buildFadeOutAnimator(shown ? mRecipientLoadingContainer : mRecipientListContainer);
-            Animator fadeIn = mAnimatorBuilder.buildFadeInAnimator(shown ? mRecipientListContainer : mRecipientLoadingContainer);
-            mLoadingAnimator = new AnimatorSet();
-            mLoadingAnimator.addListener(mLoadingAnimatorListener);
-            mLoadingAnimator.playTogether(fadeOut, fadeIn);
-            mLoadingAnimator.start();
-        } else {
-            mLoadingAnimatorListener.onAnimationStart(null);
-            mLoadingAnimatorListener.onAnimationEnd(null);
-        }
-    }
-
-    @Override
-    public void setListShown(boolean shown){
-        setListShown(shown, true);
-    }
-
-    @Override
-    public void setListShownNoAnimation(boolean shown) {
-        setListShown(shown, false);
+        mLoadingAnimatorChain = new AnimatorChain(startLoadingSet, stopLoadingSet);
+        mLoadingAnimatorChain.setAnimatorListener(mLoadingAnimatorListener);
+        mLoadingAnimatorChain.start();
     }
 
     @Override
@@ -758,7 +748,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         if(getListView().getAdapter() instanceof RecipientCursorAdapter) {
             showPopup(view);
         } else {
-            intent.putExtra(ChatFragment.PARAM_RECIPIENT, mChatAdapter.getChat(position).getMainRecipient());
+            intent.putExtra(ChatFragment.PARAM_RECIPIENT_ID, mChatAdapter.getChat(position).getMainRecipientId());
             startActivity(intent);
         }
     }
@@ -767,7 +757,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
         Recipient tappedRecipient = getListView().getAdapter() instanceof RecipientCursorAdapter ?
                 mRecipientAdapter.getRecipient(position) :
-                mChatAdapter.getChat(position).getMainRecipient();
+                mChatAdapter.getChat(position).getMainRecipientParameter();
         return triggerRecording(view, tappedRecipient);
     }
 
@@ -780,10 +770,11 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     public void onSearch(String filter) {
         if(mGetRecipientsTask != null && !mGetRecipientsTask.isCancelled() && mGetRecipientsTask.getStatus() != AsyncTask.Status.FINISHED) {
             mGetRecipientsTask.cancel(true);
+            mGetRecipientsTask = null;
         }
 
         mGetRecipientsTask = new GetRecipients(filter);
-        mGetRecipientsTask.execute();
+        mGetRecipientsTask.executeOnExecutor(mGetRecipientsExecutor);
     }
 
     private void dismissPopup() {

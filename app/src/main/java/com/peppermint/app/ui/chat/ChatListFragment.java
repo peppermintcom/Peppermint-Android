@@ -17,6 +17,7 @@ import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.ReceiverEvent;
 import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.data.Chat;
+import com.peppermint.app.data.ChatManager;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
@@ -160,7 +161,7 @@ public class ChatListFragment extends ListFragment implements AdapterView.OnItem
     };
 
     private void refreshList() {
-        Cursor cursor = Chat.getAllCursor(getDatabase());
+        Cursor cursor = ChatManager.getAllCursor(getDatabase());
         if(mAdapter == null) {
             mAdapter = new ChatCursorAdapter(mActivity, cursor, getDatabase(), mActivity.getTrackerManager());
             setListAdapter(mAdapter);
@@ -181,8 +182,7 @@ public class ChatListFragment extends ListFragment implements AdapterView.OnItem
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Chat chat = mAdapter.getChat(position);
         Intent chatIntent = new Intent(mActivity, ChatActivity.class);
-        chatIntent.putExtra(ChatFragment.PARAM_CHAT, chat);
-        chatIntent.putExtra(ChatFragment.PARAM_RECIPIENT, chat.getMainRecipient());
+        chatIntent.putExtra(ChatFragment.PARAM_RECIPIENT_ID, chat.getMainRecipientId());
         startActivity(chatIntent);
     }
 }
