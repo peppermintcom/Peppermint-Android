@@ -535,7 +535,8 @@ public class MessagesService extends Service {
                 .setSmallIcon(R.drawable.ic_mail_36dp)
                 .setContentTitle(getString(R.string.new_message))
                 .setContentText(message.getRecipientParameter().getDisplayName() + " " + getString(R.string.sent_you_a_message))
-                .setContentIntent(pendingIntent);
+                .setContentIntent(pendingIntent)
+                .setSound(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.waterdrop));
 
         if(message.getRecipientParameter().getPhotoUri() != null) {
             try {
