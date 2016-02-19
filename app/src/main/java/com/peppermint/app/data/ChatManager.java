@@ -48,6 +48,16 @@ public class ChatManager {
         return db.rawQuery("SELECT * FROM tbl_chat WHERE chat_id = " + chatId + ";", null);
     }
 
+    public static String getOldestChatTimestamp(SQLiteDatabase db) {
+        String ts = null;
+        Cursor cursor = db.rawQuery("SELECT last_message_ts FROM tbl_chat ORDER BY last_message_ts ASC;", null);
+        if(cursor.moveToFirst()) {
+            ts = cursor.getString(0);
+        }
+        cursor.close();
+        return ts;
+    }
+
     /**
      * Obtains the chat with the supplied id from the database.
      *

@@ -81,4 +81,13 @@ public class SenderEvent {
     public void setError(Throwable mError) {
         this.mError = mError;
     }
+
+    @Override
+    public String toString() {
+        return "SenderEvent{" +
+                "mTask=" + mTask +
+                ", mType=" + mType +
+                ", mError=" + mError +
+                '}';
+    }
 }

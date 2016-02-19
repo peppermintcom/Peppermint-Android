@@ -7,7 +7,16 @@ import android.util.Log;
 
 import com.peppermint.app.R;
 import com.peppermint.app.cloud.senders.SenderPreferences;
+import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.ScriptFileReader;
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+
+import java.sql.SQLException;
+import java.text.ParseException;
+import java.util.List;
 
 /**
  * Created by Nuno Luz on 05/10/2015.
@@ -120,10 +129,50 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * @param _newVersion the new version
      */
 	@Override
-	public void onUpgrade(SQLiteDatabase _db, int _oldVersion, int _newVersion) {
-		dropAll(_db);
-		onCreate(_db);
-		SenderPreferences prefs = new SenderPreferences(mContext);
-		prefs.clearRecentContactUris();
+    public void onUpgrade(SQLiteDatabase _db, int _oldVersion, int _newVersion) {
+        if(_oldVersion < 14) {
+            dropAll(_db);
+            onCreate(_db);
+            return;
+        }
+
+		if(_oldVersion < 15) {
+            try {
+                execSQLScript(R.raw.db_drop_recipient, _db);
+            } catch (Exception e) {
+                Log.e(TAG, "Unable to remove database", e);
+            }
+
+            // move recent contacts to chats
+			SenderPreferences prefs = new SenderPreferences(mContext);
+			List<Long> contactIds = prefs.getRecentContactUris();
+
+			DateContainer dateContainer = new DateContainer(DateContainer.TYPE_DATETIME);
+			try {
+				String oldestTimestamp = ChatManager.getOldestChatTimestamp(_db);
+				if(oldestTimestamp != null) {
+					dateContainer.setFromString(oldestTimestamp);
+				}
+			} catch (ParseException e) {
+				TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
+			}
+
+			DateTime dateTime = dateContainer.getDateTime().minuteOfDay().addToCopy(-1);
+
+			for (Long contactId : contactIds) {
+				Chat chat = ChatManager.getChatByMainRecipient(mContext, _db, contactId);
+				if(chat == null) {
+					DateContainer dc = new DateContainer(DateContainer.TYPE_DATETIME, dateTime);
+					try {
+						ChatManager.insert(_db, contactId, dc.getAsString(DateTimeZone.UTC));
+					} catch (SQLException e) {
+						TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
+					}
+					dateTime = dateTime.minuteOfDay().addToCopy(-1);
+				}
+			}
+
+            return;
+		}
 	}
 }
