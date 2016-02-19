@@ -24,6 +24,7 @@ import com.peppermint.app.cloud.rest.HttpJSONResponse;
 import com.peppermint.app.cloud.rest.HttpRequest;
 import com.peppermint.app.cloud.rest.HttpRequestFileData;
 import com.peppermint.app.cloud.rest.HttpResponse;
+import com.peppermint.app.cloud.rest.HttpResponseException;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.Utils;
 
@@ -103,6 +104,9 @@ public class PeppermintApi implements Serializable {
         HttpJSONResponse<MessagesResponse> response = new HttpJSONResponse<>(mMessagesResponseParser);
         request.execute(response);
 
+        if(response.getException() != null) {
+            throw new HttpResponseException(response.getException());
+        }
         if(response.getCode() == 401 || response.getCode() == 403) {
             throw new PeppermintApiInvalidAccessTokenException(request.toString());
         }
@@ -196,6 +200,9 @@ public class PeppermintApi implements Serializable {
         HttpJSONResponse<JWTsResponse> response = new HttpJSONResponse<>(mJWTsResponseParser);
         request.execute(response);
 
+        if(response.getException() != null) {
+            throw new HttpResponseException(response.getException());
+        }
         if(response.getCode() == 401 || response.getCode() == 404) {
             throw new PeppermintApiInvalidAccessTokenException(request.toString());
         }
@@ -231,6 +238,9 @@ public class PeppermintApi implements Serializable {
         HttpJSONResponse<AccountsResponse> response = new HttpJSONResponse<>(mAccountsResponseParser);
         request.execute(response);
 
+        if(response.getException() != null) {
+            throw new HttpResponseException(response.getException());
+        }
         if(response.getCode() == 401) {
             throw new PeppermintApiInvalidAccessTokenException(request.toString());
         }
@@ -262,6 +272,9 @@ public class PeppermintApi implements Serializable {
         HttpJSONResponse<AccountsResponse> response = new HttpJSONResponse<>(mAccountsResponseParser);
         request.execute(response);
 
+        if(response.getException() != null) {
+            throw new HttpResponseException(response.getException());
+        }
         if(response.getCode() == 401) {
             throw new PeppermintApiInvalidAccessTokenException(request.toString());
         }
@@ -296,6 +309,9 @@ public class PeppermintApi implements Serializable {
         HttpResponse response = new HttpResponse();
         request.execute(response);
 
+        if(response.getException() != null) {
+            throw new HttpResponseException(response.getException());
+        }
         if(response.getCode() == 401 || response.getCode() == 404) {
             throw new PeppermintApiInvalidAccessTokenException(request.toString());
         }
@@ -322,6 +338,9 @@ public class PeppermintApi implements Serializable {
         HttpResponse response = new HttpResponse();
         request.execute(response);
 
+        if(response.getException() != null) {
+            throw new HttpResponseException(response.getException());
+        }
         if(response.getCode() == 401 || response.getCode() == 404) {
             throw new PeppermintApiInvalidAccessTokenException(request.toString());
         }
@@ -349,6 +368,9 @@ public class PeppermintApi implements Serializable {
         HttpJSONResponse<RecorderResponse> response = new HttpJSONResponse<>(mRecorderResponseParser);
         request.execute(response);
 
+        if(response.getException() != null) {
+            throw new HttpResponseException(response.getException());
+        }
         if(response.getCode() == 401) {
             throw new PeppermintApiInvalidAccessTokenException(request.toString());
         }
@@ -379,6 +401,9 @@ public class PeppermintApi implements Serializable {
         HttpJSONResponse<RecorderResponse> response = new HttpJSONResponse<>(mRecorderResponseParser);
         request.execute(response);
 
+        if(response.getException() != null) {
+            throw new HttpResponseException(response.getException());
+        }
         if(response.getCode() == 401) {
             throw new PeppermintApiInvalidAccessTokenException(request.toString());
         }
@@ -412,6 +437,9 @@ public class PeppermintApi implements Serializable {
         HttpResponse response = new HttpResponse();
         request.execute(response);
 
+        if(response.getException() != null) {
+            throw new HttpResponseException(response.getException());
+        }
         if(response.getCode() == 401) {
             throw new PeppermintApiInvalidAccessTokenException(request.toString());
         }
@@ -441,6 +469,9 @@ public class PeppermintApi implements Serializable {
         HttpJSONResponse<UploadsResponse> response = new HttpJSONResponse<>(mUploadsResponseParser);
         request.execute(response);
 
+        if(response.getException() != null) {
+            throw new HttpResponseException(response.getException());
+        }
         if(response.getCode() == 401) {
             throw new PeppermintApiInvalidAccessTokenException(request.toString());
         }

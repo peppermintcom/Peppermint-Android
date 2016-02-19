@@ -23,6 +23,7 @@ import com.peppermint.app.cloud.apis.exceptions.GoogleApiInvalidAccessTokenExcep
 import com.peppermint.app.cloud.apis.exceptions.GoogleApiNoAuthorizationException;
 import com.peppermint.app.cloud.rest.HttpRequest;
 import com.peppermint.app.cloud.rest.HttpResponse;
+import com.peppermint.app.cloud.rest.HttpResponseException;
 import com.peppermint.app.cloud.senders.mail.gmail.GmailAttachmentRequest;
 
 import org.json.JSONArray;
@@ -230,6 +231,9 @@ public class GoogleApi implements Serializable {
         UserInfoResponse response = new UserInfoResponse();
         request.execute(response);
 
+        if(response.getException() != null) {
+            throw new HttpResponseException(response.getException());
+        }
         if(response.getCode() == 401) {
             throw new GoogleApiInvalidAccessTokenException(request.toString());
         }
@@ -270,6 +274,9 @@ public class GoogleApi implements Serializable {
         DraftResponse response = new DraftResponse();
         request.execute(response);
 
+        if(response.getException() != null) {
+            throw new HttpResponseException(response.getException());
+        }
         if(response.getCode() == 401) {
             throw new GoogleApiInvalidAccessTokenException(request.toString());
         }

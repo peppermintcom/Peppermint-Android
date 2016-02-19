@@ -365,6 +365,11 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     private AuthenticationPolicyEnforcer.AuthenticationDoneCallback mAuthenticationDoneCallback = new AuthenticationPolicyEnforcer.AuthenticationDoneCallback() {
         @Override
         public void done(AuthenticationData data) {
+            if(getCustomActionBarActivity() == null) {
+                // in case fragment has been detached and destroyed
+                return;
+            }
+
             getCustomActionBarActivity().getAuthenticationPolicyEnforcer().removeAuthenticationDoneCallback(this);
 
             if(getArguments() != null && (getArguments().containsKey(FAST_REPLY_NAME_PARAM) || getArguments().containsKey(FAST_REPLY_MAIL_PARAM))) {

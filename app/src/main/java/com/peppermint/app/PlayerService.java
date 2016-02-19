@@ -128,6 +128,10 @@ public class PlayerService extends Service {
     private MediaPlayer.OnPreparedListener mOnPreparedListener = new MediaPlayer.OnPreparedListener() {
         @Override
         public void onPrepared(MediaPlayer mp) {
+            if(mMediaPlayer == null) {
+                return;
+            }
+
             mEventBus.post(new PlayerEvent(PlayerEvent.EVENT_PREPARED, mMessage, 0, 0));
             int ms = Math.round(((float) mStartPercent / 100f) * (float) mMediaPlayer.getDuration());
             mMediaPlayer.seekTo(ms);
@@ -140,6 +144,10 @@ public class PlayerService extends Service {
     private MediaPlayer.OnBufferingUpdateListener mOnBufferingUpdateListener = new MediaPlayer.OnBufferingUpdateListener() {
         @Override
         public void onBufferingUpdate(MediaPlayer mp, int percent) {
+            if(mMediaPlayer == null) {
+                return;
+            }
+
             mEventBus.post(new PlayerEvent(PlayerEvent.EVENT_BUFFERING_UPDATE, mMessage, percent, mMediaPlayer.getCurrentPosition()));
         }
     };
