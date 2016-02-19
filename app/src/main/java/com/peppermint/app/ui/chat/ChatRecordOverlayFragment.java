@@ -18,6 +18,7 @@ import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.ReceiverEvent;
 import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.cloud.senders.SenderPreferences;
+import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientManager;
 import com.peppermint.app.data.Recording;
@@ -225,7 +226,7 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == REQUEST_NEWCONTACT_AND_SEND) {
             if(resultCode == Activity.RESULT_OK && mFinalEvent != null) {
-                Recipient emailRecipient = RecipientManager.getRecipientMainEmail(mActivity, mFinalEvent.getRecipient().getRawId());
+                Recipient emailRecipient = RecipientManager.getRecipientWithMainEmailContactByRawId(mActivity, mFinalEvent.getRecipient().getRawId());
                 if(emailRecipient == null) {
                     CustomToast.makeText(mActivity, R.string.msg_no_email_address, Toast.LENGTH_LONG).show();
                 } else {
@@ -269,7 +270,7 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
     public void onRecordingFinished(RecordService.Event event) {
         mFinalEvent = event;
         if(!mPreferences.isShownSmsConfirmation() && event.getRecipient().getPhone() != null) {
-            Recipient emailRecipient = RecipientManager.getRecipientMainEmail(mActivity, mFinalEvent.getRecipient().getRawId());
+            Recipient emailRecipient = RecipientManager.getRecipientWithMainEmailContactByRawId(mActivity, mFinalEvent.getRecipient().getRawId());
             mSmsConfirmationDialog.setEmailRecipient(emailRecipient);
             mSmsConfirmationDialog.show();
         } else {
@@ -278,14 +279,14 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
         }
     }
 
-    protected void sendMessage(Recipient recipient, Recording recording) {
+    protected Message sendMessage(Recipient recipient, Recording recording) {
         mFinalEvent = null;
-        mMessagesServiceManager.send(null, recipient, recording);
+        return mMessagesServiceManager.send(recipient, recording);
     }
 
-    protected void launchChatActivity(Recipient recipient) {
+    protected void launchChatActivity(long chatId) {
         Intent chatIntent = new Intent(mActivity, ChatActivity.class);
-        chatIntent.putExtra(ChatFragment.PARAM_RECIPIENT_ID, recipient.getContactId());
+        chatIntent.putExtra(ChatFragment.PARAM_CHAT_ID, chatId);
         startActivity(chatIntent);
     }
 

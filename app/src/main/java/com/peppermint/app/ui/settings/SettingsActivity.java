@@ -17,7 +17,7 @@ public class SettingsActivity extends CustomActionBarActivity {
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
-        navItems.add(new NavigationItem("Settings", R.drawable.ic_drawer_settings, SettingsFragment.class, false, false));
+        navItems.add(new NavigationItem("Settings", R.drawable.ic_drawer_settings, SettingsFragment.class, false, false, 0));
         return navItems;
     }
 

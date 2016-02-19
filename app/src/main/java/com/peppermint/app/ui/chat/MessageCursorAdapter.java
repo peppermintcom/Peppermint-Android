@@ -23,7 +23,6 @@ import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.MessageManager;
 import com.peppermint.app.data.Recipient;
-import com.peppermint.app.data.RecordingManager;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
 import com.peppermint.app.ui.views.simple.CustomFontButton;
@@ -384,8 +383,8 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
     }
 
     public Message getMessage(Cursor cursor) {
-        Message message = MessageManager.getFromCursor(cursor);
-        message.setRecordingParameter(RecordingManager.get(mDb, message.getRecordingId()));
+        // no need to get recipient data here
+        Message message = MessageManager.getFromCursor(null, mDb, cursor);
         return message;
     }
 

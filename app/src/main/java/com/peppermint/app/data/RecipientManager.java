@@ -20,30 +20,17 @@ import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.WeakHashMap;
 
 /**
  * Created by Nuno Luz on 17-02-2016.
+ *
+ * Database operations for {@link Recipient} and {@link Contact}
  */
 public class RecipientManager {
-
-    public static class InvalidNameException extends Exception {
-    }
-
-    public static class InvalidViaException extends Exception {
-    }
-
-    public static class InvalidEmailException extends InvalidViaException {
-    }
-
-    public static class InvalidPhoneException extends InvalidViaException {
-    }
 
     private static final String FILE_SCHEME = "file:/";
     private static final String GOOGLE_ACCOUNT_TYPE = "com.google";
@@ -65,10 +52,9 @@ public class RecipientManager {
     };
 
     private static final String PEPPERMINT_GROUP_TITLE = "Peppermint";
-
     public static final String CONTENT_TYPE = "com.peppermint.app.cursor.item/contact_v1";
 
-    private static Map<Long, WeakReference<Recipient>> mRecipientCache = new WeakHashMap<>();
+    /*private static Map<Long, WeakReference<Recipient>> mRecipientCache = new WeakHashMap<>();*/
 
     /**
      * Gets the data inside the Cursor's current position and puts it in an instance of the
@@ -118,8 +104,8 @@ public class RecipientManager {
      * @param via the via value
      * @return the recipient instance with all data
      */
-    public static Recipient getRecipientByViaOrId(Context context, String via, long contactId) {
-        if(contactId > 0 && mRecipientCache.containsKey(contactId)) {
+    public static Recipient getRecipientByViaOrContactId(Context context, String via, long contactId) {
+        /*if(contactId > 0 && mRecipientCache.containsKey(contactId)) {
             WeakReference<Recipient> ref = mRecipientCache.get(contactId);
             Recipient recipient = ref.get();
             if(recipient == null) {
@@ -127,7 +113,7 @@ public class RecipientManager {
             } else {
                 return recipient;
             }
-        }
+        }*/
 
         Recipient result = null;
 
@@ -142,9 +128,9 @@ public class RecipientManager {
         }
         cursor.close();
 
-        if(result != null) {
+        /*if(result != null) {
             mRecipientCache.put(result.getContactId(), new WeakReference<>(result));
-        }
+        }*/
 
         return result;
     }
@@ -156,8 +142,8 @@ public class RecipientManager {
      * @param contactId the recipient ID
      * @return the recipient instance with all data
      */
-    public static Recipient getRecipientById(Context context, long contactId) {
-        if(mRecipientCache.containsKey(contactId)) {
+    public static Recipient getRecipientByContactId(Context context, long contactId) {
+        /*if(mRecipientCache.containsKey(contactId)) {
             WeakReference<Recipient> ref = mRecipientCache.get(contactId);
             Recipient recipient = ref.get();
             if(recipient == null) {
@@ -165,7 +151,7 @@ public class RecipientManager {
             } else {
                 return recipient;
             }
-        }
+        }*/
 
         Recipient result = null;
 
@@ -178,14 +164,14 @@ public class RecipientManager {
         }
         cursor.close();
 
-        if(result != null) {
+        /*if(result != null) {
             mRecipientCache.put(result.getContactId(), new WeakReference<>(result));
-        }
+        }*/
 
         return result;
     }
 
-    public static Recipient getRecipientMainEmail(Context context, long rawId) {
+    public static Recipient getRecipientWithMainEmailContactByRawId(Context context, long rawId) {
         Recipient result = null;
 
         Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, null,
@@ -198,9 +184,9 @@ public class RecipientManager {
         }
         cursor.close();
 
-        if(result != null) {
+        /*if(result != null) {
             mRecipientCache.put(result.getContactId(), new WeakReference<>(result));
-        }
+        }*/
 
         return result;
     }
@@ -227,6 +213,22 @@ public class RecipientManager {
         List<String> mimeTypes = new ArrayList<>();
         mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
         return get(context, rawIds, mimeTypes, null);
+    }
+
+    public static Cursor getByEmailOrPhone(Context context, String email, String phone, String googleAccountName) {
+        Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI,
+                PROJECTION,
+                Utils.joinString(" AND ",
+                        Utils.joinString(" OR ",
+                                email != null ? ContactsContract.Data.DATA1 + " = " + DatabaseUtils.sqlEscapeString(email) : null,
+                                phone != null ? ContactsContract.Data.DATA1 + " = " + DatabaseUtils.sqlEscapeString(phone) : null),
+                        Utils.joinString(" OR ",
+                                ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE),
+                                ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)),
+                        ContactsContract.RawContacts.ACCOUNT_TYPE + "=" + DatabaseUtils.sqlEscapeString(GOOGLE_ACCOUNT_TYPE),
+                        ContactsContract.RawContacts.ACCOUNT_NAME + "=" + DatabaseUtils.sqlEscapeString(googleAccountName)),
+                null, null);
+        return cursor;
     }
 
     public static Cursor get(Context context, List<Long> allowedRawIds, List<String> allowedMimeTypes, String viaSearch) {
@@ -608,7 +610,7 @@ public class RecipientManager {
      * @param googleAccountName the google account name to insert the contact
      * @return a {@link Bundle} with results (can be passed on to an {@link Intent}
      */
-    public static Recipient insertOrUpdateRecipient(Context context, long rawId, String firstName, String lastName, String phone, String email, Uri photoUri, String googleAccountName, boolean hasPeppermint) throws InvalidPhoneException, InvalidNameException, InvalidEmailException {
+    public static Recipient insertOrUpdate(Context context, long rawId, String firstName, String lastName, String phone, String email, Uri photoUri, String googleAccountName, boolean hasPeppermint) throws InvalidPhoneException, InvalidNameException, InvalidEmailException {
         // try to find the rawId by email or phone
         if(rawId <= 0) {
             Cursor cursor = getByEmailOrPhone(context, email, phone, googleAccountName);
@@ -619,22 +621,6 @@ public class RecipientManager {
         }
 
         return insert(context, rawId, firstName, lastName, phone, email, photoUri, googleAccountName, hasPeppermint);
-    }
-
-    public static Cursor getByEmailOrPhone(Context context, String email, String phone, String googleAccountName) {
-        Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI,
-                PROJECTION,
-                Utils.joinString(" AND ",
-                    Utils.joinString(" OR ",
-                            email != null ? ContactsContract.Data.DATA1 + " = " + DatabaseUtils.sqlEscapeString(email) : null,
-                            phone != null ? ContactsContract.Data.DATA1 + " = " + DatabaseUtils.sqlEscapeString(phone) : null),
-                    Utils.joinString(" OR ",
-                            ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE),
-                            ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)),
-                    ContactsContract.RawContacts.ACCOUNT_TYPE + "=" + DatabaseUtils.sqlEscapeString(GOOGLE_ACCOUNT_TYPE),
-                    ContactsContract.RawContacts.ACCOUNT_NAME + "=" + DatabaseUtils.sqlEscapeString(googleAccountName)),
-                null, null);
-        return cursor;
     }
 
     private static ContentProviderResult[] executeOperations(Context context, ArrayList<ContentProviderOperation> operations) {
@@ -648,6 +634,18 @@ public class RecipientManager {
             TrackerManager.getInstance(context.getApplicationContext()).logException(e);
         }
         return null;
+    }
+
+    public static class InvalidNameException extends Exception {
+    }
+
+    public static class InvalidViaException extends Exception {
+    }
+
+    public static class InvalidEmailException extends InvalidViaException {
+    }
+
+    public static class InvalidPhoneException extends InvalidViaException {
     }
 
 }

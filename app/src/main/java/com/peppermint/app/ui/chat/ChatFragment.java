@@ -23,15 +23,12 @@ import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.MessageManager;
 import com.peppermint.app.data.Recipient;
-import com.peppermint.app.data.RecipientManager;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.views.NavigationItem;
 import com.peppermint.app.ui.views.NavigationListAdapter;
 import com.peppermint.app.ui.views.dialogs.CustomListDialog;
-import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,7 +45,7 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
     private static final String STATE_MESSAGE_ID_WITH_ERROR = TAG + "_messageIdWithError";
 
     public static final String PARAM_AUTO_PLAY_MESSAGE_ID = TAG + "_paramAutoPlayMessageId";
-    public static final String PARAM_RECIPIENT_ID = TAG + "_paramRecipientId";
+    public static final String PARAM_CHAT_ID = TAG + "_paramChatId";
 
     private static final String SCREEN_ID = "Chat";
 
@@ -62,7 +59,6 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
 
     // DATA
     private Chat mChat;
-    private Recipient mRecipient;
     private long mAutoPlayMessageId;
 
     private MessageCursorAdapter mAdapter;
@@ -167,36 +163,23 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
 
         // get arguments
         Bundle args = getArguments();
-        long recipientId = 0;
+        long chatId = 0;
         if(args != null) {
-            recipientId = args.getLong(PARAM_RECIPIENT_ID, 0);
+            chatId = args.getLong(PARAM_CHAT_ID, 0);
             mAutoPlayMessageId = args.getLong(PARAM_AUTO_PLAY_MESSAGE_ID);
         }
 
-        if(recipientId > 0) {
-            mRecipient = RecipientManager.getRecipientById(mActivity, recipientId);
-        }
-
-        // check if there's the mandatory recipient data
-        if(mRecipient == null) {
+        if(chatId <= 0) {
             mActivity.getTrackerManager().logException(new RuntimeException("Recipient is null on ChatActivity intent!"));
             mActivity.finish();
             return null;
         }
 
-        mChat = ChatManager.getByMainRecipient(getDatabase(), mRecipient.getContactId());
-        // create new chat instance if there's none
-        if(mChat == null) {
-            mChat = new Chat(mRecipient.getContactId(), DateContainer.getCurrentUTCTimestamp());
-            try {
-                ChatManager.insertOrUpdate(getDatabase(), mChat);
-            } catch (SQLException e) {
-                getCustomActionBarActivity().getTrackerManager().logException(e);
-            }
-        }
+        mChat = ChatManager.getChatById(mActivity, getDatabase(), chatId);
+        Recipient recipient = mChat.getMainRecipientParameter();
 
         // set the action bar recipient data
-        mActivity.setActionBarData(mRecipient.getDisplayName(), mRecipient.getEmail() != null ? mRecipient.getEmail().getVia() : mRecipient.getPhone().getVia(), mRecipient.getPhotoUri());
+        mActivity.setActionBarData(recipient.getDisplayName(), recipient.getEmail() != null ? recipient.getEmail().getVia() : recipient.getPhone().getVia(), recipient.getPhotoUri());
 
         if(savedInstanceState != null) {
             Bundle dialogState = savedInstanceState.getBundle(STATE_DIALOG);
@@ -277,7 +260,7 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
     @Override
     public boolean onLongClick(View v) {
         mAdapter.stopAllPlayers();
-        return triggerRecording(v, mRecipient);
+        return triggerRecording(v, mChat.getMainRecipientParameter());
     }
 
     @Override
@@ -289,7 +272,7 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
     @Override
     public void onReceivedMessage(ReceiverEvent event) {
         refreshList();
-        if(event.getMessage().getRecipientId() == mRecipient.getContactId()) {
+        if(event.getMessage().getRecipientContactId() == mChat.getMainRecipientParameter().getContactId()) {
             event.setDoNotShowNotification(true);
         }
     }
@@ -314,7 +297,7 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
             return;
         }
 
-        Cursor cursor = MessageManager.getByChatCursor(getDatabase(), mChat.getId());
+        Cursor cursor = MessageManager.getByChatId(getDatabase(), mChat.getId());
         if(mAdapter == null) {
             mAdapter = new MessageCursorAdapter(mActivity, getMessagesServiceManager(), getPlayerServiceManager(), cursor, getDatabase(), mActivity.getTrackerManager());
             mAdapter.setExclamationClickListener(new MessageCursorAdapter.ExclamationClickListener() {

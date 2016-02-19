@@ -46,6 +46,11 @@ public class Recipient implements Serializable {
         return mEmail != null ? mEmail.getId() : (mPhone != null ? mPhone.getId() : 0);
     }
 
+    public Contact getContact() {
+        // FIXME we are assuming only one is present at a time; we should probably remove this and use getRawId (aggregated contact)
+        return mEmail != null ? mEmail : mPhone;
+    }
+
     public long getRawId() {
         return mRawId;
     }

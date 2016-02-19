@@ -19,7 +19,7 @@ public class Message implements Serializable {
 
     private UUID mUUID = UUID.randomUUID();
     private long mId;
-    private long mChatId, mRecordingId, mRecipientId;
+    private long mChatId, mRecordingId, mRecipientContactId;
 
     private String mEmailSubject;
     private String mEmailBody;
@@ -38,23 +38,23 @@ public class Message implements Serializable {
     public Message() {
     }
 
-    public Message(long recordingId, long recipientId) {
-        this.mRecipientId = recipientId;
-        this.mRecordingId = recordingId;
+    public Message(long mRecordingId, long mRecipientContactId) {
+        this.mRecipientContactId = mRecipientContactId;
+        this.mRecordingId = mRecordingId;
     }
 
-    public Message(long recordingId, long recipientId, String emailSubject, String emailBody) {
-        this.mRecipientId = recipientId;
-        this.mRecordingId = recordingId;
-        this.mEmailSubject = emailSubject;
-        this.mEmailBody = emailBody;
+    public Message(long mRecordingId, long mRecipientContactId, String mEmailSubject, String mEmailBody) {
+        this.mRecipientContactId = mRecipientContactId;
+        this.mRecordingId = mRecordingId;
+        this.mEmailSubject = mEmailSubject;
+        this.mEmailBody = mEmailBody;
     }
 
-    public Message(long mId, long mChatId, long mRecordingId, long mRecipientId, String mEmailSubject, String mEmailBody, String mRegistrationTimestamp, boolean mReceived, boolean mSent, boolean mPlayed, String mServerId, String mServerCanonicalUrl, String mServerShortUrl, String mServerTranscriptionUrl) {
+    public Message(long mId, long mChatId, long mRecordingId, long mRecipientContactId, String mEmailSubject, String mEmailBody, String mRegistrationTimestamp, boolean mReceived, boolean mSent, boolean mPlayed, String mServerId, String mServerCanonicalUrl, String mServerShortUrl, String mServerTranscriptionUrl) {
         this.mId = mId;
         this.mChatId = mChatId;
         this.mRecordingId = mRecordingId;
-        this.mRecipientId = mRecipientId;
+        this.mRecipientContactId = mRecipientContactId;
         this.mEmailSubject = mEmailSubject;
         this.mEmailBody = mEmailBody;
         this.mRegistrationTimestamp = mRegistrationTimestamp;
@@ -79,12 +79,12 @@ public class Message implements Serializable {
         this.mChatId = mChatId;
     }
 
-    public long getRecipientId() {
-        return mRecipientId;
+    public long getRecipientContactId() {
+        return mRecipientContactId;
     }
 
-    public void setRecipientId(long mRecipientId) {
-        this.mRecipientId = mRecipientId;
+    public void setRecipientContactId(long mRecipientContactId) {
+        this.mRecipientContactId = mRecipientContactId;
     }
 
     public long getRecordingId() {
@@ -236,7 +236,7 @@ public class Message implements Serializable {
                 ", mId=" + mId +
                 ", mChatId=" + mChatId +
                 ", mRecordingId=" + mRecordingId +
-                ", mRecipientId=" + mRecipientId +
+                ", mRecipientContactId=" + mRecipientContactId +
                 ", mEmailSubject='" + mEmailSubject + '\'' +
                 ", mEmailBody='" + mEmailBody + '\'' +
                 ", mRegistrationTimestamp='" + mRegistrationTimestamp + '\'' +

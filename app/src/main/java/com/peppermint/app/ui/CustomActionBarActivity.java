@@ -1,11 +1,14 @@
 package com.peppermint.app.ui;
 
+import android.animation.Animator;
+import android.animation.AnimatorSet;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -26,6 +29,7 @@ import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.ui.canvas.loading.LoadingView;
 import com.peppermint.app.ui.views.CustomActionBarView;
 import com.peppermint.app.ui.views.NavigationItem;
 import com.peppermint.app.ui.views.NavigationListAdapter;
@@ -45,7 +49,7 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
 
     private static final String SAVED_MENU_POSITION_KEY = TAG + "_SAVED_MENU_POSITION_KEY";
 
-    private List<NavigationItem> mNavigationItemList;
+    private List<NavigationItem> mNavigationItemList, mVisibleNavigationItemList;
 
     private ActionBarDrawerToggle mDrawerToggle;
     private DrawerLayout mLytDrawer;
@@ -66,6 +70,108 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     }
     protected int getContentViewResourceId() {
         return R.layout.a_custom_actionbar_layout;
+    }
+
+    // fragment loading
+    private final Handler mHandler = new Handler();
+    private AnimatorBuilder mAnimatorBuilder = new AnimatorBuilder();
+    private View mFragmentLoadingContainer;
+    private LoadingView mFragmentLoadingView;
+    private final Runnable mShowFragmentLoadingRunnable = new Runnable() {
+        @Override
+        public void run() {
+            doFragmentLoading(false);
+        }
+    };
+    private AnimatorChain mFragmentLoadingAnimatorChain;
+    private Animator.AnimatorListener mFragmentLoadingAnimatorListener = new Animator.AnimatorListener() {
+        @Override
+        public void onAnimationStart(Animator animation) {
+            mFragmentLoadingView.startAnimations();
+            mFragmentLoadingView.startDrawingThread();
+            mFragmentLoadingContainer.setVisibility(View.VISIBLE);
+        }
+        @Override
+        public void onAnimationEnd(Animator animation) {
+            mFragmentLoadingContainer.setVisibility(View.INVISIBLE);
+            mFragmentLoadingView.stopAnimations();
+            mFragmentLoadingView.stopDrawingThread();
+            mFragmentLoadingAnimatorChain = null;
+        }
+        @Override
+        public void onAnimationCancel(Animator animation) { }
+        @Override
+        public void onAnimationRepeat(Animator animation) { }
+    };
+
+    public void startFragmentLoading(Fragment fragment) {
+        startFragmentLoading(getLoadingTextResId(fragment));
+    }
+
+    private int getLoadingTextResId(Fragment fragment) {
+        int loadingTextResId = 0;
+        Class<?> fragmentClass = fragment.getClass();
+        int count = mNavigationItemList.size();
+        for(int i=0; i<count && loadingTextResId == 0; i++) {
+            if(mNavigationItemList.get(i).getFragmentClass() != null && mNavigationItemList.get(i).getFragmentClass().equals(fragmentClass)) {
+                loadingTextResId = mNavigationItemList.get(i).getLoadingTextResId();
+                if(loadingTextResId <= 0) {
+                    loadingTextResId = -1;
+                }
+            }
+        }
+        return loadingTextResId;
+    }
+
+    public void startFragmentLoading(int loadingTextResId) {
+        if(loadingTextResId > 0) {
+            mFragmentLoadingView.setProgressText(getString(loadingTextResId));
+        }
+        mHandler.postDelayed(mShowFragmentLoadingRunnable, 100);
+    }
+
+    private void doFragmentLoading(int loadingTextResId, boolean avoidIfLeqZero, boolean noFadeInAnimation) {
+        if(!avoidIfLeqZero || loadingTextResId > 0) {
+            if(loadingTextResId > 0) {
+                mFragmentLoadingView.setProgressText(getString(loadingTextResId));
+            }
+            doFragmentLoading(noFadeInAnimation);
+        }
+    }
+
+    protected void doFragmentLoading(boolean noFadeInAnimation) {
+        if(mFragmentLoadingAnimatorChain != null) {
+            return;
+        }
+
+        FrameLayout fragmentContainer = getFragmentContainer();
+
+        Animator fadeOut = mAnimatorBuilder.buildFadeOutAnimator(400, fragmentContainer);
+        Animator fadeIn = mAnimatorBuilder.buildFadeInAnimator(400, mFragmentLoadingContainer);
+        AnimatorSet startLoadingSet = new AnimatorSet();
+        startLoadingSet.playTogether(fadeOut, fadeIn);
+
+        fadeOut = mAnimatorBuilder.buildFadeOutAnimator(600, mFragmentLoadingContainer);
+        fadeIn = mAnimatorBuilder.buildFadeInAnimator(600, fragmentContainer);
+        AnimatorSet stopLoadingSet = new AnimatorSet();
+        stopLoadingSet.playTogether(fadeOut, fadeIn);
+
+        mFragmentLoadingAnimatorChain = new AnimatorChain(startLoadingSet, stopLoadingSet);
+        mFragmentLoadingAnimatorChain.setAnimatorListener(mFragmentLoadingAnimatorListener);
+
+        if(noFadeInAnimation) {
+            mFragmentLoadingContainer.setAlpha(1f);
+            mFragmentLoadingAnimatorListener.onAnimationStart(null);
+        } else {
+            mFragmentLoadingAnimatorChain.start();
+        }
+    }
+
+    public void stopFragmentLoading(boolean finishAnimation) {
+        mHandler.removeCallbacks(mShowFragmentLoadingRunnable);
+        if(finishAnimation && mFragmentLoadingAnimatorChain != null) {
+            mFragmentLoadingAnimatorChain.allowNext(false);
+        }
     }
 
     @Override
@@ -98,28 +204,29 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
 
         PeppermintApp app = (PeppermintApp) getApplication();
 
+        // init loading recipients view
+        mFragmentLoadingContainer = findViewById(R.id.fragmentProgressContainer);
+        mFragmentLoadingView = (LoadingView) findViewById(R.id.loading);
+
         mImgUserAvatar = (ImageView) findViewById(R.id.imgUserAvatar);
         mTxtUsername = (TextView) findViewById(R.id.txtUserName);
         mTxtUsername.setTypeface(app.getFontSemibold());
         mLytDrawer = (DrawerLayout) findViewById(R.id.drawer);
 
         mNavigationItemList = getNavigationItems();
-        int amountVisible = 0;
+        mVisibleNavigationItemList = new ArrayList<>();
         NavigationItem firstNavigationItem = null;
 
         if(mNavigationItemList != null && mNavigationItemList.size() > 0) {
             for (NavigationItem item : mNavigationItemList) {
                 if (item.isVisible()) {
-                    amountVisible++;
+                    mVisibleNavigationItemList.add(item);
                 }
             }
             firstNavigationItem = mNavigationItemList.get(0);
-            if (!firstNavigationItem.isVisible()) {
-                mNavigationItemList.remove(0);
-            }
         }
 
-        if(mNavigationItemList == null || amountVisible <= 0) {
+        if(mNavigationItemList == null || mVisibleNavigationItemList.size() <= 0) {
             mLytDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
             getCustomActionBar().setDisplayMenuAsUpEnabled(true);
             getCustomActionBar().getMenuButton().setOnClickListener(new View.OnClickListener() {
@@ -131,7 +238,7 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
             });
         } else {
             mLstDrawer = (ListView) findViewById(R.id.list);
-            NavigationListAdapter adapter = new NavigationListAdapter(this, mNavigationItemList);
+            NavigationListAdapter adapter = new NavigationListAdapter(this, mVisibleNavigationItemList);
             mLstDrawer.setAdapter(adapter);
 
             // Drawer Item click listeners
@@ -176,6 +283,8 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
                 int pos = savedInstanceState.getInt(SAVED_MENU_POSITION_KEY, -1);
                 if(pos >= 0) {
                     selectItemFromDrawer(pos);
+                } else if(mNavigationItemList != null && mNavigationItemList.size() > 0) {
+                    doFragmentLoading(mNavigationItemList.get(0).getLoadingTextResId(), true, true);
                 }
             }
             return; // avoids duplicate fragments
@@ -190,6 +299,8 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
+
+            doFragmentLoading(firstNavigationItem.getLoadingTextResId(), true, true);
             getFragmentManager().beginTransaction().add(R.id.container, introScreenFragment).commit();
         }
     }
@@ -274,6 +385,8 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        doFragmentLoading(getLoadingTextResId(fragment), true, false);
         getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
     }
 
@@ -319,9 +432,11 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     }
 
     protected void selectItemFromDrawer(final int position) {
-        NavigationItem navItem = mNavigationItemList.get(position);
+        NavigationItem navItem = mVisibleNavigationItemList.get(position);
 
         if(navItem.getFragmentClass() != null) {
+            doFragmentLoading(navItem.getLoadingTextResId(), true, false);
+
             Fragment currentFragment = getFragmentManager().findFragmentByTag(navItem.getTag());
             if (currentFragment != null && currentFragment.isVisible()) {
                 mLytDrawer.closeDrawers();
@@ -380,10 +495,6 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     public Fragment getCurrentFragment() {
         return getFragmentManager().findFragmentById(R.id.container);
     }
-
-    /*public View getTouchInterceptor() {
-        return findViewById(R.id.touchInterceptor);
-    }*/
 
     public void addTouchEventInterceptor(View.OnTouchListener interceptor) {
         mTouchEventInterceptorList.add(interceptor);

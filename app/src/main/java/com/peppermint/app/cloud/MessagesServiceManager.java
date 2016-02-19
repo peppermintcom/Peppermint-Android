@@ -8,7 +8,6 @@ import android.os.IBinder;
 
 import com.peppermint.app.RecordService;
 import com.peppermint.app.cloud.senders.SenderEvent;
-import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
@@ -153,9 +152,8 @@ public class MessagesServiceManager {
      * @param recipient the recipient of the file
      * @param recording the recording with the file to send
      */
-    public void startAndSend(Chat chat, Recipient recipient, Recording recording) {
+    public void startAndSend(Recipient recipient, Recording recording) {
         Intent intent = new Intent(mContext, MessagesService.class);
-        intent.putExtra(MessagesService.PARAM_MESSAGE_SEND_CHAT, chat);
         intent.putExtra(MessagesService.PARAM_MESSAGE_SEND_RECORDING, recording);
         intent.putExtra(MessagesService.PARAM_MESSAGE_SEND_RECIPIENT, recipient);
         mContext.startService(intent);
@@ -216,13 +214,12 @@ public class MessagesServiceManager {
     /**
      * Sends the supplied recording to the supplied recipient.
      * Can only be used if the manager is bound to the service.
-     * @param chat the chat
      * @param recipient the recipient of the file
      * @param recording the recording and file location
      * @return the {@link Message}
      */
-    public Message send(Chat chat, Recipient recipient, Recording recording) {
-        return mService.send(chat, recipient, recording);
+    public Message send(Recipient recipient, Recording recording) {
+        return mService.send(recipient, recording);
     }
 
     public void removeAllNotifications() {

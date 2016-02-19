@@ -18,14 +18,49 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 	private static final String TAG = DatabaseHelper.class.getSimpleName();
 	
-	private static final String DATABASE_NAME = "peppermint.db";    // database filename
-	public static final int DATABASE_VERSION = 15;                   // database version
+	private static final String DATABASE_NAME = "peppermint.db";        // database filename
+	private static final int DATABASE_VERSION = 15;                     // database version
+
 	private Context mContext;
+    private SQLiteDatabase mLocalDatabase;
 
 	public DatabaseHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 		this.mContext = context;
 	}
+
+    public SQLiteDatabase getLocalReadableDatabase() {
+        if(mLocalDatabase != null && mLocalDatabase.isOpen()) {
+            return mLocalDatabase;
+        }
+
+        if(mLocalDatabase != null) {
+            mLocalDatabase.close();
+        }
+
+        mLocalDatabase = getReadableDatabase();
+        return mLocalDatabase;
+    }
+
+    public SQLiteDatabase getLocalWritableDatabase() {
+        if(mLocalDatabase != null && mLocalDatabase.isOpen() && !mLocalDatabase.isReadOnly()) {
+            return mLocalDatabase;
+        }
+
+        if(mLocalDatabase != null) {
+            mLocalDatabase.close();
+        }
+
+        mLocalDatabase = getWritableDatabase();
+        return mLocalDatabase;
+    }
+
+    public void closeLocalDatabase() {
+        if(mLocalDatabase != null) {
+            mLocalDatabase.close();
+            mLocalDatabase = null;
+        }
+    }
 
     /**
      * Reads and executes single line SQL instructions from a resource text file.

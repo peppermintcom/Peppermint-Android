@@ -15,7 +15,6 @@ import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
 import com.peppermint.app.data.MessageManager;
 import com.peppermint.app.data.Recipient;
-import com.peppermint.app.data.RecipientManager;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
@@ -97,8 +96,8 @@ public class ChatCursorAdapter extends CursorAdapter {
     }
 
     public Chat getChat(Cursor cursor) {
-        Chat chat = ChatManager.getFromCursor(cursor);
-        chat.setMainRecipientParameter(RecipientManager.getRecipientById(mContext, chat.getMainRecipientId()));
+        // get recipient data as well
+        Chat chat = ChatManager.getFromCursor(mContext, cursor);
         return chat;
     }
 

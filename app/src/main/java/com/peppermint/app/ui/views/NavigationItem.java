@@ -16,6 +16,7 @@ public class NavigationItem {
     protected String mTag;
     protected boolean mShowSeparator = false;
     protected boolean mVisible = true;
+    protected int mLoadingTextResId = 0;
 
     public NavigationItem(String title, int iconResId, Class<? extends Fragment> fragmentClass) {
         this.mIconResId = iconResId;
@@ -26,16 +27,25 @@ public class NavigationItem {
         }
     }
 
-    public NavigationItem(String title, int iconResId, Class<? extends Fragment> fragmentClass, boolean showSeparator, boolean isVisible) {
+    public NavigationItem(String title, int iconResId, Class<? extends Fragment> fragmentClass, boolean showSeparator, boolean isVisible, int mLoadingTextResId) {
         this(title, iconResId, fragmentClass);
         this.mShowSeparator = showSeparator;
         this.mVisible = isVisible;
+        this.mLoadingTextResId = mLoadingTextResId;
     }
 
     public NavigationItem(String title, int iconResId, Runnable runnable, boolean showSeparator) {
         this(title, iconResId, null);
         this.mShowSeparator = showSeparator;
         this.mRunnable = runnable;
+    }
+
+    public int getLoadingTextResId() {
+        return mLoadingTextResId;
+    }
+
+    public void setLoadingTextResId(int mLoadingTextResId) {
+        this.mLoadingTextResId = mLoadingTextResId;
     }
 
     public String getTitle() {

@@ -161,7 +161,7 @@ public class ChatListFragment extends ListFragment implements AdapterView.OnItem
     };
 
     private void refreshList() {
-        Cursor cursor = ChatManager.getAllCursor(getDatabase());
+        Cursor cursor = ChatManager.getAll(getDatabase());
         if(mAdapter == null) {
             mAdapter = new ChatCursorAdapter(mActivity, cursor, getDatabase(), mActivity.getTrackerManager());
             setListAdapter(mAdapter);
@@ -182,7 +182,7 @@ public class ChatListFragment extends ListFragment implements AdapterView.OnItem
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Chat chat = mAdapter.getChat(position);
         Intent chatIntent = new Intent(mActivity, ChatActivity.class);
-        chatIntent.putExtra(ChatFragment.PARAM_RECIPIENT_ID, chat.getMainRecipientId());
+        chatIntent.putExtra(ChatFragment.PARAM_CHAT_ID, chat.getId());
         startActivity(chatIntent);
     }
 }

@@ -8,6 +8,8 @@ import java.sql.SQLException;
 
 /**
  * Created by Nuno Luz on 18-02-2016.
+ *
+ * Database operations for {@link Recording}
  */
 public class RecordingManager {
 
@@ -18,7 +20,7 @@ public class RecordingManager {
      * @param cursor the cursor
      * @return the Recording instance
      */
-    private static Recording getFromCursor(Cursor cursor) {
+    public static Recording getFromCursor(Cursor cursor) {
         Recording recording = new Recording();
         recording.setId(cursor.getLong(cursor.getColumnIndex("recording_id")));
         recording.setFilePath(cursor.getString(cursor.getColumnIndex("file_path")));
@@ -31,28 +33,52 @@ public class RecordingManager {
     }
 
     /**
+     * Obtains the recording with the supplied ID from the database.
+     *
+     * @param db the local database connection
+     * @param recordingId the recording id
+     * @return the recording instance with all data
+     */
+    public static Recording getRecordingById(SQLiteDatabase db, long recordingId) {
+        Recording recording = null;
+        Cursor cursor = db.rawQuery("SELECT * FROM tbl_recording WHERE recording_id = " + recordingId, null);
+        if(cursor.moveToFirst()) {
+            recording = getFromCursor(cursor);
+        }
+        cursor.close();
+        return recording;
+    }
+
+    /**
      * Inserts the supplied recording into the supplied local database.
      *
      * @param db the local database connection
-     * @param recording the recording
+     * @param filePath the recording's file path
+     * @param durationMillis the recording's duration in milliseconds
+     * @param sizeKb the recording's size in kilobytes
+     * @param hasVideo if the recording includes video
+     * @param recordedTimestamp the recording's timestamp
+     * @param contentType the recording's content type
      * @throws SQLException
      */
-    public static long insert(SQLiteDatabase db, Recording recording) throws SQLException {
+    public static Recording insert(SQLiteDatabase db, String filePath, long durationMillis, float sizeKb, boolean hasVideo, String recordedTimestamp, String contentType) throws SQLException {
         ContentValues cv = new ContentValues();
-        cv.put("file_path", recording.getFilePath());
-        cv.put("duration_millis", recording.getDurationMillis());
-        cv.put("size_kb", recording.getSizeKb());
-        cv.put("has_video", recording.hasVideo() ? 1 : 0);
-        cv.put("recorded_ts", recording.getRecordedTimestamp());
-        cv.put("content_type", recording.getContentType());
+        cv.put("file_path", filePath);
+        cv.put("duration_millis", durationMillis);
+        cv.put("size_kb", sizeKb);
+        cv.put("has_video", hasVideo ? 1 : 0);
+        cv.put("recorded_ts", recordedTimestamp);
+        cv.put("content_type", contentType);
 
         long id = db.insert("tbl_recording", null, cv);
         if(id < 0) {
             throw new SQLException("Unable to insert recording!");
         }
 
+        Recording recording = new Recording(filePath, durationMillis, sizeKb, hasVideo, contentType);
+        recording.setRecordedTimestamp(recordedTimestamp);
         recording.setId(id);
-        return id;
+        return recording;
     }
 
     /**
@@ -60,37 +86,53 @@ public class RecordingManager {
      * An SQLException is thrown if the recording ID does not exist in the database.
      *
      * @param db the local database connection
-     * @param recording the recording
+     * @param recordingId the recording id
+     * @param filePath the recording's file path
+     * @param durationMillis the recording's duration in milliseconds
+     * @param sizeKb the recording's size in kilobytes
+     * @param hasVideo if the recording includes video
+     * @param recordedTimestamp the recording's timestamp
+     * @param contentType the recording's content type
      * @throws SQLException
      */
-    public static void update(SQLiteDatabase db, Recording recording) throws SQLException {
+    public static Recording update(SQLiteDatabase db, long recordingId, String filePath, long durationMillis, float sizeKb, boolean hasVideo, String recordedTimestamp, String contentType) throws SQLException {
         ContentValues cv = new ContentValues();
-        cv.put("file_path", recording.getFilePath());
-        cv.put("duration_millis", recording.getDurationMillis());
-        cv.put("size_kb", recording.getSizeKb());
-        cv.put("has_video", recording.hasVideo() ? 1 : 0);
-        cv.put("recorded_ts", recording.getRecordedTimestamp());
-        cv.put("content_type", recording.getContentType());
+        cv.put("file_path", filePath);
+        cv.put("duration_millis", durationMillis);
+        cv.put("size_kb", sizeKb);
+        cv.put("has_video", hasVideo ? 1 : 0);
+        cv.put("recorded_ts", recordedTimestamp);
+        cv.put("content_type", contentType);
 
-        long id = db.update("tbl_recording", cv, "recording_id = " + recording.getId(), null);
+        long id = db.update("tbl_recording", cv, "recording_id = " + recordingId, null);
         if(id < 0) {
             throw new SQLException("Unable to update recording!");
         }
+
+        Recording recording = new Recording(filePath, durationMillis, sizeKb, hasVideo, contentType);
+        recording.setRecordedTimestamp(recordedTimestamp);
+        recording.setId(recordingId);
+        return recording;
     }
 
     /**
      * If a recording ID is supplied it performs an update, otherwise, it inserts the recording.
      *
      * @param db the local database connection
-     * @param recording the recording
+     * @param recordingId the recording id
+     * @param filePath the recording's file path
+     * @param durationMillis the recording's duration in milliseconds
+     * @param sizeKb the recording's size in kilobytes
+     * @param hasVideo if the recording includes video
+     * @param recordedTimestamp the recording's timestamp
+     * @param contentType the recording's content type
      * @throws SQLException
      */
-    public static void insertOrUpdate(SQLiteDatabase db, Recording recording) throws  SQLException {
-        if(recording.getId() <= 0) {
-            insert(db, recording);
-            return;
+    public static Recording insertOrUpdate(SQLiteDatabase db, long recordingId, String filePath, long durationMillis, float sizeKb, boolean hasVideo, String recordedTimestamp, String contentType) throws  SQLException {
+        if(recordingId <= 0) {
+            return insert(db, filePath, durationMillis, sizeKb, hasVideo, recordedTimestamp, contentType);
         }
-        update(db, recording);
+        return update(db, recordingId, filePath, durationMillis, sizeKb, hasVideo, recordedTimestamp, contentType);
     }
 
     /**
@@ -106,23 +148,6 @@ public class RecordingManager {
         if(id < 0) {
             throw new SQLException("Unable to delete the recording!");
         }
-    }
-
-    /**
-     * Obtains the recording with the supplied ID from the database.
-     *
-     * @param db the local database connection
-     * @param id the recording ID
-     * @return the recording instance with all data
-     */
-    public static Recording get(SQLiteDatabase db, long id) {
-        Recording recording = null;
-        Cursor cursor = db.rawQuery("SELECT * FROM tbl_recording WHERE recording_id = " + id, null);
-        if(cursor.moveToFirst()) {
-            recording = getFromCursor(cursor);
-        }
-        cursor.close();
-        return recording;
     }
 
 }

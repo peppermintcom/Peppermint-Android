@@ -12,7 +12,6 @@ import android.widget.Toast;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.PermissionsPolicyEnforcer;
 import com.peppermint.app.ui.about.AboutActivity;
-import com.peppermint.app.ui.chat.ChatListActivity;
 import com.peppermint.app.ui.recipients.RecipientsFragment;
 import com.peppermint.app.ui.settings.SettingsActivity;
 import com.peppermint.app.ui.views.NavigationItem;
@@ -42,7 +41,7 @@ public class MainActivity extends CustomActionBarActivity {
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
-        navItems.add(new NavigationItem(getString(R.string.drawer_menu_contacts), R.drawable.ic_drawer_contacts, RecipientsFragment.class, false, false));
+        navItems.add(new NavigationItem(getString(R.string.drawer_menu_contacts), R.drawable.ic_drawer_contacts, RecipientsFragment.class, false, false, R.string.loading_contacts));
         /*navItems.add(new NavigationItem(getString(R.string.chats), R.drawable.ic_drawer_chats, new Runnable() {
             @Override
             public void run() {

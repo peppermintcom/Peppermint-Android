@@ -6,119 +6,90 @@
     android:descendantFocusability="beforeDescendants"
     android:focusableInTouchMode="true">
 
-    <RelativeLayout
-        android:id="@+id/listContainer"
+    <!-- To add new contact/recipient -->
+    <FrameLayout android:id="@+id/lytAddContactContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:visibility="gone"
+        android:fitsSystemWindows="true">
+
+        <com.peppermint.app.ui.views.simple.CustomFontButton
+            android:id="@+id/btnAddContact"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="5dp"
+            android:paddingLeft="30dp"
+            android:paddingRight="30dp"
+            android:paddingBottom="8dp"
+            custom:textFont="@string/font_semibold"
+            android:textSize="16dp"
+            android:text="@string/add_contact"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:background="@drawable/background_btn_alt"
+            android:drawableLeft="@drawable/ic_plus_14dp"
+            android:drawablePadding="10dp"
+            style="?android:attr/borderlessButtonStyle" />
+
+    </FrameLayout>
+
+    <FrameLayout android:id="@+id/lytContents"
         android:layout_alignParentTop="true"
+        android:layout_above="@id/lytAddContactContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- To add new contact/recipient -->
-        <FrameLayout android:id="@+id/lytAddContactContainer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="15dp"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"
-            android:visibility="gone"
-            android:fitsSystemWindows="true">
-
-            <com.peppermint.app.ui.views.simple.CustomFontButton
-                android:id="@+id/btnAddContact"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingTop="5dp"
-                android:paddingLeft="30dp"
-                android:paddingRight="30dp"
-                android:paddingBottom="8dp"
-                custom:textFont="@string/font_semibold"
-                android:textSize="16dp"
-                android:text="@string/add_contact"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:background="@drawable/background_btn_alt"
-                android:drawableLeft="@drawable/ic_plus_14dp"
-                android:drawablePadding="10dp"
-                style="?android:attr/borderlessButtonStyle" />
-
-        </FrameLayout>
-
-        <FrameLayout android:id="@+id/lytContents"
-            android:layout_alignParentTop="true"
-            android:layout_above="@id/lytAddContactContainer"
+        <com.peppermint.app.ui.views.simple.CustomVisibilityListView android:id="@id/android:list"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content"
+            android:listSelector="@null"
+            android:drawSelectorOnTop="false"
+            android:divider="@null"
+            android:background="@null"
+            android:layout_marginBottom="1dp" />
 
-            <com.peppermint.app.ui.views.simple.CustomVisibilityListView android:id="@id/android:list"
+        <ImageView
+            android:id="@+id/imgListBorder"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_gravity="bottom"
+            android:src="@color/divider_grey"
+            android:visibility="gone"/>
+
+        <LinearLayout
+            android:id="@id/android:empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="20dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txtEmpty1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:listSelector="@null"
-                android:drawSelectorOnTop="false"
-                android:divider="@null"
-                android:background="@null"
-                android:layout_marginBottom="1dp" />
+                android:layout_marginLeft="30dp"
+                android:layout_marginRight="30dp"
+                android:gravity="center"
+                android:textSize="16dp"
+                android:textColor="@color/grey_text"
+                android:text="@string/msg_no_contacts" />
 
-            <ImageView
-                android:id="@+id/imgListBorder"
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_gravity="bottom"
-                android:src="@color/divider_grey"
-                android:visibility="gone"/>
-
-            <LinearLayout
-                android:id="@id/android:empty"
-                android:layout_width="match_parent"
+            <com.peppermint.app.ui.views.simple.CustomMinHeightImageView
+                android:id="@+id/imgNoContacts"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginTop="20dp"
-                android:layout_marginLeft="20dp"
-                android:layout_marginRight="20dp"
-                android:gravity="center"
-                android:orientation="vertical">
+                android:src="@drawable/img_no_contacts"
+                custom:minVisibilityHeight="50dp" />
 
-                <TextView
-                    android:id="@+id/txtEmpty1"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="30dp"
-                    android:layout_marginRight="30dp"
-                    android:gravity="center"
-                    android:textSize="16dp"
-                    android:textColor="@color/grey_text"
-                    android:text="@string/msg_no_contacts" />
+        </LinearLayout>
 
-                <com.peppermint.app.ui.views.simple.CustomMinHeightImageView
-                    android:id="@+id/imgNoContacts"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_marginTop="20dp"
-                    android:src="@drawable/img_no_contacts"
-                    custom:minVisibilityHeight="50dp" />
-
-            </LinearLayout>
-
-        </FrameLayout>
-
-    </RelativeLayout>
-
-    <LinearLayout android:id="@+id/progressContainer"
-        android:layout_alignParentTop="true"
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/dark_green_60percent"
-        android:visibility="invisible"
-        android:gravity="center">
-
-        <com.peppermint.app.ui.canvas.loading.LoadingView
-            android:id="@+id/loading"
-            android:layout_width="170dp"
-            android:layout_height="170dp"
-            android:layout_marginBottom="40dp"
-            android:layout_marginTop="40dp"
-            android:layout_marginRight="40dp"
-            android:layout_marginLeft="40dp"
-            custom:text="@string/loading_contacts" />
-
-    </LinearLayout>
+    </FrameLayout>
 
 </RelativeLayout>

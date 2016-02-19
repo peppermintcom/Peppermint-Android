@@ -28,7 +28,7 @@ public class ChatActivity extends CustomActionBarActivity {
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
-        navItems.add(new NavigationItem("Chat", R.drawable.ic_settings_36dp, ChatFragment.class, false, false));
+        navItems.add(new NavigationItem("Chat", R.drawable.ic_settings_36dp, ChatFragment.class, false, false, 0));
         return navItems;
     }
 
