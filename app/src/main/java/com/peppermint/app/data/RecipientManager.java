@@ -16,14 +16,12 @@ import android.os.Bundle;
 import android.provider.ContactsContract;
 
 import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by Nuno Luz on 17-02-2016.
@@ -35,11 +33,11 @@ public class RecipientManager {
     private static final String FILE_SCHEME = "file:/";
     private static final String GOOGLE_ACCOUNT_TYPE = "com.google";
 
-    private static final String FIELD_DISPLAY_NAME = Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ?
+    protected static final String FIELD_DISPLAY_NAME = Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ?
             ContactsContract.Contacts.DISPLAY_NAME_PRIMARY :
             ContactsContract.Contacts.DISPLAY_NAME;
 
-    private static final String[] PROJECTION = {
+    protected static final String[] PROJECTION = {
             ContactsContract.Data._ID,
             ContactsContract.Data.RAW_CONTACT_ID,
             ContactsContract.Data.STARRED,
@@ -191,6 +189,22 @@ public class RecipientManager {
         return result;
     }
 
+    public static HashMap<Long, Contact> getPeppermintContacts(Context context, List<Long> rawIds) {
+        HashMap<Long, Contact> map = new HashMap<>();
+
+        List<String> mimeTypes = new ArrayList<>();
+        mimeTypes.add(CONTENT_TYPE);
+
+        Cursor cursor = get(context, rawIds, mimeTypes, null);
+        while(cursor.moveToNext()) {
+            Contact contact = getContactFromCursor(cursor);
+            map.put(contact.getRawId(), contact);
+        }
+        cursor.close();
+
+        return map;
+    }
+
     public static Cursor getPhone(Context context, long rawId, String phone) {
         List<Long> rawIds = new ArrayList<>();
         rawIds.add(rawId);
@@ -211,7 +225,7 @@ public class RecipientManager {
         List<Long> rawIds = new ArrayList<>();
         rawIds.add(rawId);
         List<String> mimeTypes = new ArrayList<>();
-        mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
+        mimeTypes.add(CONTENT_TYPE);
         return get(context, rawIds, mimeTypes, null);
     }
 
@@ -254,7 +268,7 @@ public class RecipientManager {
      * @param allowedMimeTypes the allowed mime types
      * @return the result cursor
      */
-    public static Cursor get(final Context context, List<Long> allowedIds, String freeTextSearch, Boolean areStarred, List<String> allowedMimeTypes, String enforcedViaSearch) {
+    public static Cursor get(final Context context, final List<Long> allowedIds, String freeTextSearch, Boolean areStarred, List<String> allowedMimeTypes, String enforcedViaSearch) {
         List<String> args = new ArrayList<>();
         String condStarred = (areStarred == null ? "" : " AND " + ContactsContract.Contacts.STARRED + "=" + (areStarred ? "1" : "0"));
         String condFreeSearch = (freeTextSearch == null ? "" : " AND (LOWER(" + FIELD_DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString(freeTextSearch + "%") + " OR LOWER(" + FIELD_DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString("% " + freeTextSearch + "%") + " OR LOWER(REPLACE(" + ContactsContract.Data.DATA1 + ", ' ', '')) LIKE " + DatabaseUtils.sqlEscapeString(freeTextSearch + "%") + ")");
@@ -271,23 +285,7 @@ public class RecipientManager {
             return rootCursor;
         }
 
-        return new FilteredCursor(rootCursor, new FilteredCursor.Filter() {
-            private Set<String> mViaSet = new HashSet<>();
-
-            @Override
-            public boolean isValid(Cursor cursor) {
-                // removes duplicate contacts
-                String via = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1)).trim().toLowerCase() +
-                        cursor.getString(cursor.getColumnIndex(FIELD_DISPLAY_NAME)).replaceAll("\\s+", "").toLowerCase();
-
-                if (!mViaSet.contains(via)) {
-                    mViaSet.add(via);
-                    return true;
-                }
-
-                return false;
-            }
-        });
+        return new PeppermintFilteredCursor(rootCursor, getPeppermintContacts(context, allowedIds));
     }
 
     public static long insertOrUpdatePhoto(Context context, Uri photoUri, long rawId, int rawIdBackRef, ArrayList<ContentProviderOperation> operationsList) {
@@ -349,6 +347,7 @@ public class RecipientManager {
         if(rawId > 0) {
             Cursor checkCursor = getPhone(context, rawId, phone);
             alreadyHasPhone = checkCursor != null && checkCursor.getCount() > 0;
+            checkCursor.close();
         }
 
         if(!alreadyHasPhone) {
@@ -391,6 +390,7 @@ public class RecipientManager {
         if(rawId > 0) {
             Cursor checkCursor = getEmail(context, rawId, email);
             alreadyHasEmail = checkCursor != null && checkCursor.getCount() > 0;
+            checkCursor.close();
         }
 
         if(!alreadyHasEmail) {
@@ -456,12 +456,31 @@ public class RecipientManager {
         return 0;
     }
 
+    public static void deletePeppermint(Context context, long rawId, ArrayList<ContentProviderOperation> operationsList) {
+        Cursor checkCursor = getPeppermint(context, rawId);
+        if(checkCursor != null && checkCursor.getCount() > 0) {
+            ArrayList<ContentProviderOperation> ops = operationsList == null ? new ArrayList<ContentProviderOperation>() : operationsList;
+
+            ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
+                    .withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=? AND " + ContactsContract.Data.MIMETYPE + "=?",
+                            new String[]{String.valueOf(rawId), CONTENT_TYPE})
+                    .build());
+
+            if(operationsList == null) {
+                // no caller operations list, so execute the operations right away
+                executeOperations(context, ops);
+            }
+        }
+        checkCursor.close();
+    }
+
     public static long insertPeppermint(Context context, String email, long rawId, int rawIdBackRef, ArrayList<ContentProviderOperation> operationsList) throws InvalidEmailException {
         boolean alreadyHasPeppermint = false;
 
         if(rawId > 0) {
             Cursor checkCursor = getPeppermint(context, rawId);
             alreadyHasPeppermint = checkCursor != null && checkCursor.getCount() > 0;
+            checkCursor.close();
         }
 
         if(!alreadyHasPeppermint) {
@@ -615,7 +634,10 @@ public class RecipientManager {
         if(rawId <= 0) {
             Cursor cursor = getByEmailOrPhone(context, email, phone, googleAccountName);
             if(cursor.moveToNext()) {
-                rawId = getRecipientFromCursor(cursor).getRawId();
+                Recipient recipient = getRecipientFromCursor(cursor);
+                if(rawId <= 0) {
+                    rawId = recipient.getRawId();
+                }
             }
             cursor.close();
         }
@@ -623,7 +645,7 @@ public class RecipientManager {
         return insert(context, rawId, firstName, lastName, phone, email, photoUri, googleAccountName, hasPeppermint);
     }
 
-    private static ContentProviderResult[] executeOperations(Context context, ArrayList<ContentProviderOperation> operations) {
+    public static ContentProviderResult[] executeOperations(Context context, ArrayList<ContentProviderOperation> operations) {
         try {
             ContentProviderResult[] res = context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, operations);
             if(res.length < operations.size()) {

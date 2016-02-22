@@ -10,7 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
 
-import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
@@ -18,30 +17,30 @@ import com.peppermint.app.data.MessageManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
-import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
 import com.peppermint.app.ui.views.simple.CustomFontTextView;
 import com.peppermint.app.utils.DateContainer;
 
 import org.joda.time.DateTimeZone;
 
 import java.text.ParseException;
+import java.util.Set;
 
 /**
  * Created by Nuno Luz on 27/08/2015.
  *
- * ArrayAdapter to show recipients in a ListView.<br />
- * Uses the {@link RecipientAdapterUtils#getView(PeppermintApp, Context, Recipient, View, ViewGroup)}
- * to fill the view of each item.
+ * ArrayAdapter to show chats in a ListView.
  */
 public class ChatCursorAdapter extends CursorAdapter {
 
     private Context mContext;
     private SQLiteDatabase mDb;
     private TrackerManager mTrackerManager;
+    private Set<Long> mPeppermintSet;
 
-    public ChatCursorAdapter(Context context, Cursor cursor, SQLiteDatabase db, TrackerManager mTrackerManager) {
+    public ChatCursorAdapter(Context context, Cursor cursor, Set<Long> peppermintSet, SQLiteDatabase db, TrackerManager mTrackerManager) {
         super(context, cursor, 0);
         this.mContext = context;
+        this.mPeppermintSet = peppermintSet;
         this.mDb = db;
         this.mTrackerManager = mTrackerManager;
     }
@@ -71,7 +70,11 @@ public class ChatCursorAdapter extends CursorAdapter {
 
         if(recipient != null) {
             txtName.setText(recipient.getDisplayName());
-            txtContact.setText(recipient.getEmail() != null ? recipient.getEmail().getVia() : recipient.getPhone().getVia());
+            if(mPeppermintSet != null && mPeppermintSet.contains(recipient.getRawId())) {
+                txtContact.setText(R.string.app_name);
+            } else {
+                txtContact.setText(recipient.getEmail() != null ? recipient.getEmail().getVia() : recipient.getPhone().getVia());
+            }
         }
 
         CustomFontTextView txtUnreadMessages = (CustomFontTextView) view.findViewById(R.id.txtUnreadMessages);
@@ -115,5 +118,13 @@ public class ChatCursorAdapter extends CursorAdapter {
 
     public void setDatabase(SQLiteDatabase mDb) {
         this.mDb = mDb;
+    }
+
+    public Set<Long> getPeppermintSet() {
+        return mPeppermintSet;
+    }
+
+    public void setPeppermintSet(Set<Long> mPeppermintSet) {
+        this.mPeppermintSet = mPeppermintSet;
     }
 }

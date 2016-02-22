@@ -15,7 +15,6 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
-import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.PlayerEvent;
 import com.peppermint.app.PlayerServiceManager;
 import com.peppermint.app.R;
@@ -23,9 +22,7 @@ import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.MessageManager;
-import com.peppermint.app.data.Recipient;
 import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.ui.recipients.RecipientAdapterUtils;
 import com.peppermint.app.ui.views.simple.CustomFontButton;
 import com.peppermint.app.ui.views.simple.CustomFontTextView;
 import com.peppermint.app.utils.DateContainer;
@@ -40,9 +37,7 @@ import java.util.Map;
 /**
  * Created by Nuno Luz on 27/08/2015.
  *
- * ArrayAdapter to show recipients in a ListView.<br />
- * Uses the {@link RecipientAdapterUtils#getView(PeppermintApp, Context, Recipient, View, ViewGroup)}
- * to fill the view of each item.
+ * ArrayAdapter to show chat messages in a ListView.<br />
  */
 public class ChatMessageCursorAdapter extends CursorAdapter implements MessagesServiceManager.SenderListener {
 

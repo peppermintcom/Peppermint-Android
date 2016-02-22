@@ -37,8 +37,10 @@ import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.cloud.ReceiverEvent;
+import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.data.ChatManager;
 import com.peppermint.app.data.DatabaseHelper;
+import com.peppermint.app.data.FilteredCursor;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientManager;
@@ -54,7 +56,6 @@ import com.peppermint.app.ui.recipients.add.NewRecipientActivity;
 import com.peppermint.app.ui.recipients.add.NewRecipientFragment;
 import com.peppermint.app.ui.views.dialogs.PopupDialog;
 import com.peppermint.app.ui.views.simple.CustomVisibilityListView;
-import com.peppermint.app.utils.FilteredCursor;
 import com.peppermint.app.utils.Utils;
 
 import java.io.InterruptedIOException;
@@ -155,6 +156,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
                         Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
 
                     if (_recipientType.isStarred() != null && _recipientType.isStarred()) {
+                        mChatAdapter.setPeppermintSet(RecipientManager.getPeppermintContacts(getCustomActionBarActivity(), null).keySet());
                         // show chat list / recent contacts
                         ChatManager.deleteMissingRecipientChats(getCustomActionBarActivity(), getDatabase());
                         return ChatManager.getAll(getDatabase());
@@ -194,6 +196,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
         @Override
         protected void onPostExecute(Object data) {
+
             // check if data is valid and activity has not been destroyed by the main thread
             if(data != null && getCustomActionBarActivity() != null && mCreated) {
 
@@ -347,15 +350,12 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
                     List<String> mimeTypes = new ArrayList<>();
                     mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
                     mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-                    FilteredCursor checkCursor = (FilteredCursor) RecipientManager.get(getCustomActionBarActivity(), null, null, null, mimeTypes, mail);
-                    boolean alreadyHasEmail = checkCursor != null && checkCursor.getOriginalCursor() != null && checkCursor.getOriginalCursor().getCount() > 0;
+                    Recipient foundRecipient = RecipientManager.getRecipientByViaOrContactId(getCustomActionBarActivity(), mail, 0);
 
                     // if not, add the contact
-                    if(!alreadyHasEmail) {
+                    if(foundRecipient == null) {
                         try {
-                            if(RecipientManager.insert(getCustomActionBarActivity(), 0, name, null, null, mail, null, data.getEmail(), false) != null) {
-                                alreadyHasEmail = true;
-                            }
+                            foundRecipient = RecipientManager.insert(getCustomActionBarActivity(), 0, name, null, null, mail, null, data.getEmail(), false);
                         } catch (Exception e) {
                             /* nothing to do here */
                         }
@@ -363,7 +363,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
                     // if it fails, add complete name+email search text to allow adding the full contact
                     // otherwise, just search by email
-                    mSearchListBarView.setSearchText(alreadyHasEmail || name.length() <= 0 ? mail : name + " <" + mail + ">");
+                    mSearchListBarView.setSearchText(foundRecipient != null || name.length() <= 0 ? mail : name + " <" + mail + ">");
                 }
             }
         }
@@ -401,7 +401,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) getCustomActionBarActivity().getApplication();
 
-        mChatAdapter = new ChatCursorAdapter(getCustomActionBarActivity(), null, null, getCustomActionBarActivity().getTrackerManager());
+        mChatAdapter = new ChatCursorAdapter(getCustomActionBarActivity(), null, null, null, getCustomActionBarActivity().getTrackerManager());
         mRecipientAdapter = new RecipientCursorAdapter(app, getCustomActionBarActivity(), null);
 
         getCustomActionBarActivity().getAuthenticationPolicyEnforcer().addAuthenticationDoneCallback(mAuthenticationDoneCallback);
@@ -666,6 +666,14 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     @Override
     public void onReceivedMessage(ReceiverEvent event) {
         super.onReceivedMessage(event);
+        if(mSearchListBarView.getSelectedItemPosition() == 0) {
+            onSearch(mSearchListBarView.getSearchText());
+        }
+    }
+
+    @Override
+    public void onSendFinished(SenderEvent event) {
+        super.onSendFinished(event);
         if(mSearchListBarView.getSelectedItemPosition() == 0) {
             onSearch(mSearchListBarView.getSearchText());
         }

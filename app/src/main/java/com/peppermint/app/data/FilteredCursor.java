@@ -1,4 +1,4 @@
-package com.peppermint.app.utils;
+package com.peppermint.app.data;
 
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
@@ -18,7 +18,7 @@ import java.util.List;
  * Created by Nuno Luz on 11-09-2015.
  *
  * Cursor that filters all the contents of another {@link Cursor} to all those
- * accepted by a {@link com.peppermint.app.utils.FilteredCursor.Filter}.<br />
+ * accepted by a {@link FilteredCursor.Filter}.<br />
  *
  * Inspired on the solution found at http://stackoverflow.com/questions/3766688/filtering-a-cursor-the-right-way
  */
