@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.views;
+package com.peppermint.app.ui.recipients;
 
 import android.content.Context;
 import android.graphics.Typeface;

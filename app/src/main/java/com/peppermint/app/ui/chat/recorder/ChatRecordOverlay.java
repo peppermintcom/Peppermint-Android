@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.chat;
+package com.peppermint.app.ui.chat.recorder;
 
 import android.graphics.Rect;
 import android.media.MediaPlayer;
@@ -15,7 +15,6 @@ import com.peppermint.app.data.Recording;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.Overlay;
 import com.peppermint.app.ui.OverlayManager;
-import com.peppermint.app.ui.views.SearchListBarView;
 import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.utils.NoMicDataIOException;
 import com.peppermint.app.utils.Utils;
@@ -57,10 +56,10 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
 
     private OnRecordingFinishedCallback mOnRecordingFinishedCallback;
 
-    private SearchListBarView mViewToRemoveFocus;
+    private View mViewToRemoveFocus;
     private View mViewToRecoverFocus;
 
-    public ChatRecordOverlay(CustomActionBarActivity activity, SearchListBarView mViewToRemoveFocus, View mViewToRecoverFocus) {
+    public ChatRecordOverlay(CustomActionBarActivity activity, View mViewToRemoveFocus, View mViewToRecoverFocus) {
         super(SCREEN_RECORDING_ID, R.layout.v_recording_overlay_layout, false, true);
         this.mActivity = activity;
         this.mViewToRecoverFocus = mViewToRecoverFocus;
@@ -155,7 +154,7 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
     @Override
     public boolean hide(boolean animated, long delayMs, boolean cancel) {
         if(mViewToRemoveFocus != null) {
-            mViewToRemoveFocus.removeSearchTextFocus(null);
+            mViewToRemoveFocus.clearFocus();
             if(mViewToRecoverFocus != null) {
                 mViewToRecoverFocus.requestFocus();
             }
@@ -311,11 +310,11 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
         this.mSenderName = mSenderName;
     }
 
-    public SearchListBarView getViewToRemoveFocus() {
+    public View getViewToRemoveFocus() {
         return mViewToRemoveFocus;
     }
 
-    public void setViewToRemoveFocus(SearchListBarView mViewToRemoveFocus) {
+    public void setViewToRemoveFocus(View mViewToRemoveFocus) {
         this.mViewToRemoveFocus = mViewToRemoveFocus;
     }
 

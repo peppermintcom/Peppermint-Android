@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.views;
+package com.peppermint.app.ui.recipients;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -244,6 +244,12 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         requestFocus();
         mTxtSearch.clearFocus();
         mInputMethodManager.hideSoftInputFromWindow(mTxtSearch.getWindowToken(), 0);
+    }
+
+    @Override
+    public void clearFocus() {
+        super.clearFocus();
+        removeSearchTextFocus(null);
     }
 
     public void removeSearchTextFocus(MotionEvent event) {

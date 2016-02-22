@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.chat;
+package com.peppermint.app.ui.chat.recorder;
 
 import android.app.Activity;
 import android.app.ListFragment;
@@ -23,6 +23,8 @@ import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientManager;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.ui.CustomActionBarActivity;
+import com.peppermint.app.ui.chat.ChatActivity;
+import com.peppermint.app.ui.chat.ChatFragment;
 import com.peppermint.app.ui.recipients.add.NewRecipientActivity;
 import com.peppermint.app.ui.recipients.add.NewRecipientFragment;
 import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;

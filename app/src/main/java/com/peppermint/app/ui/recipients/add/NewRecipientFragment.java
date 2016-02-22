@@ -56,8 +56,6 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
 
     public static final String KEY_VIA = TAG + "_Via";
     public static final String KEY_NAME = TAG + "_Name";
-    public static final String KEY_PHONE = TAG + "_Phone";
-    public static final String KEY_MAIL = TAG + "_Mail";
     public static final String KEY_RAW_ID = TAG + "_RawId";
     public static final String KEY_PHOTO_URL = TAG + "_PhotoUrl";
     public static final String KEY_RECIPIENT = TAG + "_Recipient";

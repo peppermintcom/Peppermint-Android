@@ -24,6 +24,7 @@ import com.peppermint.app.data.Message;
 import com.peppermint.app.data.MessageManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayFragment;
 import com.peppermint.app.ui.views.NavigationItem;
 import com.peppermint.app.ui.views.NavigationListAdapter;
 import com.peppermint.app.ui.views.dialogs.CustomListDialog;
@@ -61,7 +62,7 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
     private Chat mChat;
     private long mAutoPlayMessageId;
 
-    private MessageCursorAdapter mAdapter;
+    private ChatMessageCursorAdapter mAdapter;
 
     // error dialog
     private CustomListDialog mErrorDialog;
@@ -299,8 +300,8 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
 
         Cursor cursor = MessageManager.getByChatId(getDatabase(), mChat.getId());
         if(mAdapter == null) {
-            mAdapter = new MessageCursorAdapter(mActivity, getMessagesServiceManager(), getPlayerServiceManager(), cursor, getDatabase(), mActivity.getTrackerManager());
-            mAdapter.setExclamationClickListener(new MessageCursorAdapter.ExclamationClickListener() {
+            mAdapter = new ChatMessageCursorAdapter(mActivity, getMessagesServiceManager(), getPlayerServiceManager(), cursor, getDatabase(), mActivity.getTrackerManager());
+            mAdapter.setExclamationClickListener(new ChatMessageCursorAdapter.ExclamationClickListener() {
                 @Override
                 public void onClick(View v, long messageId) {
                     showErrorDialog(messageId);

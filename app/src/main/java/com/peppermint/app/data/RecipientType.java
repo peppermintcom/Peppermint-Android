@@ -4,7 +4,7 @@ import android.content.Context;
 import android.provider.ContactsContract;
 
 import com.peppermint.app.R;
-import com.peppermint.app.ui.views.SearchListBarView;
+import com.peppermint.app.ui.recipients.SearchListBarView;
 
 import java.util.ArrayList;
 import java.util.List;

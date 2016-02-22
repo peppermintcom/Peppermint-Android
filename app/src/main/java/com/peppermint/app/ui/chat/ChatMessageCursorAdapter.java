@@ -43,7 +43,7 @@ import java.util.Map;
  * Uses the {@link RecipientAdapterUtils#getView(PeppermintApp, Context, Recipient, View, ViewGroup)}
  * to fill the view of each item.
  */
-public class MessageCursorAdapter extends CursorAdapter implements MessagesServiceManager.SenderListener {
+public class ChatMessageCursorAdapter extends CursorAdapter implements MessagesServiceManager.SenderListener {
 
     public interface ExclamationClickListener {
         void onClick(View v, long messageId);
@@ -261,6 +261,9 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
 
         public void setStatusSending() {
             if(mRootView != null) {
+                FrameLayout lytBalloon = (FrameLayout) mRootView.findViewById(R.id.lytBalloon);
+                ((RelativeLayout.LayoutParams) lytBalloon.getLayoutParams()).setMargins(mBalloonMargin, 0, 0, 0);
+
                 CustomFontButton btnCancel = (CustomFontButton) mRootView.findViewById(R.id.btnCancel);
                 ImageView btnExclamation = (ImageView) mRootView.findViewById(R.id.btnExclamation);
                 btnCancel.setVisibility(View.VISIBLE);
@@ -270,6 +273,9 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
 
         public void setStatusNormal() {
             if(mRootView != null) {
+                FrameLayout lytBalloon = (FrameLayout) mRootView.findViewById(R.id.lytBalloon);
+                ((RelativeLayout.LayoutParams) lytBalloon.getLayoutParams()).setMargins(mBalloonMargin, 0, 0, 0);
+
                 CustomFontButton btnCancel = (CustomFontButton) mRootView.findViewById(R.id.btnCancel);
                 ImageView btnExclamation = (ImageView) mRootView.findViewById(R.id.btnExclamation);
                 btnCancel.setVisibility(View.GONE);
@@ -279,6 +285,9 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
 
         public void setStatusError() {
            if(mRootView != null) {
+                FrameLayout lytBalloon = (FrameLayout) mRootView.findViewById(R.id.lytBalloon);
+                ((RelativeLayout.LayoutParams) lytBalloon.getLayoutParams()).setMargins(mBalloonMarginWithExclamation, 0, 0, 0);
+
                 CustomFontButton btnCancel = (CustomFontButton) mRootView.findViewById(R.id.btnCancel);
                 ImageView btnExclamation = (ImageView) mRootView.findViewById(R.id.btnExclamation);
                 btnCancel.setVisibility(View.GONE);
@@ -337,7 +346,7 @@ public class MessageCursorAdapter extends CursorAdapter implements MessagesServi
 
     private int mBalloonMargin, mBalloonMarginWithExclamation;
 
-    public MessageCursorAdapter(Context context, MessagesServiceManager messagesServiceManager, PlayerServiceManager mPlayerServiceManager, Cursor cursor, SQLiteDatabase db, TrackerManager trackerManager) {
+    public ChatMessageCursorAdapter(Context context, MessagesServiceManager messagesServiceManager, PlayerServiceManager mPlayerServiceManager, Cursor cursor, SQLiteDatabase db, TrackerManager trackerManager) {
         super(context, cursor, 0);
         this.mDb = db;
         this.mContext = context;

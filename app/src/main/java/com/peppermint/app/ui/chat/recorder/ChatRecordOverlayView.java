@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.chat;
+package com.peppermint.app.ui.chat.recorder;
 
 import android.animation.Animator;
 import android.animation.AnimatorSet;

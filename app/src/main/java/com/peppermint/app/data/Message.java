@@ -51,7 +51,7 @@ public class Message implements Serializable {
     }
 
     public Message(long mId, long mChatId, long mRecordingId, long mRecipientContactId, String mEmailSubject, String mEmailBody, String mRegistrationTimestamp, boolean mReceived, boolean mSent, boolean mPlayed, String mServerId, String mServerCanonicalUrl, String mServerShortUrl, String mServerTranscriptionUrl) {
-        this.mId = mId;
+        setId(mId);
         this.mChatId = mChatId;
         this.mRecordingId = mRecordingId;
         this.mRecipientContactId = mRecipientContactId;
