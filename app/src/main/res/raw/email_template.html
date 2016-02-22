@@ -68,13 +68,22 @@
     }
     }
 </style>
-<table class="body" style="color: #adadad; font-family: Helvetica, Arial, sans-serif; font-weight: normal; text-align: left; line-height: 1.3; font-size: 16px; margin: 0; padding: 0;"><tr>
+<table name="peppermint_email" class="body" style="color: #adadad; font-family: Helvetica, Arial, sans-serif; font-weight: normal; text-align: left; line-height: 1.3; font-size: 16px; margin: 0; padding: 0;"><tr>
     <td class="left" align="center" valign="top" style="margin: 0; padding: 0;">
         <center>
             <table class="container" style="padding: 0 0 0 10px;">
                 <tr>
                     <td style="margin: 0; padding: 0;" align="left">
-
+                        <!--Hiden url-->
+                        <table cellspacing="0" class="row">
+                            <tr>
+                                <td class="wrapper" style="margin: 0; padding: 0;">
+                                    <input type="hidden" id="" name="long_url" value="{@CANONICAL_URL}" />
+                                    <input type="hidden" id="" name="short_url" value="{@SHORT_URL}" />
+                                </td>
+                            </tr>
+                        </table>
+                        <!--Hiden url ends-->
                         <table class="row">
                             <tr>
                                 <td class="wrapper" style="margin: 0; padding: 0;" align="left">
@@ -100,7 +109,7 @@
                                                 <table class="button" style="overflow: hidden;">
                                                     <tr>
                                                         <td style="margin:0; padding: 0; width: auto !important;" align="center">
-                                                            <a href="{@PLAY_LINK}" type="{@MIME_TYPE}" align="left" style="text-decoration:none;!important"><img class="player-img" style="width: 290px; height: 35px; margin-right: 0; font-size: 21px; color: #fff; line-height: 35px;" border="0" align="left" alt="Play Audio Message" src="https://s3-us-west-2.amazonaws.com/dev.peppermint.com/img/player.png" /></a>
+                                                            <a href="{@CANONICAL_URL}" type="{@MIME_TYPE}" align="left" style="text-decoration:none;!important"><img class="player-img" style="width: 290px; height: 35px; margin-right: 0; font-size: 21px; color: #fff; line-height: 35px;" border="0" align="left" alt="Play Audio Message" src="https://s3-us-west-2.amazonaws.com/dev.peppermint.com/img/player.png" /></a>
                                                         </td>
                                                     </tr>
                                                 </table>
@@ -126,46 +135,8 @@
 
 
 
-                        <table class="row">
-                            <tr>
-                                <td width="auto" style="display: block; font-size: 16px;" align="left">
-                                     </td>
-                            </tr>
-                        </table>
 
-                        <table class="row">
-                            <tr>
-                                <td class="wrapper" style="margin: 0; padding: 0;" align="left">
-                                    <table class="one columns">
-                                        <tr>
-                                            <td style="margin: 0; padding: 0;" align="left">
-                                                <h1 style="color: #adadad; font-family: Helvetica, Arial, sans-serif; font-weight: normal; text-align: left; line-height: 1.3; word-break: normal; font-size: 16px; margin: 0; padding: 0;" align="left"></h1>
-                                            </td>
-                                            <td class="expander" style="visibility: hidden; width: 0px;font-size: 14px; margin: 0; padding: 0;" align="left">
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                        </table>
-
-                        <table class="row">
-                            <tr>
-                                <td class="wrapper" style="text-align: left; margin: 0; padding: 0;" align="left">
-
-                                    <table class="nine columns" style="width: 430px;">
-                                        <tr>
-                                            <td style="margin: 0; padding: 0;" align="left">
-                                                <p style="color: #222222; font-family: Helvetica, Arial, sans-serif; font-weight: normal; text-align: left; line-height: 19px; font-size: 14px; margin: 0 0 10px; padding: 0;" align="left"></p>
-                                            </td>
-                                            <td class="expander" style="visibility: hidden; width: 0px; font-size: 14px; margin: 0; padding: 0;" align="left">
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                        </table>
-
+                        <!--DIVIDER-->
                         <table class="row">
                             <tr>
                                 <td width="auto" style="display: block; font-size: 16px; margin: 0; padding: 0;" align="left">
@@ -175,7 +146,16 @@
                                 <td width="auto" style="display: block; font-size: 16px; margin: 0; padding: 0;" align="left"> 
                                 </td>
                             </tr>
+                            <tr>
+                                <td width="auto" style="display: block; font-size: 16px; margin: 0; padding: 0;" align="left">
+                                     </td>
+                            </tr>
+                            <tr>
+                                <td width="auto" style="display: block; font-size: 16px; margin: 0; padding: 0;" align="left"> 
+                                </td>
+                            </tr>
                         </table>
+                        <!--DIVIDIER ENDS-->
 
                         <table class="row">
                             <tr>

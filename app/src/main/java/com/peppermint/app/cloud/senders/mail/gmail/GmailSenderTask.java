@@ -85,7 +85,7 @@ public class GmailSenderTask extends SenderUploadTask {
         File file = getMessage().getRecordingParameter().getFile();
 
         // build the email body
-        getMessage().setEmailBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template, url,
+        getMessage().setEmailBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template, url, canonicalUrl,
                 getMessage().getRecordingParameter().getDurationMillis(),
                 getMessage().getRecordingParameter().getContentType(),
                 fullName, data.getEmail(), true));

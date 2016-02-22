@@ -42,7 +42,7 @@ public class IntentMailSenderTask extends SenderUploadTask {
         String displayName = getSenderPreferences().getFullName();
 
         // build the email body
-        getMessage().setEmailBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_simple, url,
+        getMessage().setEmailBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_simple, url, getMessage().getServerCanonicalUrl(),
                 getMessage().getRecordingParameter().getDurationMillis(),
                 getMessage().getRecordingParameter().getContentType(),
                 displayName, data.getEmail(), false));

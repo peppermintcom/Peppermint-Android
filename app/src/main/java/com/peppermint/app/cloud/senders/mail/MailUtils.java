@@ -15,7 +15,7 @@ import java.net.URLEncoder;
  */
 public class MailUtils {
 
-    public static String buildEmailFromTemplate(Context context, int templateResId, String playUrl, long durationInMillis, String contentType, String replyName, String replyEmail, boolean isHtml)
+    public static String buildEmailFromTemplate(Context context, int templateResId, String shortUrl, String canonicalUrl, long durationInMillis, String contentType, String replyName, String replyEmail, boolean isHtml)
             throws UnsupportedEncodingException {
 
         StringBuilder bodyBuilder = new StringBuilder();
@@ -32,7 +32,8 @@ public class MailUtils {
             String line = null;
             while((line = templateReader.nextLine()) != null) {
                 if(line.contains("{@")) {
-                    line = line.replace("{@PLAY_LINK}", playUrl)
+                    line = line.replace("{@SHORT_URL}", shortUrl)
+                            .replace("{@CANONICAL_URL}", canonicalUrl)
                             .replace("{@DURATION}", friendlyDuration)
                             .replace("{@MIME_TYPE}", contentType)
                             .replace("{@REPLY_NAME}", replyName == null ? "" : URLEncoder.encode(replyName, "UTF-8"))
