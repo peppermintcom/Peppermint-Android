@@ -9,6 +9,10 @@ import com.peppermint.app.data.Message;
  */
 public class PlayerEvent {
 
+    public static final int ERROR_ILLEGAL_STATE = -1;
+    public static final int ERROR_NO_CONNECTIVITY = -2;
+    public static final int ERROR_DATA_SOURCE = -3;
+
     public static final int EVENT_STARTED = 1;
     public static final int EVENT_PAUSED = 2;
     public static final int EVENT_COMPLETED = 3;
@@ -21,6 +25,7 @@ public class PlayerEvent {
     private Message mMessage;
     private int mPercent;
     private long mCurrentMs;
+    private int mErrorCode;
 
     public PlayerEvent() {
     }
@@ -30,6 +35,22 @@ public class PlayerEvent {
         this.mMessage = mMessage;
         this.mPercent = mPercent;
         this.mCurrentMs = mCurrentMs;
+    }
+
+    public PlayerEvent(Message mMessage, int mPercent, long mCurrentMs, int mErrorCode) {
+        this.mType = EVENT_ERROR;
+        this.mMessage = mMessage;
+        this.mPercent = mPercent;
+        this.mCurrentMs = mCurrentMs;
+        this.mErrorCode = mErrorCode;
+    }
+
+    public int getErrorCode() {
+        return mErrorCode;
+    }
+
+    public void setErrorCode(int mErrorCode) {
+        this.mErrorCode = mErrorCode;
     }
 
     public int getType() {

@@ -13,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
+import android.widget.Toast;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.PlayerEvent;
@@ -327,6 +328,11 @@ public class ChatMessageCursorAdapter extends CursorAdapter implements MessagesS
                     }
                     break;
                 case PlayerEvent.EVENT_ERROR:
+                    if(event.getErrorCode() == PlayerEvent.ERROR_NO_CONNECTIVITY) {
+                        Toast.makeText(mContext, R.string.msg_no_internet_try_again, Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(mContext, R.string.msg_unable_to_play, Toast.LENGTH_LONG).show();
+                    }
                     pause(true);
                     destroy();
                     break;

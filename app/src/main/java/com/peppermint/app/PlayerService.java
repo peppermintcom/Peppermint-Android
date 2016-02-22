@@ -10,6 +10,9 @@ import android.os.IBinder;
 
 import com.peppermint.app.data.Message;
 import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.utils.Utils;
+
+import java.io.File;
 
 import de.greenrobot.event.EventBus;
 
@@ -162,7 +165,9 @@ public class PlayerService extends Service {
                 mMediaPlayer.release();
                 mMediaPlayer = null;
             }
-            mEventBus.post(new PlayerEvent(PlayerEvent.EVENT_ERROR, mMessage, 0, 0));
+            Message message = mMessage;
+            mMessage = null;
+            mEventBus.post(new PlayerEvent(message, 0, 0, what));
             return false;
         }
     };
@@ -212,25 +217,44 @@ public class PlayerService extends Service {
     private void play(Message message, int startPercent) {
         this.mStartPercent = startPercent;
         if(mMessage == null || !message.equals(mMessage)) {
+            mMessage = message;
+
+            File dataSourceFile = message.getRecordingParameter().getValidatedFile();
+            String dataSourceUri = dataSourceFile != null ? dataSourceFile.getAbsolutePath() : null;
+            if(dataSourceUri == null) {
+                if(!Utils.isInternetAvailable(PlayerService.this)) {
+                    mOnErrorListener.onError(null, PlayerEvent.ERROR_NO_CONNECTIVITY, 0);
+                    return;
+                }
+                dataSourceUri = message.getServerCanonicalUrl();
+            }
+
             if (mMediaPlayer != null) {
                 if (mMediaPlayer.isPlaying()) {
                     mMediaPlayer.stop();
                 }
                 mMediaPlayer.release();
             }
-            mMessage = message;
+
             mMediaPlayer = new MediaPlayer();
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             try {
-                mMediaPlayer.setDataSource(message.getRecordingParameter().getFilePath() != null ? message.getRecordingParameter().getFilePath() : message.getServerCanonicalUrl());
+                mMediaPlayer.setDataSource(dataSourceUri);
             } catch (Throwable e) {
                 mTrackerManager.logException(e);
+                mOnErrorListener.onError(mMediaPlayer, PlayerEvent.ERROR_DATA_SOURCE, 0);
+                return;
             }
             mMediaPlayer.setOnBufferingUpdateListener(mOnBufferingUpdateListener);
             mMediaPlayer.setOnCompletionListener(mOnCompletionListener);
             mMediaPlayer.setOnPreparedListener(mOnPreparedListener);
             mMediaPlayer.setOnErrorListener(mOnErrorListener);
-            mMediaPlayer.prepareAsync();
+            try {
+                mMediaPlayer.prepareAsync();
+            } catch(IllegalStateException e) {
+                mTrackerManager.logException(e);
+                mOnErrorListener.onError(mMediaPlayer, PlayerEvent.ERROR_ILLEGAL_STATE, 0);
+            }
         } else {
             mOnPreparedListener.onPrepared(mMediaPlayer);
         }

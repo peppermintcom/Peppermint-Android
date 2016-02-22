@@ -1,12 +1,7 @@
 package com.peppermint.app.data;
 
-import android.content.ContentValues;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-
 import java.io.File;
 import java.io.Serializable;
-import java.sql.SQLException;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
@@ -59,10 +54,15 @@ public class Recording implements Serializable {
     }
 
     public File getValidatedFile() {
+        if(mFilePath == null) {
+            return null;
+        }
+
         File file = new File(mFilePath);
         if(file.exists() && file.canRead()) {
             return file;
         }
+
         return null;
     }
 
