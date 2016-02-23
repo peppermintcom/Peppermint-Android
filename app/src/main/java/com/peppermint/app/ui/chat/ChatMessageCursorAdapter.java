@@ -412,7 +412,6 @@ public class ChatMessageCursorAdapter extends CursorAdapter implements MessagesS
     }
 
     public void destroy() {
-
         mMessagesServiceManager.removeSenderListener(this);
 
         if(mPlayingController != null) {

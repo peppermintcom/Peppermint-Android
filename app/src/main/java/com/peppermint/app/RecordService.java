@@ -320,14 +320,7 @@ public class RecordService extends Service {
     }
 
     @Override
-    public void onCreate() {
-        super.onCreate();
-    }
-
-    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand: " + intent);
-
         if(intent != null && intent.hasExtra(INTENT_DATA_DOSTART) && intent.hasExtra(INTENT_DATA_RECIPIENT)) {
             if(intent.getBooleanExtra(INTENT_DATA_DOSTART, false)) {
                 try {

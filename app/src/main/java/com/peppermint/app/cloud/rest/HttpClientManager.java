@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -87,14 +86,11 @@ public class HttpClientManager {
                     onEventMainThread(ev);
                 }
             }
-
-            Log.d(TAG, "onServiceConnected");
         }
 
         public void onServiceDisconnected(ComponentName className) {
             // this is called when the connection with the service has been unexpectedly disconnected - process crashed.
             mService = null;
-            Log.d(TAG, "onServiceDisconnected");
         }
     };
 

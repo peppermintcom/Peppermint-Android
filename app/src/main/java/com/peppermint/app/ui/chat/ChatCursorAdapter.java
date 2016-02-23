@@ -51,7 +51,7 @@ public class ChatCursorAdapter extends CursorAdapter {
     }
 
     @Override
-    public void bindView(View view, Context context, Cursor cursor) {
+    public synchronized void bindView(View view, Context context, Cursor cursor) {
         Chat chat = getChat(cursor);
         Recipient recipient = chat.getMainRecipientParameter();
 
@@ -116,7 +116,7 @@ public class ChatCursorAdapter extends CursorAdapter {
         return mDb;
     }
 
-    public void setDatabase(SQLiteDatabase mDb) {
+    public synchronized void setDatabase(SQLiteDatabase mDb) {
         this.mDb = mDb;
     }
 
@@ -124,7 +124,7 @@ public class ChatCursorAdapter extends CursorAdapter {
         return mPeppermintSet;
     }
 
-    public void setPeppermintSet(Set<Long> mPeppermintSet) {
+    public synchronized void setPeppermintSet(Set<Long> mPeppermintSet) {
         this.mPeppermintSet = mPeppermintSet;
     }
 }

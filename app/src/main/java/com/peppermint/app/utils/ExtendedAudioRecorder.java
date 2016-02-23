@@ -8,6 +8,7 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.coremedia.iso.boxes.Container;
+import com.googlecode.mp4parser.DataSource;
 import com.googlecode.mp4parser.FileDataSourceImpl;
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
@@ -437,13 +438,15 @@ public class ExtendedAudioRecorder {
     private void encodeFile() throws Exception {
         Movie movie = new Movie();
 
-        AACTrackImpl aacTrack = new AACTrackImpl(new FileDataSourceImpl(mTempFilePath));
+        DataSource dataSource = new FileDataSourceImpl(mTempFilePath);
+        AACTrackImpl aacTrack = new AACTrackImpl(dataSource);
         movie.addTrack(aacTrack);
 
         Container mp4file = new DefaultMp4Builder().build(movie);
         FileChannel fc = new FileOutputStream(new File(mFilePath)).getChannel();
         mp4file.writeContainer(fc);
         fc.close();
+        dataSource.close();
 
         discardTemp();
     }

@@ -254,6 +254,7 @@ public class ChatManager {
                 delete(db, id);
             }
         }
+        cursor.close();
     }
 
 }

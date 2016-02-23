@@ -236,6 +236,9 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
 
     @Override
     public void onStop() {
+        if(mAdapter != null) {
+            mAdapter.changeCursor(null);
+        }
         if(mDatabase != null) {
             mDatabase.close();
             mDatabase = null;
@@ -309,8 +312,8 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
             });
             setListAdapter(mAdapter);
         } else {
-            mAdapter.swapCursor(cursor);
-            mAdapter.notifyDataSetChanged();
+            mAdapter.changeCursor(cursor);
+            /*mAdapter.notifyDataSetChanged();*/
         }
 
         if(mAutoPlayMessageId > 0) {

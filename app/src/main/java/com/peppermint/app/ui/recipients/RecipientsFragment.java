@@ -165,6 +165,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
                     // get normal full, email or phone contact list
                     FilteredCursor cursor = (FilteredCursor) RecipientManager.get(getCustomActionBarActivity(), null, _name, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
                     if(cursor.getOriginalCursor().getCount() <= 0 && _name != null && _via != null) {
+                        cursor.close();
                         cursor = (FilteredCursor) RecipientManager.get(getCustomActionBarActivity(), null, null, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
                     }
                     cursor.filter();
@@ -196,35 +197,22 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
         @Override
         protected void onPostExecute(Object data) {
-
             // check if data is valid and activity has not been destroyed by the main thread
             if(data != null && getCustomActionBarActivity() != null && mCreated) {
 
                 if (data instanceof FilteredCursor) {
                     // re-use adapter and replace cursor
                     mRecipientAdapter.changeCursor((Cursor) data);
-
                     if(getListView().getAdapter() != mRecipientAdapter) {
-                        // sync. trying to avoid detachFromGLContext errors
-                        synchronized (mAnimationRunnable) {
-                            getListView().setAdapter(mRecipientAdapter);
-                        }
+                        getListView().setAdapter(mRecipientAdapter);
                     }
-
-                    mRecipientAdapter.notifyDataSetChanged();
                     mChatAdapter.changeCursor(null);
                 } else {
                     // use new adapter
                     mChatAdapter.changeCursor((Cursor) data);
-
                     if(getListView().getAdapter() != mChatAdapter) {
-                        // sync. trying to avoid detachFromGLContext errors
-                        synchronized (mAnimationRunnable) {
-                            getListView().setAdapter(mChatAdapter);
-                        }
+                         getListView().setAdapter(mChatAdapter);
                     }
-
-                    mChatAdapter.notifyDataSetChanged();
                     mRecipientAdapter.changeCursor(null);
                 }
 
@@ -236,6 +224,10 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
         @Override
         protected void onCancelled(Object o) {
+            if(o != null) {
+                ((Cursor) o).close();
+            }
+
             handleAddContactButtonVisibility();
             if(getCustomActionBarActivity() != null) {
                 getCustomActionBarActivity().stopFragmentLoading(false);
@@ -257,32 +249,28 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     private final Runnable mAnimationRunnable = new Runnable() {
         @Override
         public void run() {
-            // sync. trying to avoid detachFromGLContext errors
-            synchronized (this) {
+            List<AnimatedAvatarView> possibleAnimationsList = new ArrayList<>();
 
-                List<AnimatedAvatarView> possibleAnimationsList = new ArrayList<>();
-
-                // get all anonymous avatar instances
-                for (int i = 0; i < getListView().getChildCount(); i++) {
-                    AnimatedAvatarView v = (AnimatedAvatarView) getListView().getChildAt(i).findViewById(R.id.imgPhoto);
-                    if (!v.isShowStaticAvatar()) {
-                        possibleAnimationsList.add(v);
-                    }
+            // get all anonymous avatar instances
+            for (int i = 0; i < getListView().getChildCount(); i++) {
+                AnimatedAvatarView v = (AnimatedAvatarView) getListView().getChildAt(i).findViewById(R.id.imgPhoto);
+                if (!v.isShowStaticAvatar()) {
+                    possibleAnimationsList.add(v);
                 }
+            }
 
-                // randomly pick one
-                int index = possibleAnimationsList.size() > 0 ? mRandom.nextInt(possibleAnimationsList.size()) : 0;
+            // randomly pick one
+            int index = possibleAnimationsList.size() > 0 ? mRandom.nextInt(possibleAnimationsList.size()) : 0;
 
-                // start the animation for the picked avatar and stop all others (avoids unnecessary drawing threads)
-                for (int i = 0; i < possibleAnimationsList.size(); i++) {
-                    AnimatedAvatarView v = possibleAnimationsList.get(i);
-                    if (i == index) {
-                        v.startDrawingThread();
-                        v.resetAnimations();
-                        v.startAnimations();
-                    } else {
-                        v.stopDrawingThread();
-                    }
+            // start the animation for the picked avatar and stop all others (avoids unnecessary drawing threads)
+            for (int i = 0; i < possibleAnimationsList.size(); i++) {
+                AnimatedAvatarView v = possibleAnimationsList.get(i);
+                if (i == index) {
+                    v.startDrawingThread();
+                    v.resetAnimations();
+                    v.startAnimations();
+                } else {
+                    v.stopDrawingThread();
                 }
             }
 
@@ -617,6 +605,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
     @Override
     public void onStop() {
+
         // global touch interceptor to hide keyboard
         getCustomActionBarActivity().removeTouchEventInterceptor(mTouchInterceptor);
 
@@ -627,6 +616,10 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         if(mGetRecipientsTask != null && !mGetRecipientsTask.isCancelled() && mGetRecipientsTask.getStatus() != AsyncTask.Status.FINISHED) {
             mGetRecipientsTask.cancel(true);
         }
+
+        // close adapter cursors
+        mChatAdapter.changeCursor(null);
+        mRecipientAdapter.changeCursor(null);
 
         if(mDatabase != null) {
             mDatabase.close();
@@ -640,10 +633,6 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
     @Override
     public void onDestroy() {
-        // close adapter cursors
-        mChatAdapter.changeCursor(null);
-        mRecipientAdapter.changeCursor(null);
-
         mSearchListBarView.deinit();
         mTipPopup.setOnDismissListener(null);
         mTipPopup.dismiss();

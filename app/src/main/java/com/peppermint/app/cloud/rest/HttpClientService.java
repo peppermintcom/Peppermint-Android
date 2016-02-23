@@ -199,13 +199,10 @@ public class HttpClientService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d(TAG, "onCreate");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand: " + intent);
-
         mTryShutdown = false;
 
         if(intent != null && intent.hasExtra(INTENT_DATA_REQUEST) && intent.hasExtra(INTENT_DATA_RESPONSE)) {
@@ -221,25 +218,21 @@ public class HttpClientService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        Log.d(TAG, "onBind: " + intent);
         return mBinder;
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
-        Log.d(TAG, "onUnbind: " + intent);
         return true;
     }
 
     @Override
     public void onRebind(Intent intent) {
         super.onRebind(intent);
-        Log.d(TAG, "onRebind: " + intent);
     }
 
     @Override
     public void onDestroy() {
-        Log.d(TAG, "onDestroy");
         mFinishedRequests.clear();
         super.onDestroy();
     }

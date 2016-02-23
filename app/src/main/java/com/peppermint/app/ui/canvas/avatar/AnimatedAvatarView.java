@@ -205,7 +205,9 @@ public class AnimatedAvatarView extends AnimatedView {
     protected Drawable getBitmapFromURI(Uri uri) {
         try {
             InputStream inputStream = getContext().getContentResolver().openInputStream(uri);
-            return Drawable.createFromStream(inputStream, uri.toString());
+            Drawable drawable = Drawable.createFromStream(inputStream, uri.toString());
+            inputStream.close();
+            return drawable;
         } catch (IOException e) {
             Log.e(TAG, "Unable to get bitmap from URI!");
         }
