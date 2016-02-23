@@ -1,14 +1,15 @@
 package com.peppermint.app.ui.views.simple;
 
-import android.animation.Animator;
+import android.animation.LayoutTransition;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -19,7 +20,6 @@ import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 
 import com.peppermint.app.R;
-import com.peppermint.app.ui.AnimatorBuilder;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ import java.util.Set;
 /**
  * Created by Nuno Luz on 16-02-2016.
  */
-public class EditTextValidatorLayout extends FrameLayout implements ViewGroup.OnHierarchyChangeListener, View.OnFocusChangeListener {
+public class EditTextValidatorLayout extends LinearLayout implements ViewGroup.OnHierarchyChangeListener, View.OnFocusChangeListener, TextWatcher {
 
     public interface OnValidityChangeListener {
         void onValidityChange(boolean isValid);
@@ -78,30 +78,6 @@ public class EditTextValidatorLayout extends FrameLayout implements ViewGroup.On
     private int mValidBackgroundResource = -1;
     private int mInvalidBackgroundResource = -1;
 
-    private AnimatorBuilder mAnimatorBuilder;
-    private Animator mValidatorTextViewShowAnimator;
-    private Animator.AnimatorListener mShowAnimatorListener = new Animator.AnimatorListener() {
-        @Override
-        public void onAnimationStart(Animator animation) {
-            mValidatorTextView.setVisibility(VISIBLE);
-        }
-
-        @Override
-        public void onAnimationEnd(Animator animation) {
-
-        }
-
-        @Override
-        public void onAnimationCancel(Animator animation) {
-            mValidatorTextView.setVisibility(GONE);
-        }
-
-        @Override
-        public void onAnimationRepeat(Animator animation) {
-
-        }
-    };
-
     public EditTextValidatorLayout(Context context) {
         super(context);
         init(context, null, -1, -1);
@@ -124,9 +100,15 @@ public class EditTextValidatorLayout extends FrameLayout implements ViewGroup.On
     }
 
     private void init(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+        setOrientation(VERTICAL);
         mEditTextList = new ArrayList<>();
-        mAnimatorBuilder = new AnimatorBuilder();
         setSaveEnabled(true);
+
+        LayoutTransition layoutTransition = new LayoutTransition();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            layoutTransition.enableTransitionType(LayoutTransition.CHANGING);
+        }
+        setLayoutTransition(layoutTransition);
 
         mValidatorTextView = new CustomFontTextView(context);
         mValidatorTextView.setVisibility(GONE);
@@ -134,13 +116,12 @@ public class EditTextValidatorLayout extends FrameLayout implements ViewGroup.On
         mValidatorTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12);
         mValidatorTextView.setTextColor(Utils.getColor(context, R.color.white));
         mValidatorTextView.setBackgroundResource(R.color.orange_text);
-        mValidatorTextView.setGravity(Gravity.BOTTOM);
 
         final int dp3 = Utils.dpToPx(context, 3);
         final int dp5 = Utils.dpToPx(context, 5);
         mValidatorTextView.setPadding(dp5, dp3, dp5, dp3);
 
-        addView(mValidatorTextView, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM));
+        addView(mValidatorTextView, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
         setOnHierarchyChangeListener(this);
     }
@@ -153,7 +134,7 @@ public class EditTextValidatorLayout extends FrameLayout implements ViewGroup.On
 
         if(parent.equals(this)) {
             removeView(mValidatorTextView);
-            addView(mValidatorTextView, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM));
+            addView(mValidatorTextView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
         }
 
         initChild(child);
@@ -162,6 +143,7 @@ public class EditTextValidatorLayout extends FrameLayout implements ViewGroup.On
     private void initChild(View child) {
         if(child instanceof EditText) {
             child.setOnFocusChangeListener(this);
+            ((EditText) child).addTextChangedListener(this);
             mEditTextList.add((EditText) child);
         } else if(child instanceof ViewGroup) {
             ViewGroup viewGroup = (ViewGroup) child;
@@ -176,6 +158,7 @@ public class EditTextValidatorLayout extends FrameLayout implements ViewGroup.On
     private void deinitChild(View child) {
         if(child instanceof EditText) {
             mEditTextList.remove(child);
+            ((EditText) child).removeTextChangedListener(this);
             child.setOnFocusChangeListener(null);
         } else if(child instanceof ViewGroup) {
             ViewGroup viewGroup = (ViewGroup) child;
@@ -198,6 +181,17 @@ public class EditTextValidatorLayout extends FrameLayout implements ViewGroup.On
 
     @Override
     public void onFocusChange(View v, boolean hasFocus) {
+        validate();
+    }
+
+    @Override
+    public void beforeTextChanged(CharSequence s, int start, int count, int after) { /* nothing to do */ }
+
+    @Override
+    public void onTextChanged(CharSequence s, int start, int before, int count) { /* nothing to do */ }
+
+    @Override
+    public void afterTextChanged(Editable s) {
         validate();
     }
 
@@ -329,11 +323,7 @@ public class EditTextValidatorLayout extends FrameLayout implements ViewGroup.On
                             setEditTextBackground(mEditTextList.get(i), mInvalidBackgroundResource);
                         }
                     }
-                    if (mValidatorTextViewShowAnimator == null || !mValidatorTextViewShowAnimator.isStarted()) {
-                        mValidatorTextViewShowAnimator = mAnimatorBuilder.buildFadeInAnimator(mValidatorTextView);
-                        mValidatorTextViewShowAnimator.addListener(mShowAnimatorListener);
-                        mValidatorTextViewShowAnimator.start();
-                    }
+                    mValidatorTextView.setVisibility(VISIBLE);
                     if (mOnValidityChangeListener != null && doListener) {
                         mOnValidityChangeListener.onValidityChange(false);
                     }
@@ -343,7 +333,7 @@ public class EditTextValidatorLayout extends FrameLayout implements ViewGroup.On
             } else {
                 if (mValidatorTextView.getVisibility() == VISIBLE) {
                     if (mValidBackgroundResource > 0) {
-                        for(int i : indicesWithError) {
+                        for (int i : indicesWithError) {
                             setEditTextBackground(mEditTextList.get(i), mValidBackgroundResource);
                         }
                     }
@@ -351,11 +341,6 @@ public class EditTextValidatorLayout extends FrameLayout implements ViewGroup.On
                     if (mOnValidityChangeListener != null && doListener) {
                         mOnValidityChangeListener.onValidityChange(true);
                     }
-                }
-
-                if (mValidatorTextViewShowAnimator != null && mValidatorTextViewShowAnimator.isStarted()) {
-                    mValidatorTextViewShowAnimator.cancel();
-                    mValidatorTextViewShowAnimator = null;
                 }
             }
         }

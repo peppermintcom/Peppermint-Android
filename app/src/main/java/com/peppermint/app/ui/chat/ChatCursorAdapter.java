@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,8 +53,6 @@ public class ChatCursorAdapter extends CursorAdapter {
     public synchronized void bindView(View view, Context context, Cursor cursor) {
         Chat chat = getChat(cursor);
         Recipient recipient = chat.getMainRecipientParameter();
-
-        Log.d("TAG", "RECIPIENT " + recipient.getContactId());
 
         AnimatedAvatarView imgPhoto = (AnimatedAvatarView) view.findViewById(R.id.imgPhoto);
         CustomFontTextView txtName = (CustomFontTextView) view.findViewById(R.id.txtName);

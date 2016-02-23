@@ -19,8 +19,6 @@
             android:background="@drawable/background_border_bottom">
 
             <LinearLayout
-                android:layout_marginBottom="15dp"
-                android:layout_marginTop="15dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -87,10 +85,7 @@
 
             <com.peppermint.app.ui.views.simple.CustomFontEditText
                 android:id="@+id/txtEmail"
-                android:layout_marginTop="25dp"
-                android:layout_marginBottom="25dp"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
+                android:padding="15dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 custom:textFont="@string/font_regular"
@@ -117,10 +112,7 @@
 
             <com.peppermint.app.ui.views.simple.CustomFontEditText
                 android:id="@+id/txtPhoneNumber"
-                android:layout_marginTop="25dp"
-                android:layout_marginBottom="25dp"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
+                android:padding="15dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 custom:textFont="@string/font_regular"
