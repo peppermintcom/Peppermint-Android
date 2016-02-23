@@ -1,28 +1,20 @@
 package com.peppermint.app.utils;
 
-import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
-import android.test.InstrumentationTestCase;
+import com.peppermint.app.BuildConfig;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.RobolectricGradleTestRunner;
+import org.robolectric.annotation.Config;
+
+import static junit.framework.Assert.assertEquals;
 
 /**
  * Created by Nuno Luz on 21-02-2016.
  */
-@RunWith(AndroidJUnit4.class)
-public class UtilsTest extends InstrumentationTestCase {
-
-    private Context mContext;
-
-    @Before
-    public void setup() throws Exception {
-        super.setUp();
-        injectInstrumentation(InstrumentationRegistry.getInstrumentation());
-        mContext = getInstrumentation().getContext();
-    }
+@RunWith(RobolectricGradleTestRunner.class)
+@Config(constants = BuildConfig.class)
+public class UtilsTest {
 
     @Test
     public void testGetFriendlyDuration() {

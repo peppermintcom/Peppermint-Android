@@ -14,6 +14,12 @@ repositories {
     maven { url 'https://maven.fabric.io/public' }
 }
 
+sourceSets {
+    test {
+        java.srcDir file('src/test/java/')
+    }
+}
+
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.1"
@@ -24,7 +30,6 @@ android {
         targetSdkVersion 23
         versionCode 5
         versionName "1.1.2"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
@@ -36,6 +41,9 @@ android {
     sourceSets {
         main {
             jniLibs.srcDir file('native-libs/')
+        }
+        test {
+            java.srcDir file('src/test/java/')
         }
     }
 
@@ -79,13 +87,9 @@ dependencies {
     compile('com.crashlytics.sdk.android:crashlytics-ndk:1.1.2@aar') {
         transitive = true
     }
-    compile 'com.google.code.findbugs:jsr305:2.0.1'
 
+    testCompile 'org.robolectric:robolectric:3.1-SNAPSHOT'
     testCompile 'junit:junit:4.12'
-    androidTestCompile 'com.android.support:support-annotations:23.1.1'
-    androidTestCompile 'com.android.support.test:runner:0.4'
-    androidTestCompile 'com.android.support.test:rules:0.4'
-    androidTestCompile 'com.android.support.test.espresso:espresso-core:2.2.1'
 }
 
 configurations {

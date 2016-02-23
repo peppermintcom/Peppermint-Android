@@ -1,21 +1,23 @@
 package com.peppermint.app.utils;
 
+import com.peppermint.app.BuildConfig;
+
 import org.joda.time.DateTimeZone;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricGradleTestRunner;
+import org.robolectric.annotation.Config;
 
 import java.text.ParseException;
 
-import static org.junit.Assert.assertEquals;
+import static junit.framework.Assert.assertEquals;
 
 /**
  * Created by Nuno Luz on 21-02-2016.
  */
+@RunWith(RobolectricGradleTestRunner.class)
+@Config(constants = BuildConfig.class)
 public class DateContainerTest {
-
-    @Before
-    public void setup() throws Exception {
-    }
 
     @Test
     public void testParseDateTime() throws ParseException {
