@@ -1,6 +1,7 @@
 package com.peppermint.app.utils;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 
 import com.peppermint.app.R;
 
@@ -141,7 +142,7 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
     }
 
     @Override
-    public int compareTo(DateContainer dateContainer) {
+    public int compareTo(@NonNull DateContainer dateContainer) {
         switch (mType) {
             case TYPE_TIME:
                 return (int) (getMillisOfDay() - dateContainer.getMillisOfDay());

@@ -230,7 +230,7 @@ public class RecipientManager {
     }
 
     public static Cursor getByEmailOrPhone(Context context, String email, String phone, String googleAccountName) {
-        Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI,
+        return context.getContentResolver().query(ContactsContract.Data.CONTENT_URI,
                 PROJECTION,
                 Utils.joinString(" AND ",
                         Utils.joinString(" OR ",
@@ -242,7 +242,6 @@ public class RecipientManager {
                         ContactsContract.RawContacts.ACCOUNT_TYPE + "=" + DatabaseUtils.sqlEscapeString(GOOGLE_ACCOUNT_TYPE),
                         ContactsContract.RawContacts.ACCOUNT_NAME + "=" + DatabaseUtils.sqlEscapeString(googleAccountName)),
                 null, null);
-        return cursor;
     }
 
     public static Cursor get(Context context, List<Long> allowedRawIds, List<String> allowedMimeTypes, String viaSearch) {

@@ -3,7 +3,6 @@ package com.peppermint.app.ui.views.dialogs;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Rect;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.MotionEvent;

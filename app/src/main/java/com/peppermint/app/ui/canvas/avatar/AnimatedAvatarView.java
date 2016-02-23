@@ -42,12 +42,10 @@ public class AnimatedAvatarView extends AnimatedView {
 
     private Random mRandom = new Random();
 
-    private int mCornerRadius, mBorderWidth;
-    private Paint mBorderPaint, mBitmapPaint;
-
     private List<BitmapSequenceAnimatedLayer> mAvatars = new ArrayList<>();
     private BitmapSequenceAnimatedLayer mCurrentAvatar;
     private BitmapLayer mStaticAvatar;
+    private Rect mFullBounds = new Rect();
 
     public AnimatedAvatarView(Context context) {
         super(context);
@@ -71,11 +69,11 @@ public class AnimatedAvatarView extends AnimatedView {
     }
 
     protected void init(AttributeSet attrs) {
-        mCornerRadius = Utils.dpToPx(getContext(), DEF_CORNER_RADIUS_DP);
-        mBorderWidth = Utils.dpToPx(getContext(), DEF_BORDER_WIDTH_DP);
+        int cornerRadius = Utils.dpToPx(getContext(), DEF_CORNER_RADIUS_DP);
+        int borderWidth = Utils.dpToPx(getContext(), DEF_BORDER_WIDTH_DP);
 
-        mBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mBorderPaint.setStyle(Paint.Style.FILL);
+        Paint borderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        borderPaint.setStyle(Paint.Style.FILL);
 
         if (attrs != null) {
             TypedArray a = getContext().getTheme().obtainStyledAttributes(
@@ -84,83 +82,83 @@ public class AnimatedAvatarView extends AnimatedView {
                     0, 0);
 
             try {
-                mCornerRadius = a.getDimensionPixelSize(R.styleable.PeppermintView_cornerRadius, Utils.dpToPx(getContext(), DEF_CORNER_RADIUS_DP));
-                mBorderWidth = a.getDimensionPixelSize(R.styleable.PeppermintView_borderWidth, Utils.dpToPx(getContext(), DEF_BORDER_WIDTH_DP));
-                mBorderPaint.setColor(a.getColor(R.styleable.PeppermintView_borderColor, Color.parseColor(DEF_BORDER_COLOR)));
+                cornerRadius = a.getDimensionPixelSize(R.styleable.PeppermintView_cornerRadius, Utils.dpToPx(getContext(), DEF_CORNER_RADIUS_DP));
+                borderWidth = a.getDimensionPixelSize(R.styleable.PeppermintView_borderWidth, Utils.dpToPx(getContext(), DEF_BORDER_WIDTH_DP));
+                borderPaint.setColor(a.getColor(R.styleable.PeppermintView_borderColor, Color.parseColor(DEF_BORDER_COLOR)));
             } finally {
                 a.recycle();
             }
         }
 
-        mBitmapPaint = new Paint();
-        mBitmapPaint.setAntiAlias(true);
-        mBitmapPaint.setFilterBitmap(true);
-        mBitmapPaint.setDither(true);
+        Paint bitmapPaint = new Paint();
+        bitmapPaint.setAntiAlias(true);
+        bitmapPaint.setFilterBitmap(true);
+        bitmapPaint.setDither(true);
 
-        WinkAvatarAnimatedLayer winkAvatar = new WinkAvatarAnimatedLayer(getContext(), 2500, mBitmapPaint);
-        winkAvatar.setBorderWidth(mBorderWidth);
-        winkAvatar.setBorderPaint(mBorderPaint);
-        winkAvatar.setCornerRadius(mCornerRadius);
+        WinkAvatarAnimatedLayer winkAvatar = new WinkAvatarAnimatedLayer(getContext(), 2500, bitmapPaint);
+        winkAvatar.setBorderWidth(borderWidth);
+        winkAvatar.setBorderPaint(borderPaint);
+        winkAvatar.setCornerRadius(cornerRadius);
         mAvatars.add(winkAvatar);
 
-        TongueOutAvatarAnimatedLayer tongueAvatar = new TongueOutAvatarAnimatedLayer(getContext(), 2500, mBitmapPaint);
-        tongueAvatar.setBorderWidth(mBorderWidth);
-        tongueAvatar.setBorderPaint(mBorderPaint);
-        tongueAvatar.setCornerRadius(mCornerRadius);
+        TongueOutAvatarAnimatedLayer tongueAvatar = new TongueOutAvatarAnimatedLayer(getContext(), 2500, bitmapPaint);
+        tongueAvatar.setBorderWidth(borderWidth);
+        tongueAvatar.setBorderPaint(borderPaint);
+        tongueAvatar.setCornerRadius(cornerRadius);
         mAvatars.add(tongueAvatar);
 
-        SurprisedAvatarAnimatedLayer surprisedAvatar = new SurprisedAvatarAnimatedLayer(getContext(), 2000, mBitmapPaint);
-        surprisedAvatar.setBorderWidth(mBorderWidth);
-        surprisedAvatar.setBorderPaint(mBorderPaint);
-        surprisedAvatar.setCornerRadius(mCornerRadius);
+        SurprisedAvatarAnimatedLayer surprisedAvatar = new SurprisedAvatarAnimatedLayer(getContext(), 2000, bitmapPaint);
+        surprisedAvatar.setBorderWidth(borderWidth);
+        surprisedAvatar.setBorderPaint(borderPaint);
+        surprisedAvatar.setCornerRadius(cornerRadius);
         mAvatars.add(surprisedAvatar);
 
-        SillyAvatarAnimatedLayer sillyAvatar = new SillyAvatarAnimatedLayer(getContext(), 2500, mBitmapPaint);
-        sillyAvatar.setBorderWidth(mBorderWidth);
-        sillyAvatar.setBorderPaint(mBorderPaint);
-        sillyAvatar.setCornerRadius(mCornerRadius);
+        SillyAvatarAnimatedLayer sillyAvatar = new SillyAvatarAnimatedLayer(getContext(), 2500, bitmapPaint);
+        sillyAvatar.setBorderWidth(borderWidth);
+        sillyAvatar.setBorderPaint(borderPaint);
+        sillyAvatar.setCornerRadius(cornerRadius);
         mAvatars.add(sillyAvatar);
 
-        AngryAvatarAnimatedLayer angryAvatar = new AngryAvatarAnimatedLayer(getContext(), 2500, mBitmapPaint);
-        angryAvatar.setBorderWidth(mBorderWidth);
-        angryAvatar.setBorderPaint(mBorderPaint);
-        angryAvatar.setCornerRadius(mCornerRadius);
+        AngryAvatarAnimatedLayer angryAvatar = new AngryAvatarAnimatedLayer(getContext(), 2500, bitmapPaint);
+        angryAvatar.setBorderWidth(borderWidth);
+        angryAvatar.setBorderPaint(borderPaint);
+        angryAvatar.setCornerRadius(cornerRadius);
         mAvatars.add(angryAvatar);
 
-        CryingAvatarAnimatedLayer cryingAvatar = new CryingAvatarAnimatedLayer(getContext(), 2500, mBitmapPaint);
-        cryingAvatar.setBorderWidth(mBorderWidth);
-        cryingAvatar.setBorderPaint(mBorderPaint);
-        cryingAvatar.setCornerRadius(mCornerRadius);
+        CryingAvatarAnimatedLayer cryingAvatar = new CryingAvatarAnimatedLayer(getContext(), 2500, bitmapPaint);
+        cryingAvatar.setBorderWidth(borderWidth);
+        cryingAvatar.setBorderPaint(borderPaint);
+        cryingAvatar.setCornerRadius(cornerRadius);
         mAvatars.add(cryingAvatar);
 
-        EvilAvatarAnimatedLayer evilAvatar = new EvilAvatarAnimatedLayer(getContext(), 2500, mBitmapPaint);
-        evilAvatar.setBorderWidth(mBorderWidth);
-        evilAvatar.setBorderPaint(mBorderPaint);
-        evilAvatar.setCornerRadius(mCornerRadius);
+        EvilAvatarAnimatedLayer evilAvatar = new EvilAvatarAnimatedLayer(getContext(), 2500, bitmapPaint);
+        evilAvatar.setBorderWidth(borderWidth);
+        evilAvatar.setBorderPaint(borderPaint);
+        evilAvatar.setCornerRadius(cornerRadius);
         mAvatars.add(evilAvatar);
 
-        SadAvatarAnimatedLayer sadAvatar = new SadAvatarAnimatedLayer(getContext(), 2500, mBitmapPaint);
-        sadAvatar.setBorderWidth(mBorderWidth);
-        sadAvatar.setBorderPaint(mBorderPaint);
-        sadAvatar.setCornerRadius(mCornerRadius);
+        SadAvatarAnimatedLayer sadAvatar = new SadAvatarAnimatedLayer(getContext(), 2500, bitmapPaint);
+        sadAvatar.setBorderWidth(borderWidth);
+        sadAvatar.setBorderPaint(borderPaint);
+        sadAvatar.setCornerRadius(cornerRadius);
         mAvatars.add(sadAvatar);
 
-        AnxiousAvatarAnimatedLayer anxiousAvatar = new AnxiousAvatarAnimatedLayer(getContext(), 2500, mBitmapPaint);
-        anxiousAvatar.setBorderWidth(mBorderWidth);
-        anxiousAvatar.setBorderPaint(mBorderPaint);
-        anxiousAvatar.setCornerRadius(mCornerRadius);
+        AnxiousAvatarAnimatedLayer anxiousAvatar = new AnxiousAvatarAnimatedLayer(getContext(), 2500, bitmapPaint);
+        anxiousAvatar.setBorderWidth(borderWidth);
+        anxiousAvatar.setBorderPaint(borderPaint);
+        anxiousAvatar.setCornerRadius(cornerRadius);
         mAvatars.add(anxiousAvatar);
 
-        InLoveAvatarAnimatedLayer inloveAvatar = new InLoveAvatarAnimatedLayer(getContext(), 2500, mBitmapPaint);
-        inloveAvatar.setBorderWidth(mBorderWidth);
-        inloveAvatar.setBorderPaint(mBorderPaint);
-        inloveAvatar.setCornerRadius(mCornerRadius);
+        InLoveAvatarAnimatedLayer inloveAvatar = new InLoveAvatarAnimatedLayer(getContext(), 2500, bitmapPaint);
+        inloveAvatar.setBorderWidth(borderWidth);
+        inloveAvatar.setBorderPaint(borderPaint);
+        inloveAvatar.setCornerRadius(cornerRadius);
         mAvatars.add(inloveAvatar);
 
-        mStaticAvatar = new BitmapLayer(getContext(), R.drawable.ic_anonymous_green_48dp, mBitmapPaint);
-        mStaticAvatar.setBorderWidth(mBorderWidth);
-        mStaticAvatar.setBorderPaint(mBorderPaint);
-        mStaticAvatar.setCornerRadius(mCornerRadius);
+        mStaticAvatar = new BitmapLayer(getContext(), R.drawable.ic_anonymous_green_48dp, bitmapPaint);
+        mStaticAvatar.setBorderWidth(borderWidth);
+        mStaticAvatar.setBorderPaint(borderPaint);
+        mStaticAvatar.setCornerRadius(cornerRadius);
 
         mCurrentAvatar = getRandomAnimatedAvatar();
         addLayer(mCurrentAvatar);
@@ -183,11 +181,11 @@ public class AnimatedAvatarView extends AnimatedView {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
         // box bounds (get values obtained in parent onMeasure)
-        Rect fullBounds = new Rect(0, 0, (int) getLocalWidth(), (int) getLocalHeight());
+        mFullBounds.set(0, 0, (int) getLocalWidth(), (int) getLocalHeight());
         for(BitmapSequenceAnimatedLayer avatarLayer : mAvatars) {
-            avatarLayer.setBounds(fullBounds);
+            avatarLayer.setBounds(mFullBounds);
         }
-        mStaticAvatar.setBounds(fullBounds);
+        mStaticAvatar.setBounds(mFullBounds);
     }
 
     public synchronized boolean setStaticDrawable(Uri drawableUri) {

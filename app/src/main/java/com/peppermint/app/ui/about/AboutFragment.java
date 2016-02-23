@@ -21,16 +21,14 @@ public class AboutFragment extends Fragment implements View.OnClickListener {
 
     private static final String PRIVACY_URL = "http://peppermint.com/privacy";
 
-    private TextView mTxtPrivacy;
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // inflate the view
         View v = inflater.inflate(R.layout.f_about, container, false);
 
         // tap privacy listener
-        mTxtPrivacy = (TextView) v.findViewById(R.id.txtPrivacy);
-        mTxtPrivacy.setOnClickListener(this);
+        TextView txtPrivacy = (TextView) v.findViewById(R.id.txtPrivacy);
+        txtPrivacy.setOnClickListener(this);
 
         // set the version text
         TextView txtVersion = (TextView) v.findViewById(R.id.txtVersion);

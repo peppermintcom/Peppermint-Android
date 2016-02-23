@@ -34,22 +34,18 @@ public class LoadingView extends AnimatedView {
 
     private static final String DEF_PROGRESS_TEXT = "Loading\nContacts...";
 
-    private float mCornerRadius;
-
     private float mProgress = 0;
-    private float mAmplitude;
     private String mProgressText;
 
     private float mTextSize;
-    private float mTextSpacing;
-    private int mBackgroundColor1, mBackgroundColor2;
-    private Paint mBackground1Paint, mBackground2Paint, mTextPaint, mBitmapPaint;
-
-    private Typeface mFont;
+    private Paint mTextPaint;
 
     private TextLayer mTextLayer;
     private BitmapLayer mLeftEye, mRightEye;
     private LoadingBoxAnimatedLayer mProgressBox;
+    private Rect mFullBounds = new Rect();
+    private Rect mLeftEyeBounds = new Rect(), mRightEyeBounds = new Rect();
+    private Rect mTextBounds = new Rect();
 
     public LoadingView(Context context) {
         super(context);
@@ -73,12 +69,12 @@ public class LoadingView extends AnimatedView {
     }
 
     protected void init(AttributeSet attrs) {
-        mCornerRadius = Utils.dpToPx(getContext(), DEF_CORNER_RADIUS_DP);
+        int cornerRadius = Utils.dpToPx(getContext(), DEF_CORNER_RADIUS_DP);
 
-        mBackgroundColor1 = Color.parseColor(DEF_BACKGROUND_COLOR1);
-        mBackgroundColor2 = Color.parseColor(DEF_BACKGROUND_COLOR2);
-        mAmplitude = Utils.dpToPx(getContext(), DEF_AMPLITUDE_DP);
-        mTextSpacing = Utils.dpToPx(getContext(), DEF_TEXT_SPACING_DP);
+        int backgroundColor1 = Color.parseColor(DEF_BACKGROUND_COLOR1);
+        int backgroundColor2 = Color.parseColor(DEF_BACKGROUND_COLOR2);
+        int amplitude = Utils.dpToPx(getContext(), DEF_AMPLITUDE_DP);
+        int textSpacing = Utils.dpToPx(getContext(), DEF_TEXT_SPACING_DP);
         mProgressText = DEF_PROGRESS_TEXT;
 
         String textFont = "fonts/OpenSans-Semibold.ttf";
@@ -90,18 +86,18 @@ public class LoadingView extends AnimatedView {
                     0, 0);
 
             try {
-                mCornerRadius = a.getDimensionPixelSize(R.styleable.PeppermintView_cornerRadius, Utils.dpToPx(getContext(), DEF_CORNER_RADIUS_DP));
+                cornerRadius = a.getDimensionPixelSize(R.styleable.PeppermintView_cornerRadius, Utils.dpToPx(getContext(), DEF_CORNER_RADIUS_DP));
 
-                mBackgroundColor1 = a.getColor(R.styleable.PeppermintView_backgroundColor1, Color.parseColor(DEF_BACKGROUND_COLOR1));
-                mBackgroundColor2 = a.getColor(R.styleable.PeppermintView_backgroundColor2, Color.parseColor(DEF_BACKGROUND_COLOR2));
+                backgroundColor1 = a.getColor(R.styleable.PeppermintView_backgroundColor1, Color.parseColor(DEF_BACKGROUND_COLOR1));
+                backgroundColor2 = a.getColor(R.styleable.PeppermintView_backgroundColor2, Color.parseColor(DEF_BACKGROUND_COLOR2));
 
                 String aTextFont = a.getString(R.styleable.PeppermintView_textFont);
                 if(aTextFont != null) {
                     textFont = aTextFont;
                 }
 
-                mAmplitude = a.getDimensionPixelSize(R.styleable.PeppermintView_amplitude, Utils.dpToPx(getContext(), DEF_AMPLITUDE_DP));
-                mTextSpacing = a.getDimensionPixelSize(R.styleable.PeppermintView_textSpacing, Utils.dpToPx(getContext(), DEF_TEXT_SPACING_DP));
+                amplitude = a.getDimensionPixelSize(R.styleable.PeppermintView_amplitude, Utils.dpToPx(getContext(), DEF_AMPLITUDE_DP));
+                textSpacing = a.getDimensionPixelSize(R.styleable.PeppermintView_textSpacing, Utils.dpToPx(getContext(), DEF_TEXT_SPACING_DP));
                 mProgressText = a.getString(R.styleable.PeppermintView_text);
                 if(mProgressText == null) {
                     mProgressText = DEF_PROGRESS_TEXT;
@@ -111,33 +107,33 @@ public class LoadingView extends AnimatedView {
             }
         }
 
-        mBackground1Paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mBackground1Paint.setStyle(Paint.Style.FILL);
-        mBackground1Paint.setColor(mBackgroundColor1);
+        Paint background1Paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        background1Paint.setStyle(Paint.Style.FILL);
+        background1Paint.setColor(backgroundColor1);
 
-        mBackground2Paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mBackground2Paint.setStyle(Paint.Style.FILL);
-        mBackground2Paint.setColor(mBackgroundColor2);
+        Paint background2Paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        background2Paint.setStyle(Paint.Style.FILL);
+        background2Paint.setColor(backgroundColor2);
 
-        mBitmapPaint = new Paint();
-        mBitmapPaint.setColorFilter(new PorterDuffColorFilter(mBackground2Paint.getColor(), PorterDuff.Mode.MULTIPLY));
-        mBitmapPaint.setAntiAlias(true);
-        mBitmapPaint.setFilterBitmap(true);
-        mBitmapPaint.setDither(true);
+        Paint bitmapPaint = new Paint();
+        bitmapPaint.setColorFilter(new PorterDuffColorFilter(background2Paint.getColor(), PorterDuff.Mode.MULTIPLY));
+        bitmapPaint.setAntiAlias(true);
+        bitmapPaint.setFilterBitmap(true);
+        bitmapPaint.setDither(true);
 
-        mFont = Typeface.createFromAsset(getContext().getAssets(), textFont);
+        Typeface font = Typeface.createFromAsset(getContext().getAssets(), textFont);
         mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setStyle(Paint.Style.FILL);
         mTextPaint.setTextAlign(Paint.Align.CENTER);
-        mTextPaint.setTypeface(mFont);
-        mTextPaint.setColor(mBackgroundColor1);
+        mTextPaint.setTypeface(font);
+        mTextPaint.setColor(backgroundColor1);
         mTextPaint.setTextSize(mTextSize);
 
-        mTextLayer = new TextLayer(getContext(), mTextSize, mTextSpacing, mTextPaint);
+        mTextLayer = new TextLayer(getContext(), mTextSize, textSpacing, mTextPaint);
         mTextLayer.setText(mProgressText);
-        mLeftEye = new BitmapLayer(getContext(), R.drawable.img_logo_eye, mBitmapPaint);
-        mRightEye = new BitmapLayer(getContext(), R.drawable.img_logo_eye, mBitmapPaint);
-        mProgressBox = new LoadingBoxAnimatedLayer(getContext(), 360 * 33, true, mCornerRadius, mAmplitude, mBackground2Paint, mBackground1Paint, mBackground1Paint, null);
+        mLeftEye = new BitmapLayer(getContext(), R.drawable.img_logo_eye, bitmapPaint);
+        mRightEye = new BitmapLayer(getContext(), R.drawable.img_logo_eye, bitmapPaint);
+        mProgressBox = new LoadingBoxAnimatedLayer(getContext(), 360 * 33, true, cornerRadius, amplitude, background2Paint, background1Paint, background1Paint, null);
         mProgressBox.setProgressType(LoadingBoxAnimatedLayer.PROGRESS_WAVE);
 
         addLayer(mProgressBox);
@@ -157,25 +153,26 @@ public class LoadingView extends AnimatedView {
         mTextLayer.setTextSize(mTextSize);
 
         // box bounds
-        Rect fullBounds = new Rect(0, 0, (int) getLocalWidth(), (int) getLocalHeight());
-        mProgressBox.setBounds(fullBounds);
+        mFullBounds.set(0, 0, (int) getLocalWidth(), (int) getLocalHeight());
+        mProgressBox.setBounds(mFullBounds);
 
         // eye bounds
         final float eyeXFactor = 7f;
         final float eyeYFactor = 5.5f;
         int eyeRadius = (int) (smallerSide / 18f);
-        int eyeCenterX = (int) (fullBounds.centerX() - (smallerSide / eyeXFactor));
-        int eyeCenterY = (int) (fullBounds.centerY() - (smallerSide / eyeYFactor));
-        Rect leftEyeBounds = new Rect(eyeCenterX - eyeRadius, eyeCenterY - eyeRadius, eyeCenterX + eyeRadius, eyeCenterY + eyeRadius);
-        mLeftEye.setBounds(leftEyeBounds);
+        int eyeCenterX = (int) (mFullBounds.centerX() - (smallerSide / eyeXFactor));
+        int eyeCenterY = (int) (mFullBounds.centerY() - (smallerSide / eyeYFactor));
+        mLeftEyeBounds.set(eyeCenterX - eyeRadius, eyeCenterY - eyeRadius, eyeCenterX + eyeRadius, eyeCenterY + eyeRadius);
+        mLeftEye.setBounds(mLeftEyeBounds);
 
-        Rect rightEyeBounds = new Rect(leftEyeBounds);
-        rightEyeBounds.offset((int) (smallerSide / (eyeXFactor / 2f)), 0);
-        mRightEye.setBounds(rightEyeBounds);
+        mRightEyeBounds.set(mLeftEyeBounds);
+        mRightEyeBounds.offset((int) (smallerSide / (eyeXFactor / 2f)), 0);
+        mRightEye.setBounds(mRightEyeBounds);
 
         // text bounds
         int textY = (int) ((getLocalHeight() / 2f) + (smallerSide / 4f));
-        mTextLayer.setBounds(new Rect(0, (int) (textY - mTextSize), (int) getLocalWidth(), (int) (textY + mTextSize)));
+        mTextBounds.set(0, (int) (textY - mTextSize), (int) getLocalWidth(), (int) (textY + mTextSize));
+        mTextLayer.setBounds(mTextBounds);
     }
 
     public LoadingBoxAnimatedLayer getProgressBox() {

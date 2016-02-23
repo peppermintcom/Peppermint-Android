@@ -23,7 +23,6 @@ public class SMSConfirmationDialog extends CustomConfirmationDialog implements V
     private Recipient mEmailRecipient;
 
     private CustomFontTextView mTxtEmailVia, mTxtEmailValue;
-    private LinearLayout mLytEmail;
 
     private View.OnClickListener mEmailClickListener;
 
@@ -46,8 +45,8 @@ public class SMSConfirmationDialog extends CustomConfirmationDialog implements V
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mLytEmail = (LinearLayout) findViewById(R.id.lytEmail);
-        mLytEmail.setOnClickListener(this);
+        LinearLayout lytEmail = (LinearLayout) findViewById(R.id.lytEmail);
+        lytEmail.setOnClickListener(this);
 
         mTxtEmailVia = (CustomFontTextView) findViewById(R.id.txtEmailVia);
         mTxtEmailValue = (CustomFontTextView) findViewById(R.id.txtEmailValue);

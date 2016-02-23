@@ -166,9 +166,9 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
      * If a previouslyFailedTask is supplied, tries to send the specified message using the
      * following {@link Sender} in the previouslyFailedTask failure chain.
      *
-     * @param message the sending request
+     * @param message the message
      * @param sender the sender
-     * @return the UUID of the sending request
+     * @param previousFailedTask the previously failed upload task
      */
     private void send(Message message, Sender sender, SenderUploadTask previousFailedTask) {
         while(sender != null && (sender.getPreferences() != null && !sender.getPreferences().isEnabled())) {

@@ -117,8 +117,7 @@ public class PeppermintApi implements Serializable {
             throw new PeppermintApiResponseCodeException(response.getCode(), request.toString());
         }
 
-        MessagesResponse responseData = response.getJsonBody();
-        return responseData;
+        return response.getJsonBody();
     }
 
     // JWTS
@@ -132,7 +131,7 @@ public class PeppermintApi implements Serializable {
      * @param recorderId the recorder/device id
      * @param recorderKey the recorder/device key/password
      * @param fullName the full name of the user
-     * @param trackerManager
+     * @param trackerManager the tracker manager
      * @return the JWT response
      * @throws PeppermintApiTooManyRequestsException
      * @throws PeppermintApiResponseCodeException  a status code different from 2XX was returned
@@ -192,7 +191,7 @@ public class PeppermintApi implements Serializable {
             case ACCOUNT_TYPE_FACEBOOK:
                 accountTypeStr = "facebook";
                 break;
-        };
+        }
 
         HttpRequest request = new HttpRequest(JWTS_ENDPOINT, HttpRequest.METHOD_POST);
         request.setHeaderParam("Authorization", "Peppermint " + accountTypeStr + "=" + Utils.getBasicAuthenticationToken(accountEmail, accountPassword) + ", recorder=" + Utils.getBasicAuthenticationToken(recorderId, recorderKey));

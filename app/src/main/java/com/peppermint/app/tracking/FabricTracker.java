@@ -73,19 +73,19 @@ public class FabricTracker extends TrackerApi {
 
         try {
             StringBuilder writer = new StringBuilder();
-            writer.append(log + "\n");
+            writer.append(log).append("\n");
             for(boolean e = true; t != null; t = t.getCause()) {
                 String message = t.getLocalizedMessage();
                 message = message == null ? "" : message.replaceAll("(\r\n|\n|\f)", " ");
                 String causedBy = e ? "" : "Caused by: ";
-                writer.append(causedBy + t.getClass().getName() + ": " + message + "\n");
+                writer.append(causedBy).append(t.getClass().getName()).append(": ").append(message).append("\n");
                 e = false;
                 StackTraceElement[] arr$ = t.getStackTrace();
                 int len$ = arr$.length;
 
                 for(int i$ = 0; i$ < len$; ++i$) {
                     StackTraceElement element = arr$[i$];
-                    writer.append("\tat " + element.toString() + "\n");
+                    writer.append("\tat ").append(element.toString()).append("\n");
                 }
             }
 

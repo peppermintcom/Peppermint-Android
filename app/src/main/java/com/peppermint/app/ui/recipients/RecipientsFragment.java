@@ -104,7 +104,6 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
     // the custom action bar (with recipient type filter and recipient search)
     private SearchListBarView mSearchListBarView;
-    private SearchListBarAdapter<RecipientType> mRecipientTypeAdapter;
 
     // search
     private final Object mLock = new Object();
@@ -397,8 +396,8 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         // hold popup
         mHoldPopup = new PopupWindow(getCustomActionBarActivity());
         mHoldPopup.setContentView(inflater.inflate(R.layout.v_recipients_popup, null));
-        //noinspection deprecation
         // although this is deprecated, it is required for versions  < 22/23, otherwise the popup doesn't show up
+        //noinspection deprecation
         mHoldPopup.setWindowLayoutMode(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         mHoldPopup.setBackgroundDrawable(Utils.getDrawable(getCustomActionBarActivity(), R.drawable.img_popup));
         mHoldPopup.setAnimationStyle(R.style.Peppermint_PopupAnimation);
@@ -459,8 +458,8 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
         // inflate and init custom action bar view
         mSearchListBarView = (SearchListBarView) inflater.inflate(R.layout.f_recipients_actionbar, null, false);
-        mRecipientTypeAdapter = new SearchListBarAdapter<>(app.getFontRegular(), getCustomActionBarActivity(), RecipientType.getAll(getCustomActionBarActivity()));
-        mSearchListBarView.setListAdapter(mRecipientTypeAdapter);
+        SearchListBarAdapter<RecipientType> recipientTypeAdapter = new SearchListBarAdapter<>(app.getFontRegular(), getCustomActionBarActivity(), RecipientType.getAll(getCustomActionBarActivity()));
+        mSearchListBarView.setListAdapter(recipientTypeAdapter);
         mSearchListBarView.setTypeface(app.getFontRegular());
 
         if (savedInstanceState != null) {

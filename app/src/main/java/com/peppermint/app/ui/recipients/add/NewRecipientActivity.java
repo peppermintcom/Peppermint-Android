@@ -21,8 +21,6 @@ import java.util.List;
  */
 public class NewRecipientActivity extends CustomActionBarActivity {
 
-    private Button mBtnSave;
-
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
@@ -41,8 +39,8 @@ public class NewRecipientActivity extends CustomActionBarActivity {
         TextView txtTitle = ((TextView) v.findViewById(R.id.txtTitle));
         txtTitle.setTypeface(app.getFontSemibold());
 
-        mBtnSave = (Button) v.findViewById(R.id.btnSave);
-        mBtnSave.setTypeface(app.getFontSemibold());
+        Button btnSave = (Button) v.findViewById(R.id.btnSave);
+        btnSave.setTypeface(app.getFontSemibold());
 
         getCustomActionBar().setContents(v, false);
 

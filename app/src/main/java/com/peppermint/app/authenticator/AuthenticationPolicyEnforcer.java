@@ -45,7 +45,7 @@ public class AuthenticationPolicyEnforcer {
     private boolean mIsAuthenticating = false;
 
     // listens for Activity lifecycle events
-    private Application.ActivityLifecycleCallbacks mActivityLifecycleCallback = new Application.ActivityLifecycleCallbacks() {
+    private final Application.ActivityLifecycleCallbacks mActivityLifecycleCallback = new Application.ActivityLifecycleCallbacks() {
         @Override
         public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
             /* this is never called since the policy enforced is only set afterwards */

@@ -1,5 +1,7 @@
 package com.peppermint.app.cloud.rest;
 
+import android.os.Parcel;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -81,5 +83,30 @@ public class HttpJSONRequest<T> extends HttpRequest {
 
     public void setJsonBody(List<T> body) {
         mBody = body;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel out, int flags) {
+        super.writeToParcel(out, flags);
+        out.writeSerializable(mParser);
+    }
+
+    public static final Creator<HttpJSONRequest> CREATOR = new Creator<HttpJSONRequest>() {
+        public HttpJSONRequest createFromParcel(Parcel in) {
+            return new HttpJSONRequest(in);
+        }
+        public HttpJSONRequest[] newArray(int size) {
+            return new HttpJSONRequest[size];
+        }
+    };
+
+    protected HttpJSONRequest(Parcel in) {
+        super(in);
+        mParser = (JSONParser) in.readSerializable();
     }
 }

@@ -4,7 +4,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 
-import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.views.NavigationItem;
@@ -35,7 +34,6 @@ public class ChatActivity extends CustomActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        PeppermintApp app = (PeppermintApp) getApplication();
 
         // inflate custom action bar
         View v = getLayoutInflater().inflate(R.layout.v_chat_actionbar, null, false);

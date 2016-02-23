@@ -7,7 +7,6 @@ import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
-import android.util.Log;
 
 import com.peppermint.app.data.Message;
 import com.peppermint.app.tracking.TrackerManager;

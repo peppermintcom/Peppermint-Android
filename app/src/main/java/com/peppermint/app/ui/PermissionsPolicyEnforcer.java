@@ -7,6 +7,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -54,9 +55,7 @@ public class PermissionsPolicyEnforcer {
         HashSet<String> set = null;
         if(requiredFeatures != null) {
             set = new HashSet<>();
-            for (String feature : requiredFeatures) {
-                set.add(feature);
-            }
+            Collections.addAll(set, requiredFeatures);
         }
 
         mPermissions.add(new RequiredPermission(permission, set, optional));

@@ -103,8 +103,7 @@ public class ChatCursorAdapter extends CursorAdapter {
 
     public Chat getChat(Cursor cursor) {
         // get recipient data as well
-        Chat chat = ChatManager.getFromCursor(mContext, cursor);
-        return chat;
+        return ChatManager.getFromCursor(mContext, cursor);
     }
 
     public Chat getChat(int position) {

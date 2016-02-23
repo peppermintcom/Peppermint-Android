@@ -45,14 +45,6 @@
     <string name="recipient_type_phone">Phone Contacts</string>
     <string name="recipient_type_recent">Recent Contacts</string>
 
-    <!-- RECIPIENTS LAYOUT: STATUS -->
-    <string name="sent">Sent</string>
-    <string name="tap_to_cancel">Tap to cancel</string>
-    <string name="cancelling">Cancelling...</string>
-    <string name="cancelled">Cancelled</string>
-    <string name="not_sent">Not Sent</string>
-    <string name="queued">Queued</string>
-
     <!-- RECIPIENTS LAYOUT: RECORDING OVERLAY -->
     <string name="swipe_to_cancel">Swipe anywhere\nto cancel</string>
     <string name="recording_for">Recording for %1$s</string>
@@ -101,8 +93,6 @@
     <string name="pref_summary_displayname">The receiver will see your name when receiving a message so you need to make sure it\'s your real name</string>
     <string name="pref_title_gmailenabled">In-app Gmail</string>
     <string name="pref_summary_gmailenabled">Send messages through Gmail without leaving the app (requires extra permissions)</string>
-    <string name="pref_title_gmailaccount">Gmail account</string>
-    <string name="pref_summary_gmailaccount">Pick the Gmail account used to send emails</string>
     <string name="pref_title_emailcategory">Email</string>
 
     <!-- NEW CONTACT LAYOUT -->
@@ -114,7 +104,6 @@
     <string name="choose_photo">Choose photo</string>
     <string name="select_photo">Select Photo</string>
     <string name="msg_invalid_contactname">Please enter a valid contact name</string>
-    <string name="msg_invalid_contactvia">Please enter a valid email address or phone number</string>
     <string name="msg_insert_mail">Please enter a valid email address</string>
     <string name="msg_insert_phone">Please enter a valid phone number</string>
     <string name="msg_unable_addcontact">Unable to add contact. Please try again later</string>
@@ -129,9 +118,6 @@
     <string name="this_account_will_be_used">This account will be used for authentication and to send email messages</string>
     <string name="no_google_accounts_found">No Google accounts found!</string>
     <string name="add_account_to_start"><u>Sign in with a new Google account to start using Peppermint</u></string>
-    <string name="your_name_">Your Name</string>
-    <string name="next">Next</string>
-    <string name="link_another_gmail">Add Google Account</string>
     <string name="only_one_peppermint_account_supported">Only one Peppermint account is supported.</string>
     <string name="authenticating_">Authenticating…</string>
     <string name="msg_secure_connection">Could not establish a secure connection to the Peppermint server. Please try again later.</string>
@@ -144,13 +130,10 @@
     <string name="sign_in">Sign In</string>
 
     <!-- AUTHENTICATION/NEW CONTACT -->
-    <string name="msg_insert_first_name">Please enter a valid first name</string>
-    <string name="msg_insert_last_name">Please enter a valid last name</string>
     <string name="first_name">First Name</string>
     <string name="last_name">Last Name</string>
 
     <!-- SETTINGS -->
-    <string name="msg_gmail_disabled">Please enable in-app Gmail before picking a Gmail account</string>
     <string name="msg_insert_name">Please enter a valid name</string>
     <string name="sign_out">Sign Out</string>
     <string name="signing_out_">Signing out…</string>

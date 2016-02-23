@@ -24,7 +24,6 @@ public class RegistrationIntentService extends IntentService {
     public static final String REGISTRATION_COMPLETE_ACTION = "com.peppermint.app.cloud.gcm.REGISTRATION_COMPLETE";
     public static final String PARAM_REGISTRATION_ERROR = TAG + "_paramError";
 
-    private AuthenticatorUtils mAuthenticatorUtils;
     private PeppermintApi mPeppermintApi;
 
     public RegistrationIntentService() {
@@ -36,9 +35,9 @@ public class RegistrationIntentService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         Throwable error = null;
         try {
-            mAuthenticatorUtils = new AuthenticatorUtils(this);
-            String accessToken = mAuthenticatorUtils.getAccessToken();
-            AuthenticationData data = mAuthenticatorUtils.getAccountData();
+            AuthenticatorUtils authenticatorUtils = new AuthenticatorUtils(this);
+            String accessToken = authenticatorUtils.getAccessToken();
+            AuthenticationData data = authenticatorUtils.getAccountData();
             mPeppermintApi.setAccessToken(accessToken);
 
             // [START register_for_gcm]
@@ -51,7 +50,7 @@ public class RegistrationIntentService extends IntentService {
             Log.d(TAG, "GCM Registration Token: " + token);
 
             mPeppermintApi.updateRecorder(data.getDeviceServerId(), token);
-            mAuthenticatorUtils.updateAccountGcmRegistration(token);
+            authenticatorUtils.updateAccountGcmRegistration(token);
             // [END register_for_gcm]
         } catch (Throwable e) {
             Log.d(TAG, "Failed to complete token refresh", e);

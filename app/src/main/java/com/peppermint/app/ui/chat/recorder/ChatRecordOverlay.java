@@ -50,8 +50,8 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
 
     // swipe-related
     private Rect mContactRect = new Rect();
-    private float mX1, mX2, mY1, mY2;
-    private long mT1, mT2;
+    private float mX1, mY1;
+    private long mT1;
     private int mMinSwipeDistance;
 
     private OnRecordingFinishedCallback mOnRecordingFinishedCallback;
@@ -241,9 +241,9 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
             switch (event.getAction()) {
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    mX2 = event.getX();
-                    mY2 = event.getY();
-                    mT2 = android.os.SystemClock.uptimeMillis();
+                    float mX2 = event.getX();
+                    float mY2 = event.getY();
+                    long mT2 = android.os.SystemClock.uptimeMillis();
                     float deltaX = mX2 - mX1;
                     float deltaY = mY2 - mY1;
 

@@ -7,6 +7,7 @@ import com.peppermint.app.R;
 import com.peppermint.app.ui.recipients.SearchListBarView;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -94,9 +95,7 @@ public class RecipientType implements SearchListBarView.ListItem {
 
     public void setMimeType(String[] mimeTypes) {
         mMimeTypes.clear();
-        for(String mimeType : mimeTypes) {
-            mMimeTypes.add(mimeType);
-        }
+        Collections.addAll(mMimeTypes, mimeTypes);
     }
 
     public Boolean isStarred() {

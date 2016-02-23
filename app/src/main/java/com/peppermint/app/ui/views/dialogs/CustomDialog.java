@@ -26,7 +26,6 @@ public class CustomDialog extends Dialog implements View.OnClickListener {
 
     private int mLayoutRes;
     private View mLayoutView;
-    private FrameLayout mContainer;
 
     private CharSequence mTitleText;
     private CharSequence mPositiveButtonText, mNegativeButtonText, mNeutralButtonText;
@@ -97,13 +96,13 @@ public class CustomDialog extends Dialog implements View.OnClickListener {
         mButton3 = (CustomFontButton) findViewById(R.id.button3);
 
         mTxtTitle = (CustomFontTextView) findViewById(R.id.title);
-        mContainer = (FrameLayout) findViewById(R.id.container);
+        FrameLayout container = (FrameLayout) findViewById(R.id.container);
 
         if(mLayoutView == null && mLayoutRes > 0) {
             View v = LayoutInflater.from(getContext()).inflate(mLayoutRes, null);
-            mContainer.addView(v, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            container.addView(v, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         } else {
-            mContainer.addView(mLayoutView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            container.addView(mLayoutView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         }
 
         mButton1.setOnClickListener(this);

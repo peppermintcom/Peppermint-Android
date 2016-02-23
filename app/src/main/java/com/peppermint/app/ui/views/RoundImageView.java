@@ -28,9 +28,9 @@ public class RoundImageView extends ImageView {
     private static final int DEF_CORNER_RADIUS_DP = 10;
 
     private int mBorderWidth, mCornerRadius;
-    private Bitmap mImage;
     private Paint mPaint, mBorderPaint;
     private int mWidth, mHeight;
+    private RectF mBitmapBounds = new RectF(), mBorderBounds = new RectF();
 
     private boolean mKeepAspectRatio = false;
 
@@ -72,10 +72,10 @@ public class RoundImageView extends ImageView {
     @Override
     public void onDraw(Canvas canvas) {
         // load the bitmap
-        mImage = drawableToBitmap(getDrawable());
+        Bitmap image = drawableToBitmap(getDrawable());
 
         // init shader
-        if (mImage != null) {
+        if (image != null) {
             int mCanvasSize = mWidth;
             if(mHeight < mCanvasSize) {
                 mCanvasSize = mHeight;
@@ -85,13 +85,13 @@ public class RoundImageView extends ImageView {
             int bitmapHeight = mCanvasSize;
 
             if(isKeepAspectRatio()) {
-                float scale = mImage.getHeight() > mImage.getWidth()
-                        ? (float) mCanvasSize / (float) mImage.getHeight() : (float) mCanvasSize / (float) mImage.getWidth();
-                bitmapWidth = Math.round((float) mImage.getWidth() * scale);
-                bitmapHeight = Math.round((float) mImage.getHeight() * scale);
+                float scale = image.getHeight() > image.getWidth()
+                        ? (float) mCanvasSize / (float) image.getHeight() : (float) mCanvasSize / (float) image.getWidth();
+                bitmapWidth = Math.round((float) image.getWidth() * scale);
+                bitmapHeight = Math.round((float) image.getHeight() * scale);
             }
 
-            Bitmap bitmap = Bitmap.createScaledBitmap(mImage, bitmapWidth, bitmapHeight, true);
+            Bitmap bitmap = Bitmap.createScaledBitmap(image, bitmapWidth, bitmapHeight, true);
             BitmapShader shader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
             mPaint.setShader(shader);
 
@@ -103,8 +103,10 @@ public class RoundImageView extends ImageView {
                 yOffset = (int) (((float) mHeight - (float) bitmap.getHeight()) / 2f);
             }
 
-            canvas.drawRoundRect(new RectF(xOffset, yOffset, bitmap.getWidth(), bitmap.getHeight()), mCornerRadius, mCornerRadius, mBorderPaint);
-            canvas.drawRoundRect(new RectF(xOffset + mBorderWidth, yOffset + mBorderWidth, bitmap.getWidth() - mBorderWidth, bitmap.getHeight() - mBorderWidth), mCornerRadius - mBorderWidth, mCornerRadius - mBorderWidth, mPaint);
+            mBorderBounds.set(xOffset, yOffset, bitmap.getWidth(), bitmap.getHeight());
+            mBitmapBounds.set(xOffset + mBorderWidth, yOffset + mBorderWidth, bitmap.getWidth() - mBorderWidth, bitmap.getHeight() - mBorderWidth);
+            canvas.drawRoundRect(mBorderBounds, mCornerRadius, mCornerRadius, mBorderPaint);
+            canvas.drawRoundRect(mBitmapBounds, mCornerRadius - mBorderWidth, mCornerRadius - mBorderWidth, mPaint);
 
             //bitmap.recycle();
         }

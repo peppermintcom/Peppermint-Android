@@ -170,6 +170,7 @@
 
         <!-- UI: AUTHENTICATION -->
         <service android:name=".authenticator.AuthenticationService"
+            android:exported="false"
             android:enabled="true">
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator" />

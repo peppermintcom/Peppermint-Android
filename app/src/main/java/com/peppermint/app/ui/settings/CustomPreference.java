@@ -60,22 +60,21 @@ public class CustomPreference extends Preference {
 
         TextView txtTitle = (TextView) view.findViewById(android.R.id.title);
         TextView txtSummary = (TextView) view.findViewById(android.R.id.summary);
-        TextView txtContent = (TextView) view.findViewById(R.id.content);
 
         if(mContent == null) {
-            txtContent.setVisibility(View.GONE);
+            mTxtContent.setVisibility(View.GONE);
         } else {
-            txtContent.setText(mContent);
+            mTxtContent.setText(mContent);
         }
 
         txtTitle.setTextColor(Utils.getColor(getContext(), R.color.black));
         txtSummary.setTextColor(Utils.getColor(getContext(), R.color.dark_grey_text));
-        txtContent.setTextColor(Utils.getColor(getContext(), R.color.black));
+        mTxtContent.setTextColor(Utils.getColor(getContext(), R.color.black));
 
         PeppermintApp app = (PeppermintApp) ((Activity) getContext()).getApplication();
         txtTitle.setTypeface(app.getFontSemibold());
         txtSummary.setTypeface(app.getFontRegular());
-        txtContent.setTypeface(app.getFontRegular());
+        mTxtContent.setTypeface(app.getFontRegular());
 
         try {
             txtTitle.setTextColor(ContextCompat.getColorStateList(getContext(), R.color.color_black_to_darkgrey_disabled));
@@ -85,10 +84,10 @@ public class CustomPreference extends Preference {
         }
 
         try {
-            txtContent.setTextColor(ContextCompat.getColorStateList(getContext(), R.color.color_black_to_darkgrey_disabled));
+            mTxtContent.setTextColor(ContextCompat.getColorStateList(getContext(), R.color.color_black_to_darkgrey_disabled));
         } catch (Exception e) {
             TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
-            txtContent.setTextColor(Utils.getColor(getContext(), R.color.black));
+            mTxtContent.setTextColor(Utils.getColor(getContext(), R.color.black));
         }
 
         try {

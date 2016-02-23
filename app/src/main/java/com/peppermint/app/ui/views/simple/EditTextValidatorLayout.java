@@ -23,6 +23,7 @@ import com.peppermint.app.ui.AnimatorBuilder;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -49,9 +50,7 @@ public class EditTextValidatorLayout extends FrameLayout implements ViewGroup.On
 
         public ValidityChecker(EditTextValidatorLayout... validatorLayouts) {
             mSet = new HashSet<>();
-            for(int i=0; i<validatorLayouts.length; i++) {
-                mSet.add(validatorLayouts[i]);
-            }
+            Collections.addAll(mSet, validatorLayouts);
         }
 
         public boolean areValid() {

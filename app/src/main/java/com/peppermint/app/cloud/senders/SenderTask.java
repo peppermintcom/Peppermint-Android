@@ -224,7 +224,12 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
      *     <li>Checks the {@link PeppermintApi} access token</li>
      * </ol>
      * @param invalidateToken true to forcefully invalidate the Peppermint API access token
-     * @throws Throwable
+     * @throws NoInternetConnectionException
+     * @throws PeppermintApiNoAccountException
+     * @throws PeppermintApiInvalidAccessTokenException
+     * @throws IOException
+     * @throws GoogleApiNoAuthorizationException
+     * @throws GoogleAuthException
      */
     protected AuthenticationData setupPeppermintAuthentication(boolean invalidateToken) throws NoInternetConnectionException, PeppermintApiNoAccountException, PeppermintApiInvalidAccessTokenException, IOException, GoogleApiNoAuthorizationException, GoogleAuthException {
         checkInternetConnection();

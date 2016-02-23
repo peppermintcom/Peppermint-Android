@@ -23,6 +23,7 @@ import com.peppermint.app.R;
 import com.peppermint.app.ui.AnimatorBuilder;
 import com.peppermint.app.utils.Utils;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -49,9 +50,7 @@ public class CustomValidatedEditText extends FrameLayout implements TextWatcher 
 
         public ValidityChecker(CustomValidatedEditText... editTexts) {
             mSet = new HashSet<>();
-            for(int i=0; i<editTexts.length; i++) {
-                mSet.add(editTexts[i]);
-            }
+            Collections.addAll(mSet, editTexts);
         }
 
         public boolean areValid() {

@@ -212,9 +212,9 @@ public class SenderErrorHandler extends SenderObject {
      * Return {@link #RECOVERY_NOK} if there's no way of recovering and to stop the task
      * Return {@link #RECOVERY_RETRY} to just retry until MAX_RETRIES is exceeded
      *
-     * @param failedUploadTask
-     * @param error
-     * @return
+     * @param failedUploadTask the failed upload task
+     * @param error the error thrown by the task
+     * @return the action to perform with the failed upload task
      */
     protected int tryToRecover(SenderUploadTask failedUploadTask, Throwable error) {
         return RECOVERY_RETRY;
@@ -265,7 +265,7 @@ public class SenderErrorHandler extends SenderObject {
     /**
      * Tells the {@link Sender} that the error thrown by the failed sender task is not recoverable.
      *
-     * Either {@link #doNotRecover(SenderUploadTask)} or {@link #doRecover(SenderUploadTask)} must be invoked
+     * Either this or {@link #doRecover(SenderUploadTask)} must be invoked
      * for each {@link SenderTask} sent to {@link #tryToRecover(SenderUploadTask)}. <br/>
      *
      * @param recoveringTask the failed/recovering task
@@ -282,7 +282,7 @@ public class SenderErrorHandler extends SenderObject {
      * Tells the {@link Sender} that the error thrown by the failed sender task has been
      * handled (recovered).
      *
-     * Either {@link #doNotRecover(SenderUploadTask)} or {@link #doRecover(SenderUploadTask)} must be invoked
+     * Either this or {@link #doNotRecover(SenderUploadTask)} must be invoked
      * for each {@link SenderTask} sent to {@link #tryToRecover(SenderUploadTask)}. <br/>
      *
      * @param recoveringTask the failed/recovering task

@@ -46,6 +46,7 @@ public class FitsSystemWindowsFrameLayout extends FrameLayout {
         return super.dispatchApplyWindowInsets(newWindowInsets);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     protected boolean fitSystemWindows(Rect insets) {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -58,6 +59,7 @@ public class FitsSystemWindowsFrameLayout extends FrameLayout {
         return false;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void addView(View child, int index, ViewGroup.LayoutParams params) {
         super.addView(child, index, params);

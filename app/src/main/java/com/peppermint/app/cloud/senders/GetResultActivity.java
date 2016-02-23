@@ -34,14 +34,13 @@ public class GetResultActivity extends Activity {
     private UUID mUuid;
     private String mBroadcastType;
     private int mRequestCode;
-    private TrackerManager mTrackerManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a_getresult_layout);
 
-        mTrackerManager = TrackerManager.getInstance(getApplicationContext());
+        TrackerManager trackerManager = TrackerManager.getInstance(getApplicationContext());
 
         // obtain the intent with the data to start the new activity for result
         mUuid = (UUID) getIntent().getSerializableExtra(INTENT_ID);
@@ -52,11 +51,11 @@ public class GetResultActivity extends Activity {
 
         if(i == null) {
             onActivityResult(mRequestCode, -2, null);
-            mTrackerManager.log("Intent data is null on GetResultActivity! ReqCode=" + mRequestCode + " BroadcastType=" + mBroadcastType + " UUID=" + mUuid);
+            trackerManager.log("Intent data is null on GetResultActivity! ReqCode=" + mRequestCode + " BroadcastType=" + mBroadcastType + " UUID=" + mUuid);
             return;
         }
 
-        mTrackerManager.trackScreenView(SCREEN_ID + i.getAction());
+        trackerManager.trackScreenView(SCREEN_ID + i.getAction());
 
         startActivityForResult(i, mRequestCode);
     }

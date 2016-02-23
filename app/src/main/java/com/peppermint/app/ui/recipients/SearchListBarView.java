@@ -54,7 +54,6 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         int getDrawableResource();
     }
 
-    private LayoutInflater mLayoutInflater;
     private InputMethodManager mInputMethodManager;
 
     private ImageButton mBtnList, mBtnClear;
@@ -159,8 +158,8 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
 
     private void init(AttributeSet attrs) {
         mInputMethodManager = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        mLayoutInflater = LayoutInflater.from(getContext());
-        mLayoutInflater.inflate(R.layout.v_search_and_list_box_layout, this);
+        LayoutInflater layoutInflater = LayoutInflater.from(getContext());
+        layoutInflater.inflate(R.layout.v_search_and_list_box_layout, this);
 
         mBtnClear = (ImageButton) findViewById(R.id.btnClear);
         mBtnClear.setOnClickListener(new OnClickListener() {

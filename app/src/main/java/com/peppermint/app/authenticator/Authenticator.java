@@ -113,9 +113,7 @@ class Authenticator extends AbstractAccountAuthenticator {
                 }
             } catch (PeppermintApiInvalidAccessTokenException e) {
                 Log.w(TAG, "Invalid credentials!", e);
-            } catch (PeppermintApiResponseCodeException e) {
-                throw new NetworkErrorException(e);
-            } catch (PeppermintApiTooManyRequestsException e) {
+            } catch (PeppermintApiResponseCodeException | PeppermintApiTooManyRequestsException e) {
                 throw new NetworkErrorException(e);
             }
 

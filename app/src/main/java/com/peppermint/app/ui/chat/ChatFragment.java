@@ -66,8 +66,6 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
 
     // error dialog
     private CustomListDialog mErrorDialog;
-    private List<NavigationItem> mErrorOptions;
-    private NavigationListAdapter mErrorAdapter;
     private long mMessageIdWithError;
 
     // hold to record, release to send popup
@@ -106,9 +104,9 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        mErrorOptions = new ArrayList<>();
-        mErrorOptions.add(new NavigationItem(getString(R.string.retry), R.drawable.ic_drawer_refresh, null, true));
-        mErrorOptions.add(new NavigationItem(getString(R.string.delete), R.drawable.ic_drawer_delete, null, true));
+        List<NavigationItem> errorOptions = new ArrayList<>();
+        errorOptions.add(new NavigationItem(getString(R.string.retry), R.drawable.ic_drawer_refresh, null, true));
+        errorOptions.add(new NavigationItem(getString(R.string.delete), R.drawable.ic_drawer_delete, null, true));
 
         mErrorDialog = new CustomListDialog(mActivity);
         mErrorDialog.setCancelable(true);
@@ -141,14 +139,14 @@ public class ChatFragment extends ChatRecordOverlayFragment implements View.OnCl
                 }
             }
         });
-        mErrorAdapter = new NavigationListAdapter(mActivity, mErrorOptions);
-        mErrorDialog.setListAdapter(mErrorAdapter);
+        NavigationListAdapter errorAdapter = new NavigationListAdapter(mActivity, errorOptions);
+        mErrorDialog.setListAdapter(errorAdapter);
 
         // hold popup
         mHoldPopup = new PopupWindow(getCustomActionBarActivity());
         mHoldPopup.setContentView(inflater.inflate(R.layout.v_recipients_popup, null));
-        //noinspection deprecation
         // although this is deprecated, it is required for versions  < 22/23, otherwise the popup doesn't show up
+        //noinspection deprecation
         mHoldPopup.setWindowLayoutMode(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         mHoldPopup.setBackgroundDrawable(Utils.getDrawable(getCustomActionBarActivity(), R.drawable.img_coach));
         mHoldPopup.setAnimationStyle(R.style.Peppermint_PopupAnimation);

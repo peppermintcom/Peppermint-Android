@@ -1,17 +1,17 @@
 package com.peppermint.app.utils;
 
-import junit.framework.TestCase;
-
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.text.ParseException;
 
+import static org.junit.Assert.assertEquals;
+
 /**
  * Created by Nuno Luz on 21-02-2016.
  */
-public class DateContainerTest extends TestCase {
+public class DateContainerTest {
 
     @Before
     public void setup() throws Exception {
@@ -25,8 +25,8 @@ public class DateContainerTest extends TestCase {
         assertEquals(dc.getAsString(DateTimeZone.UTC), originalDate);
 
         assertEquals(dc.getDateTime().getYear(), 2015);
-        assertEquals(dc.getDateTime().getMonthOfYear(), 01);
-        assertEquals(dc.getDateTime().getDayOfMonth(), 01);
+        assertEquals(dc.getDateTime().getMonthOfYear(), 1);
+        assertEquals(dc.getDateTime().getDayOfMonth(), 1);
         assertEquals(dc.getDateTime().getHourOfDay(), 12);
         assertEquals(dc.getDateTime().getMinuteOfHour(), 34);
         assertEquals(dc.getDateTime().getSecondOfMinute(), 56);
