@@ -280,7 +280,7 @@ public class MessagesService extends Service {
             } else if(intent.hasExtra(PARAM_MESSAGE_RECEIVE_DATA)) {
                 Bundle receivedMessageData = intent.getBundleExtra(PARAM_MESSAGE_RECEIVE_DATA);
 
-                /*Utils.logBundle(receivedMessageData, null);*/
+                Utils.logBundle(receivedMessageData, null);
 
                 String audioUrl = receivedMessageData.getString("audio_url");
                 String transcriptionUrl = receivedMessageData.getString("transcription_url");

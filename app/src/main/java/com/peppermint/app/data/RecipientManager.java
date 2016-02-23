@@ -634,10 +634,7 @@ public class RecipientManager {
         if(rawId <= 0) {
             Cursor cursor = getByEmailOrPhone(context, email, phone, googleAccountName);
             if(cursor.moveToNext()) {
-                Recipient recipient = getRecipientFromCursor(cursor);
-                if(rawId <= 0) {
-                    rawId = recipient.getRawId();
-                }
+                rawId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data.RAW_CONTACT_ID));
             }
             cursor.close();
         }

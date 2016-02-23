@@ -71,6 +71,7 @@ public class RecordServiceManager {
     private RecordService.RecordServiceBinder mService;
     private Listener mListener;
     protected boolean mIsBound = false;                                         // if the manager is bound to the service
+    protected boolean mIsBinding = false;
 
     /**
      * Event callback triggered by the {@link RecordService} through an {@link de.greenrobot.event.EventBus}.<br />
@@ -111,6 +112,7 @@ public class RecordServiceManager {
             mService.register(RecordServiceManager.this);
 
             mIsBound = true;
+            mIsBinding = false;
 
             if(mListener != null) {
                 mListener.onBoundRecording(mService.getCurrentRecording(), mService.getCurrentRecipient(), mService.getCurrentLoudness());
@@ -121,6 +123,7 @@ public class RecordServiceManager {
             // this is called when the connection with the service has been unexpectedly disconnected - process crashed.
             mService = null;
             mIsBound = false;
+            mIsBinding = false;
         }
     };
 
@@ -146,16 +149,15 @@ public class RecordServiceManager {
      * The service will only stop after stopping the current recording.
      */
     public void shouldStop() {
+        unbind();
         mService.shutdown();
-        if(mIsBound) {
-            unbind();
-        }
     }
 
     /**
      * Binds this manager to the service.
      */
     public void bind() {
+        mIsBinding = true;
         mContext.bindService(new Intent(mContext, RecordService.class), mConnection, Context.BIND_AUTO_CREATE);
     }
 
@@ -163,7 +165,7 @@ public class RecordServiceManager {
      * Unbinds this manager from the service.
      */
     public void unbind() {
-        if (mIsBound) {
+        if (mIsBound || mIsBinding) {
             // if we have received the service, and hence registered with it, then now is the time to unregister.
             if (mService != null) {
                 mService.unregister(RecordServiceManager.this);
@@ -171,6 +173,7 @@ public class RecordServiceManager {
             // detach our existing connection.
             mContext.unbindService(mConnection);
             mIsBound = false;
+            mIsBinding = false;
         }
     }
 

@@ -88,6 +88,8 @@ public class HttpRequest implements Parcelable {
 	}
 
 	public void execute(HttpResponse response) {
+		Log.d(TAG, toString());
+
 		try {
 			mConnection = createConnection();
 

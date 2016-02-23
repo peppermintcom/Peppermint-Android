@@ -48,7 +48,7 @@ import java.util.List;
 public class GoogleApi implements Serializable {
 
     protected static final String[] SCOPES = { GmailScopes.GMAIL_COMPOSE, GmailScopes.GMAIL_MODIFY,
-            /*"https://www.googleapis.com/auth/userinfo.profile", */
+            "https://www.googleapis.com/auth/userinfo.profile",
             "https://www.googleapis.com/auth/plus.profile.emails.read" };
 
     // HttpResponse that parses Google endpoint JSON and returns a {@link Draft} instance

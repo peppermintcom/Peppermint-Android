@@ -2,6 +2,7 @@ package com.peppermint.app.cloud.apis;
 
 import android.content.Context;
 import android.os.Build;
+import android.util.Log;
 
 import com.peppermint.app.cloud.apis.data.AccountsResponse;
 import com.peppermint.app.cloud.apis.data.JWTsResponse;
@@ -140,6 +141,8 @@ public class PeppermintApi implements Serializable {
      */
     public JWTsResponse authOrRegister(String accountEmail, String accountPassword, int accountType, String recorderId, String recorderKey, String fullName, TrackerManager trackerManager) throws PeppermintApiTooManyRequestsException, PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException {
         JWTsResponse jwtsResponse = null;
+
+        Log.d("PeppermintApi", "authOrRegister - fullName=" + fullName);
 
         try {
             jwtsResponse = authBoth(accountEmail, accountPassword, recorderId, recorderKey, accountType);

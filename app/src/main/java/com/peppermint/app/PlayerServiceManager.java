@@ -35,6 +35,7 @@ public class PlayerServiceManager {
     private List<PlayerListener> mPlayerListenerList = new ArrayList<>();
     private List<PlayServiceListener> mServiceListenerList = new ArrayList<>();
     protected boolean mIsBound = false;
+    protected boolean mIsBinding = false;
 
     public void onEventMainThread(PlayerEvent event) {
         for(PlayerListener listener : mPlayerListenerList) {
@@ -51,6 +52,7 @@ public class PlayerServiceManager {
             mService.register(PlayerServiceManager.this);
 
             mIsBound = true;
+            mIsBinding = false;
 
             for(PlayServiceListener listener : mServiceListenerList) {
                 listener.onBoundPlayService();
@@ -61,6 +63,7 @@ public class PlayerServiceManager {
             // this is called when the connection with the service has been unexpectedly disconnected - process crashed.
             mService = null;
             mIsBound = false;
+            mIsBinding = false;
         }
     };
 
@@ -109,16 +112,15 @@ public class PlayerServiceManager {
      * <b>Also unbinds this manager from the service.</b>
      */
     public void shouldStop() {
+        unbind();
         mService.shutdown();
-        if(mIsBound) {
-            unbind();
-        }
     }
 
     /**
      * Binds this manager to the service.
      */
     public void bind() {
+        mIsBinding = true;
         mContext.bindService(new Intent(mContext, PlayerService.class), mConnection, Context.BIND_AUTO_CREATE);
     }
 
@@ -126,7 +128,7 @@ public class PlayerServiceManager {
      * Unbinds this manager from the service.
      */
     public void unbind() {
-        if (mIsBound) {
+        if (mIsBound || mIsBinding) {
             // if we have received the service, and hence registered with it, then now is the time to unregister.
             if (mService != null) {
                 mService.unregister(PlayerServiceManager.this);
@@ -134,6 +136,7 @@ public class PlayerServiceManager {
             // detach our existing connection.
             mContext.unbindService(mConnection);
             mIsBound = false;
+            mIsBinding = false;
         }
     }
 

@@ -81,6 +81,7 @@ public class MessagesServiceManager {
     private List<ReceiverListener> mReceiverListenerList = new ArrayList<>();
     private List<ServiceListener> mServiceListenerList = new ArrayList<>();
     protected boolean mIsBound = false;                                         // if the manager is bound to the service
+    protected boolean mIsBinding = false;
 
     public void onEventMainThread(ReceiverEvent event) {
         switch(event.getType()) {
@@ -130,6 +131,7 @@ public class MessagesServiceManager {
             mService.register(MessagesServiceManager.this);
 
             mIsBound = true;
+            mIsBinding = false;
 
             for(ServiceListener listener : mServiceListenerList) {
                 listener.onBoundSendService();
@@ -140,6 +142,7 @@ public class MessagesServiceManager {
             // this is called when the connection with the service has been unexpectedly disconnected - process crashed.
             mService = null;
             mIsBound = false;
+            mIsBinding = false;
         }
     };
 
@@ -179,16 +182,15 @@ public class MessagesServiceManager {
      * <b>Also unbinds this manager from the service.</b>
      */
     public void shouldStop() {
+        unbind();
         mService.shutdown();
-        if(mIsBound) {
-            unbind();
-        }
     }
 
     /**
      * Binds this manager to the service.
      */
     public void bind() {
+        mIsBinding = true;
         mContext.bindService(new Intent(mContext, MessagesService.class), mConnection, Context.BIND_AUTO_CREATE);
     }
 
@@ -196,7 +198,7 @@ public class MessagesServiceManager {
      * Unbinds this manager from the service.
      */
     public void unbind() {
-        if (mIsBound) {
+        if (mIsBound || mIsBinding) {
             // if we have received the service, and hence registered with it, then now is the time to unregister.
             if (mService != null) {
                 mService.unregister(MessagesServiceManager.this);
@@ -204,6 +206,7 @@ public class MessagesServiceManager {
             // detach our existing connection.
             mContext.unbindService(mConnection);
             mIsBound = false;
+            mIsBinding = false;
         }
     }
 
