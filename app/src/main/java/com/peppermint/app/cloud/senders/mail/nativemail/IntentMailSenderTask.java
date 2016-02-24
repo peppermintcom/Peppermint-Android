@@ -43,7 +43,7 @@ public class IntentMailSenderTask extends SenderUploadTask {
 
         if(!isCancelled()) {
             // build the email body
-            getMessage().setEmailBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_simple, url, getMessage().getServerCanonicalUrl(),
+            getMessage().setEmailBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_plain, url, getMessage().getServerCanonicalUrl(),
                     getMessage().getRecordingParameter().getDurationMillis(),
                     getMessage().getRecordingParameter().getContentType(),
                     displayName, data.getEmail(), false));
@@ -52,7 +52,7 @@ public class IntentMailSenderTask extends SenderUploadTask {
 
             Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + getMessage().getRecipientParameter().getEmail().getVia()));
             i.putExtra(Intent.EXTRA_SUBJECT, getMessage().getEmailSubject());
-            i.putExtra(Intent.EXTRA_TEXT, Html.fromHtml(getMessage().getEmailBody()));
+            i.putExtra(Intent.EXTRA_TEXT, getMessage().getEmailBody());
             Uri fileUri = FileProvider.getUriForFile(getContext(), "com.peppermint.app", file);
             i.putExtra(Intent.EXTRA_STREAM, fileUri);
             i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);

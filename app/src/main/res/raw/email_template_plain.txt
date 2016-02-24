@@ -1,0 +1,7 @@
+Here's my message.
+{@SHORT_URL}
+{@DURATION}
+
+
+
+Peppermint Quick Reply (https://peppermint.com/reply?name={@REPLY_NAME}&mail={@REPLY_EMAIL})

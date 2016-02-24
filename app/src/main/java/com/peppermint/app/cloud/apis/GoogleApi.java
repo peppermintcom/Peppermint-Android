@@ -256,7 +256,7 @@ public class GoogleApi implements Serializable {
      * @throws GoogleAuthException
      * @throws IOException
      */
-    public synchronized DraftResponse createGmailDraft(String subject, String body, String destEmail, String contentType, Date emailDate, File attachment) throws GoogleApiNoAuthorizationException, GoogleApiInvalidAccessTokenException, GoogleAuthException, IOException {
+    public synchronized DraftResponse createGmailDraft(String subject, String bodyPlain, String bodyHtml, String destEmail, String contentType, Date emailDate, File attachment) throws GoogleApiNoAuthorizationException, GoogleApiInvalidAccessTokenException, GoogleAuthException, IOException {
         if(mAccessToken == null) {
             try {
                 mAccessToken = mCredential.getToken();
@@ -267,7 +267,7 @@ public class GoogleApi implements Serializable {
 
         // custom, performance optimized code to create the draft
         GmailAttachmentRequest request = new GmailAttachmentRequest(attachment, mAccountName, mDisplayName, destEmail,
-                subject, body, contentType, emailDate);
+                subject, bodyPlain, bodyHtml, contentType, emailDate);
         request.setHeaderParam("Authorization", "Bearer " + mAccessToken);
         request.setHeaderParam("Content-Type", "application/json; charset=UTF-8");
         // perform request to the Gmail API endpoint

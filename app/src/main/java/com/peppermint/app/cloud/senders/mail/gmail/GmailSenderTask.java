@@ -86,10 +86,17 @@ public class GmailSenderTask extends SenderUploadTask {
         File file = getMessage().getRecordingParameter().getFile();
 
         // build the email body
-        getMessage().setEmailBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template, url, canonicalUrl,
+        String bodyPlain = MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_plain, url, canonicalUrl,
                 getMessage().getRecordingParameter().getDurationMillis(),
                 getMessage().getRecordingParameter().getContentType(),
-                fullName, data.getEmail(), true));
+                fullName, data.getEmail(), false);
+
+        String bodyHtml = MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_html, url, canonicalUrl,
+                getMessage().getRecordingParameter().getDurationMillis(),
+                getMessage().getRecordingParameter().getContentType(),
+                fullName, data.getEmail(), true);
+
+        getMessage().setEmailBody(bodyPlain);
 
         try {
             Draft draft = null;
@@ -102,7 +109,7 @@ public class GmailSenderTask extends SenderUploadTask {
             }
 
             try {
-                GoogleApi.DraftResponse response = googleApi.createGmailDraft(getMessage().getEmailSubject(), getMessage().getEmailBody(), getMessage().getRecipientParameter().getEmail().getVia(),
+                GoogleApi.DraftResponse response = googleApi.createGmailDraft(getMessage().getEmailSubject(), bodyPlain, bodyHtml, getMessage().getRecipientParameter().getEmail().getVia(),
                         getMessage().getRecordingParameter().getContentType(), emailDate, file);
                 draft = (Draft) response.getBody();
 
@@ -125,8 +132,6 @@ public class GmailSenderTask extends SenderUploadTask {
                     throw e;
                 }
             }
-
-
 
             if(!isCancelled()) {
                 try {

@@ -37,7 +37,7 @@ public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
     private static final String ENDPOINT = "https://www.googleapis.com/gmail/v1/users/me/drafts";
 
     protected File mFile;
-    protected String mSenderMail, mSenderName, mRecipientMail, mSubject, mBody, mContentType;
+    protected String mSenderMail, mSenderName, mRecipientMail, mSubject, mBodyPlain, mBodyHtml, mContentType;
     protected Date mTimestamp;
 
     /**
@@ -51,13 +51,14 @@ public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
         this.mSenderName = req.mSenderName;
         this.mRecipientMail = req.mRecipientMail;
         this.mSubject = req.mSubject;
-        this.mBody = req.mBody;
+        this.mBodyPlain = req.mBodyPlain;
+        this.mBodyHtml = req.mBodyHtml;
         this.mContentType = req.mContentType;
         this.mTimestamp = req.mTimestamp;
     }
 
     public GmailAttachmentRequest(File file, String senderMail, String senderName, String recipientMail,
-                                  String subject, String body, String contentType, Date timestamp) {
+                                  String subject, String bodyPlain, String bodyHtml, String contentType, Date timestamp) {
 
         super(ENDPOINT, HttpRequest.METHOD_POST, false);
 
@@ -69,7 +70,8 @@ public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
         this.mSenderName = senderName;
         this.mRecipientMail = recipientMail;
         this.mSubject = subject;
-        this.mBody = body;
+        this.mBodyPlain = bodyPlain;
+        this.mBodyHtml = bodyHtml;
         this.mContentType = contentType;
         this.mTimestamp = timestamp;
     }
@@ -80,14 +82,15 @@ public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
      * @param to the email address of the receiver.
      * @param from the email address of the sender, the mailbox account.
      * @param subject the subject of the email.
-     * @param bodyText the body text of the email.
+     * @param bodyPlainText the body play text of the email.
+     * @param bodyHtmlText the body HTML text of the email.
      * @param fileDir the path to the directory containing attachment.
      * @param filename the name of file to be attached.
      * @return the MimeMessage to be used to send email.
      * @throws MessagingException
      */
     private static MimeMessage createEmailWithAttachment(String to, String from, String fromName, String subject,
-                                                         String bodyText, String fileDir, String filename, String contentType, Date dateSent) throws IOException, MessagingException {
+                                                         String bodyPlainText, String bodyHtmlText, String fileDir, String filename, String contentType, Date dateSent) throws IOException, MessagingException {
         Properties props = new Properties();
         Session session = Session.getDefaultInstance(props, null);
 
@@ -100,23 +103,31 @@ public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
         email.setSubject(subject);
         email.setSentDate(dateSent);
 
-        MimeBodyPart mimeBodyPart = new MimeBodyPart();
-        mimeBodyPart.setContent(bodyText, "text/html");
-        mimeBodyPart.setHeader("Content-Type", "text/html; charset=\"UTF-8\"");
+        Multipart multipart = new MimeMultipart("alternative");
 
-        Multipart multipart = new MimeMultipart();
+        // Plain text message
+        MimeBodyPart mimeBodyPart = new MimeBodyPart();
+        mimeBodyPart.setContent(bodyPlainText, "text/plain");
+        mimeBodyPart.setHeader("Content-Type", "text/plain; charset=\"UTF-8\"");
         multipart.addBodyPart(mimeBodyPart);
 
+        // HTML message
+        mimeBodyPart = new MimeBodyPart();
+        mimeBodyPart.setContent(bodyHtmlText, "text/html");
+        mimeBodyPart.setHeader("Content-Type", "text/html; charset=\"UTF-8\"");
+        multipart.addBodyPart(mimeBodyPart);
+
+        // Attachment
         mimeBodyPart = new MimeBodyPart();
         DataSource source = new FileDataSource(fileDir + "/" + filename);
-
         mimeBodyPart.setDataHandler(new DataHandler(source));
         mimeBodyPart.setFileName(filename);
         mimeBodyPart.setHeader("Content-Type", contentType + "; name=\"" + filename + "\"");
         mimeBodyPart.setHeader("Content-Transfer-Encoding", "binary");
-
         multipart.addBodyPart(mimeBodyPart);
+
         email.setContent(multipart);
+
         return email;
     }
 
@@ -137,7 +148,7 @@ public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
         try {
             email = createEmailWithAttachment(mRecipientMail,
                     mSenderMail, mSenderName,
-                    mSubject, mBody,
+                    mSubject, mBodyPlain, mBodyHtml,
                     mFile.getParent(), mFile.getName(),
                     mContentType,
                     mTimestamp);
@@ -174,7 +185,8 @@ public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
         out.writeString(mSenderName);
         out.writeString(mRecipientMail);
         out.writeString(mSubject);
-        out.writeString(mBody);
+        out.writeString(mBodyPlain);
+        out.writeString(mBodyHtml);
         out.writeString(mContentType);
         out.writeSerializable(mTimestamp);
     }
@@ -193,7 +205,8 @@ public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
         mSenderName = in.readString();
         mRecipientMail = in.readString();
         mSubject = in.readString();
-        mBody = in.readString();
+        mBodyPlain = in.readString();
+        mBodyHtml = in.readString();
         mContentType = in.readString();
         mTimestamp = (Date) in.readSerializable();
     }
