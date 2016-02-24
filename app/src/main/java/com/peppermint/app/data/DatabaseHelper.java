@@ -146,6 +146,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             // move recent contacts to chats
 			SenderPreferences prefs = new SenderPreferences(mContext);
 			List<Long> contactIds = prefs.getRecentContactUris();
+			if(contactIds == null) {
+				return;
+			}
 
 			DateContainer dateContainer = new DateContainer(DateContainer.TYPE_DATETIME);
 			try {
