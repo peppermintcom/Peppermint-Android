@@ -837,7 +837,7 @@ public class Utils {
      * @return the conditions string
      */
     public static <T> String getSQLConditions(String field, List<T> allowed, List<String> args, boolean isAnd) {
-        if(allowed == null) {
+        if(allowed == null || allowed.size() <= 0) {
             return "1";
         }
 
