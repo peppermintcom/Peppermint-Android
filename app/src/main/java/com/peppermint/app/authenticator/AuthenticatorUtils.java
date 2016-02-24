@@ -3,6 +3,7 @@ package com.peppermint.app.authenticator;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.OperationCanceledException;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Build;
 
@@ -130,6 +131,10 @@ public class AuthenticatorUtils {
             mAccountManager.setPassword(mAccount, null);
             mAccountManager.setAuthToken(mAccount, AuthenticatorConstants.FULL_TOKEN_TYPE, null);
         }
+
+        NotificationManager notificationManager =
+                (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancelAll();
     }
 
     /**
