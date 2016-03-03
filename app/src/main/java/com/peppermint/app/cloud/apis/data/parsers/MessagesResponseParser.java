@@ -20,9 +20,11 @@ public class MessagesResponseParser implements JSONParser<MessagesResponse> {
     public MessagesResponse processJson(JSONObject obj) throws JSONException {
         MessagesResponse response = new MessagesResponse();
 
-        response.setMessageId(obj.getString("id"));
+        JSONObject data = obj.getJSONObject("data");
 
-        JSONObject attrData = obj.getJSONObject("attributes");
+        response.setMessageId(data.getString("id"));
+
+        JSONObject attrData = data.getJSONObject("attributes");
         if(!attrData.isNull("audio_url")) {
             response.setAudioUrl(attrData.getString("audio_url"));
         }
