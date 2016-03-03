@@ -1,12 +1,13 @@
 package com.peppermint.app;
 
 import android.app.Application;
+import android.content.Intent;
 import android.graphics.Typeface;
 
 import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.ui.chat.head.ChatHeadService;
 
-import net.danlew.android.joda.JodaTimeAndroid;
 
 /**
  * Created by Nuno Luz on 15-09-2015.
@@ -20,8 +21,6 @@ public class PeppermintApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-
-        JodaTimeAndroid.init(this);
 
         // init tracker apis
         TrackerManager.getInstance(this);

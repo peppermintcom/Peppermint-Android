@@ -9,6 +9,7 @@ buildscript {
 }
 apply plugin: 'com.android.application'
 apply plugin: 'io.fabric'
+apply plugin: 'com.getkeepsafe.dexcount'
 
 repositories {
     maven { url 'https://maven.fabric.io/public' }
@@ -29,11 +30,13 @@ android {
         minSdkVersion 15
         targetSdkVersion 23
         versionCode 5
-        versionName "1.1.2"
+        versionName "1.1.3"
     }
+
     buildTypes {
         release {
-            minifyEnabled false
+            shrinkResources true
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -46,20 +49,6 @@ android {
             java.srcDir file('src/test/java/')
         }
     }
-
-    packagingOptions {
-        exclude 'LICENSE.txt'
-        exclude 'META-INF/DEPENDENCIES.txt'
-        exclude 'META-INF/LICENSE.txt'
-        exclude 'META-INF/NOTICE.txt'
-        exclude 'META-INF/NOTICE'
-        exclude 'META-INF/LICENSE'
-        exclude 'META-INF/DEPENDENCIES'
-        exclude 'META-INF/notice.txt'
-        exclude 'META-INF/license.txt'
-        exclude 'META-INF/dependencies.txt'
-        exclude 'META-INF/LGPL2.1'
-    }
 }
 
 crashlytics {
@@ -70,24 +59,32 @@ crashlytics {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'de.greenrobot:eventbus:2.4.0'
+
     compile 'com.android.support:appcompat-v7:23.1.1'
+
+    // MP4
     compile 'com.googlecode.mp4parser:isoparser:1.0.5.4'
-    compile 'net.danlew:android.joda:2.9.2'
-    compile 'com.google.android.gms:play-services-gcm:8.4.0'
-    compile 'com.google.android.gms:play-services-base:8.4.0'
+    /*compile 'net.danlew:android.joda:2.9.2'*/
+
+    // GA
     compile 'com.google.android.gms:play-services-analytics:8.4.0'
-    compile 'com.google.api-client:google-api-client:1.20.0'
+
+    // GCM
+    compile 'com.google.android.gms:play-services-gcm:8.4.0'
+
+    // GMAIL
+    compile 'com.google.apis:google-api-services-gmail:v1-rev29-1.20.0'
     compile 'com.google.api-client:google-api-client-android:1.20.0'
     compile 'com.google.api-client:google-api-client-gson:1.20.0'
-    compile 'com.google.apis:google-api-services-gmail:v1-rev29-1.20.0'
-    compile('com.crashlytics.sdk.android:crashlytics:2.5.5@aar') {
-        transitive = true;
-    }
-    compile('com.crashlytics.sdk.android:crashlytics-ndk:1.1.2@aar') {
-        transitive = true
-    }
 
+    compile 'de.greenrobot:eventbus:2.4.0'
+    compile 'com.facebook.rebound:rebound:0.3.8'
+
+    // CRASHLYTICS
+    compile('com.crashlytics.sdk.android:crashlytics:2.5.5@aar') { transitive = true; }
+    compile('com.crashlytics.sdk.android:crashlytics-ndk:1.1.2@aar') { transitive = true }
+
+    // TEST
     testCompile 'org.robolectric:robolectric:3.1-SNAPSHOT'
     testCompile 'junit:junit:4.12'
 }

@@ -19,10 +19,9 @@ import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.views.simple.CustomFontTextView;
 import com.peppermint.app.utils.DateContainer;
 
-import org.joda.time.DateTimeZone;
-
 import java.text.ParseException;
 import java.util.Set;
+import java.util.TimeZone;
 
 /**
  * Created by Nuno Luz on 27/08/2015.
@@ -80,7 +79,7 @@ public class ChatCursorAdapter extends CursorAdapter {
         if(chat.getLastMessageTimestamp() != null) {
             try {
                 DateContainer lastMessageDate = new DateContainer(DateContainer.TYPE_DATE, chat.getLastMessageTimestamp());
-                txtLastMessageDate.setText(DateContainer.getRelativeLabelToToday(mContext, lastMessageDate, DateTimeZone.getDefault()));
+                txtLastMessageDate.setText(DateContainer.getRelativeLabelToToday(mContext, lastMessageDate, TimeZone.getDefault()));
             } catch (ParseException e) {
                 mTrackerManager.logException(e);
                 txtLastMessageDate.setText(chat.getLastMessageTimestamp());

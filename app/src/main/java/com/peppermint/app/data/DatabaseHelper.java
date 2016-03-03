@@ -11,11 +11,9 @@ import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.ScriptFileReader;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-
 import java.sql.SQLException;
 import java.text.ParseException;
+import java.util.Calendar;
 import java.util.List;
 
 /**
@@ -160,18 +158,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 				TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
 			}
 
-			DateTime dateTime = dateContainer.getDateTime().minuteOfDay().addToCopy(-1);
+			Calendar calendar = dateContainer.getCalendar();
+			calendar.add(Calendar.MINUTE, -1);
 
 			for (Long contactId : contactIds) {
 				Chat chat = ChatManager.getChatByMainRecipient(mContext, _db, contactId);
 				if(chat == null) {
-					DateContainer dc = new DateContainer(DateContainer.TYPE_DATETIME, dateTime);
 					try {
-						ChatManager.insert(_db, contactId, dc.getAsString(DateTimeZone.UTC));
+						ChatManager.insert(_db, contactId, dateContainer.getAsString(DateContainer.UTC));
 					} catch (SQLException e) {
 						TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
 					}
-					dateTime = dateTime.minuteOfDay().addToCopy(-1);
+					calendar.add(Calendar.MINUTE, -1);
 				}
 			}
 
