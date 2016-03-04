@@ -1,7 +1,7 @@
 package com.peppermint.app.ui.chat.recorder;
 
 import android.app.Activity;
-import android.app.ListFragment;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
@@ -14,6 +14,7 @@ import com.peppermint.app.PlayerServiceManager;
 import com.peppermint.app.R;
 import com.peppermint.app.RecordService;
 import com.peppermint.app.authenticator.AuthenticationData;
+import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.ReceiverEvent;
 import com.peppermint.app.cloud.senders.SenderEvent;
@@ -22,18 +23,24 @@ import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientManager;
 import com.peppermint.app.data.Recording;
-import com.peppermint.app.ui.CustomActionBarActivity;
-import com.peppermint.app.ui.chat.ChatActivity;
-import com.peppermint.app.ui.chat.ChatFragment;
+import com.peppermint.app.ui.OverlayManager;
+import com.peppermint.app.ui.TouchInterceptable;
 import com.peppermint.app.ui.recipients.add.NewRecipientActivity;
 import com.peppermint.app.ui.recipients.add.NewRecipientFragment;
 import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.utils.Utils;
 
-public class ChatRecordOverlayFragment extends ListFragment implements ChatRecordOverlay.OnRecordingFinishedCallback, MessagesServiceManager.ReceiverListener, MessagesServiceManager.SenderListener, MessagesServiceManager.ServiceListener, PlayerServiceManager.PlayerListener, PlayerServiceManager.PlayServiceListener {
+/**
+ * Created by Nuno Luz on 04-03-2016.
+ */
+public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordingFinishedCallback,
+        MessagesServiceManager.ReceiverListener, MessagesServiceManager.SenderListener, MessagesServiceManager.ServiceListener,
+        PlayerServiceManager.PlayerListener, PlayerServiceManager.PlayServiceListener {
 
-    public static final int REQUEST_NEWCONTACT_AND_SEND = 223;
+    public interface Callbacks {
+        void onNewContact(Intent intentToLaunchActivity);
+    }
 
     // keys to save the instance state
     private static final String RECIPIENT_TAPPED_KEY = "RecipientsFragment_RecipientTapped";
@@ -41,28 +48,37 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
     private static final String RECORDING_FINAL_EVENT_KEY = "RecipientsFragment_RecordingFinalEvent";
     private static final String SMS_CONFIRMATION_STATE_KEY = "RecipientsFragment_SmsConfirmationState";
 
-    private CustomActionBarActivity mActivity;
+    // contextual/external instances
+    private Context mContext;
     private SenderPreferences mPreferences;
+    private OverlayManager mOverlayManager;
+    private TouchInterceptable mTouchInterceptable;
+    private AuthenticationPolicyEnforcer mAuthenticationPolicyEnforcer;
+    private Callbacks mCallbacks;
+
     private MessagesServiceManager mMessagesServiceManager;
     private PlayerServiceManager mPlayerServiceManager;
 
+    // overlay
     private ChatRecordOverlay mChatRecordOverlay;
 
+    // dialogs
     private SMSConfirmationDialog mSmsConfirmationDialog;
     private CustomConfirmationDialog mSmsAddContactDialog;
 
     private Recipient mRecipient;
     private RecordService.Event mFinalEvent;
 
-    @SuppressWarnings("deprecation")
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        mActivity = (CustomActionBarActivity) activity;
-        mPreferences = new SenderPreferences(activity);
+    private View mView;
+
+    public ChatRecordOverlayController(Context context, Callbacks callbacks) {
+        mContext = context;
+        mCallbacks = callbacks;
+
+        mPreferences = new SenderPreferences(mContext);
 
         // send through SMS confirmation dialog
-        mSmsConfirmationDialog = new SMSConfirmationDialog(mActivity);
+        mSmsConfirmationDialog = new SMSConfirmationDialog(mContext);
         mSmsConfirmationDialog.setTitleText(R.string.sending_via_sms);
         mSmsConfirmationDialog.setMessageText(R.string.when_you_send_via_sms);
         mSmsConfirmationDialog.setCheckText(R.string.do_not_show_this_again);
@@ -99,19 +115,19 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
                     mFinalEvent = null;
                     mSmsConfirmationDialog.dismiss();
                 } else {
-                    launchNewRecipientActivity(mFinalEvent.getRecipient(), REQUEST_NEWCONTACT_AND_SEND);
+                    launchNewRecipientActivity(mFinalEvent.getRecipient());
                 }
             }
         });
 
         // dialog for unsupported SMS
-        mSmsAddContactDialog = new CustomConfirmationDialog(mActivity);
+        mSmsAddContactDialog = new CustomConfirmationDialog(mContext);
         mSmsAddContactDialog.setTitleText(R.string.sending_via_sms);
         mSmsAddContactDialog.setMessageText(R.string.msg_sms_disabled_add_contact);
         mSmsAddContactDialog.setPositiveButtonListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                launchNewRecipientActivity(mRecipient, REQUEST_NEWCONTACT_AND_SEND);
+                launchNewRecipientActivity(mRecipient);
                 mSmsAddContactDialog.dismiss();
             }
         });
@@ -122,20 +138,24 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
             }
         });
 
-        mMessagesServiceManager = new MessagesServiceManager(mActivity);
+        // services
+        mMessagesServiceManager = new MessagesServiceManager(mContext);
         mMessagesServiceManager.addServiceListener(this);
         mMessagesServiceManager.addSenderListener(this);
         mMessagesServiceManager.addReceiverListener(this);
 
-        mPlayerServiceManager = new PlayerServiceManager(mActivity);
+        mPlayerServiceManager = new PlayerServiceManager(mContext);
         mPlayerServiceManager.addServiceListener(this);
         mPlayerServiceManager.addPlayerListener(this);
     }
 
-    @Override
-    public void onViewCreated(final View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+    public void init(View rootView, OverlayManager overlayManager, TouchInterceptable touchInterceptable, AuthenticationPolicyEnforcer authenticationPolicyEnforcer, Bundle savedInstanceState) {
+        mView = rootView;
+        mOverlayManager = overlayManager;
+        mTouchInterceptable = touchInterceptable;
+        mAuthenticationPolicyEnforcer = authenticationPolicyEnforcer;
 
+        // start services
         mMessagesServiceManager.start();
         mPlayerServiceManager.start();
 
@@ -157,23 +177,12 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
             }
         }
 
-        mChatRecordOverlay = (ChatRecordOverlay) mActivity.getOverlayManager().createOverlay(new ChatRecordOverlay(mActivity, null, view));
+        // create overlay
+        mChatRecordOverlay = (ChatRecordOverlay) mOverlayManager.createOverlay(new ChatRecordOverlay(mTouchInterceptable));
         mChatRecordOverlay.setOnRecordingFinishedCallback(this);
     }
 
-    private void launchNewRecipientActivity(Recipient editRecipient, int requestCode) {
-        Intent intent = new Intent(mActivity, NewRecipientActivity.class);
-        if (editRecipient != null) {
-            intent.putExtra(NewRecipientFragment.KEY_VIA, editRecipient.getEmail() != null ? editRecipient.getEmail().getVia() : editRecipient.getPhone().getVia());
-            intent.putExtra(NewRecipientFragment.KEY_NAME, editRecipient.getDisplayName());
-            intent.putExtra(NewRecipientFragment.KEY_RAW_ID, editRecipient.getRawId());
-            intent.putExtra(NewRecipientFragment.KEY_PHOTO_URL, editRecipient.getPhotoUri() == null ? null : Uri.parse(editRecipient.getPhotoUri()));
-        }
-        startActivityForResult(intent, requestCode);
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
+    public void saveInstanceState(Bundle outState) {
         // save tapped recipient in case add contact dialog is showing
         outState.putSerializable(RECIPIENT_TAPPED_KEY, mRecipient);
         // save add contact dialog state as well
@@ -186,65 +195,59 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
             outState.putSerializable(RECORDING_FINAL_EVENT_KEY, mFinalEvent);
         }
         outState.putBundle(SMS_CONFIRMATION_STATE_KEY, mSmsConfirmationDialog.onSaveInstanceState());
-
-        super.onSaveInstanceState(outState);
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
+    public void start() {
         mMessagesServiceManager.bind();
         mPlayerServiceManager.bind();
         mChatRecordOverlay.bindService();
     }
 
-    @Override
-    public void onPause() {
+    public void stop() {
         mChatRecordOverlay.hide(false, true);
-        super.onPause();
-    }
-
-    @Override
-    public void onStop() {
         mChatRecordOverlay.unbindService();
         mPlayerServiceManager.unbind();
         mMessagesServiceManager.unbind();
-        super.onStop();
     }
 
-    @Override
-    public void onDestroy() {
+    public void deinit() {
         mMessagesServiceManager.removeReceiverListener(this);
         mMessagesServiceManager.removeSenderListener(this);
         mMessagesServiceManager.removeServiceListener(this);
         mPlayerServiceManager.removePlayerListener(this);
         mPlayerServiceManager.removeServiceListener(this);
-        mActivity = null;
-        super.onDestroy();
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == REQUEST_NEWCONTACT_AND_SEND) {
-            if(resultCode == Activity.RESULT_OK && mFinalEvent != null) {
-                Recipient emailRecipient = RecipientManager.getRecipientWithMainEmailContactByRawId(mActivity, mFinalEvent.getRecipient().getRawId());
-                if(emailRecipient == null) {
-                    CustomToast.makeText(mActivity, R.string.msg_no_email_address, Toast.LENGTH_LONG).show();
-                } else {
-                    mSmsConfirmationDialog.dismiss();
-                    sendMessage(emailRecipient, mFinalEvent.getRecording());
-                    mFinalEvent = null;
-                }
+    private void launchNewRecipientActivity(Recipient editRecipient) {
+        Intent intent = new Intent(mContext.getApplicationContext(), NewRecipientActivity.class);
+        if (editRecipient != null) {
+            intent.putExtra(NewRecipientFragment.KEY_VIA, editRecipient.getEmail() != null ? editRecipient.getEmail().getVia() : editRecipient.getPhone().getVia());
+            intent.putExtra(NewRecipientFragment.KEY_NAME, editRecipient.getDisplayName());
+            intent.putExtra(NewRecipientFragment.KEY_RAW_ID, editRecipient.getRawId());
+            intent.putExtra(NewRecipientFragment.KEY_PHOTO_URL, editRecipient.getPhotoUri() == null ? null : Uri.parse(editRecipient.getPhotoUri()));
+        }
+        mCallbacks.onNewContact(intent);
+    }
+
+    public void handleNewContactResult(int resultCode, Intent data) {
+        if(resultCode == Activity.RESULT_OK && mFinalEvent != null) {
+            Recipient emailRecipient = RecipientManager.getRecipientWithMainEmailContactByRawId(mContext, mFinalEvent.getRecipient().getRawId());
+            if(emailRecipient == null) {
+                CustomToast.makeText(mContext, R.string.msg_no_email_address, Toast.LENGTH_LONG).show();
+            } else {
+                mSmsConfirmationDialog.dismiss();
+                sendMessage(emailRecipient, mFinalEvent.getRecording());
+                mFinalEvent = null;
             }
         }
     }
 
     public boolean triggerRecording(View boundsView, Recipient recipient) {
-        AuthenticationData authData = getCustomActionBarActivity().getAuthenticationPolicyEnforcer().getAuthenticationData();
+        AuthenticationData authData = mAuthenticationPolicyEnforcer.getAuthenticationData();
         if(authData == null) {
             return false;
         }
+
         String userRef = getPreferences().getFullName();
         if(userRef == null) {
             userRef = authData.getEmail();
@@ -252,7 +255,7 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
 
         this.mRecipient = recipient;
 
-        if (mRecipient.getPhone() != null && !Utils.isSimAvailable(mActivity)) {
+        if (mRecipient.getPhone() != null && !Utils.isSimAvailable(mContext)) {
             if(!mSmsAddContactDialog.isShowing()) {
                 mSmsAddContactDialog.show();
             }
@@ -260,7 +263,7 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
         }
 
         // start recording
-        mChatRecordOverlay.setBoundsView(boundsView);
+        mChatRecordOverlay.setViewBounds(boundsView);
         mChatRecordOverlay.setRecipient(mRecipient);
         mChatRecordOverlay.setSenderName(userRef);
         mChatRecordOverlay.show(false);
@@ -272,7 +275,7 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
     public void onRecordingFinished(RecordService.Event event) {
         mFinalEvent = event;
         if(!mPreferences.isShownSmsConfirmation() && event.getRecipient().getPhone() != null) {
-            Recipient emailRecipient = RecipientManager.getRecipientWithMainEmailContactByRawId(mActivity, mFinalEvent.getRecipient().getRawId());
+            Recipient emailRecipient = RecipientManager.getRecipientWithMainEmailContactByRawId(mContext, mFinalEvent.getRecipient().getRawId());
             mSmsConfirmationDialog.setEmailRecipient(emailRecipient);
             mSmsConfirmationDialog.show();
         } else {
@@ -286,12 +289,6 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
         return mMessagesServiceManager.send(recipient, recording);
     }
 
-    protected void launchChatActivity(long chatId) {
-        Intent chatIntent = new Intent(mActivity, ChatActivity.class);
-        chatIntent.putExtra(ChatFragment.PARAM_CHAT_ID, chatId);
-        startActivity(chatIntent);
-    }
-
     public ChatRecordOverlay getChatRecordOverlay() {
         return mChatRecordOverlay;
     }
@@ -300,8 +297,12 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
         return mPreferences;
     }
 
-    public CustomActionBarActivity getCustomActionBarActivity() {
-        return mActivity;
+    public Context getContext() {
+        return mContext;
+    }
+
+    public void setContext(Context mContext) {
+        this.mContext = mContext;
     }
 
     public MessagesServiceManager getMessagesServiceManager() {
@@ -312,52 +313,52 @@ public class ChatRecordOverlayFragment extends ListFragment implements ChatRecor
         return mPlayerServiceManager;
     }
 
+    public TouchInterceptable getTouchInterceptable() {
+        return mTouchInterceptable;
+    }
+
+    public void setTouchInterceptable(TouchInterceptable mTouchInterceptable) {
+        this.mTouchInterceptable = mTouchInterceptable;
+    }
+
     @Override
     public void onReceivedMessage(ReceiverEvent event) {
     }
 
     @Override
     public void onSendStarted(SenderEvent event) {
-
     }
 
     @Override
     public void onSendCancelled(SenderEvent event) {
-
     }
 
     @Override
     public void onSendError(SenderEvent event) {
-
     }
 
     @Override
     public void onSendFinished(SenderEvent event) {
-
     }
 
     @Override
     public void onSendProgress(SenderEvent event) {
-
     }
 
     @Override
     public void onSendQueued(SenderEvent event) {
-
     }
 
     @Override
     public void onBoundSendService() {
-
     }
 
     @Override
     public void onPlayerEvent(PlayerEvent event) {
-
     }
 
     @Override
     public void onBoundPlayService() {
-
     }
+
 }

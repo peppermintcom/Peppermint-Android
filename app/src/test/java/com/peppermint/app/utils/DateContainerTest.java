@@ -2,7 +2,6 @@ package com.peppermint.app.utils;
 
 import com.peppermint.app.BuildConfig;
 
-import org.joda.time.DateTimeZone;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricGradleTestRunner;
@@ -10,6 +9,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 import java.text.ParseException;
+import java.util.Calendar;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
@@ -26,14 +26,14 @@ public class DateContainerTest {
         String originalDate = "2015-01-01 12:34:56";
 
         DateContainer dc = new DateContainer(DateContainer.TYPE_DATETIME, originalDate);
-        assertEquals(dc.getAsString(DateTimeZone.UTC), originalDate);
+        assertEquals(dc.getAsString(DateContainer.UTC), originalDate);
 
-        assertEquals(dc.getDateTime().getYear(), 2015);
-        assertEquals(dc.getDateTime().getMonthOfYear(), 1);
-        assertEquals(dc.getDateTime().getDayOfMonth(), 1);
-        assertEquals(dc.getDateTime().getHourOfDay(), 12);
-        assertEquals(dc.getDateTime().getMinuteOfHour(), 34);
-        assertEquals(dc.getDateTime().getSecondOfMinute(), 56);
+        assertEquals(dc.getCalendar().get(Calendar.YEAR), 2015);
+        assertEquals(dc.getCalendar().get(Calendar.MONTH), 0);
+        assertEquals(dc.getCalendar().get(Calendar.DAY_OF_MONTH), 1);
+        assertEquals(dc.getCalendar().get(Calendar.HOUR_OF_DAY), 12);
+        assertEquals(dc.getCalendar().get(Calendar.MINUTE), 34);
+        assertEquals(dc.getCalendar().get(Calendar.SECOND), 56);
     }
 
     @Test
@@ -41,7 +41,7 @@ public class DateContainerTest {
         String originalDate = "2015-01-01 12:34:56";
 
         DateContainer dc = new DateContainer(DateContainer.TYPE_DATE, originalDate);
-        assertEquals(dc.getAsString(DateTimeZone.UTC), originalDate.substring(0, 10));
+        assertEquals(dc.getAsString(DateContainer.UTC), originalDate.substring(0, 10));
     }
 
     @Test
@@ -49,7 +49,7 @@ public class DateContainerTest {
         String originalDate = "2015-01-01 12:34:56";
 
         DateContainer dc = new DateContainer(DateContainer.TYPE_TIME, originalDate);
-        assertEquals(dc.getAsString(DateTimeZone.UTC), originalDate.substring(11));
+        assertEquals(dc.getAsString(DateContainer.UTC), originalDate.substring(11));
     }
 
     @Test
@@ -59,7 +59,7 @@ public class DateContainerTest {
         DateContainer dc = new DateContainer(DateContainer.TYPE_DATETIME, originalDate);
         dc.zeroTime();
 
-        assertEquals(dc.getAsString(DateTimeZone.UTC), originalDate.substring(0, 10) + " 00:00:00");
+        assertEquals(dc.getAsString(DateContainer.UTC), originalDate.substring(0, 10) + " 00:00:00");
     }
 
     @Test
@@ -67,19 +67,19 @@ public class DateContainerTest {
         DateContainer relativeDate = new DateContainer(DateContainer.TYPE_DATETIME, "2015-12-12 01:34:20");
 
         DateContainer dc = new DateContainer(DateContainer.TYPE_DATETIME, "2014-12-01 12:34:56");
-        assertEquals(DateContainer.getDateAsStringRelativeTo(RuntimeEnvironment.application, dc, relativeDate, DateTimeZone.UTC), "1 Dec 2014");
+        assertEquals(DateContainer.getDateAsStringRelativeTo(RuntimeEnvironment.application, dc, relativeDate, DateContainer.UTC), "1 Dec 2014");
 
         dc = new DateContainer(DateContainer.TYPE_DATETIME, "2015-12-12 12:34:56");
-        assertEquals(DateContainer.getDateAsStringRelativeTo(RuntimeEnvironment.application, dc, relativeDate, DateTimeZone.UTC), "Today");
+        assertEquals(DateContainer.getDateAsStringRelativeTo(RuntimeEnvironment.application, dc, relativeDate, DateContainer.UTC), "Today");
 
         dc = new DateContainer(DateContainer.TYPE_DATETIME, "2015-12-11 12:34:56");
-        assertEquals(DateContainer.getDateAsStringRelativeTo(RuntimeEnvironment.application, dc, relativeDate, DateTimeZone.UTC), "Yesterday");
+        assertEquals(DateContainer.getDateAsStringRelativeTo(RuntimeEnvironment.application, dc, relativeDate, DateContainer.UTC), "Yesterday");
 
         dc = new DateContainer(DateContainer.TYPE_DATETIME, "2015-12-09 12:34:56");
-        assertEquals(DateContainer.getDateAsStringRelativeTo(RuntimeEnvironment.application, dc, relativeDate, DateTimeZone.UTC), "Wednesday");
+        assertEquals(DateContainer.getDateAsStringRelativeTo(RuntimeEnvironment.application, dc, relativeDate, DateContainer.UTC), "Wednesday");
 
         dc = new DateContainer(DateContainer.TYPE_DATETIME, "2015-12-01 12:34:56");
-        assertEquals(DateContainer.getDateAsStringRelativeTo(RuntimeEnvironment.application, dc, relativeDate, DateTimeZone.UTC), "1 Dec");
+        assertEquals(DateContainer.getDateAsStringRelativeTo(RuntimeEnvironment.application, dc, relativeDate, DateContainer.UTC), "1 Dec");
     }
 
     @Test

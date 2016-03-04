@@ -17,6 +17,7 @@ public class Chat implements Serializable {
     private String mLastMessageTimestamp = DateContainer.getCurrentUTCTimestamp();
 
     private Recipient mMainRecipientParameter;
+    private int mAmountUnopened;
 
     public Chat() {
     }
@@ -62,10 +63,19 @@ public class Chat implements Serializable {
         this.mMainRecipientParameter = mMainRecipientParameter;
     }
 
+    public int getAmountUnopened() {
+        return mAmountUnopened;
+    }
+
+    public void setAmountUnopened(int mAmountUnopened) {
+        this.mAmountUnopened = mAmountUnopened;
+    }
+
     @Override
     public String toString() {
         return "Chat{" +
                 "mId=" + mId +
+                ", mAmountUnopened=" + mAmountUnopened +
                 ", mMainRecipientId=" + mMainRecipientId +
                 ", mLastMessageTimestamp=" + mLastMessageTimestamp +
                 '}';

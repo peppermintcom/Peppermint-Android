@@ -23,8 +23,8 @@
             android:layout_height="48dp"
             android:layout_marginRight="16dp"
             custom:cornerRadius="10dp"
-            custom:borderWidth="2dp"
-            custom:borderColor="@color/white" />
+            custom:roundBorderWidth="2dp"
+            custom:roundBorderColor="@color/white" />
 
         <LinearLayout
             android:id="@+id/lytChatStats"

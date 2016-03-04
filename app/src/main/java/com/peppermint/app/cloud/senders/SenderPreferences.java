@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.peppermint.app.utils.Utils;
 
@@ -32,6 +33,11 @@ public class SenderPreferences {
 
     public static final String FIRST_NAME_KEY = "firstName";
     public static final String LAST_NAME_KEY = "lastName";
+
+    public static final String ALLOW_OVERLAY_KEY = "allowOverlay";
+
+    public static final String CHAT_HEAD_POSITION_X_KEY = "chatHeadPositionX";
+    public static final String CHAT_HEAD_POSITION_Y_KEY = "chatHeadPositionY";
 
     protected static final int RECENT_CONTACTS_LIST_LIMIT = 50;
 
@@ -64,6 +70,16 @@ public class SenderPreferences {
 
     public boolean isEnabled() {
         return getSharedPreferences().getBoolean(getEnabledPreferenceKey(this.getClass()), true);
+    }
+
+    public void setOverlayAllowed(boolean val) {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putBoolean(ALLOW_OVERLAY_KEY, val);
+        editor.commit();
+    }
+
+    public boolean isOverlayAllowed() {
+        return getSharedPreferences().getBoolean(ALLOW_OVERLAY_KEY, true);
     }
 
     public void addRecentContactUri(long id) {
@@ -139,6 +155,21 @@ public class SenderPreferences {
 
     public boolean isShownSmsConfirmation() {
         return getSharedPreferences().getBoolean(SHOWN_SMS_CONFIRMATION_KEY, false);
+    }
+
+    public void setChatHeadPosition(float x, float y) {
+        Log.d("TAG", "SET X="+x+" Y="+y);
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putFloat(CHAT_HEAD_POSITION_X_KEY, x);
+        editor.putFloat(CHAT_HEAD_POSITION_Y_KEY, y);
+        editor.commit();
+    }
+
+    public float[] getChatHeadPosition() {
+        float x = getSharedPreferences().getFloat(CHAT_HEAD_POSITION_X_KEY, 0);
+        float y = getSharedPreferences().getFloat(CHAT_HEAD_POSITION_Y_KEY, 0);
+        Log.d("TAG", "GET X="+x+" Y="+y);
+        return new float[]{x, y};
     }
 
     public void setFirstName(String name) {

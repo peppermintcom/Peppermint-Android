@@ -163,10 +163,6 @@ public class ChatRecordOverlayView extends FrameLayout {
         mTxtRecordingFor.setText(String.format(getContext().getString(R.string.recording_for), name));
     }
 
-    public void setVia(String via) {
-        /*mTxtVia.setText(via);*/
-    }
-
     public void setContentPosition(Rect rect) {
         int factor = 0;
 

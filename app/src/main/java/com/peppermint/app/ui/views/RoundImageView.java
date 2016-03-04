@@ -30,6 +30,9 @@ public class RoundImageView extends ImageView {
     private int mBorderWidth, mCornerRadius;
     private Paint mPaint, mBorderPaint;
     private int mWidth, mHeight;
+
+    private Drawable mDrawable;
+    private Bitmap mBitmap;
     private RectF mBitmapBounds = new RectF(), mBorderBounds = new RectF();
 
     private boolean mKeepAspectRatio = false;
@@ -60,79 +63,97 @@ public class RoundImageView extends ImageView {
 
             try {
                 mKeepAspectRatio = a.getBoolean(R.styleable.PeppermintView_keepAspectRatio, mKeepAspectRatio);
-                mBorderWidth = a.getDimensionPixelSize(R.styleable.PeppermintView_borderWidth, Utils.dpToPx(getContext(), DEF_BORDER_WIDTH_DP));
+                mBorderWidth = a.getDimensionPixelSize(R.styleable.PeppermintView_roundBorderWidth, Utils.dpToPx(getContext(), DEF_BORDER_WIDTH_DP));
                 mCornerRadius = a.getDimensionPixelSize(R.styleable.PeppermintView_cornerRadius, Utils.dpToPx(getContext(), DEF_CORNER_RADIUS_DP));
-                mBorderPaint.setColor(a.getColor(R.styleable.PeppermintView_borderColor, Color.parseColor(DEF_BORDER_COLOR)));
+                mBorderPaint.setColor(a.getColor(R.styleable.PeppermintView_roundBorderColor, Color.parseColor(DEF_BORDER_COLOR)));
             } finally {
                 a.recycle();
             }
+        } else {
+            mBorderWidth = Utils.dpToPx(getContext(), DEF_BORDER_WIDTH_DP);
+            mCornerRadius = Utils.dpToPx(getContext(), DEF_CORNER_RADIUS_DP);
+            mBorderPaint.setColor(Color.parseColor(DEF_BORDER_COLOR));
         }
     }
 
     @Override
     public void onDraw(Canvas canvas) {
-        // load the bitmap
-        Bitmap image = drawableToBitmap(getDrawable());
-
-        // init shader
-        if (image != null) {
-            int mCanvasSize = mWidth;
-            if(mHeight < mCanvasSize) {
-                mCanvasSize = mHeight;
-            }
-
-            int bitmapWidth = mCanvasSize;
-            int bitmapHeight = mCanvasSize;
-
-            if(isKeepAspectRatio()) {
-                float scale = image.getHeight() > image.getWidth()
-                        ? (float) mCanvasSize / (float) image.getHeight() : (float) mCanvasSize / (float) image.getWidth();
-                bitmapWidth = Math.round((float) image.getWidth() * scale);
-                bitmapHeight = Math.round((float) image.getHeight() * scale);
-            }
-
-            Bitmap bitmap = Bitmap.createScaledBitmap(image, bitmapWidth, bitmapHeight, true);
-            BitmapShader shader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
-            mPaint.setShader(shader);
-
+        if (mBitmap != null) {
             int xOffset = 0;
             int yOffset = 0;
 
             if(isKeepAspectRatio()) {
-                xOffset = (int) (((float) mWidth - (float) bitmap.getWidth()) / 2f);
-                yOffset = (int) (((float) mHeight - (float) bitmap.getHeight()) / 2f);
+                xOffset = (int) (((float) mWidth - (float) mBitmap.getWidth()) / 2f);
+                yOffset = (int) (((float) mHeight - (float) mBitmap.getHeight()) / 2f);
             }
 
-            mBorderBounds.set(xOffset, yOffset, bitmap.getWidth(), bitmap.getHeight());
-            mBitmapBounds.set(xOffset + mBorderWidth, yOffset + mBorderWidth, bitmap.getWidth() - mBorderWidth, bitmap.getHeight() - mBorderWidth);
+            mBorderBounds.set(xOffset, yOffset, mBitmap.getWidth() + xOffset, mBitmap.getHeight() + yOffset);
+            mBitmapBounds.set(xOffset + mBorderWidth, yOffset + mBorderWidth, mBitmap.getWidth() + xOffset - mBorderWidth, mBitmap.getHeight() + yOffset - mBorderWidth);
             canvas.drawRoundRect(mBorderBounds, mCornerRadius, mCornerRadius, mBorderPaint);
             canvas.drawRoundRect(mBitmapBounds, mCornerRadius - mBorderWidth, mCornerRadius - mBorderWidth, mPaint);
-
-            //bitmap.recycle();
         }
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        mWidth = MeasureSpec.getSize(widthMeasureSpec);
-        mHeight = MeasureSpec.getSize(heightMeasureSpec);
-        setMeasuredDimension(mWidth, mHeight);
-    }
+        int tmpWidth = MeasureSpec.getSize(widthMeasureSpec);
+        int tmpHeight = MeasureSpec.getSize(heightMeasureSpec);
 
-    private Bitmap drawableToBitmap(Drawable drawable) {
-        if (drawable == null) {
-            return null;
-        } else if (drawable instanceof BitmapDrawable) {
-            return ((BitmapDrawable) drawable).getBitmap();
+        if(mWidth != tmpWidth || mHeight != tmpHeight || (mDrawable != null && !mDrawable.equals(getDrawable()))) {
+            mWidth = tmpWidth;
+            mHeight = tmpHeight;
+            onSizeChanged();
         }
 
-        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
-                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
+        setMeasuredDimension(tmpWidth, tmpHeight);
+    }
 
-        return bitmap;
+    protected void onSizeChanged() {
+        Drawable drawable = getDrawable();
+
+        if (drawable == null) {
+            mBitmap = null;
+            return;
+        }
+
+        mDrawable = drawable;
+
+        // draw to bitmap
+        Bitmap tmpBitmap;
+        boolean recycleBitmap = false;
+        if(drawable instanceof BitmapDrawable) {
+            tmpBitmap = ((BitmapDrawable) drawable).getBitmap();
+        } else {
+            tmpBitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                    drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(tmpBitmap);
+            drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+            drawable.draw(canvas);
+            recycleBitmap = true;
+        }
+
+        // set paint
+        int mCanvasSize = mWidth;
+        if(mHeight < mCanvasSize) {
+            mCanvasSize = mHeight;
+        }
+
+        int bitmapWidth = mCanvasSize;
+        int bitmapHeight = mCanvasSize;
+
+        if(isKeepAspectRatio()) {
+            float scale = tmpBitmap.getHeight() > tmpBitmap.getWidth()
+                    ? (float) mCanvasSize / (float) tmpBitmap.getHeight() : (float) mCanvasSize / (float) tmpBitmap.getWidth();
+            bitmapWidth = Math.round((float) tmpBitmap.getWidth() * scale);
+            bitmapHeight = Math.round((float) tmpBitmap.getHeight() * scale);
+        }
+
+        mBitmap = Bitmap.createScaledBitmap(tmpBitmap, bitmapWidth, bitmapHeight, true);
+        mPaint.setShader(new BitmapShader(mBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
+
+        if(recycleBitmap) {
+            tmpBitmap.recycle();
+        }
     }
 
     public boolean isKeepAspectRatio() {
@@ -141,5 +162,41 @@ public class RoundImageView extends ImageView {
 
     public void setKeepAspectRatio(boolean mKeepAspectRatio) {
         this.mKeepAspectRatio = mKeepAspectRatio;
+    }
+
+    public int getBorderWidth() {
+        return mBorderWidth;
+    }
+
+    public void setBorderWidth(int mBorderWidth) {
+        this.mBorderWidth = mBorderWidth;
+    }
+
+    public int getCornerRadius() {
+        return mCornerRadius;
+    }
+
+    public void setCornerRadius(int mCornerRadius) {
+        this.mCornerRadius = mCornerRadius;
+    }
+
+    protected int getLocalHeight() {
+        return mHeight;
+    }
+
+    protected int getLocalWidth() {
+        return mWidth;
+    }
+
+    protected Bitmap getBitmap() {
+        return mBitmap;
+    }
+
+    protected Paint getBorderPaint() {
+        return mBorderPaint;
+    }
+
+    protected Paint getBitmapPaint() {
+        return mPaint;
     }
 }

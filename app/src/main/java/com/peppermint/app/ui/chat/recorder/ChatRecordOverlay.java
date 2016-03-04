@@ -12,9 +12,9 @@ import com.peppermint.app.RecordService;
 import com.peppermint.app.RecordServiceManager;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
-import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.Overlay;
 import com.peppermint.app.ui.OverlayManager;
+import com.peppermint.app.ui.TouchInterceptable;
 import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.utils.NoMicDataIOException;
 import com.peppermint.app.utils.Utils;
@@ -38,14 +38,22 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
     private static final int MIN_SWIPE_DISTANCE_DP = 90;        // min swipe distance
     private static final int MAX_SWIPE_DURATION = 300;        // max swipe duration
 
-    private CustomActionBarActivity mActivity;
+    // contextual/external instances
+    private TouchInterceptable mTouchInterceptable;
     private RecordServiceManager mRecordServiceManager;
 
+    // actual View of the overlay
     private ChatRecordOverlayView mView;
+    private View mViewBounds;
+
+    // start recording pop sound player
     private MediaPlayer mRecordSoundPlayer;
+
+    // state
     private boolean mRecording = false;
+
+    // sender and recipient data
     private Recipient mRecipient;
-    private View mBoundsView;
     private String mSenderName;
 
     // swipe-related
@@ -54,27 +62,31 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
     private long mT1;
     private int mMinSwipeDistance;
 
+    // callback
     private OnRecordingFinishedCallback mOnRecordingFinishedCallback;
 
-    private View mViewToRemoveFocus;
-    private View mViewToRecoverFocus;
-
-    public ChatRecordOverlay(CustomActionBarActivity activity, View mViewToRemoveFocus, View mViewToRecoverFocus) {
+    public ChatRecordOverlay(TouchInterceptable touchInterceptable) {
         super(SCREEN_RECORDING_ID, R.layout.v_recording_overlay_layout, false, true);
-        this.mActivity = activity;
-        this.mViewToRecoverFocus = mViewToRecoverFocus;
-        this.mViewToRemoveFocus = mViewToRemoveFocus;
+        this.mTouchInterceptable = touchInterceptable;
     }
 
+    /**
+     * Binds to the {@link RecordService}
+     * Also starts listening for touch events that trigger the overlay.
+     */
     public void bindService() {
         if(mRecordServiceManager != null) {
             mRecordServiceManager.bind();
         }
-        mActivity.addTouchEventInterceptor(this);
+        mTouchInterceptable.addTouchEventInterceptor(this);
     }
 
+    /**
+     * Unbinds from the {@link RecordService}
+     * Also stops listening for touch events that trigger the overlay.
+     */
     public void unbindService() {
-        mActivity.removeTouchEventInterceptor(this);
+        mTouchInterceptable.removeTouchEventInterceptor(this);
         if(mRecordServiceManager != null) {
             mRecordServiceManager.unbind();
         }
@@ -83,14 +95,13 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
     @Override
     protected View onCreateView(LayoutInflater layoutInflater) {
         mView = (ChatRecordOverlayView) super.onCreateView(layoutInflater);
-        /*mView.setOnTouchListener(this);*/
 
-        mRecordServiceManager = new RecordServiceManager(mActivity);
+        mRecordServiceManager = new RecordServiceManager(getContext());
         mRecordServiceManager.setListener(this);
         mRecordServiceManager.start(false);
 
-        mRecordSoundPlayer = MediaPlayer.create(mActivity, R.raw.s_record);
-        mMinSwipeDistance = Utils.dpToPx(mActivity, MIN_SWIPE_DISTANCE_DP);
+        mRecordSoundPlayer = MediaPlayer.create(getContext(), R.raw.s_record);
+        mMinSwipeDistance = Utils.dpToPx(getContext(), MIN_SWIPE_DISTANCE_DP);
 
         getOverlayManager().addOverlayVisibilityChangeListener(this);
 
@@ -126,7 +137,7 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
         boolean shown = super.show(animated);
 
         if(shown) {
-            mBoundsView.getGlobalVisibleRect(mContactRect);
+            mViewBounds.getGlobalVisibleRect(mContactRect);
             mView.setContentPosition(mContactRect);
 
             if(mRecordSoundPlayer.isPlaying()) {
@@ -136,8 +147,7 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
             mRecordSoundPlayer.start();
 
             mView.setName(mRecipient.getDisplayName());
-            mView.setVia(mRecipient.getEmail() != null ? mRecipient.getEmail().getVia() : mRecipient.getPhone().getVia());
-            String filename = mActivity.getString(R.string.filename_message_from) + Utils.normalizeAndCleanString(mSenderName);
+            String filename = getContext().getString(R.string.filename_message_from) + Utils.normalizeAndCleanString(mSenderName);
 
             mRecordServiceManager.startRecording(filename, mRecipient, MAX_DURATION_MILLIS);
 
@@ -153,13 +163,6 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
 
     @Override
     public boolean hide(boolean animated, long delayMs, boolean cancel) {
-        if(mViewToRemoveFocus != null) {
-            mViewToRemoveFocus.clearFocus();
-            if(mViewToRecoverFocus != null) {
-                mViewToRecoverFocus.requestFocus();
-            }
-        }
-
         if(mRecording) {
             mRecordServiceManager.stopRecording(true);
         }
@@ -213,9 +216,9 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
     @Override
     public void onErrorRecording(RecordService.Event event) {
         if(event.getError() instanceof NoMicDataIOException) {
-            Toast.makeText(mActivity, mActivity.getString(R.string.msg_nomicdata_error), Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), getContext().getString(R.string.msg_nomicdata_error), Toast.LENGTH_LONG).show();
         } else {
-            Toast.makeText(mActivity, mActivity.getString(R.string.msg_record_error), Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), getContext().getString(R.string.msg_record_error), Toast.LENGTH_LONG).show();
         }
         mRecording = false;
         hide(false, RECORDING_OVERLAY_HIDE_DELAY, true);
@@ -254,10 +257,10 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
                         discard = lessThanMin || moreThanMax;
 
                         if (lessThanMin) {
-                            CustomToast.makeText(mActivity, R.string.msg_record_at_least, Toast.LENGTH_LONG).show();
+                            CustomToast.makeText(getContext(), R.string.msg_record_at_least, Toast.LENGTH_LONG).show();
                         }
                         if (moreThanMax) {
-                            CustomToast.makeText(mActivity, R.string.msg_exceeded_maxduration, Toast.LENGTH_LONG).show();
+                            CustomToast.makeText(getContext(), R.string.msg_exceeded_maxduration, Toast.LENGTH_LONG).show();
                         }
                     }
                     if (mRecording) {
@@ -286,12 +289,12 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
         this.mOnRecordingFinishedCallback = mOnRecordingFinishedCallback;
     }
 
-    public View getBoundsView() {
-        return mBoundsView;
+    public View getViewBounds() {
+        return mViewBounds;
     }
 
-    public void setBoundsView(View mBoundsView) {
-        this.mBoundsView = mBoundsView;
+    public void setViewBounds(View mViewBounds) {
+        this.mViewBounds = mViewBounds;
     }
 
     public Recipient getRecipient() {
@@ -310,30 +313,12 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
         this.mSenderName = mSenderName;
     }
 
-    public View getViewToRemoveFocus() {
-        return mViewToRemoveFocus;
-    }
-
-    public void setViewToRemoveFocus(View mViewToRemoveFocus) {
-        this.mViewToRemoveFocus = mViewToRemoveFocus;
-    }
-
-    public View getViewToRecoverFocus() {
-        return mViewToRecoverFocus;
-    }
-
-    public void setViewToRecoverFocus(View mViewToRecoverFocus) {
-        this.mViewToRecoverFocus = mViewToRecoverFocus;
-    }
-
     @Override
     public void assimilateFrom(Overlay overlay) {
         super.assimilateFrom(overlay);
 
-        this.mBoundsView = ((ChatRecordOverlay) overlay).mBoundsView;
+        this.mViewBounds = ((ChatRecordOverlay) overlay).mViewBounds;
         this.mRecipient = ((ChatRecordOverlay) overlay).mRecipient;
-        this.mViewToRecoverFocus = ((ChatRecordOverlay) overlay).mViewToRecoverFocus;
-        this.mViewToRemoveFocus = ((ChatRecordOverlay) overlay).mViewToRemoveFocus;
         this.mOnRecordingFinishedCallback = null;
     }
 }

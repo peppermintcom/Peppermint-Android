@@ -32,6 +32,8 @@ public class PeppermintApp extends Application {
         // start the service so that we can receive GCM notifications
         MessagesServiceManager messagesServiceManager = new MessagesServiceManager(this);
         messagesServiceManager.start();
+
+        startService(new Intent(ChatHeadService.ACTION_ENABLE, null, this, ChatHeadService.class));
     }
 
     public Typeface getFontSemibold() {

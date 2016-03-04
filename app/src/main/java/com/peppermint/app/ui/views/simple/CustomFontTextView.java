@@ -52,7 +52,14 @@ public class CustomFontTextView extends TextView {
         init(attrs);
     }
 
-    private void init(AttributeSet attrs) {
+    public void setTypeface(int typefaceStringResId) {
+        String tfPath = getContext().getString(typefaceStringResId);
+        if(tfPath != null) {
+            setTypeface(getTypeface(getContext(), tfPath));
+        }
+    }
+
+    public void init(AttributeSet attrs) {
         if(attrs != null) {
             TypedArray a = getContext().getTheme().obtainStyledAttributes(
                     attrs,

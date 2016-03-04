@@ -3,6 +3,7 @@ package com.peppermint.app.ui;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
+import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Build;
@@ -11,6 +12,7 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.FrameLayout;
 
 import com.peppermint.app.tracking.TrackerManager;
@@ -48,9 +50,9 @@ public class OverlayManager {
             if(mOverlay.isDisableAllTouch()) {
                 enableDisableAllTouch(true);
             }
-            if(mOverlay.isDisableAutoScreenRotation()) {
+            if(mContext instanceof Activity && mOverlay.isDisableAutoScreenRotation()) {
                 //noinspection ResourceType
-                mActivity.setRequestedOrientation(mOverlay.getRequestedOrientation());
+                ((Activity) mContext).setRequestedOrientation(mOverlay.getRequestedOrientation());
             }
 
             boolean allHidden = true;
@@ -65,7 +67,7 @@ public class OverlayManager {
             }
 
             if(mOverlay.getId() != null && mRootScreenId != null) {
-                TrackerManager.getInstance(mActivity.getApplicationContext()).trackScreenView(mRootScreenId);
+                TrackerManager.getInstance(mContext.getApplicationContext()).trackScreenView(mRootScreenId);
             }
 
             for(OverlayVisibilityChangeListener listener : mOverlayVisibilityChangeListenerList) {
@@ -75,7 +77,7 @@ public class OverlayManager {
     }
 
     private String mRootScreenId;
-    private Activity mActivity;
+    private Context mContext;
     private AnimatorBuilder mAnimatorBuilder;
     private Handler mDelayHandler = new Handler();
 
@@ -87,15 +89,15 @@ public class OverlayManager {
 
     private List<OverlayVisibilityChangeListener> mOverlayVisibilityChangeListenerList = new ArrayList<>();
 
-    public OverlayManager(Activity activityWithOverlays, String rootScreenId) {
-        this.mActivity = activityWithOverlays;
+    public OverlayManager(Context context, String rootScreenId) {
+        this.mContext = context;
         this.mAnimatorBuilder = new AnimatorBuilder();
         this.mRootScreenId = rootScreenId;
     }
 
-    public OverlayManager(Activity activityWithOverlays, String rootScreenId, int overlayContainerResId) {
-        this(activityWithOverlays, rootScreenId);
-        this.mLytOverlayContainer = (FrameLayout) activityWithOverlays.findViewById(overlayContainerResId);
+    public OverlayManager(Context context, String rootScreenId, FrameLayout overlayContainer) {
+        this(context, rootScreenId);
+        this.mLytOverlayContainer = overlayContainer;
     }
 
     /**
@@ -119,7 +121,7 @@ public class OverlayManager {
         overlay.setOverlayManager(this);
         mOverlayMap.put(overlay.getId(), overlay);
 
-        View v = overlay.create(mActivity);
+        View v = overlay.create(mContext);
         v.setVisibility(View.INVISIBLE);
 
         mLytOverlayContainer.addView(v, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -147,14 +149,14 @@ public class OverlayManager {
             enableDisableAllTouch(false);
         }
 
-        if(overlay.isDisableAutoScreenRotation()) {
-            overlay.setRequestedOrientation(mActivity.getRequestedOrientation());
+        if(mContext instanceof Activity && overlay.isDisableAutoScreenRotation()) {
+            overlay.setRequestedOrientation(((Activity) mContext).getRequestedOrientation());
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-                mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+                ((Activity) mContext).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
             } else {
                 //noinspection ResourceType
-                mActivity.setRequestedOrientation(getActivityInfoOrientation() | ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
+                ((Activity) mContext).setRequestedOrientation(getActivityInfoOrientation() | ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
             }
         }
 
@@ -165,7 +167,7 @@ public class OverlayManager {
         }
 
         if(overlay.getId() != null) {
-            TrackerManager.getInstance(mActivity.getApplicationContext()).trackScreenView(overlay.getId());
+            TrackerManager.getInstance(mContext.getApplicationContext()).trackScreenView(overlay.getId());
         }
 
         for(OverlayVisibilityChangeListener listener : mOverlayVisibilityChangeListenerList) {
@@ -275,25 +277,33 @@ public class OverlayManager {
     }
 
     protected void lockOrientation() {
-        mCachedScreenOrientation = mActivity.getRequestedOrientation();
+        if(!(mContext instanceof Activity)) {
+            return;
+        }
+
+        mCachedScreenOrientation = ((Activity) mContext).getRequestedOrientation();
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            mActivity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+            ((Activity) mContext).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
         } else {
             //noinspection ResourceType
-            mActivity.setRequestedOrientation(getActivityInfoOrientation() | ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
+            ((Activity) mContext).setRequestedOrientation(getActivityInfoOrientation() | ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
         }
     }
 
     protected void unlockOrientation() {
-        mActivity.setRequestedOrientation(mCachedScreenOrientation);
+        if(!(mContext instanceof Activity)) {
+            return;
+        }
+
+        ((Activity) mContext).setRequestedOrientation(mCachedScreenOrientation);
     }
 
     private int getActivityInfoOrientation() {
         // rotation depends on devices natural orientation (in tablets it's landscape; portrait on phones)
         // thus, 0 rotation is landscape on tablets and portrait on phones
-        int rotation = mActivity.getWindowManager().getDefaultDisplay().getRotation();
-        if(mActivity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+        int rotation = ((WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getRotation();
+        if(mContext.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
             if(rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_270) {
                 return ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
             }
@@ -311,7 +321,9 @@ public class OverlayManager {
      * @param enabled true to enable; false to disable
      */
     public void enableDisableAllTouch(boolean enabled) {
-        enableDisableTouch((ViewGroup) mActivity.getWindow().getDecorView(), enabled);
+        if(mContext instanceof Activity) {
+            enableDisableTouch((ViewGroup) ((Activity) mContext).getWindow().getDecorView(), enabled);
+        }
     }
 
     /**

@@ -9,6 +9,7 @@ import android.view.View;
  */
 public class Overlay {
 
+    private Context mContext;
     private int mViewResId;
     private View mView;
     private boolean mDisableAllTouch, mDisableAutoScreenRotation;
@@ -31,6 +32,8 @@ public class Overlay {
     }
 
     protected View create(Context context) {
+        this.mContext = context;
+
         if(mCreated) {
             return mView;
         }
@@ -112,6 +115,14 @@ public class Overlay {
 
     public boolean isVisible() {
         return mView != null && mView.getVisibility() == View.VISIBLE;
+    }
+
+    public Context getContext() {
+        return mContext;
+    }
+
+    public void setContext(Context mContext) {
+        this.mContext = mContext;
     }
 
     public void assimilateFrom(Overlay overlay) {

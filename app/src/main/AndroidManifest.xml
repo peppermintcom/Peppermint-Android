@@ -16,6 +16,8 @@
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
 
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+
     <!-- GCM Permissions -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <permission android:name="com.peppermint.app.permission.C2D_MESSAGE"
@@ -136,12 +138,30 @@
             android:windowSoftInputMode="stateHidden">
         </activity>
 
+        <!-- UI: CHAT OVERLAY -->
+        <activity
+            android:name=".ui.chat.head.ChatHeadActivity"
+            android:label="@string/app_name"
+            android:theme="@style/Peppermint.Theme.Transparent"
+            android:windowSoftInputMode="stateHidden">
+        </activity>
+
         <!-- UI: HELPER GET RESULT (utilitary invisible activity that allows services to
             launch other activities and obtain a result through "onActivityResult") -->
         <activity
             android:name=".cloud.senders.GetResultActivity"
             android:theme="@style/Theme.Transparent" >
         </activity>
+
+        <service
+            android:name=".ui.chat.head.ChatHeadService"
+            android:enabled="true"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="com.peppermint.app.ChatHeadService.ENABLE" />
+                <action android:name="com.peppermint.app.ChatHeadService.DISABLE" />
+            </intent-filter>
+        </service>
 
         <!-- SERV: RECORDING -->
         <service

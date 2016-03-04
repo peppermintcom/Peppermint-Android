@@ -43,7 +43,7 @@ import java.util.List;
  *
  * Abstract activity implementation that uses Peppermint's custom action bar.
  */
-public abstract class CustomActionBarActivity extends FragmentActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public abstract class CustomActionBarActivity extends FragmentActivity implements SharedPreferences.OnSharedPreferenceChangeListener, TouchInterceptable {
 
     private static final String TAG = CustomActionBarActivity.class.getSimpleName();
 
@@ -71,6 +71,7 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     protected int getContentViewResourceId() {
         return R.layout.a_custom_actionbar_layout;
     }
+    protected int getBackgroundResourceId() { return R.color.background0; }
 
     // fragment loading
     private final Handler mHandler = new Handler();
@@ -179,20 +180,23 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
         super.onCreate(savedInstanceState);
 
         setContentView(getContentViewResourceId());
-        getCustomActionBar().initViews();
+        CustomActionBarView actionBar = getCustomActionBar();
 
-        getCustomActionBar().getTouchInterceptor().setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                mLytDrawer.closeDrawers();
-                return false;
-            }
-        });
+        if(actionBar != null) {
+            actionBar.initViews();
+            actionBar.getTouchInterceptor().setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    mLytDrawer.closeDrawers();
+                    return false;
+                }
+            });
+        }
 
         mPreferences = new SenderPreferences(this);
 
         mTrackerManager = TrackerManager.getInstance(getApplicationContext());
-        mOverlayManager = new OverlayManager(this, null, R.id.lytOverlay);
+        mOverlayManager = new OverlayManager(this, null, (FrameLayout) findViewById(R.id.lytOverlay));
         mAuthenticationPolicyEnforcer = new AuthenticationPolicyEnforcer(this, savedInstanceState);
         mAuthenticationPolicyEnforcer.addAuthenticationDoneCallback(new AuthenticationPolicyEnforcer.AuthenticationDoneCallback() {
             @Override
@@ -210,7 +214,9 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
 
         mImgUserAvatar = (ImageView) findViewById(R.id.imgUserAvatar);
         mTxtUsername = (TextView) findViewById(R.id.txtUserName);
-        mTxtUsername.setTypeface(app.getFontSemibold());
+        if(mTxtUsername != null) {
+            mTxtUsername.setTypeface(app.getFontSemibold());
+        }
         mLytDrawer = (DrawerLayout) findViewById(R.id.drawer);
 
         mNavigationItemList = getNavigationItems();
@@ -226,54 +232,61 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
             firstNavigationItem = mNavigationItemList.get(0);
         }
 
-        if(mNavigationItemList == null || mVisibleNavigationItemList.size() <= 0) {
-            mLytDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
-            getCustomActionBar().setDisplayMenuAsUpEnabled(true);
-            getCustomActionBar().getMenuButton().setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Utils.hideKeyboard(CustomActionBarActivity.this);
-                    finish();
-                }
-            });
-        } else {
-            mLstDrawer = (ListView) findViewById(R.id.list);
-            NavigationListAdapter adapter = new NavigationListAdapter(this, mVisibleNavigationItemList);
-            mLstDrawer.setAdapter(adapter);
+        if(mLytDrawer != null) {
 
-            // Drawer Item click listeners
-            mLstDrawer.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    selectItemFromDrawer(position);
+            if (mNavigationItemList == null || mVisibleNavigationItemList.size() <= 0) {
+                mLytDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+                if (actionBar != null) {
+                    actionBar.setDisplayMenuAsUpEnabled(true);
+                    actionBar.getMenuButton().setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Utils.hideKeyboard(CustomActionBarActivity.this);
+                            finish();
+                        }
+                    });
                 }
-            });
+            } else {
+                mLstDrawer = (ListView) findViewById(R.id.list);
+                NavigationListAdapter adapter = new NavigationListAdapter(this, mVisibleNavigationItemList);
+                mLstDrawer.setAdapter(adapter);
 
-            mDrawerToggle = new ActionBarDrawerToggle(this, mLytDrawer, null, R.string.drawer_open_desc, R.string.drawer_closed_desc) {
-                @Override
-                public void onDrawerOpened(View drawerView) {
-                    super.onDrawerOpened(drawerView);
-                    invalidateOptionsMenu();
-                }
-
-                @Override
-                public void onDrawerClosed(View drawerView) {
-                    super.onDrawerClosed(drawerView);
-                    invalidateOptionsMenu();
-                }
-            };
-            mLytDrawer.setDrawerListener(mDrawerToggle);
-
-            getCustomActionBar().getMenuButton().setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (mLytDrawer.isDrawerOpen(GravityCompat.START)) {
-                        mLytDrawer.closeDrawers();
-                    } else {
-                        mLytDrawer.openDrawer(GravityCompat.START);
+                // Drawer Item click listeners
+                mLstDrawer.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        selectItemFromDrawer(position);
                     }
+                });
+
+                mDrawerToggle = new ActionBarDrawerToggle(this, mLytDrawer, null, R.string.drawer_open_desc, R.string.drawer_closed_desc) {
+                    @Override
+                    public void onDrawerOpened(View drawerView) {
+                        super.onDrawerOpened(drawerView);
+                        invalidateOptionsMenu();
+                    }
+
+                    @Override
+                    public void onDrawerClosed(View drawerView) {
+                        super.onDrawerClosed(drawerView);
+                        invalidateOptionsMenu();
+                    }
+                };
+                mLytDrawer.setDrawerListener(mDrawerToggle);
+
+                if (actionBar != null) {
+                    actionBar.getMenuButton().setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (mLytDrawer.isDrawerOpen(GravityCompat.START)) {
+                                mLytDrawer.closeDrawers();
+                            } else {
+                                mLytDrawer.openDrawer(GravityCompat.START);
+                            }
+                        }
+                    });
                 }
-            });
+            }
         }
 
         mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
@@ -314,7 +327,7 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     @Override
     protected void onStart() {
         super.onStart();
-        getWindow().setBackgroundDrawableResource(R.color.background0);
+        getWindow().setBackgroundDrawableResource(getBackgroundResourceId());
     }
 
     @Override
@@ -338,7 +351,7 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
 
     @Override
     public void onBackPressed() {
-        if(mLytDrawer.isDrawerOpen(GravityCompat.START)) {
+        if(mLytDrawer != null && mLytDrawer.isDrawerOpen(GravityCompat.START)) {
             mLytDrawer.closeDrawers();
             return;
         }
@@ -404,7 +417,7 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     }
 
     protected boolean refreshProfileData() {
-        if(mNavigationItemList == null || mNavigationItemList.size() <= 0) {
+        if(mVisibleNavigationItemList == null || mVisibleNavigationItemList.size() <= 0) {
             Log.d(TAG, "Drawer is locked and profile is hidden. Skipping profile info refresh...");
             return false;
         }
@@ -496,10 +509,12 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
         return getFragmentManager().findFragmentById(R.id.container);
     }
 
+    @Override
     public void addTouchEventInterceptor(View.OnTouchListener interceptor) {
         mTouchEventInterceptorList.add(interceptor);
     }
 
+    @Override
     public boolean removeTouchEventInterceptor(View.OnTouchListener mTouchEventInterceptor) {
         return mTouchEventInterceptorList.remove(mTouchEventInterceptor);
     }

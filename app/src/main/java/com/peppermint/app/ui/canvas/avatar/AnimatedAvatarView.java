@@ -83,8 +83,8 @@ public class AnimatedAvatarView extends AnimatedView {
 
             try {
                 cornerRadius = a.getDimensionPixelSize(R.styleable.PeppermintView_cornerRadius, Utils.dpToPx(getContext(), DEF_CORNER_RADIUS_DP));
-                borderWidth = a.getDimensionPixelSize(R.styleable.PeppermintView_borderWidth, Utils.dpToPx(getContext(), DEF_BORDER_WIDTH_DP));
-                borderPaint.setColor(a.getColor(R.styleable.PeppermintView_borderColor, Color.parseColor(DEF_BORDER_COLOR)));
+                borderWidth = a.getDimensionPixelSize(R.styleable.PeppermintView_roundBorderWidth, Utils.dpToPx(getContext(), DEF_BORDER_WIDTH_DP));
+                borderPaint.setColor(a.getColor(R.styleable.PeppermintView_roundBorderColor, Color.parseColor(DEF_BORDER_COLOR)));
             } finally {
                 a.recycle();
             }

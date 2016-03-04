@@ -18,7 +18,7 @@ import java.util.List;
  *
  * Activity for user authentication.
  */
-public class ChatActivity extends CustomActionBarActivity {
+public class ChatActivity extends CustomActionBarActivity implements RecipientDataGUI {
 
     // UI
     private CustomFontTextView mTxtChatName, mTxtChatVia;
@@ -45,7 +45,8 @@ public class ChatActivity extends CustomActionBarActivity {
         getCustomActionBar().setContents(v, false);
     }
 
-    protected void setActionBarData(String recipientName, String recipientVia, String recipientPhotoUri) {
+    @Override
+    public void setRecipientData(String recipientName, String recipientVia, String recipientPhotoUri) {
         mTxtChatName.setText(recipientName);
         mTxtChatVia.setText(recipientVia);
         if(recipientPhotoUri == null) {

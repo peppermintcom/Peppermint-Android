@@ -2,6 +2,7 @@ package com.peppermint.app.ui.recipients;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ListFragment;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -46,12 +47,14 @@ import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.RecipientManager;
 import com.peppermint.app.data.RecipientType;
 import com.peppermint.app.data.Recording;
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.ui.CustomActionBarActivity;
+import com.peppermint.app.ui.Overlay;
+import com.peppermint.app.ui.OverlayManager;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.chat.ChatActivity;
 import com.peppermint.app.ui.chat.ChatCursorAdapter;
 import com.peppermint.app.ui.chat.ChatFragment;
-import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayFragment;
+import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
 import com.peppermint.app.ui.recipients.add.NewRecipientActivity;
 import com.peppermint.app.ui.recipients.add.NewRecipientFragment;
 import com.peppermint.app.ui.views.dialogs.PopupDialog;
@@ -68,20 +71,24 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class RecipientsFragment extends ChatRecordOverlayFragment implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener,
-        SearchListBarView.OnSearchListener {
+public class RecipientsFragment extends ListFragment implements ChatRecordOverlayController.Callbacks,
+        AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener,
+        SearchListBarView.OnSearchListener, OverlayManager.OverlayVisibilityChangeListener {
 
     private static final String SCREEN_ID = "Contacts";
 
     public static final String FAST_REPLY_NAME_PARAM = "name";
     public static final String FAST_REPLY_MAIL_PARAM = "mail";
 
+    public static final int REQUEST_NEWCONTACT_AND_SEND = 223;
     public static final int REQUEST_NEWCONTACT = 224;
 
     // avatar animation frequency
     private static final int FIXED_AVATAR_ANIMATION_INTERVAL_MS = 7500;
     private static final int VARIABLE_AVATAR_ANIMATION_INTERVAL_MS = 7500;
 
+    private CustomActionBarActivity mActivity;
+    private ChatRecordOverlayController mController;
 
     private boolean mHasSavedInstanceState = false;
     private boolean mOnActivityResult = false;
@@ -135,7 +142,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
         @Override
         protected void onPreExecute() {
-            getCustomActionBarActivity().startFragmentLoading(RecipientsFragment.this);
+            mActivity.startFragmentLoading(RecipientsFragment.this);
 
             _recipientType = (RecipientType) mSearchListBarView.getSelectedItem();
 
@@ -151,21 +158,21 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         @Override
         protected Object doInBackground(Void... nothing) {
             try {
-                if (getCustomActionBarActivity() != null && ContextCompat.checkSelfPermission(getCustomActionBarActivity(),
+                if (mActivity != null && ContextCompat.checkSelfPermission(mActivity,
                         Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
 
                     if (_recipientType.isStarred() != null && _recipientType.isStarred()) {
-                        mChatAdapter.setPeppermintSet(RecipientManager.getPeppermintContacts(getCustomActionBarActivity(), null).keySet());
+                        mChatAdapter.setPeppermintSet(RecipientManager.getPeppermintContacts(mActivity, null).keySet());
                         // show chat list / recent contacts
-                        ChatManager.deleteMissingRecipientChats(getCustomActionBarActivity(), getDatabase());
+                        ChatManager.deleteMissingRecipientChats(mActivity, getDatabase());
                         return ChatManager.getAll(getDatabase());
                     }
 
                     // get normal full, email or phone contact list
-                    FilteredCursor cursor = (FilteredCursor) RecipientManager.get(getCustomActionBarActivity(), null, _name, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
+                    FilteredCursor cursor = (FilteredCursor) RecipientManager.get(mActivity, null, _name, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
                     if(cursor.getOriginalCursor().getCount() <= 0 && _name != null && _via != null) {
                         cursor.close();
-                        cursor = (FilteredCursor) RecipientManager.get(getCustomActionBarActivity(), null, null, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
+                        cursor = (FilteredCursor) RecipientManager.get(mActivity, null, null, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
                     }
                     cursor.filter();
 
@@ -197,7 +204,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         @Override
         protected void onPostExecute(Object data) {
             // check if data is valid and activity has not been destroyed by the main thread
-            if(data != null && getCustomActionBarActivity() != null && mCreated) {
+            if(data != null && mActivity != null && mCreated) {
 
                 if (data instanceof FilteredCursor) {
                     // re-use adapter and replace cursor
@@ -215,7 +222,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
                     mRecipientAdapter.changeCursor(null);
                 }
 
-                getCustomActionBarActivity().stopFragmentLoading(true);
+                mActivity.stopFragmentLoading(true);
             }
 
             handleAddContactButtonVisibility();
@@ -228,8 +235,8 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
             }
 
             handleAddContactButtonVisibility();
-            if(getCustomActionBarActivity() != null) {
-                getCustomActionBarActivity().stopFragmentLoading(false);
+            if(mActivity != null) {
+                mActivity.stopFragmentLoading(false);
             }
         }
 
@@ -283,11 +290,11 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     private final Runnable mTipRunnable = new Runnable() {
         @Override
         public void run() {
-            if (mTipPopup != null && getCustomActionBarActivity() != null && !mTipPopup.isShowing() && !isRemoving() && !getCustomActionBarActivity().isFinishing()) {
-                if(getCustomActionBarActivity().getCustomActionBar().getHeight() <= 0) {
+            if (mTipPopup != null && mActivity != null && !mTipPopup.isShowing() && !isRemoving() && !mActivity.isFinishing()) {
+                if(mActivity.getCustomActionBar().getHeight() <= 0) {
                     mHandler.postDelayed(mTipRunnable, 100);
                 } else {
-                    mTipPopup.show(getCustomActionBarActivity().getCustomActionBar());
+                    mTipPopup.show(mActivity.getCustomActionBar());
                 }
             }
         }
@@ -318,12 +325,12 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     private AuthenticationPolicyEnforcer.AuthenticationDoneCallback mAuthenticationDoneCallback = new AuthenticationPolicyEnforcer.AuthenticationDoneCallback() {
         @Override
         public void done(AuthenticationData data) {
-            if(getCustomActionBarActivity() == null) {
+            if(mActivity == null) {
                 // in case fragment has been detached and destroyed
                 return;
             }
 
-            getCustomActionBarActivity().getAuthenticationPolicyEnforcer().removeAuthenticationDoneCallback(this);
+            mActivity.getAuthenticationPolicyEnforcer().removeAuthenticationDoneCallback(this);
 
             if(getArguments() != null && (getArguments().containsKey(FAST_REPLY_NAME_PARAM) || getArguments().containsKey(FAST_REPLY_MAIL_PARAM))) {
                 String name = getArguments().getString(FAST_REPLY_NAME_PARAM, "");
@@ -337,12 +344,12 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
                     List<String> mimeTypes = new ArrayList<>();
                     mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
                     mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-                    Recipient foundRecipient = RecipientManager.getRecipientByViaOrContactId(getCustomActionBarActivity(), mail, 0);
+                    Recipient foundRecipient = RecipientManager.getRecipientByViaOrContactId(mActivity, mail, 0);
 
                     // if not, add the contact
                     if(foundRecipient == null) {
                         try {
-                            foundRecipient = RecipientManager.insert(getCustomActionBarActivity(), 0, name, null, null, mail, null, data.getEmail(), false);
+                            foundRecipient = RecipientManager.insert(mActivity, 0, name, null, null, mail, null, data.getEmail(), false);
                         } catch (Exception e) {
                             /* nothing to do here */
                         }
@@ -382,30 +389,66 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         mDatabaseHelper = new DatabaseHelper(activity);
+        mActivity = (CustomActionBarActivity) activity;
+        mController = new ChatRecordOverlayController(mActivity, this) {
+            @Override
+            public void onReceivedMessage(ReceiverEvent event) {
+                super.onReceivedMessage(event);
+                if(mSearchListBarView.getSelectedItemPosition() == 0) {
+                    onSearch(mSearchListBarView.getSearchText());
+                }
+            }
+
+            @Override
+            public void onSendFinished(SenderEvent event) {
+                super.onSendFinished(event);
+                if(mSearchListBarView.getSelectedItemPosition() == 0) {
+                    onSearch(mSearchListBarView.getSearchText());
+                }
+            }
+
+            @Override
+            protected Message sendMessage(Recipient recipient, Recording recording) {
+                Message message = super.sendMessage(recipient, recording);
+
+                // go back to recent contacts after sending a message
+                mSearchListBarView.setSelectedItemPositionBeforeSearch(0);
+
+                // if the user has gone through the sending process without
+                // discarding the recording, then clear the search filter
+                if(!mSearchListBarView.clearSearch(0)) {
+                    onSearch(mSearchListBarView.getSearchText());
+                }
+
+                launchChatActivity(message.getChatId());
+
+                return message;
+            }
+        };
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        PeppermintApp app = (PeppermintApp) getCustomActionBarActivity().getApplication();
+        PeppermintApp app = (PeppermintApp) mActivity.getApplication();
 
-        mChatAdapter = new ChatCursorAdapter(getCustomActionBarActivity(), null, null, null, getCustomActionBarActivity().getTrackerManager());
-        mRecipientAdapter = new RecipientCursorAdapter(app, getCustomActionBarActivity(), null);
+        mChatAdapter = new ChatCursorAdapter(mActivity, null, null, null, mActivity.getTrackerManager());
+        mRecipientAdapter = new RecipientCursorAdapter(app, mActivity, null);
 
-        getCustomActionBarActivity().getAuthenticationPolicyEnforcer().addAuthenticationDoneCallback(mAuthenticationDoneCallback);
+        mActivity.getAuthenticationPolicyEnforcer().addAuthenticationDoneCallback(mAuthenticationDoneCallback);
 
         // hold popup
-        mHoldPopup = new PopupWindow(getCustomActionBarActivity());
+        mHoldPopup = new PopupWindow(mActivity);
         mHoldPopup.setContentView(inflater.inflate(R.layout.v_recipients_popup, null));
         // although this is deprecated, it is required for versions  < 22/23, otherwise the popup doesn't show up
         //noinspection deprecation
         mHoldPopup.setWindowLayoutMode(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        mHoldPopup.setBackgroundDrawable(Utils.getDrawable(getCustomActionBarActivity(), R.drawable.img_popup));
+        mHoldPopup.setBackgroundDrawable(Utils.getDrawable(mActivity, R.drawable.img_popup));
         mHoldPopup.setAnimationStyle(R.style.Peppermint_PopupAnimation);
         // do not let the popup get in the way of user interaction
         mHoldPopup.setFocusable(false);
         mHoldPopup.setTouchable(false);
 
-        mTipPopup = new PopupDialog(getCustomActionBarActivity()) {
+        mTipPopup = new PopupDialog(mActivity) {
             @Override
             public boolean onTouchEvent(MotionEvent event) {
                 mTipPoint = new PointF();
@@ -417,7 +460,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         mTipPopup.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialog) {
-                getPreferences().setFirstRun(false);
+                mController.getPreferences().setFirstRun(false);
                 if (mTipPoint != null) {
                     EditText searchEditText = mSearchListBarView.getSearchEditText();
                     if (searchEditText != null) {
@@ -430,7 +473,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
                         }
                         if (mSearchRect.contains((int) mTipPoint.x, (int) mTipPoint.y) || (mTipPoint.y < 0 && mSearchRect.contains((int) mTipPoint.x, mSearchRect.centerY()))) {
                             searchEditText.requestFocus();
-                            Utils.showKeyboard(getCustomActionBarActivity(), searchEditText, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+                            Utils.showKeyboard(mActivity, searchEditText, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
                             // hack for some devices with Android < 5
                             searchEditText.dispatchTouchEvent(MotionEvent.obtain(
@@ -458,7 +501,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
         // inflate and init custom action bar view
         mSearchListBarView = (SearchListBarView) inflater.inflate(R.layout.f_recipients_actionbar, null, false);
-        SearchListBarAdapter<RecipientType> recipientTypeAdapter = new SearchListBarAdapter<>(app.getFontRegular(), getCustomActionBarActivity(), RecipientType.getAll(getCustomActionBarActivity()));
+        SearchListBarAdapter<RecipientType> recipientTypeAdapter = new SearchListBarAdapter<>(app.getFontRegular(), mActivity, RecipientType.getAll(mActivity));
         mSearchListBarView.setListAdapter(recipientTypeAdapter);
         mSearchListBarView.setTypeface(app.getFontRegular());
 
@@ -466,7 +509,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
             mHasSavedInstanceState = true;
         }
 
-        getCustomActionBarActivity().getCustomActionBar().setContents(mSearchListBarView, false);
+        mActivity.getCustomActionBar().setContents(mSearchListBarView, false);
 
         // inflate the view
         View v = inflater.inflate(R.layout.f_recipients_layout, container, false);
@@ -481,7 +524,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         mBtnAddContact.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getCustomActionBarActivity(), NewRecipientActivity.class);
+                Intent intent = new Intent(mActivity, NewRecipientActivity.class);
 
                 String filter = mSearchListBarView.getSearchText();
                 if (filter != null) {
@@ -508,8 +551,9 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        getCustomActionBarActivity().getOverlayManager().setRootScreenId(SCREEN_ID);
-        getChatRecordOverlay().setViewToRemoveFocus(mSearchListBarView);
+        mController.init(view, mActivity.getOverlayManager(), mActivity, mActivity.getAuthenticationPolicyEnforcer(), savedInstanceState);
+
+        mActivity.getOverlayManager().setRootScreenId(SCREEN_ID);
 
         getListView().setOnItemClickListener(this);
         getListView().setLongClickable(true);
@@ -535,37 +579,42 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     }
 
     @Override
-    protected Message sendMessage(Recipient recipient, Recording recording) {
-        Message message = super.sendMessage(recipient, recording);
+    public void onOverlayShown(Overlay overlay) { /* nothing to do */ }
 
-        // go back to recent contacts after sending a message
-        mSearchListBarView.setSelectedItemPositionBeforeSearch(0);
-
-        // if the user has gone through the sending process without
-        // discarding the recording, then clear the search filter
-        if(!mSearchListBarView.clearSearch(0)) {
-            onSearch(mSearchListBarView.getSearchText());
+    @Override
+    public void onOverlayHidden(Overlay overlay, boolean wasCancelled) {
+        if(mSearchListBarView != null) {
+            mSearchListBarView.clearFocus();
+            if(getView() != null) {
+                getView().requestFocus();
+            }
         }
+    }
 
-        launchChatActivity(message.getChatId());
-
-        return message;
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        mController.saveInstanceState(outState);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
     public void onStart() {
         super.onStart();
 
+        mActivity.getOverlayManager().addOverlayVisibilityChangeListener(this);
+
+        mController.start();
+
         mChatAdapter.setDatabase(getDatabase());
 
         // global touch interceptor to hide keyboard
-        getCustomActionBarActivity().addTouchEventInterceptor(mTouchInterceptor);
+        mActivity.addTouchEventInterceptor(mTouchInterceptor);
 
         if(!mOnActivityResult) {
             if (!mHasSavedInstanceState) {
                 // default view is all contacts
                 int selectedItemPosition = 0;
-                if (!getPreferences().hasRecentContactUris()) {
+                if (!mController.getPreferences().hasRecentContactUris()) {
                     // select "all contacts" in case there are no fav/recent contacts
                     selectedItemPosition = 1;
                 }
@@ -588,25 +637,25 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         // avoid cursor focus and keyboard when opening
         // if it is on onStart(), it doesn't work for screen rotations
         if(!mHasSavedInstanceState) {
-            Utils.hideKeyboard(getCustomActionBarActivity(), WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+            Utils.hideKeyboard(mActivity, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         } else {
             mHasSavedInstanceState = false;
         }
         mSearchListBarView.removeSearchTextFocus(null);
         getView().requestFocus();
 
-        if(getPreferences().isFirstRun()) {
+        if(mController.getPreferences().isFirstRun()) {
             mHandler.postDelayed(mTipRunnable, 100);
         }
 
-        TrackerManager.getInstance(getCustomActionBarActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
+        mActivity.getTrackerManager().trackScreenView(SCREEN_ID);
     }
 
     @Override
     public void onStop() {
 
         // global touch interceptor to hide keyboard
-        getCustomActionBarActivity().removeTouchEventInterceptor(mTouchInterceptor);
+        mActivity.removeTouchEventInterceptor(mTouchInterceptor);
 
         mHandler.removeCallbacks(mAnimationRunnable);
 
@@ -627,6 +676,10 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
         dismissPopup();
 
+        mActivity.getOverlayManager().removeOverlayVisibilityChangeListener(this);
+
+        mController.stop();
+
         super.onStop();
     }
 
@@ -635,6 +688,11 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         mSearchListBarView.deinit();
         mTipPopup.setOnDismissListener(null);
         mTipPopup.dismiss();
+
+        mController.deinit();
+        mController.setContext(null);
+        mActivity = null;
+
         super.onDestroy();
     }
 
@@ -648,23 +706,20 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
             } else {
                 mSearchListBarView.clearSearch(0);
             }
+        } else if(requestCode == REQUEST_NEWCONTACT_AND_SEND) {
+            mController.handleNewContactResult(resultCode, data);
         }
     }
 
     @Override
-    public void onReceivedMessage(ReceiverEvent event) {
-        super.onReceivedMessage(event);
-        if(mSearchListBarView.getSelectedItemPosition() == 0) {
-            onSearch(mSearchListBarView.getSearchText());
-        }
+    public void onNewContact(Intent intentToLaunchActivity) {
+        startActivityForResult(intentToLaunchActivity, REQUEST_NEWCONTACT_AND_SEND);
     }
 
-    @Override
-    public void onSendFinished(SenderEvent event) {
-        super.onSendFinished(event);
-        if(mSearchListBarView.getSelectedItemPosition() == 0) {
-            onSearch(mSearchListBarView.getSearchText());
-        }
+    protected void launchChatActivity(long chatId) {
+        Intent chatIntent = new Intent(mActivity, ChatActivity.class);
+        chatIntent.putExtra(ChatFragment.PARAM_CHAT_ID, chatId);
+        startActivity(chatIntent);
     }
 
     public int clearFilters() {
@@ -677,7 +732,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
     @Override
     public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
-        Intent intent = new Intent(getCustomActionBarActivity(), ChatActivity.class);
+        Intent intent = new Intent(mActivity, ChatActivity.class);
 
         if(getListView().getAdapter() instanceof RecipientCursorAdapter) {
             showPopup(view);
@@ -692,7 +747,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
         Recipient tappedRecipient = getListView().getAdapter() instanceof RecipientCursorAdapter ?
                 mRecipientAdapter.getRecipient(position) :
                 mChatAdapter.getChat(position).getMainRecipientParameter();
-        return triggerRecording(view, tappedRecipient);
+        return mController.triggerRecording(view, tappedRecipient);
     }
 
     @Override
@@ -712,7 +767,7 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
     }
 
     private void dismissPopup() {
-        if(mHoldPopup.isShowing() && !isDetached() && getCustomActionBarActivity() != null) {
+        if(mHoldPopup.isShowing() && !isDetached() && mActivity != null) {
             mHoldPopup.dismiss();
             mHandler.removeCallbacks(mDismissPopupRunnable);
         }
@@ -720,9 +775,9 @@ public class RecipientsFragment extends ChatRecordOverlayFragment implements Ada
 
     // the method that displays the img_popup.
     private void showPopup(View parent) {
-        if(!mHoldPopup.isShowing() && !isDetached() && getCustomActionBarActivity() != null) {
+        if(!mHoldPopup.isShowing() && !isDetached() && mActivity != null) {
             dismissPopup();
-            mHoldPopup.showAtLocation(parent, Gravity.NO_GRAVITY, mLastTouchPoint.x - Utils.dpToPx(getCustomActionBarActivity(), 120), mLastTouchPoint.y + Utils.dpToPx(getCustomActionBarActivity(), 10));
+            mHoldPopup.showAtLocation(parent, Gravity.NO_GRAVITY, mLastTouchPoint.x - Utils.dpToPx(mActivity, 120), mLastTouchPoint.y + Utils.dpToPx(mActivity, 10));
             mHandler.postDelayed(mDismissPopupRunnable, 6000);
         }
     }

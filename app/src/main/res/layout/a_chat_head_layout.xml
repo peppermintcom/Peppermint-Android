@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/lytRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black_50percent">
+
+    <RelativeLayout android:id="@+id/lytHeader"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageButton android:id="@+id/btnClose"
+            android:layout_alignParentRight="true"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_cross_11dp"
+            android:background="@drawable/background_ripple"
+            android:adjustViewBounds="true"
+            android:scaleType="center" />
+
+        <LinearLayout android:layout_toLeftOf="@id/btnClose"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <com.peppermint.app.ui.views.RoundImageView
+                android:id="@+id/imgChatAvatar"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_anonymous_green_48dp"/>
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_arrow_up_20dp" />
+        </LinearLayout>
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_below="@id/lytHeader"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@drawable/background_overlay_box">
+
+        <com.peppermint.app.ui.views.simple.CustomFontTextView
+            android:id="@+id/txtName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            custom:textFont="@string/font_semibold"
+            android:paddingTop="5dp"
+            android:paddingLeft="15dp"
+            android:paddingRight="15dp"
+            android:singleLine="true"
+            android:text="@string/peppermint_com"
+            android:textColor="@color/black"
+            android:textSize="16dp"
+            android:paddingBottom="10dp"
+            android:background="@drawable/background_border_bottom"
+            />
+
+        <com.peppermint.app.ui.views.simple.FitsSystemWindowsFrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <com.peppermint.app.ui.views.simple.FitsSystemWindowsFrameLayout
+                android:id="@+id/container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <RelativeLayout
+                android:id="@+id/fragmentProgressContainer"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/dark_green_60percent"
+                android:visibility="gone"
+                android:gravity="center">
+
+                <ImageView
+                    android:layout_width="170dp"
+                    android:layout_height="170dp"
+                    android:layout_marginBottom="40dp"
+                    android:layout_marginTop="40dp"
+                    android:layout_marginRight="40dp"
+                    android:layout_marginLeft="40dp"
+                    android:src="@drawable/img_static_loading_170dp" />
+
+                <com.peppermint.app.ui.canvas.loading.LoadingView
+                    android:id="@+id/loading"
+                    android:layout_width="170dp"
+                    android:layout_height="170dp"
+                    android:layout_marginBottom="40dp"
+                    android:layout_marginTop="40dp"
+                    android:layout_marginRight="40dp"
+                    android:layout_marginLeft="40dp"
+                    custom:text="@string/loading_contacts" />
+
+            </RelativeLayout>
+
+        </com.peppermint.app.ui.views.simple.FitsSystemWindowsFrameLayout>
+
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/touchInterceptor"
+        android:layout_alignParentTop="true"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/lytOverlay"
+        android:layout_alignParentTop="true"
+        android:visibility="gone"
+        android:focusable="true"
+        android:clickable="true"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </FrameLayout>
+
+</RelativeLayout>
