@@ -11,6 +11,12 @@ import java.io.Serializable;
  */
 public class Contact implements Serializable {
 
+    public static final String EMAIL_MIMETYPE = ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE;
+    public static final String PHONE_MIMETYPE = ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE;
+    public static final String PHOTO_MIMETYPE = ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE;
+    public static final String NAME_MIMETYPE = ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE;
+    public static final String PEPPERMINT_MIMETYPE = "com.peppermint.app.cursor.item/contact_v1";
+
     private long mId, mRawId;
     private boolean mStarred;
     private String mMimeType;
@@ -68,23 +74,23 @@ public class Contact implements Serializable {
     }
 
     public boolean isName() {
-        return mMimeType != null && ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE.compareTo(mMimeType) == 0;
+        return mMimeType != null && NAME_MIMETYPE.compareTo(mMimeType) == 0;
     }
 
     public boolean isPhoto() {
-        return mMimeType != null && ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE.compareTo(mMimeType) == 0;
+        return mMimeType != null && PHOTO_MIMETYPE.compareTo(mMimeType) == 0;
     }
 
     public boolean isEmail() {
-        return mMimeType != null && ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE.compareTo(mMimeType) == 0;
+        return mMimeType != null && EMAIL_MIMETYPE.compareTo(mMimeType) == 0;
     }
 
     public boolean isPhone() {
-        return mMimeType != null && ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE.compareTo(mMimeType) == 0;
+        return mMimeType != null && PHONE_MIMETYPE.compareTo(mMimeType) == 0;
     }
 
     public boolean isPeppermint() {
-        return mMimeType != null && RecipientManager.CONTENT_TYPE.compareTo(mMimeType) == 0;
+        return mMimeType != null && PEPPERMINT_MIMETYPE.compareTo(mMimeType) == 0;
     }
 
     @Override

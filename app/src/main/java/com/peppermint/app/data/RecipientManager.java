@@ -50,7 +50,6 @@ public class RecipientManager {
     };
 
     private static final String PEPPERMINT_GROUP_TITLE = "Peppermint";
-    public static final String CONTENT_TYPE = "com.peppermint.app.cursor.item/contact_v1";
 
     /*private static Map<Long, WeakReference<Recipient>> mRecipientCache = new WeakHashMap<>();*/
 
@@ -193,7 +192,7 @@ public class RecipientManager {
         HashMap<Long, Contact> map = new HashMap<>();
 
         List<String> mimeTypes = new ArrayList<>();
-        mimeTypes.add(CONTENT_TYPE);
+        mimeTypes.add(Contact.PEPPERMINT_MIMETYPE);
 
         Cursor cursor = get(context, rawIds, mimeTypes, null);
         while(cursor.moveToNext()) {
@@ -225,7 +224,7 @@ public class RecipientManager {
         List<Long> rawIds = new ArrayList<>();
         rawIds.add(rawId);
         List<String> mimeTypes = new ArrayList<>();
-        mimeTypes.add(CONTENT_TYPE);
+        mimeTypes.add(Contact.PEPPERMINT_MIMETYPE);
         return get(context, rawIds, mimeTypes, null);
     }
 
@@ -462,7 +461,7 @@ public class RecipientManager {
 
             ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
                     .withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=? AND " + ContactsContract.Data.MIMETYPE + "=?",
-                            new String[]{String.valueOf(rawId), CONTENT_TYPE})
+                            new String[]{String.valueOf(rawId), Contact.PEPPERMINT_MIMETYPE})
                     .build());
 
             if(operationsList == null) {
@@ -495,7 +494,7 @@ public class RecipientManager {
                         .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawId);
             }
 
-            ops.add(op.withValue(ContactsContract.Data.MIMETYPE, CONTENT_TYPE).withValue(ContactsContract.Data.DATA1, email).build());
+            ops.add(op.withValue(ContactsContract.Data.MIMETYPE, Contact.PEPPERMINT_MIMETYPE).withValue(ContactsContract.Data.DATA1, email).build());
 
             if(operationsList == null) {
                 // no caller operations list, so execute the operations right away

@@ -148,9 +148,7 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
      * @param previousFailedTask the previously failed upload task
      */
     public void send(Message message, SenderUploadTask previousFailedTask) {
-        String mimeType = message.getRecipientParameter().getEmail() != null ?
-                message.getRecipientParameter().getEmail().getMimeType() :
-                message.getRecipientParameter().getPhone().getMimeType();
+        String mimeType = message.getRecipientParameter().getContactMimetype();
 
         // check if there's a sender for the specified recipient mime type
         if(!mSenderMap.containsKey(mimeType)) {

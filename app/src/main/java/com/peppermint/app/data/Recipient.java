@@ -1,6 +1,8 @@
 package com.peppermint.app.data;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Nuno Luz on 26/08/2015.
@@ -15,7 +17,7 @@ public class Recipient implements Serializable {
     private String mDisplayName;
     private String mPhotoUri;
 
-    private Contact mEmail, mPhone, mPeppermint;
+    private Map<String, Contact> mContacts = new HashMap<>();
 
     public Recipient() {
     }
@@ -36,19 +38,48 @@ public class Recipient implements Serializable {
         this.mAccountName = mAccountName;
         this.mDisplayName = mDisplayName;
         this.mPhotoUri = mPhotoUri;
-        this.mEmail = mEmail;
-        this.mPhone = mPhone;
-        this.mPeppermint = mPeppermint;
+
+        mContacts.put(Contact.EMAIL_MIMETYPE, mEmail);
+        mContacts.put(Contact.PHONE_MIMETYPE, mPhone);
+        mContacts.put(Contact.PEPPERMINT_MIMETYPE, mPeppermint);
     }
 
-    public long getContactId() {
-        // FIXME we are assuming only one is present at a time; we should probably remove this and use getRawId (aggregated contact)
-        return mEmail != null ? mEmail.getId() : (mPhone != null ? mPhone.getId() : 0);
+    public Recipient(long mRawId, boolean mDeleted, String mAccountType, String mAccountName, String mDisplayName, String mPhotoUri, String mEmailVia, String mPhoneVia, String mPeppermintVia) {
+        this.mRawId = mRawId;
+        this.mDeleted = mDeleted;
+        this.mAccountType = mAccountType;
+        this.mAccountName = mAccountName;
+        this.mDisplayName = mDisplayName;
+        this.mPhotoUri = mPhotoUri;
+
+        if(mPeppermintVia != null) {
+            mContacts.put(Contact.PEPPERMINT_MIMETYPE, new Contact(0, mRawId, false, Contact.PEPPERMINT_MIMETYPE, mPeppermintVia));
+        } else if(mEmailVia != null) {
+            mContacts.put(Contact.EMAIL_MIMETYPE, new Contact(0, mRawId, false, Contact.EMAIL_MIMETYPE, mEmailVia));
+        } else if(mPhoneVia != null) {
+            mContacts.put(Contact.PHONE_MIMETYPE, new Contact(0, mRawId, false, Contact.PHONE_MIMETYPE, mPhoneVia));
+        }
     }
 
-    public Contact getContact() {
+    public long getEmailOrPhoneContactId() {
         // FIXME we are assuming only one is present at a time; we should probably remove this and use getRawId (aggregated contact)
-        return mEmail != null ? mEmail : mPhone;
+        return getEmail() != null ? getEmail().getId() : (getPhone() != null ? getPhone().getId() : 0);
+    }
+
+    public String getContactVia() {
+        return getPeppermint() != null ? getPeppermint().getVia() : (
+                getEmail() != null ? getEmail().getVia() : (
+                        getPhone() != null ? getPhone().getVia() : null
+                        )
+                );
+    }
+
+    public String getContactMimetype() {
+        return getPeppermint() != null ? getPeppermint().getMimeType() : (
+                getEmail() != null ? getEmail().getMimeType() : (
+                        getPhone() != null ? getPhone().getMimeType() : null
+                )
+        );
     }
 
     public long getRawId() {
@@ -84,27 +115,31 @@ public class Recipient implements Serializable {
     }
 
     public Contact getEmail() {
-        return mEmail;
+        return mContacts.get(Contact.EMAIL_MIMETYPE);
     }
 
     public void setEmail(Contact mEmail) {
-        this.mEmail = mEmail;
+        mContacts.put(Contact.EMAIL_MIMETYPE, mEmail);
     }
 
     public Contact getPhone() {
-        return mPhone;
+        return mContacts.get(Contact.PHONE_MIMETYPE);
     }
 
     public void setPhone(Contact mPhone) {
-        this.mPhone = mPhone;
+        mContacts.put(Contact.PHONE_MIMETYPE, mPhone);
     }
 
     public Contact getPeppermint() {
-        return mPeppermint;
+        return mContacts.get(Contact.PEPPERMINT_MIMETYPE);
     }
 
     public void setPeppermint(Contact mPeppermint) {
-        this.mPeppermint = mPeppermint;
+        mContacts.put(Contact.PEPPERMINT_MIMETYPE, mPeppermint);
+    }
+
+    public void setContact(Contact mContact) {
+        mContacts.put(mContact.getMimeType(), mContact);
     }
 
     public String getDisplayName() {
@@ -126,9 +161,7 @@ public class Recipient implements Serializable {
     @Override
     public String toString() {
         return "Recipient{" +
-                "mPeppermint=" + mPeppermint +
-                ", mPhone=" + mPhone +
-                ", mEmail=" + mEmail +
+                "mContacts=" + mContacts +
                 ", mPhotoUri='" + mPhotoUri + '\'' +
                 ", mDisplayName='" + mDisplayName + '\'' +
                 ", mAccountName='" + mAccountName + '\'' +

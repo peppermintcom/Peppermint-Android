@@ -241,7 +241,8 @@ public class ChatController extends ChatRecordOverlayController implements View.
     @Override
     public void onReceivedMessage(ReceiverEvent event) {
         refreshList();
-        if(event.getMessage().getRecipientContactId() == mChat.getMainRecipientParameter().getContactId()) {
+        Recipient recipient = mChat.getMainRecipientParameter();
+        if(recipient != null && event.getMessage().getRecipientContactId() == recipient.getEmailOrPhoneContactId()) {
             event.setDoNotShowNotification(true);
         }
     }

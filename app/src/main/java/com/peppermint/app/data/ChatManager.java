@@ -5,6 +5,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.peppermint.app.utils.Utils;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,14 +29,34 @@ public class ChatManager {
      * @return the Chat instance
      */
     public static Chat getFromCursor(Context context, Cursor cursor) {
-        Chat message = new Chat();
-        message.setId(cursor.getLong(cursor.getColumnIndex("chat_id")));
-        message.setMainRecipientId(cursor.getLong(cursor.getColumnIndex("main_recipient_id")));
-        message.setLastMessageTimestamp(cursor.getString(cursor.getColumnIndex("last_message_ts")));
-        if(context != null) {
-            message.setMainRecipientParameter(RecipientManager.getRecipientByContactId(context, message.getMainRecipientId()));
+        Chat chat = new Chat();
+        chat.setId(cursor.getLong(cursor.getColumnIndex("chat_id")));
+        chat.setMainRecipientId(cursor.getLong(cursor.getColumnIndex("main_recipient_id")));
+
+        boolean containsContactFields = cursor.getColumnIndex("display_name") >= 0 && cursor.getColumnIndex("mimetype") >= 0 && cursor.getColumnIndex("via") >= 0;
+        if (containsContactFields) {
+            String displayName = cursor.getString(cursor.getColumnIndex("display_name"));
+            String via = cursor.getString(cursor.getColumnIndex("via"));
+            String mimetype = cursor.getString(cursor.getColumnIndex("mimetype"));
+
+            if(via != null && mimetype != null) {
+                Recipient recipient = new Recipient();
+                recipient.setDisplayName(displayName);
+                Contact contact = new Contact(0, 0, false, mimetype,
+                        via);
+                recipient.setContact(contact);
+                chat.setMainRecipientParameter(recipient);
+            }
         }
-        return message;
+
+        chat.setLastMessageTimestamp(cursor.getString(cursor.getColumnIndex("last_message_ts")));
+        if(context != null) {
+            Recipient recipient = RecipientManager.getRecipientByContactId(context, chat.getMainRecipientId());
+            if(recipient != null) {
+                chat.setMainRecipientParameter(recipient);
+            }
+        }
+        return chat;
     }
 
     /**
@@ -83,8 +105,9 @@ public class ChatManager {
      * @param mainRecipientId the chat's main recipient id
      * @return the cursor instance with all data
      */
-    public static Cursor getMainRecipient(SQLiteDatabase db, long mainRecipientId) {
-        return db.rawQuery("SELECT * FROM tbl_chat WHERE main_recipient_id = " + mainRecipientId + ";", null);
+    public static Cursor getMainRecipient(SQLiteDatabase db, long mainRecipientId, String via) {
+        String where = Utils.joinString(" AND ", mainRecipientId > 0 ? "main_recipient_id = " + mainRecipientId : null, via != null ? "via = ?" : null);
+        return db.rawQuery("SELECT * FROM tbl_chat WHERE " + where + ";", via != null ? new String[]{via} : null);
     }
 
     /**
@@ -95,9 +118,9 @@ public class ChatManager {
      * @param mainRecipientId the chat's main recipient id
      * @return the chat instance with all data
      */
-    public static Chat getChatByMainRecipient(Context context, SQLiteDatabase db, long mainRecipientId) {
+    public static Chat getChatByMainRecipient(Context context, SQLiteDatabase db, long mainRecipientId, String via) {
         Chat chat = null;
-        Cursor cursor = getMainRecipient(db, mainRecipientId);
+        Cursor cursor = getMainRecipient(db, mainRecipientId, via);
         if(cursor.moveToFirst()) {
             chat = getFromCursor(context, cursor);
         }
@@ -142,7 +165,7 @@ public class ChatManager {
      * @param lastMessageTimestamp the chat last message timestamp
      * @throws SQLException
      */
-    public static Chat insert(SQLiteDatabase db, long mainRecipientId, String lastMessageTimestamp) throws SQLException {
+    public static Chat insert(SQLiteDatabase db, long mainRecipientId, String displayName, String via, String mimetype, String lastMessageTimestamp) throws SQLException {
         ContentValues cv = new ContentValues();
 
         if(mainRecipientId > 0) {
@@ -150,6 +173,17 @@ public class ChatManager {
         } else {
             cv.putNull("main_recipient_id");
         }
+
+        if(displayName != null) {
+            cv.put("display_name", displayName);
+        }
+        if(via != null) {
+            cv.put("via", via);
+        }
+        if(mimetype != null) {
+            cv.put("mimetype", mimetype);
+        }
+
         cv.put("last_message_ts", lastMessageTimestamp);
 
         long id = db.insert("tbl_chat", null, cv);
@@ -172,7 +206,7 @@ public class ChatManager {
      * @param lastMessageTimestamp the chat last message timestamp
      * @throws SQLException
      */
-    public static Chat update(SQLiteDatabase db, long chatId, long mainRecipientId, String lastMessageTimestamp) throws SQLException {
+    public static Chat update(SQLiteDatabase db, long chatId, long mainRecipientId, String displayName, String via, String mimetype, String lastMessageTimestamp) throws SQLException {
         ContentValues cv = new ContentValues();
 
         if(mainRecipientId > 0) {
@@ -180,6 +214,17 @@ public class ChatManager {
         } else {
             cv.putNull("main_recipient_id");
         }
+
+        if(displayName != null) {
+            cv.put("display_name", displayName);
+        }
+        if(via != null) {
+            cv.put("via", via);
+        }
+        if(mimetype != null) {
+            cv.put("mimetype", mimetype);
+        }
+
         cv.put("last_message_ts", lastMessageTimestamp);
 
         long id = db.update("tbl_chat", cv, "chat_id = " + chatId, null);
@@ -201,22 +246,22 @@ public class ChatManager {
      * @param lastMessageTimestamp the chat last message timestamp
      * @throws SQLException
      */
-    public static Chat insertOrUpdate(SQLiteDatabase db, long chatId, long mainRecipientId, String lastMessageTimestamp) throws  SQLException {
+    public static Chat insertOrUpdate(SQLiteDatabase db, long chatId, long mainRecipientId, String displayName, String via, String mimetype, String lastMessageTimestamp) throws  SQLException {
         if(chatId <= 0) {
             Chat searchedChat = null;
 
-            if(mainRecipientId > 0) {
-                searchedChat = getChatByMainRecipient(null, db, mainRecipientId);
+            if(mainRecipientId > 0 || via != null) {
+                searchedChat = getChatByMainRecipient(null, db, mainRecipientId, via);
             }
 
             if (searchedChat == null) {
-                return insert(db, mainRecipientId, lastMessageTimestamp);
+                return insert(db, mainRecipientId, displayName, via, mimetype, lastMessageTimestamp);
             }
 
             chatId = searchedChat.getId();
         }
 
-        return update(db, chatId, mainRecipientId, lastMessageTimestamp);
+        return update(db, chatId, mainRecipientId, displayName, via, mimetype, lastMessageTimestamp);
     }
 
     /**
@@ -248,10 +293,10 @@ public class ChatManager {
     public static void deleteMissingRecipientChats(Context context, SQLiteDatabase db)  throws SQLException {
         Cursor cursor = getAll(db);
         while(cursor.moveToNext()) {
-            long id = cursor.getLong(cursor.getColumnIndex("chat_id"));
-            long recipientId = cursor.getLong(cursor.getColumnIndex("main_recipient_id"));
-            if(RecipientManager.getRecipientByContactId(context, recipientId) == null) {
-                delete(db, id);
+            Chat chat = getFromCursor(null, cursor);
+            Recipient recipient = RecipientManager.getRecipientByContactId(context, chat.getMainRecipientId());
+            if(recipient == null || (recipient.getEmail() == null && recipient.getPhone() == null && recipient.getPeppermint() == null && recipient.getContactVia() == null)) {
+                delete(db, chat.getId());
             }
         }
         cursor.close();

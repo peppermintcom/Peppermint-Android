@@ -1,6 +1,7 @@
 package com.peppermint.app.data;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
@@ -26,7 +27,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	private static final String TAG = DatabaseHelper.class.getSimpleName();
 	
 	private static final String DATABASE_NAME = "peppermint.db";        // database filename
-	private static final int DATABASE_VERSION = 15;                     // database version
+	private static final int DATABASE_VERSION = 16;                     // database version
 
 	private Context mContext;
     private SQLiteDatabase mLocalDatabase;
@@ -131,10 +132,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if(_oldVersion < 14) {
             dropAll(_db);
             onCreate(_db);
-            return;
         }
 
 		if(_oldVersion < 15) {
+            // remove recipient table and use only contacts provider
+            // also store recent contacts in database instead of prefs.
             try {
                 execSQLScript(R.raw.db_drop_recipient, _db);
             } catch (Exception e) {
@@ -162,18 +164,55 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 			calendar.add(Calendar.MINUTE, -1);
 
 			for (Long contactId : contactIds) {
-				Chat chat = ChatManager.getChatByMainRecipient(mContext, _db, contactId);
+				Chat chat = ChatManager.getChatByMainRecipient(mContext, _db, contactId, null);
 				if(chat == null) {
+                    Recipient recipient = RecipientManager.getRecipientByContactId(mContext, contactId);
 					try {
-						ChatManager.insert(_db, contactId, dateContainer.getAsString(DateContainer.UTC));
+						ChatManager.insert(_db, contactId, recipient.getDisplayName(), recipient.getContactVia(), recipient.getContactMimetype(), dateContainer.getAsString(DateContainer.UTC));
 					} catch (SQLException e) {
 						TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
 					}
 					calendar.add(Calendar.MINUTE, -1);
 				}
 			}
+		}
 
-            return;
+		if(_oldVersion < 16) {
+			// add extra data fields to tbl_chat and tbl_message
+			// to include min. required recipient data in case the
+			// recipient gets deleted from contacts
+			try {
+				execSQLScript(R.raw.db_16_add_fields, _db);
+
+                // make sure that all chat data is valid
+                // delete if not; if this happens, it's only for a really low amount of cases
+                Cursor cursor = ChatManager.getAll(_db);
+                while(cursor.moveToNext()) {
+                    Chat chat = ChatManager.getFromCursor(mContext, cursor);
+                    Recipient recipient = chat.getMainRecipientParameter();
+                    if(recipient != null && recipient.getDisplayName() != null && recipient.getContactVia() != null) {
+                        ChatManager.update(_db, chat.getId(), chat.getMainRecipientId(),
+                                recipient.getDisplayName(), recipient.getContactVia(),
+                                recipient.getContactMimetype(), chat.getLastMessageTimestamp());
+
+                        Cursor msgCursor = MessageManager.getByChatId(_db, chat.getId());
+                        while(msgCursor.moveToNext()) {
+                            Message message = MessageManager.getFromCursor(mContext, null, msgCursor);
+                            MessageManager.update(_db, message.getId(), message.getChatId(), message.getRecipientContactId(), message.getRecordingId(),
+                                    message.getServerId(), message.getServerShortUrl(), message.getServerCanonicalUrl(), message.getServerTranscriptionUrl(),
+                                    message.getEmailSubject(), message.getEmailBody(), message.getRegistrationTimestamp(), message.isSent(), message.isReceived(),
+                                    message.isPlayed(), recipient.getDisplayName(), recipient.getContactVia(), recipient.getContactMimetype());
+                        }
+                        msgCursor.close();
+
+                    } else {
+						ChatManager.delete(_db, chat.getId());
+					}
+                }
+                cursor.close();
+			} catch (Exception e) {
+				Log.e(TAG, "Unable to add chat table fields", e);
+			}
 		}
 	}
 }

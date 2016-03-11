@@ -313,7 +313,7 @@ public class MessagesService extends Service {
                         mTrackerManager.log("Received wrong message from GCM! Should have gone to email " + receiverEmail);
                     }
 
-                    if(recipient != null) {
+                    if(recipient != null && recipient.getContactVia() != null) {
                         Recording recording = null;
                         Chat chat = null;
                         Message message = null;
@@ -324,20 +324,21 @@ public class MessagesService extends Service {
                             recording = RecordingManager.insertOrUpdate(db, 0, null, durationSeconds * 1000l, 0, false, createdTs, Recording.CONTENT_TYPE_AUDIO);
 
                             // insert chat
-                            Chat foundChat = ChatManager.getChatByMainRecipient(null, db, recipient.getContactId());
+                            Chat foundChat = ChatManager.getChatByMainRecipient(null, db, recipient.getEmailOrPhoneContactId(), null);
                             if(foundChat != null) {
                                 String chatTimestamp = createdTs;
                                 if(foundChat.getLastMessageTimestamp() != null && foundChat.getLastMessageTimestamp().compareToIgnoreCase(createdTs) > 0) {
                                     chatTimestamp = foundChat.getLastMessageTimestamp();
                                 }
-                                chat = ChatManager.update(db, foundChat.getId(), recipient.getContactId(), chatTimestamp);
+                                chat = ChatManager.update(db, foundChat.getId(), recipient.getEmailOrPhoneContactId(), recipient.getDisplayName(), recipient.getContactVia(), recipient.getContactMimetype(), chatTimestamp);
                             } else {
-                                chat = ChatManager.insert(db, recipient.getContactId(), createdTs);
+                                chat = ChatManager.insert(db, recipient.getEmailOrPhoneContactId(), recipient.getDisplayName(), recipient.getContactVia(), recipient.getContactMimetype(), createdTs);
                             }
 
                             // insert message
-                            message = MessageManager.insert(db, chat.getId(), recipient.getContactId(), recording.getId(),
-                                null, null, audioUrl, transcriptionUrl, null, null, createdTs, false, true, false);
+                            message = MessageManager.insert(db, chat.getId(), recipient.getEmailOrPhoneContactId(), recording.getId(),
+                                null, null, audioUrl, transcriptionUrl, null, null, createdTs, false, true, false,
+                                    recipient.getDisplayName(), recipient.getContactVia(), recipient.getContactMimetype());
                             message.setRecipientParameter(recipient);
                             message.setRecordingParameter(recording);
                         } catch (SQLException e) {
@@ -346,7 +347,7 @@ public class MessagesService extends Service {
                         db.close();
 
                         if(message != null) {
-                            mPreferences.addRecentContactUri(recipient.getContactId());
+                            mPreferences.addRecentContactUri(recipient.getEmailOrPhoneContactId());
 
                             ReceiverEvent ev = new ReceiverEvent();
                             ev.setReceiverEmail(receiverEmail);
@@ -417,7 +418,8 @@ public class MessagesService extends Service {
                     MessageManager.insertOrUpdate(db, message.getId(), message.getChatId(), message.getRecipientContactId(), message.getRecordingId(),
                     message.getServerId(), message.getServerShortUrl(), message.getServerCanonicalUrl(), message.getServerTranscriptionUrl(),
                             message.getEmailSubject(), message.getEmailBody(),
-                            message.getRegistrationTimestamp(), message.isSent(), message.isReceived(), message.isPlayed());
+                            message.getRegistrationTimestamp(), message.isSent(), message.isReceived(), message.isPlayed(),
+                            null, null, null);
                 } catch (SQLException e) {
                     mTrackerManager.logException(e);
                 }
@@ -439,7 +441,8 @@ public class MessagesService extends Service {
                 MessageManager.insertOrUpdate(db, message.getId(), message.getChatId(), message.getRecipientContactId(), message.getRecordingId(),
                         message.getServerId(), message.getServerShortUrl(), message.getServerCanonicalUrl(), message.getServerTranscriptionUrl(),
                         message.getEmailSubject(), message.getEmailBody(),
-                        message.getRegistrationTimestamp(), message.isSent(), message.isReceived(), message.isPlayed());
+                        message.getRegistrationTimestamp(), message.isSent(), message.isReceived(), message.isPlayed(),
+                        null, null, null);
             } catch (SQLException e) {
                 mTrackerManager.logException(e);
             }
@@ -468,6 +471,12 @@ public class MessagesService extends Service {
     }
 
     private Message send(Recipient recipient, Recording recording) {
+        if(recipient.getContactVia() == null) {
+            mTrackerManager.log(recipient.toString());
+            mTrackerManager.logException(new IllegalArgumentException("No contact via!"));
+            return null;
+        }
+
         // each sender is currently responsible for building its own message body
         String body = getString(R.string.sender_default_message);
         Message message = null;
@@ -475,7 +484,8 @@ public class MessagesService extends Service {
         SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
         try {
             // insert chat
-            Chat chat = ChatManager.insertOrUpdate(db, 0, recipient.getContactId(), recording.getRecordedTimestamp());
+            String via = recipient.getContactVia();
+            Chat chat = ChatManager.insertOrUpdate(db, 0, recipient.getEmailOrPhoneContactId(), recipient.getDisplayName(), via, recipient.getContactMimetype(), recording.getRecordedTimestamp());
 
             // insert recording
             Recording newRecording = RecordingManager.insertOrUpdate(db, recording.getId(), recording.getFilePath(), recording.getDurationMillis(), recording.getSizeKb(),
@@ -483,8 +493,9 @@ public class MessagesService extends Service {
             recording.setId(newRecording.getId());
 
             // insert message
-            message = MessageManager.insertOrUpdate(db, 0, chat.getId(), recipient.getContactId(), recording.getId(), null, null, null, null,
-                    getString(R.string.sender_default_mail_subject), body, DateContainer.getCurrentUTCTimestamp(), false, false, false);
+            message = MessageManager.insertOrUpdate(db, 0, chat.getId(), recipient.getEmailOrPhoneContactId(), recording.getId(), null, null, null, null,
+                    getString(R.string.sender_default_mail_subject), body, DateContainer.getCurrentUTCTimestamp(), false, false, false,
+                    recipient.getDisplayName(), recipient.getContactVia(), recipient.getContactMimetype());
             message.setRecipientParameter(recipient);
             message.setRecordingParameter(recording);
         } catch (SQLException e) {
@@ -493,7 +504,7 @@ public class MessagesService extends Service {
         db.close();
 
         if(message != null) {
-            mPreferences.addRecentContactUri(recipient.getContactId());
+            mPreferences.addRecentContactUri(recipient.getEmailOrPhoneContactId());
             mSenderManager.send(message);
         }
 

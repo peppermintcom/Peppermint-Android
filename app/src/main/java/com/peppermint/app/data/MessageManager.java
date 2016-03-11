@@ -50,11 +50,31 @@ public class MessageManager {
         message.setReceived(cursor.getInt(cursor.getColumnIndex("received")) > 0);
         message.setPlayed(cursor.getInt(cursor.getColumnIndex("played")) > 0);
 
+        boolean containsContactFields = cursor.getColumnIndex("display_name") >= 0 && cursor.getColumnIndex("mimetype") >= 0 && cursor.getColumnIndex("via") >= 0;
+        if (containsContactFields) {
+            String displayName = cursor.getString(cursor.getColumnIndex("display_name"));
+            String via = cursor.getString(cursor.getColumnIndex("via"));
+            String mimetype = cursor.getString(cursor.getColumnIndex("mimetype"));
+
+            if(via != null && mimetype != null) {
+                Recipient recipient = new Recipient();
+                recipient.setDisplayName(displayName);
+                Contact contact = new Contact(0, 0, false, mimetype,
+                        via);
+                recipient.setContact(contact);
+                message.setRecipientParameter(recipient);
+            }
+        }
+
         if(db != null) {
             message.setRecordingParameter(RecordingManager.getRecordingById(db, message.getRecordingId()));
         }
+
         if(context != null) {
-            message.setRecipientParameter(RecipientManager.getRecipientByContactId(context, message.getRecipientContactId()));
+            Recipient recipient = RecipientManager.getRecipientByContactId(context, message.getRecipientContactId());
+            if(recipient != null) {
+                message.setRecipientParameter(recipient);
+            }
         }
 
         return message;
@@ -119,10 +139,6 @@ public class MessageManager {
         if(cursor.moveToFirst()) {
             do {
                 Message message = getFromCursor(context, db, cursor);
-                message.setRecordingParameter(RecordingManager.getRecordingById(db, message.getRecordingId()));
-                if(context != null) {
-                    message.setRecipientParameter(RecipientManager.getRecipientByContactId(context, message.getRecipientContactId()));
-                }
                 list.add(message);
             } while(cursor.moveToNext());
         }
@@ -163,7 +179,8 @@ public class MessageManager {
                                  String serverId, String shortUrl, String canonicalUrl, String transcriptionUrl,
                                  String emailSubject, String emailBody,
                                  String registrationTimestamp,
-                                 boolean sent, boolean received, boolean played) throws SQLException {
+                                 boolean sent, boolean received, boolean played,
+                                 String displayName, String via, String mimetype) throws SQLException {
         ContentValues cv = new ContentValues();
 
         cv.put("email_subject", emailSubject);
@@ -183,6 +200,16 @@ public class MessageManager {
             cv.put("recording_id", recordingId);
         } else {
             cv.putNull("recording_id");
+        }
+
+        if(displayName != null) {
+            cv.put("display_name", displayName);
+        }
+        if(via != null) {
+            cv.put("via", via);
+        }
+        if(mimetype != null) {
+            cv.put("mimetype", mimetype);
         }
 
         cv.put("server_message_id", serverId);
@@ -230,7 +257,8 @@ public class MessageManager {
                               String serverId, String shortUrl, String canonicalUrl, String transcriptionUrl,
                               String emailSubject, String emailBody,
                               String registrationTimestamp,
-                              boolean sent, boolean received, boolean played) throws SQLException {
+                              boolean sent, boolean received, boolean played,
+                              String displayName, String via, String mimetype) throws SQLException {
         ContentValues cv = new ContentValues();
 
         cv.put("email_subject", emailSubject);
@@ -250,6 +278,16 @@ public class MessageManager {
             cv.put("recording_id", recordingId);
         } else {
             cv.putNull("recording_id");
+        }
+
+        if(displayName != null) {
+            cv.put("display_name", displayName);
+        }
+        if(via != null) {
+            cv.put("via", via);
+        }
+        if(mimetype != null) {
+            cv.put("mimetype", mimetype);
         }
 
         cv.put("server_message_id", serverId);
@@ -296,7 +334,8 @@ public class MessageManager {
                                       String serverId, String shortUrl, String canonicalUrl, String transcriptionUrl,
                                       String emailSubject, String emailBody,
                                       String registrationTimestamp,
-                                      boolean sent, boolean received, boolean played) throws  SQLException {
+                                      boolean sent, boolean received, boolean played,
+                                      String displayName, String via, String mimetype) throws  SQLException {
 
         Message foundMessage = null;
         if(messageId > 0 || serverId != null) {
@@ -305,11 +344,13 @@ public class MessageManager {
 
         if(foundMessage == null) {
             return insert(db, chatId, recipientContactId, recordingId, serverId, shortUrl, canonicalUrl,
-                    transcriptionUrl, emailSubject, emailBody, registrationTimestamp, sent, received, played);
+                    transcriptionUrl, emailSubject, emailBody, registrationTimestamp, sent, received, played,
+                    displayName, via, mimetype);
         }
 
         return update(db, foundMessage.getId(), chatId, recipientContactId, recordingId, serverId, shortUrl, canonicalUrl,
-                transcriptionUrl, emailSubject, emailBody, registrationTimestamp, sent, received, played);
+                transcriptionUrl, emailSubject, emailBody, registrationTimestamp, sent, received, played,
+                displayName, via, mimetype);
     }
 
     /**

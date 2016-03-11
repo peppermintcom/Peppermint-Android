@@ -164,7 +164,7 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
                     if (_recipientType.isStarred() != null && _recipientType.isStarred()) {
                         mChatAdapter.setPeppermintSet(RecipientManager.getPeppermintContacts(mActivity, null).keySet());
                         // show chat list / recent contacts
-                        ChatManager.deleteMissingRecipientChats(mActivity, getDatabase());
+                        // ChatManager.deleteMissingRecipientChats(mActivity, getDatabase());
                         return ChatManager.getAll(getDatabase());
                     }
 
