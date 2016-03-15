@@ -35,8 +35,7 @@ android {
 
     buildTypes {
         release {
-            shrinkResources true
-            minifyEnabled true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -64,7 +63,6 @@ dependencies {
 
     // MP4
     compile 'com.googlecode.mp4parser:isoparser:1.0.5.4'
-    /*compile 'net.danlew:android.joda:2.9.2'*/
 
     // GA
     compile 'com.google.android.gms:play-services-analytics:8.4.0'

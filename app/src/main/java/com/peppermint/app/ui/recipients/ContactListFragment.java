@@ -718,10 +718,10 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
     }
 
     public int clearFilters() {
-        if(mSearchListBarView.isShowingList()) {
+        /*if(mSearchListBarView.isShowingList()) {
             mSearchListBarView.hideList();
             return 2;
-        }
+        }*/
         return (mSearchListBarView.clearSearch(0) ? 1 : 0);
     }
 

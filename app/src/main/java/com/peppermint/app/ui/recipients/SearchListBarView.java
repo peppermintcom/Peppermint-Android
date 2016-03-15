@@ -21,12 +21,9 @@ import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.ListPopupWindow;
-import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import com.peppermint.app.R;
-import com.peppermint.app.utils.Utils;
 
 /**
  * Created by Nuno Luz on 17-09-2015.
@@ -56,9 +53,9 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
 
     private InputMethodManager mInputMethodManager;
 
-    private ImageButton mBtnList, mBtnClear;
+    private ImageButton /*mBtnList,*/ mBtnClear;
     private EditText mTxtSearch;
-    private ListPopupWindow mListPopupWindow;
+    /*private ListPopupWindow mListPopupWindow;*/
 
     private SearchListBarAdapter mAdapter;
     private int mMinSearchCharacters = MIN_SEARCH_CHARACTERS;
@@ -169,7 +166,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
             }
         });
 
-        mBtnList = (ImageButton) findViewById(R.id.btnList);
+        /*mBtnList = (ImageButton) findViewById(R.id.btnList);
         mBtnList.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -180,7 +177,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
                 mBtnList.setEnabled(false);
             }
             }
-        });
+        });*/
 
         mTxtSearch = (EditText) findViewById(R.id.txtSearch);
         // this disables default restore view state mechanism (it was triggering
@@ -198,11 +195,11 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
             }
         });
 
-        TypedArray a = getContext().getTheme().obtainStyledAttributes(new int[] {R.attr.normalBoxRadius});
+        /*TypedArray a = getContext().getTheme().obtainStyledAttributes(new int[] {R.attr.normalBoxRadius});
         int offset = a.getDimensionPixelSize(0, 0) + Utils.dpToPx(getContext(), 1);
-        a.recycle();
+        a.recycle();*/
 
-        mListPopupWindow = new ListPopupWindow(getContext());
+        /*mListPopupWindow = new ListPopupWindow(getContext());
         mListPopupWindow.setAnchorView(this);
         mListPopupWindow.setVerticalOffset(-offset);
         mListPopupWindow.setOnItemClickListener(this);
@@ -216,28 +213,28 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
                     }
                 }, 250);
             }
-        });
+        });*/
 
         if(attrs != null) {
-            a = getContext().getTheme().obtainStyledAttributes(
+            TypedArray a = getContext().getTheme().obtainStyledAttributes(
                     attrs,
                     R.styleable.SearchListBarView,
                     0, 0);
 
             try {
                 mTxtSearch.setHint(a.getString(R.styleable.SearchListBarView_hint));
-                mListPopupWindow.setListSelector(Utils.getDrawable(getContext(), a.getResourceId(R.styleable.SearchListBarView_listSelector, R.drawable.background_transparent_to_solid_pressed)));
+                /*mListPopupWindow.setListSelector(Utils.getDrawable(getContext(), a.getResourceId(R.styleable.SearchListBarView_listSelector, R.drawable.background_transparent_to_solid_pressed)));*/
             } finally {
                 a.recycle();
             }
         }
     }
 
-    public void hideList() {
+    /*public void hideList() {
         if(mListPopupWindow.isShowing()) {
             mListPopupWindow.dismiss();
         }
-    }
+    }*/
 
     private void hideKeyboard() {
         requestFocus();
@@ -280,11 +277,11 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
 
     private void innerSetSelectedItemPosition(int position) {
         mSelectedItemPosition = position;
-        mListPopupWindow.setSelection(position);
+        /*mListPopupWindow.setSelection(position);*/
 
         // set imagebutton drawable with selected contact list icon
         ListItem item = mAdapter.getItem(position);
-        mBtnList.setImageResource(item.getDrawableResource());
+        /*mBtnList.setImageResource(item.getDrawableResource());*/
 
         // reset text if not searchable
         if(!item.isSearchable() && getSearchText() != null) {
@@ -311,12 +308,12 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         setSelectedItemPosition(position);
-        mListPopupWindow.dismiss();
+        /*mListPopupWindow.dismiss();*/
     }
 
     public void setListAdapter(SearchListBarAdapter adapter) {
         mAdapter = adapter;
-        mListPopupWindow.setAdapter(adapter);
+        /*mListPopupWindow.setAdapter(adapter);*/
     }
 
     public SearchListBarAdapter getListAdapter() {
@@ -379,14 +376,14 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         mTxtSearch.setText(text);
     }
 
-    public boolean isShowingList() {
+    /*public boolean isShowingList() {
         return mListPopupWindow.isShowing();
-    }
+    }*/
 
     public void deinit() {
-        if(mListPopupWindow.isShowing()) {
+        /*if(mListPopupWindow.isShowing()) {
             mListPopupWindow.dismiss();
-        }
+        }*/
     }
 
     public EditText getSearchEditText() {
