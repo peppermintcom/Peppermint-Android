@@ -1,5 +1,6 @@
 package com.peppermint.app.cloud.rest;
 
+import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
@@ -10,7 +11,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -149,23 +149,17 @@ public class HttpRequest implements Parcelable {
 	 */
 	protected HttpURLConnection createConnection() throws Exception {
 
+        Uri.Builder uriBuilder = Uri.parse(mEndpoint).buildUpon();
+
 		// build url params
-		String combinedParams = "";
 		if (!urlParams.isEmpty()) {
-			combinedParams += "?";
 			for (Map.Entry<String, Object> p : urlParams.entrySet()) {
-				String paramString = p.getKey() + "="
-						+ URLEncoder.encode(p.getValue().toString(), "UTF-8");
-
-				if (combinedParams.length() > 1)
-					combinedParams += "&";
-
-				combinedParams += paramString;
+                uriBuilder.appendQueryParameter(p.getKey(), p.getValue().toString());
 			}
 		}
 
 		// connection
-		URL url = new URL(mEndpoint + combinedParams);
+		URL url = new URL(uriBuilder.build().toString());
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 		conn.setUseCaches(false);
 		//conn.setDoInput(true);

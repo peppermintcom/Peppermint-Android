@@ -8,7 +8,6 @@ import com.peppermint.app.cloud.senders.mail.gmail.GmailSender;
 import com.peppermint.app.cloud.senders.mail.nativemail.IntentMailSender;
 import com.peppermint.app.cloud.senders.sms.directsms.SMSSender;
 import com.peppermint.app.cloud.senders.sms.nativesms.IntentSMSSender;
-import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.tracking.TrackerManager;
 
@@ -56,8 +55,7 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
         super(context,
                 TrackerManager.getInstance(context.getApplicationContext()),
                 defaultSenderParameters,
-                new SenderPreferences(context),
-                new DatabaseHelper(context));
+                new SenderPreferences(context));
 
         this.mEventBus = eventBus;
         this.mTaskMap = new ConcurrentHashMap<>();
@@ -148,7 +146,7 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
      * @param previousFailedTask the previously failed upload task
      */
     public void send(Message message, SenderUploadTask previousFailedTask) {
-        String mimeType = message.getRecipientParameter().getContactMimetype();
+        String mimeType = message.getChatParameter().getRecipientList().get(0).getMimeType();
 
         // check if there's a sender for the specified recipient mime type
         if(!mSenderMap.containsKey(mimeType)) {

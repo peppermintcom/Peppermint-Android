@@ -33,6 +33,7 @@ import android.widget.Toast;
 
 import com.peppermint.app.R;
 import com.peppermint.app.cloud.MessagesServiceManager;
+import com.peppermint.app.cloud.MessagesSyncTask;
 import com.peppermint.app.cloud.apis.PeppermintApi;
 import com.peppermint.app.cloud.apis.exceptions.GoogleApiDeniedAuthorizationException;
 import com.peppermint.app.cloud.apis.exceptions.GoogleApiNoAuthorizationException;
@@ -88,6 +89,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     // authentication process tasks
     private AuthenticationPeppermintTask mAuthenticationPeppermintTask;
     private AuthenticationGoogleApiTask mAuthenticationGoogleApiTask;
+    private MessagesSyncTask mMessagesSyncTask;
 
     // authentication process status variables
     private boolean mDoingAuth = false;
@@ -100,6 +102,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         @Override
         public void onSendingSupportStarted(SenderSupportTask supportTask) {
             mDoingAuth = true;
+            mProgressDialog.setMessage(getString(R.string.authenticating_));
         }
 
         @Override
@@ -130,6 +133,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         @Override
         public void onSendingSupportStarted(SenderSupportTask supportTask) {
             mDoingAuth = true;
+            mProgressDialog.setMessage(getString(R.string.authenticating_));
         }
 
         @Override
@@ -143,9 +147,8 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
             AuthenticationPeppermintTask task = (AuthenticationPeppermintTask) supportTask;
             mDeviceServerId = task.getDeviceServerId();
             mAccountServerId = task.getAccountServerId();
-            finishAuthentication(task.getAccessToken());
-            mDoingAuth = false;
-            hideProgress();
+            mAuthenticatorUtils.createAccount(task.getAccessToken(), mSelectedAccount, mAccountServerId, mPassword, mDeviceServerId, mDeviceId, mDeviceKey, mAccountType);
+            startMessagesSync();
         }
 
         @Override
@@ -156,6 +159,35 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
 
         @Override
         public void onSendingSupportProgress(SenderSupportTask supportTask, float progressValue) { }
+    };
+
+    private final SenderSupportListener mSyncTaskListener = new SenderSupportListener() {
+        @Override
+        public void onSendingSupportStarted(SenderSupportTask supportTask) { mDoingAuth = true;
+            mProgressDialog.setMessage(getString(R.string.syncing_messages_));
+        }
+
+        @Override
+        public void onSendingSupportCancelled(SenderSupportTask supportTask) {
+            mDoingAuth = false;
+            hideProgress();
+        }
+
+        @Override
+        public void onSendingSupportFinished(SenderSupportTask supportTask) {
+            finishAuthentication();
+            mDoingAuth = false;
+            hideProgress();
+        }
+
+        @Override
+        public void onSendingSupportError(SenderSupportTask supportTask, Throwable error) {
+            onSendingSupportFinished(supportTask);
+        }
+
+        @Override
+        public void onSendingSupportProgress(SenderSupportTask supportTask, float progressValue) {
+        }
     };
 
     private void startGoogleAuthentication() {
@@ -176,6 +208,12 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         mAuthenticationPeppermintTask.getIdentity().setTrackerManager(mTrackerManager);
         mAuthenticationPeppermintTask.getIdentity().setPreferences(mPreferences);
         mAuthenticationPeppermintTask.execute((Void) null);
+    }
+
+    private void startMessagesSync() {
+        showProgress();
+        mMessagesSyncTask = new MessagesSyncTask(this, mSyncTaskListener);
+        mMessagesSyncTask.execute((Void) null);
     }
 
     private void handleError(Throwable error) {
@@ -212,9 +250,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         mTrackerManager.logException(error);
     }
 
-    private void finishAuthentication(String accessToken) {
-        mAuthenticatorUtils.createAccount(accessToken, mSelectedAccount, mAccountServerId, mPassword, mDeviceServerId, mDeviceId, mDeviceKey, mAccountType);
-
+    private void finishAuthentication() {
         final Intent intent = new Intent();
         intent.putExtra(AccountManager.KEY_ACCOUNT_NAME, AuthenticatorConstants.ACCOUNT_NAME);
         intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, AuthenticatorConstants.ACCOUNT_TYPE);
@@ -274,6 +310,9 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
                 }
                 if (mAuthenticationGoogleApiTask != null) {
                     mAuthenticationGoogleApiTask.cancel(true);
+                }
+                if (mMessagesSyncTask != null) {
+                    mMessagesSyncTask.cancel(true);
                 }
             }
         });

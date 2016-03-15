@@ -6,10 +6,8 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.IBinder;
-import android.view.LayoutInflater;
 import android.view.View;
 
-import com.peppermint.app.R;
 import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.ReceiverEvent;
 import com.peppermint.app.cloud.senders.SenderEvent;
@@ -18,7 +16,6 @@ import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.MessageManager;
-import com.peppermint.app.ui.OverlayManager;
 import com.peppermint.app.ui.chat.ChatController;
 import com.peppermint.app.ui.chat.RecipientDataGUI;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
@@ -35,7 +32,6 @@ public class ChatHeadService extends Service implements MessagesServiceManager.R
 
     private ChatHeadController mChatHeadController;
 
-    private DatabaseHelper mDatabaseHelper;
     private SenderPreferences mPreferences;
     private MessagesServiceManager mMessagesServiceManager;
 
@@ -73,7 +69,6 @@ public class ChatHeadService extends Service implements MessagesServiceManager.R
     @Override
     public void onCreate() {
         super.onCreate();
-        mDatabaseHelper = new DatabaseHelper(this);
         mPreferences = new SenderPreferences(this);
         mMessagesServiceManager = new MessagesServiceManager(this);
         mMessagesServiceManager.startAndBind();
@@ -103,17 +98,17 @@ public class ChatHeadService extends Service implements MessagesServiceManager.R
 
         mChatHeadController = new ChatHeadController(this);
 
-        SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
+        DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this);
+        SQLiteDatabase db = databaseHelper.getReadableDatabase();
         Cursor chatCursor = ChatManager.getAll(db);
         int i = 0;
         while(chatCursor.moveToNext() && i < MAX_CHAT_HEADS) {
-            Chat chat = ChatManager.getFromCursor(this, chatCursor);
+            Chat chat = ChatManager.getChatFromCursor(db, chatCursor);
             chat.setAmountUnopened(MessageManager.getUnopenedCountByChat(db, chat.getId()));
             mChatHeadController.addChat(chat);
             i++;
         }
         chatCursor.close();
-        db.close();
 
         if(mPreferences.isOverlayAllowed()) {
             mChatHeadController.requestLayout();

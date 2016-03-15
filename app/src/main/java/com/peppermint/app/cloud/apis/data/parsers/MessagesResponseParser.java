@@ -20,17 +20,32 @@ public class MessagesResponseParser implements JSONParser<MessagesResponse> {
     public MessagesResponse processJson(JSONObject obj) throws JSONException {
         MessagesResponse response = new MessagesResponse();
 
-        JSONObject data = obj.getJSONObject("data");
+        JSONObject data = obj.isNull("data") ? obj : obj.getJSONObject("data");
 
         response.setMessageId(data.getString("id"));
 
         JSONObject attrData = data.getJSONObject("attributes");
+
         if(!attrData.isNull("audio_url")) {
             response.setAudioUrl(attrData.getString("audio_url"));
         }
-        if(!attrData.isNull("transcription_url")) {
-            response.setTranscriptionUrl(attrData.getString("transcription_url"));
+
+        if(!attrData.isNull("transcription")) {
+            response.setTranscription(attrData.getString("transcription"));
         }
+
+        if(!attrData.isNull("read")) {
+            response.setReadTimestamp(attrData.getString("read"));
+        }
+
+        if(!attrData.isNull("sender_name")) {
+            response.setSenderName(attrData.getString("sender_name"));
+        }
+
+        if(!attrData.isNull("duration")) {
+            response.setDuration(attrData.getInt("duration"));
+        }
+
         response.setSenderEmail(attrData.getString("sender_email"));
         response.setRecipientEmail(attrData.getString("recipient_email"));
         response.setCreatedTimestamp(attrData.getString("created"));

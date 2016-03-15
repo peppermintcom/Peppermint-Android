@@ -5,7 +5,7 @@ import android.content.Context;
 import com.peppermint.app.cloud.apis.GoogleApi;
 import com.peppermint.app.cloud.apis.PeppermintApi;
 import com.peppermint.app.cloud.senders.mail.gmail.GmailSender;
-import com.peppermint.app.data.DatabaseHelper;
+import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.tracking.TrackerManager;
 
@@ -16,7 +16,7 @@ import java.util.UUID;
  * Created by Nuno Luz on 01-10-2015.
  * <p>
  *     A Sender abstract implementation that sends a {@link Message} ({@link com.peppermint.app.data.Recording} to
- *     {@link com.peppermint.app.data.Recipient}) through a particular medium/protocol.
+ *     {@link ContactRaw}) through a particular medium/protocol.
  *</p>
  * <p>
  *     Senders are an extension of {@link SenderObject}s, thus containing common contextual data.
@@ -37,8 +37,8 @@ public abstract class Sender extends SenderObject {
     private SenderUploadListener mSenderUploadListener;
     private Sender mFailureChainSender;
 
-    public Sender(Context context, TrackerManager trackerManager, Map<String, Object> parameters, DatabaseHelper databaseHelper, SenderUploadListener senderUploadListener) {
-        super(context, trackerManager, parameters, null, databaseHelper);
+    public Sender(Context context, TrackerManager trackerManager, Map<String, Object> parameters, SenderUploadListener senderUploadListener) {
+        super(context, trackerManager, parameters, null);
         this.mSenderUploadListener = senderUploadListener;
         this.mErrorHandler = new SenderErrorHandler(this, mSenderUploadListener);
     }

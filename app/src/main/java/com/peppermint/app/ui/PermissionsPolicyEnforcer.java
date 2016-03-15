@@ -1,6 +1,7 @@
 package com.peppermint.app.ui;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -62,25 +63,7 @@ public class PermissionsPolicyEnforcer {
     }
 
     public boolean requestPermissions(Activity activityRequestingPermissions) {
-        mPermissionsToAsk = new ArrayList<>();
-        List<String> tmpPermissionsToAsk = new ArrayList<>();
-
-        for(RequiredPermission permission : mPermissions) {
-
-            boolean requirementsOk = true;
-            if(permission.requiredFeatures != null) {
-                Iterator<String> featureIt = permission.requiredFeatures.iterator();
-                while(featureIt.hasNext() && requirementsOk) {
-                    String feature = featureIt.next();
-                    requirementsOk = requirementsOk && activityRequestingPermissions.getPackageManager().hasSystemFeature(feature);
-                }
-            }
-
-            if(requirementsOk && ContextCompat.checkSelfPermission(activityRequestingPermissions, permission.permission) != PackageManager.PERMISSION_GRANTED) {
-                mPermissionsToAsk.add(permission);
-                tmpPermissionsToAsk.add(permission.permission);
-            }
-        }
+        List<String> tmpPermissionsToAsk = getPermissionsToAsk(activityRequestingPermissions);
 
         if (tmpPermissionsToAsk.size() > 0) {
             ActivityCompat.requestPermissions(activityRequestingPermissions,
@@ -108,6 +91,30 @@ public class PermissionsPolicyEnforcer {
         }
 
         return true;
+    }
+
+    public List<String> getPermissionsToAsk(Context context) {
+        mPermissionsToAsk = new ArrayList<>();
+        List<String> tmpPermissionsToAsk = new ArrayList<>();
+
+        for(RequiredPermission permission : mPermissions) {
+
+            boolean requirementsOk = true;
+            if(permission.requiredFeatures != null) {
+                Iterator<String> featureIt = permission.requiredFeatures.iterator();
+                while(featureIt.hasNext() && requirementsOk) {
+                    String feature = featureIt.next();
+                    requirementsOk = requirementsOk && context.getPackageManager().hasSystemFeature(feature);
+                }
+            }
+
+            if(requirementsOk && ContextCompat.checkSelfPermission(context, permission.permission) != PackageManager.PERMISSION_GRANTED) {
+                mPermissionsToAsk.add(permission);
+                tmpPermissionsToAsk.add(permission.permission);
+            }
+        }
+
+        return tmpPermissionsToAsk;
     }
 
 }

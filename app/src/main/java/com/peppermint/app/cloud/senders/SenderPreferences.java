@@ -39,6 +39,8 @@ public class SenderPreferences {
     public static final String CHAT_HEAD_POSITION_X_KEY = "chatHeadPositionX";
     public static final String CHAT_HEAD_POSITION_Y_KEY = "chatHeadPositionY";
 
+    public static final String LAST_SYNC_TIMESTAMP_KEY = "lastSyncTimestmap";
+
     protected static final int RECENT_CONTACTS_LIST_LIMIT = 50;
 
     public static String getEnabledPreferenceKey(Class<? extends SenderPreferences> prefClass) {
@@ -170,6 +172,16 @@ public class SenderPreferences {
         float y = getSharedPreferences().getFloat(CHAT_HEAD_POSITION_Y_KEY, 0);
         Log.d("TAG", "GET X="+x+" Y="+y);
         return new float[]{x, y};
+    }
+
+    public void setLastSyncTimestamp(String ts) {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putString(LAST_SYNC_TIMESTAMP_KEY, ts);
+        editor.commit();
+    }
+
+    public String getLastSyncTimestamp() {
+        return getSharedPreferences().getString(LAST_SYNC_TIMESTAMP_KEY, null);
     }
 
     public void setFirstName(String name) {

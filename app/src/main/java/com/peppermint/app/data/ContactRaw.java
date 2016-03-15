@@ -7,9 +7,10 @@ import java.util.Map;
 /**
  * Created by Nuno Luz on 26/08/2015.
  *
- * Represents a Recipient of a recorded message.
+ * Represents a {@link android.provider.ContactsContract} raw contact.
+ * Aggregates all raw contact data entries with phone, email, name and photo data.
  */
-public class Recipient implements Serializable {
+public class ContactRaw implements Serializable {
 
     private long mRawId;
     private boolean mDeleted = false;
@@ -19,10 +20,10 @@ public class Recipient implements Serializable {
 
     private Map<String, Contact> mContacts = new HashMap<>();
 
-    public Recipient() {
+    public ContactRaw() {
     }
 
-    public Recipient(long mRawId, boolean mDeleted, String mAccountType, String mAccountName, String mDisplayName, String mPhotoUri) {
+    public ContactRaw(long mRawId, boolean mDeleted, String mAccountType, String mAccountName, String mDisplayName, String mPhotoUri) {
         this.mRawId = mRawId;
         this.mDeleted = mDeleted;
         this.mAccountType = mAccountType;
@@ -31,7 +32,7 @@ public class Recipient implements Serializable {
         this.mPhotoUri = mPhotoUri;
     }
 
-    public Recipient(long mRawId, boolean mDeleted, String mAccountType, String mAccountName, String mDisplayName, String mPhotoUri, Contact mEmail, Contact mPhone, Contact mPeppermint) {
+    public ContactRaw(long mRawId, boolean mDeleted, String mAccountType, String mAccountName, String mDisplayName, String mPhotoUri, Contact mEmail, Contact mPhone, Contact mPeppermint) {
         this.mRawId = mRawId;
         this.mDeleted = mDeleted;
         this.mAccountType = mAccountType;
@@ -44,7 +45,7 @@ public class Recipient implements Serializable {
         mContacts.put(Contact.PEPPERMINT_MIMETYPE, mPeppermint);
     }
 
-    public Recipient(long mRawId, boolean mDeleted, String mAccountType, String mAccountName, String mDisplayName, String mPhotoUri, String mEmailVia, String mPhoneVia, String mPeppermintVia) {
+    public ContactRaw(long mRawId, boolean mDeleted, String mAccountType, String mAccountName, String mDisplayName, String mPhotoUri, String mEmailVia, String mPhoneVia, String mPeppermintVia) {
         this.mRawId = mRawId;
         this.mDeleted = mDeleted;
         this.mAccountType = mAccountType;
@@ -160,7 +161,7 @@ public class Recipient implements Serializable {
 
     @Override
     public String toString() {
-        return "Recipient{" +
+        return "ContactRaw{" +
                 "mContacts=" + mContacts +
                 ", mPhotoUri='" + mPhotoUri + '\'' +
                 ", mDisplayName='" + mDisplayName + '\'' +

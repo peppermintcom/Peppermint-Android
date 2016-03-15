@@ -14,6 +14,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 
 import com.peppermint.app.R;
+import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.ui.canvas.AnimatedView;
 import com.peppermint.app.ui.canvas.BitmapLayer;
 import com.peppermint.app.ui.canvas.BitmapSequenceAnimatedLayer;
@@ -28,7 +29,7 @@ import java.util.Random;
 /**
  * Created by Nuno Luz on 15-09-2015.
  *
- * Avatar view for {@link com.peppermint.app.data.Recipient}s.<br />
+ * Avatar view for {@link ContactRaw}s.<br />
  * It can either show a static picture as the avatar, or an animated sequence of pictures.<br />
  * The animation can be triggered through {@link #startAnimations()} and {@link #startDrawingThread()}.
  */

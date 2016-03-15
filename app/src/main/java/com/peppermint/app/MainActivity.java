@@ -12,7 +12,7 @@ import android.widget.Toast;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.PermissionsPolicyEnforcer;
 import com.peppermint.app.ui.about.AboutActivity;
-import com.peppermint.app.ui.recipients.RecipientsFragment;
+import com.peppermint.app.ui.recipients.ContactListFragment;
 import com.peppermint.app.ui.settings.SettingsActivity;
 import com.peppermint.app.ui.views.NavigationItem;
 import com.peppermint.app.utils.Utils;
@@ -41,7 +41,7 @@ public class MainActivity extends CustomActionBarActivity {
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
-        navItems.add(new NavigationItem(getString(R.string.drawer_menu_contacts), R.drawable.ic_drawer_contacts, RecipientsFragment.class, false, false, R.string.loading_contacts));
+        navItems.add(new NavigationItem(getString(R.string.drawer_menu_contacts), R.drawable.ic_drawer_contacts, ContactListFragment.class, false, false, R.string.loading_contacts));
         navItems.add(new NavigationItem(getString(R.string.drawer_menu_settings), R.drawable.ic_drawer_settings, new Runnable() {
             @Override
             public void run() {
@@ -100,8 +100,8 @@ public class MainActivity extends CustomActionBarActivity {
         }
 
         Fragment fragment = getCurrentFragment();
-        if(fragment instanceof RecipientsFragment) {
-            int stepsLeft = ((RecipientsFragment) fragment).clearFilters();
+        if(fragment instanceof ContactListFragment) {
+            int stepsLeft = ((ContactListFragment) fragment).clearFilters();
             if (stepsLeft <= 0) {
                 super.onBackPressed();
                 return;

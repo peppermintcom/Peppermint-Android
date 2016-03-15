@@ -25,17 +25,15 @@ public class SenderObject implements Cloneable {
 
     protected Map<String, Object> mParameters;
     protected transient SenderPreferences mPreferences;
-    protected transient DatabaseHelper mDatabaseHelper;
 
     public SenderObject(SenderObject inst) {
-        this(inst.mContext, inst.mTrackerManager, inst.mParameters, inst.mPreferences, inst.mDatabaseHelper);
+        this(inst.mContext, inst.mTrackerManager, inst.mParameters, inst.mPreferences);
     }
 
-    public SenderObject(Context context, TrackerManager trackerManager, Map<String, Object> parameters, SenderPreferences senderPreferences, DatabaseHelper databaseHelper) {
+    public SenderObject(Context context, TrackerManager trackerManager, Map<String, Object> parameters, SenderPreferences senderPreferences) {
         mContext = context;
         mTrackerManager = trackerManager;
         mPreferences = senderPreferences;
-        mDatabaseHelper = databaseHelper;
         mParameters = new HashMap<>();
         if(parameters != null) {
             mParameters.putAll(parameters);
@@ -86,11 +84,7 @@ public class SenderObject implements Cloneable {
     }
 
     public DatabaseHelper getDatabaseHelper() {
-        return mDatabaseHelper;
-    }
-
-    public void setDatabaseHelper(DatabaseHelper mDatabaseHelper) {
-        this.mDatabaseHelper = mDatabaseHelper;
+        return DatabaseHelper.getInstance(mContext);
     }
 
     public UUID getId() {

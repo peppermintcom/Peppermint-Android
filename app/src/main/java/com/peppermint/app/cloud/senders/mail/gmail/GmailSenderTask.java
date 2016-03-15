@@ -16,8 +16,8 @@ import com.peppermint.app.cloud.senders.SenderUploadTask;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.cloud.senders.exceptions.TryAgainException;
 import com.peppermint.app.cloud.senders.mail.MailUtils;
+import com.peppermint.app.data.ContactManager;
 import com.peppermint.app.data.Message;
-import com.peppermint.app.data.RecipientManager;
 import com.peppermint.app.utils.DateContainer;
 
 import org.json.JSONArray;
@@ -108,8 +108,11 @@ public class GmailSenderTask extends SenderUploadTask {
                 getTrackerManager().logException(e);
             }
 
+            String recipientEmail = getMessage().getChatParameter().getRecipientList().get(0).getVia();
+            long recipientRawId = getMessage().getChatParameter().getRecipientList().get(0).getRawContactId();
+
             try {
-                GoogleApi.DraftResponse response = googleApi.createGmailDraft(getMessage().getEmailSubject(), bodyPlain, bodyHtml, getMessage().getRecipientParameter().getEmail().getVia(),
+                GoogleApi.DraftResponse response = googleApi.createGmailDraft(getMessage().getEmailSubject(), bodyPlain, bodyHtml, recipientEmail,
                         getMessage().getRecordingParameter().getContentType(), emailDate, file);
                 draft = (Draft) response.getBody();
 
@@ -122,11 +125,11 @@ public class GmailSenderTask extends SenderUploadTask {
 
             if(!isCancelled()) {
                 try {
-                    getPeppermintApi().sendMessage(null, canonicalUrl, data.getEmail(), getMessage().getRecipientParameter().getEmail().getVia(), (int) (getMessage().getRecordingParameter().getDurationMillis() / 1000));
-                    RecipientManager.insertPeppermint(getContext(), getMessage().getRecipientParameter().getEmail().getVia(), getMessage().getRecipientParameter().getRawId(), 0, null);
+                    getPeppermintApi().sendMessage(null, canonicalUrl, data.getEmail(), recipientEmail, (int) (getMessage().getRecordingParameter().getDurationMillis() / 1000));
+                    ContactManager.insertPeppermint(getContext(), recipientEmail, recipientRawId, 0, null);
                 } catch(PeppermintApiRecipientNoAppException e) {
                     getTrackerManager().log("Unable to send through Peppermint", e);
-                    RecipientManager.deletePeppermint(getContext(), getMessage().getRecipientParameter().getRawId(), null);
+                    ContactManager.deletePeppermint(getContext(), recipientRawId, null);
                 } catch(Throwable e) {
                     googleApi.deleteGmailDraft(draft);
                     throw e;

@@ -47,7 +47,8 @@
             android:layout_height="wrap_content"
             android:listSelector="@null"
             android:drawSelectorOnTop="false"
-            android:divider="@null"
+            android:divider="@color/divider_grey"
+            android:dividerHeight="1dp"
             android:background="@null"
             android:layout_marginBottom="1dp" />
 

@@ -15,6 +15,7 @@ import android.util.AttributeSet;
 
 import com.peppermint.app.R;
 import com.peppermint.app.data.Chat;
+import com.peppermint.app.data.ChatRecipient;
 import com.peppermint.app.ui.views.RoundImageView;
 import com.peppermint.app.utils.Utils;
 
@@ -173,13 +174,15 @@ public class ChatHeadView extends RoundImageView {
     public void setChat(Chat mChat) {
         this.mChat = mChat;
 
-        if(mChat == null) {
+        if(mChat == null || mChat.getRecipientList().size() <= 0) {
             return;
         }
 
+        ChatRecipient recipient = mChat.getRecipientList().get(0);
+
         // setup avatar
-        if(mChat.getMainRecipientParameter().getPhotoUri() != null) {
-            setImageURI(Uri.parse(mChat.getMainRecipientParameter().getPhotoUri()));
+        if(recipient.getPhotoUri() != null) {
+            setImageURI(Uri.parse(recipient.getPhotoUri()));
         } else {
             setImageResource(R.drawable.ic_anonymous_green_48dp);
         }
@@ -193,14 +196,16 @@ public class ChatHeadView extends RoundImageView {
     private void refreshDisplayName() {
         mDisplayNameList.clear();
 
-        if(mChat == null) {
+        if(mChat == null || mChat.getRecipientList().size() <= 0) {
             return;
         }
+
+        ChatRecipient recipient = mChat.getRecipientList().get(0);
 
         // the following code splits the display name into several strings
         // each corresponding to one line
         // this allows the name to fit into the width of the view
-        String displayName = mChat.getMainRecipientParameter().getDisplayName();
+        String displayName = recipient.getDisplayName();
         mTextPaint.getTextBounds(displayName, 0, displayName.length(), mTextBounds);
 
         if(mTextBounds.width() > getLocalWidth()) {

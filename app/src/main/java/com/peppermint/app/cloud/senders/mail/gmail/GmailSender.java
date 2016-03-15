@@ -6,7 +6,6 @@ import com.peppermint.app.cloud.senders.Sender;
 import com.peppermint.app.cloud.senders.SenderObject;
 import com.peppermint.app.cloud.senders.SenderUploadListener;
 import com.peppermint.app.cloud.senders.SenderUploadTask;
-import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.tracking.TrackerManager;
 
@@ -20,8 +19,8 @@ import java.util.UUID;
  */
 public class GmailSender extends Sender {
 
-    public GmailSender(Context context, TrackerManager trackerManager, Map<String, Object> parameters, DatabaseHelper databaseHelper, SenderUploadListener senderUploadListener) {
-        super(context, trackerManager, parameters, databaseHelper, senderUploadListener);
+    public GmailSender(Context context, TrackerManager trackerManager, Map<String, Object> parameters, SenderUploadListener senderUploadListener) {
+        super(context, trackerManager, parameters, senderUploadListener);
         construct();
     }
 

@@ -10,19 +10,48 @@ import java.io.Serializable;
 public class MessagesResponse implements Serializable {
 
     private String mMessageId;
-    private String mAudioUrl, mTranscriptionUrl;
+    private String mAudioUrl, mTranscription;
     private String mSenderEmail, mRecipientEmail, mCreatedTimestamp;
+    private String mSenderName, mReadTimestamp;
+    private int mDuration;
 
     public MessagesResponse() {
     }
 
-    public MessagesResponse(String mMessageId, String mAudioUrl, String mTranscriptionUrl, String mSenderEmail, String mRecipientEmail, String mCreatedTimestamp) {
+    public MessagesResponse(String mMessageId, String mAudioUrl, String mTranscription, String mSenderEmail, String mSenderName, String mRecipientEmail, int mDuration, String mCreatedTimestamp, String mReadTimestamp) {
         this.mMessageId = mMessageId;
         this.mAudioUrl = mAudioUrl;
-        this.mTranscriptionUrl = mTranscriptionUrl;
+        this.mTranscription = mTranscription;
         this.mSenderEmail = mSenderEmail;
+        this.mSenderName = mSenderName;
         this.mRecipientEmail = mRecipientEmail;
         this.mCreatedTimestamp = mCreatedTimestamp;
+        this.mReadTimestamp = mReadTimestamp;
+        this.mDuration = mDuration;
+    }
+
+    public int getDuration() {
+        return mDuration;
+    }
+
+    public void setDuration(int mDuration) {
+        this.mDuration = mDuration;
+    }
+
+    public String getSenderName() {
+        return mSenderName;
+    }
+
+    public void setSenderName(String mSenderName) {
+        this.mSenderName = mSenderName;
+    }
+
+    public String getReadTimestamp() {
+        return mReadTimestamp;
+    }
+
+    public void setReadTimestamp(String mReadTimestamp) {
+        this.mReadTimestamp = mReadTimestamp;
     }
 
     public String getMessageId() {
@@ -41,12 +70,12 @@ public class MessagesResponse implements Serializable {
         this.mAudioUrl = mAudioUrl;
     }
 
-    public String getTranscriptionUrl() {
-        return mTranscriptionUrl;
+    public String getTranscription() {
+        return mTranscription;
     }
 
-    public void setTranscriptionUrl(String mTranscriptionUrl) {
-        this.mTranscriptionUrl = mTranscriptionUrl;
+    public void setTranscription(String mTranscription) {
+        this.mTranscription = mTranscription;
     }
 
     public String getSenderEmail() {
@@ -78,10 +107,13 @@ public class MessagesResponse implements Serializable {
         return "MessagesResponse{" +
                 "mMessageId='" + mMessageId + '\'' +
                 ", mAudioUrl='" + mAudioUrl + '\'' +
-                ", mTranscriptionUrl='" + mTranscriptionUrl + '\'' +
+                ", mTranscription='" + mTranscription + '\'' +
                 ", mSenderEmail='" + mSenderEmail + '\'' +
+                ", mSenderName='" + mSenderName + '\'' +
                 ", mRecipientEmail='" + mRecipientEmail + '\'' +
                 ", mCreatedTimestamp='" + mCreatedTimestamp + '\'' +
+                ", mReadTimestamp='" + mReadTimestamp + '\'' +
+                ", mDuration=" + mDuration +
                 '}';
     }
 }

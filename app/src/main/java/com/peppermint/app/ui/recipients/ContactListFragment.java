@@ -7,7 +7,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -32,19 +31,21 @@ import android.widget.ImageView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
-import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.cloud.ReceiverEvent;
+import com.peppermint.app.cloud.SyncEvent;
 import com.peppermint.app.cloud.senders.SenderEvent;
+import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
+import com.peppermint.app.data.ChatRecipient;
+import com.peppermint.app.data.ContactManager;
+import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.FilteredCursor;
 import com.peppermint.app.data.Message;
-import com.peppermint.app.data.Recipient;
-import com.peppermint.app.data.RecipientManager;
 import com.peppermint.app.data.RecipientType;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.ui.CustomActionBarActivity;
@@ -55,10 +56,11 @@ import com.peppermint.app.ui.chat.ChatActivity;
 import com.peppermint.app.ui.chat.ChatCursorAdapter;
 import com.peppermint.app.ui.chat.ChatFragment;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
-import com.peppermint.app.ui.recipients.add.NewRecipientActivity;
-import com.peppermint.app.ui.recipients.add.NewRecipientFragment;
+import com.peppermint.app.ui.recipients.add.NewContactActivity;
+import com.peppermint.app.ui.recipients.add.NewContactFragment;
 import com.peppermint.app.ui.views.dialogs.PopupDialog;
 import com.peppermint.app.ui.views.simple.CustomVisibilityListView;
+import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
 import java.io.InterruptedIOException;
@@ -71,7 +73,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class RecipientsFragment extends ListFragment implements ChatRecordOverlayController.Callbacks,
+public class ContactListFragment extends ListFragment implements ChatRecordOverlayController.Callbacks,
         AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener,
         SearchListBarView.OnSearchListener, OverlayManager.OverlayVisibilityChangeListener {
 
@@ -89,12 +91,13 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
 
     private CustomActionBarActivity mActivity;
     private ChatRecordOverlayController mController;
+    private DatabaseHelper mDatabaseHelper;
 
     private boolean mHasSavedInstanceState = false;
     private boolean mOnActivityResult = false;
 
     // the recipient list
-    private RecipientCursorAdapter mRecipientAdapter;
+    private ContactCursorAdapter mRecipientAdapter;
     private Button mBtnAddContact;
     private ViewGroup mLytAddContactContainer;
     private ImageView mImgListBorder;
@@ -118,18 +121,9 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
     private GetRecipients mGetRecipientsTask;
     private static final Pattern mViaPattern = Pattern.compile("<([^\\s]*)>");
 
-    private DatabaseHelper mDatabaseHelper;
-    private SQLiteDatabase mDatabase;
     private ChatCursorAdapter mChatAdapter;
 
     private ThreadPoolExecutor mGetRecipientsExecutor;
-
-    private SQLiteDatabase getDatabase() {
-        if(mDatabase == null || !mDatabase.isOpen()) {
-            mDatabase = mDatabaseHelper.getReadableDatabase();
-        }
-        return mDatabase;
-    }
 
     private class GetRecipients extends AsyncTask<Void, Void, Object> {
         private RecipientType _recipientType;
@@ -142,7 +136,7 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
 
         @Override
         protected void onPreExecute() {
-            mActivity.startFragmentLoading(RecipientsFragment.this);
+            mActivity.startFragmentLoading(ContactListFragment.this);
 
             _recipientType = (RecipientType) mSearchListBarView.getSelectedItem();
 
@@ -162,17 +156,17 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
                         Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
 
                     if (_recipientType.isStarred() != null && _recipientType.isStarred()) {
-                        mChatAdapter.setPeppermintSet(RecipientManager.getPeppermintContacts(mActivity, null).keySet());
+                        mChatAdapter.setPeppermintSet(ContactManager.getPeppermintContacts(mActivity, null).keySet());
                         // show chat list / recent contacts
                         // ChatManager.deleteMissingRecipientChats(mActivity, getDatabase());
-                        return ChatManager.getAll(getDatabase());
+                        return ChatManager.getAll(mDatabaseHelper.getReadableDatabase());
                     }
 
                     // get normal full, email or phone contact list
-                    FilteredCursor cursor = (FilteredCursor) RecipientManager.get(mActivity, null, _name, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
+                    FilteredCursor cursor = (FilteredCursor) ContactManager.get(mActivity, null, _name, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
                     if(cursor.getOriginalCursor().getCount() <= 0 && _name != null && _via != null) {
                         cursor.close();
-                        cursor = (FilteredCursor) RecipientManager.get(mActivity, null, null, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
+                        cursor = (FilteredCursor) ContactManager.get(mActivity, null, null, _recipientType.isStarred(), _recipientType.getMimeTypes(), _via);
                     }
                     cursor.filter();
 
@@ -194,7 +188,7 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
                 }
             } catch(Throwable e) {
                 if(!(e instanceof InterruptedIOException)) {
-                    Crashlytics.logException(e);
+                    mActivity.getTrackerManager().logException(e);
                 }
             }
 
@@ -300,7 +294,7 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
         }
     };
 
-    public RecipientsFragment() {
+    public ContactListFragment() {
         this.mGetRecipientsExecutor = new ThreadPoolExecutor(1, 1,
                 60, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>());
@@ -332,6 +326,8 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
 
             mActivity.getAuthenticationPolicyEnforcer().removeAuthenticationDoneCallback(this);
 
+            mController.getMessagesServiceManager().startAndSync();
+
             if(getArguments() != null && (getArguments().containsKey(FAST_REPLY_NAME_PARAM) || getArguments().containsKey(FAST_REPLY_MAIL_PARAM))) {
                 String name = getArguments().getString(FAST_REPLY_NAME_PARAM, "");
                 String mail = getArguments().getString(FAST_REPLY_MAIL_PARAM, "");
@@ -344,12 +340,12 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
                     List<String> mimeTypes = new ArrayList<>();
                     mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
                     mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-                    Recipient foundRecipient = RecipientManager.getRecipientByViaOrContactId(mActivity, mail, 0);
+                    ContactRaw foundRecipient = ContactManager.getRawContactByViaOrContactId(mActivity, mail, 0);
 
                     // if not, add the contact
                     if(foundRecipient == null) {
                         try {
-                            foundRecipient = RecipientManager.insert(mActivity, 0, name, null, null, mail, null, data.getEmail(), false);
+                            foundRecipient = ContactManager.insert(mActivity, 0, name, null, null, mail, null, data.getEmail(), false);
                         } catch (Exception e) {
                             /* nothing to do here */
                         }
@@ -388,12 +384,11 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mDatabaseHelper = new DatabaseHelper(activity);
+        mDatabaseHelper = DatabaseHelper.getInstance(activity);
         mActivity = (CustomActionBarActivity) activity;
         mController = new ChatRecordOverlayController(mActivity, this) {
             @Override
             public void onReceivedMessage(ReceiverEvent event) {
-                super.onReceivedMessage(event);
                 if(mSearchListBarView.getSelectedItemPosition() == 0) {
                     onSearch(mSearchListBarView.getSearchText());
                 }
@@ -401,15 +396,21 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
 
             @Override
             public void onSendFinished(SenderEvent event) {
-                super.onSendFinished(event);
                 if(mSearchListBarView.getSelectedItemPosition() == 0) {
                     onSearch(mSearchListBarView.getSearchText());
                 }
             }
 
             @Override
-            protected Message sendMessage(Recipient recipient, Recording recording) {
-                Message message = super.sendMessage(recipient, recording);
+            public void onSyncFinished(SyncEvent event) {
+                if(mSearchListBarView.getSelectedItemPosition() == 0) {
+                    onSearch(mSearchListBarView.getSearchText());
+                }
+            }
+
+            @Override
+            protected Message sendMessage(Chat chat, Recording recording) {
+                Message message = super.sendMessage(chat, recording);
 
                 // go back to recent contacts after sending a message
                 mSearchListBarView.setSelectedItemPositionBeforeSearch(0);
@@ -431,8 +432,8 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         PeppermintApp app = (PeppermintApp) mActivity.getApplication();
 
-        mChatAdapter = new ChatCursorAdapter(mActivity, null, null, null, mActivity.getTrackerManager());
-        mRecipientAdapter = new RecipientCursorAdapter(app, mActivity, null);
+        mChatAdapter = new ChatCursorAdapter(mActivity, null, null, mActivity.getTrackerManager());
+        mRecipientAdapter = new ContactCursorAdapter(mActivity, null);
 
         mActivity.getAuthenticationPolicyEnforcer().addAuthenticationDoneCallback(mAuthenticationDoneCallback);
 
@@ -524,17 +525,17 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
         mBtnAddContact.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(mActivity, NewRecipientActivity.class);
+                Intent intent = new Intent(mActivity, NewContactActivity.class);
 
                 String filter = mSearchListBarView.getSearchText();
                 if (filter != null) {
                     String[] viaName = getSearchData(filter);
-                    intent.putExtra(NewRecipientFragment.KEY_VIA, viaName[0]);
+                    intent.putExtra(NewContactFragment.KEY_VIA, viaName[0]);
 
                     if (viaName[0] == null && (Utils.isValidPhoneNumber(viaName[1]) || Utils.isValidEmail(viaName[1]))) {
-                        intent.putExtra(NewRecipientFragment.KEY_VIA, viaName[1]);
+                        intent.putExtra(NewContactFragment.KEY_VIA, viaName[1]);
                     } else {
-                        intent.putExtra(NewRecipientFragment.KEY_NAME, viaName[1]);
+                        intent.putExtra(NewContactFragment.KEY_NAME, viaName[1]);
                     }
                 }
                 startActivityForResult(intent, REQUEST_NEWCONTACT);
@@ -605,8 +606,6 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
 
         mController.start();
 
-        mChatAdapter.setDatabase(getDatabase());
-
         // global touch interceptor to hide keyboard
         mActivity.addTouchEventInterceptor(mTouchInterceptor);
 
@@ -614,7 +613,8 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
             if (!mHasSavedInstanceState) {
                 // default view is all contacts
                 int selectedItemPosition = 0;
-                if (!mController.getPreferences().hasRecentContactUris()) {
+                int chatCount = ChatManager.getChatCount(mDatabaseHelper.getReadableDatabase());
+                if (chatCount <= 0) {
                     // select "all contacts" in case there are no fav/recent contacts
                     selectedItemPosition = 1;
                 }
@@ -669,11 +669,6 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
         mChatAdapter.changeCursor(null);
         mRecipientAdapter.changeCursor(null);
 
-        if(mDatabase != null) {
-            mDatabase.close();
-            mDatabase = null;
-        }
-
         dismissPopup();
 
         mActivity.getOverlayManager().removeOverlayVisibilityChangeListener(this);
@@ -702,7 +697,7 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
         if(requestCode == REQUEST_NEWCONTACT) {
             mOnActivityResult = true;
             if(resultCode == Activity.RESULT_OK) {
-                mSearchListBarView.setSearchText(data.getStringExtra(NewRecipientFragment.KEY_NAME));
+                mSearchListBarView.setSearchText(data.getStringExtra(NewContactFragment.KEY_NAME));
             } else {
                 mSearchListBarView.clearSearch(0);
             }
@@ -734,7 +729,7 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
     public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
         Intent intent = new Intent(mActivity, ChatActivity.class);
 
-        if(getListView().getAdapter() instanceof RecipientCursorAdapter) {
+        if(getListView().getAdapter() instanceof ContactCursorAdapter) {
             showPopup(view);
         } else {
             intent.putExtra(ChatFragment.PARAM_CHAT_ID, mChatAdapter.getChat(position).getId());
@@ -744,10 +739,15 @@ public class RecipientsFragment extends ListFragment implements ChatRecordOverla
 
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        Recipient tappedRecipient = getListView().getAdapter() instanceof RecipientCursorAdapter ?
-                mRecipientAdapter.getRecipient(position) :
-                mChatAdapter.getChat(position).getMainRecipientParameter();
-        return mController.triggerRecording(view, tappedRecipient);
+        if(getListView().getAdapter() instanceof ChatCursorAdapter) {
+            return mController.triggerRecording(view, mChatAdapter.getChat(position));
+        }
+
+        // create the chat instance if non-existent
+        Chat tappedChat = new Chat();
+        tappedChat.setTitle(mRecipientAdapter.getRecipient(position).getDisplayName());
+        tappedChat.addRecipient(new ChatRecipient(0, mRecipientAdapter.getRecipient(position), DateContainer.getCurrentUTCTimestamp()));
+        return mController.triggerRecording(view, tappedChat);
     }
 
     @Override

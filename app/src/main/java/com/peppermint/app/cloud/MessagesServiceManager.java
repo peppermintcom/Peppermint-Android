@@ -8,8 +8,8 @@ import android.os.IBinder;
 
 import com.peppermint.app.RecordService;
 import com.peppermint.app.cloud.senders.SenderEvent;
+import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.Message;
-import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
 
 import java.util.ArrayList;
@@ -75,13 +75,32 @@ public class MessagesServiceManager {
         void onReceivedMessage(ReceiverEvent event);
     }
 
+    public interface SyncListener {
+        void onSyncStarted(SyncEvent event);
+        void onSyncFinished(SyncEvent event);
+    }
+
     private Context mContext;
     private MessagesService.SendRecordServiceBinder mService;
     private List<SenderListener> mSenderListenerList = new ArrayList<>();
     private List<ReceiverListener> mReceiverListenerList = new ArrayList<>();
     private List<ServiceListener> mServiceListenerList = new ArrayList<>();
+    private List<SyncListener> mSyncListenerList = new ArrayList<>();
     protected boolean mIsBound = false;                                         // if the manager is bound to the service
     protected boolean mIsBinding = false;
+
+    public void onEventMainThread(SyncEvent event) {
+        for(SyncListener listener : mSyncListenerList) {
+            switch (event.getType()) {
+                case SyncEvent.EVENT_STARTED:
+                    listener.onSyncStarted(event);
+                    break;
+                default:
+                    listener.onSyncFinished(event);
+                    break;
+            }
+        }
+    }
 
     public void onEventMainThread(ReceiverEvent event) {
         switch(event.getType()) {
@@ -151,14 +170,20 @@ public class MessagesServiceManager {
     }
 
     /**
-     * Starts the service and sends an intent to start sending the supplied file to the supplied recipient.
-     * @param recipient the recipient of the file
+     * Starts the service and sends an intent to start sending the supplied file to the supplied chat.
+     * @param chat the chat to send the file to
      * @param recording the recording with the file to send
      */
-    public void startAndSend(Recipient recipient, Recording recording) {
+    public void startAndSend(Chat chat, Recording recording) {
         Intent intent = new Intent(mContext, MessagesService.class);
         intent.putExtra(MessagesService.PARAM_MESSAGE_SEND_RECORDING, recording);
-        intent.putExtra(MessagesService.PARAM_MESSAGE_SEND_RECIPIENT, recipient);
+        intent.putExtra(MessagesService.PARAM_MESSAGE_SEND_CHAT, chat);
+        mContext.startService(intent);
+    }
+
+    public void startAndSync() {
+        Intent intent = new Intent(mContext, MessagesService.class);
+        intent.putExtra(MessagesService.PARAM_DO_SYNC, true);
         mContext.startService(intent);
     }
 
@@ -215,14 +240,14 @@ public class MessagesServiceManager {
     }
 
     /**
-     * Sends the supplied recording to the supplied recipient.
+     * Sends the supplied recording to the supplied chat.
      * Can only be used if the manager is bound to the service.
-     * @param recipient the recipient of the file
+     * @param chat the chat to send the recording to
      * @param recording the recording and file location
      * @return the {@link Message}
      */
-    public Message send(Recipient recipient, Recording recording) {
-        return mService.send(recipient, recording);
+    public Message send(Chat chat, Recording recording) {
+        return mService.send(chat, recording);
     }
 
     public void removeAllNotifications() {
@@ -271,6 +296,14 @@ public class MessagesServiceManager {
 
     public boolean removeReceiverListener(ReceiverListener listener) {
         return mReceiverListenerList.remove(listener);
+    }
+
+    public void addSyncListener(SyncListener listener) {
+        mSyncListenerList.add(listener);
+    }
+
+    public boolean removeSyncListener(SyncListener listener) {
+        return mSyncListenerList.remove(listener);
     }
 
     public void addSenderListener(SenderListener listener) {

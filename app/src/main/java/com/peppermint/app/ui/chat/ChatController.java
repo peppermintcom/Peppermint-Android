@@ -18,13 +18,14 @@ import android.widget.RelativeLayout;
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.cloud.ReceiverEvent;
+import com.peppermint.app.cloud.SyncEvent;
 import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
+import com.peppermint.app.data.ChatRecipient;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.MessageManager;
-import com.peppermint.app.data.Recipient;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.OverlayManager;
 import com.peppermint.app.ui.TouchInterceptable;
@@ -96,7 +97,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
     public ChatController(Context context, RecipientDataGUI recipientDataGUI, Callbacks callbacks) {
         super(context, callbacks);
         this.mRecipientDataGUI = recipientDataGUI;
-        mDatabaseHelper = new DatabaseHelper(context);
+        mDatabaseHelper = DatabaseHelper.getInstance(context);
     }
 
     @Override
@@ -203,10 +204,6 @@ public class ChatController extends ChatRecordOverlayController implements View.
         if(mAdapter != null) {
             mAdapter.changeCursor(null);
         }
-        if(mDatabase != null) {
-            mDatabase.close();
-            mDatabase = null;
-        }
 
         super.stop();
     }
@@ -229,7 +226,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
     @Override
     public boolean onLongClick(View v) {
         mAdapter.stopAllPlayers();
-        return triggerRecording(v, mChat.getMainRecipientParameter());
+        return triggerRecording(v, mChat);
     }
 
     @Override
@@ -241,10 +238,14 @@ public class ChatController extends ChatRecordOverlayController implements View.
     @Override
     public void onReceivedMessage(ReceiverEvent event) {
         refreshList();
-        Recipient recipient = mChat.getMainRecipientParameter();
-        if(recipient != null && event.getMessage().getRecipientContactId() == recipient.getEmailOrPhoneContactId()) {
+        if(event.getMessage().getChatId() == mChat.getId()) {
             event.setDoNotShowNotification(true);
         }
+    }
+
+    @Override
+    public void onSyncFinished(SyncEvent event) {
+        refreshList();
     }
 
     @Override
@@ -350,14 +351,14 @@ public class ChatController extends ChatRecordOverlayController implements View.
     }
 
     public void setChat(long chatId) {
-        this.mChat = ChatManager.getChatById(getContext(), getDatabase(), chatId);
+        this.mChat = ChatManager.getChatById(getDatabase(), chatId);
         if(mChat == null) {
             return;
         }
-        Recipient recipient = mChat.getMainRecipientParameter();
+        ChatRecipient recipient = mChat.getRecipientList().get(0);
         if(recipient != null && mRecipientDataGUI != null) {
             mRecipientDataGUI.setRecipientData(recipient.getDisplayName(),
-                    recipient.getEmail() != null ? recipient.getEmail().getVia() : recipient.getPhone().getVia(),
+                    recipient.getVia(),
                     recipient.getPhotoUri());
         }
     }

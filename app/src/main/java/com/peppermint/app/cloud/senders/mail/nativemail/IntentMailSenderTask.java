@@ -5,7 +5,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.support.v4.content.FileProvider;
-import android.text.Html;
 
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
@@ -50,7 +49,7 @@ public class IntentMailSenderTask extends SenderUploadTask {
 
             File file = getMessage().getRecordingParameter().getFile();
 
-            Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + getMessage().getRecipientParameter().getEmail().getVia()));
+            Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + getMessage().getChatParameter().getRecipientList().get(0).getVia()));
             i.putExtra(Intent.EXTRA_SUBJECT, getMessage().getEmailSubject());
             i.putExtra(Intent.EXTRA_TEXT, getMessage().getEmailBody());
             Uri fileUri = FileProvider.getUriForFile(getContext(), "com.peppermint.app", file);

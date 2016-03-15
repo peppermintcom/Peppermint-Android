@@ -5,12 +5,14 @@ import android.os.Build;
 
 import com.peppermint.app.cloud.apis.data.AccountsResponse;
 import com.peppermint.app.cloud.apis.data.JWTsResponse;
+import com.peppermint.app.cloud.apis.data.MessageListResponse;
 import com.peppermint.app.cloud.apis.data.MessagesResponse;
 import com.peppermint.app.cloud.apis.data.RecordResponse;
 import com.peppermint.app.cloud.apis.data.RecorderResponse;
 import com.peppermint.app.cloud.apis.data.UploadsResponse;
 import com.peppermint.app.cloud.apis.data.parsers.AccountsResponseParser;
 import com.peppermint.app.cloud.apis.data.parsers.JWTsResponseParser;
+import com.peppermint.app.cloud.apis.data.parsers.MessageListResponseParser;
 import com.peppermint.app.cloud.apis.data.parsers.MessagesResponseParser;
 import com.peppermint.app.cloud.apis.data.parsers.RecordResponseParser;
 import com.peppermint.app.cloud.apis.data.parsers.RecorderResponseParser;
@@ -77,11 +79,37 @@ public class PeppermintApi implements Serializable {
     private final RecordResponseParser mRecordResponseParser = new RecordResponseParser();
     private final JWTsResponseParser mJWTsResponseParser = new JWTsResponseParser();
     private final MessagesResponseParser mMessagesResponseParser = new MessagesResponseParser();
+    private final MessageListResponseParser mMessageListResponseParser = new MessageListResponseParser();
 
     public PeppermintApi() {
     }
 
     // MESSAGES
+
+    public MessageListResponse getMessages(String serverAccountId, String sinceTimestamp, boolean received) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException, PeppermintApiTooManyRequestsException, PeppermintApiRecipientNoAppException {
+        HttpRequest request = new HttpRequest(MESSAGES_ENDPOINT, HttpRequest.METHOD_GET, false);
+        request.setHeaderParam("Authorization", "Bearer " + getAccessToken());
+        request.setHeaderParam("X-Api-Key", API_KEY);
+        request.setUrlParam(received ? "recipient" : "sender", serverAccountId);
+        request.setUrlParam("since", sinceTimestamp);
+        HttpJSONResponse<MessageListResponse> response = new HttpJSONResponse<>(mMessageListResponseParser);
+        request.execute(response);
+
+        if(response.getException() != null) {
+            throw new HttpResponseException(response.getException());
+        }
+        if(response.getCode() == 401 || response.getCode() == 403) {
+            throw new PeppermintApiInvalidAccessTokenException(request.toString());
+        }
+        if(response.getCode() == 404) {
+            throw new PeppermintApiRecipientNoAppException();
+        }
+        if((response.getCode() / 100) != 2) {
+            throw new PeppermintApiResponseCodeException(response.getCode(), request.toString());
+        }
+
+        return response.getJsonBody();
+    }
 
     /**
      * Sends a previously created message to the specified recipient through in-app messaging.

@@ -66,7 +66,7 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
         if(sender != null) {
             this.mIdentity = new SenderObject(sender);
         } else {
-            this.mIdentity = new SenderObject(null, null, null, null, null);
+            this.mIdentity = new SenderObject(null, null, null, null);
         }
         this.mSender = sender;
         this.mMessage = message;

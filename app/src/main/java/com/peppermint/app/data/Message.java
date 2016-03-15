@@ -14,12 +14,12 @@ import java.util.UUID;
  */
 public class Message implements Serializable {
 
-    private static final String PARAM_RECIPIENT = "paramRecipient";
+    private static final String PARAM_CHAT = "paramChat";
     private static final String PARAM_RECORDING = "paramRecording";
 
     private UUID mUUID = UUID.randomUUID();
     private long mId;
-    private long mChatId, mRecordingId, mRecipientContactId;
+    private long mChatId, mRecordingId, mAuthorId;
 
     private String mEmailSubject;
     private String mEmailBody;
@@ -30,7 +30,7 @@ public class Message implements Serializable {
     private boolean mPlayed = false;
 
     private String mServerId;
-    private String mServerCanonicalUrl, mServerShortUrl, mServerTranscriptionUrl;
+    private String mServerCanonicalUrl, mServerShortUrl, mTranscription;
 
     // extra parameters about the message that can be stored by/feed to senders
     private Map<String, Object> mParameters = new HashMap<>();
@@ -38,23 +38,23 @@ public class Message implements Serializable {
     public Message() {
     }
 
-    public Message(long mRecordingId, long mRecipientContactId) {
-        this.mRecipientContactId = mRecipientContactId;
+    public Message(long mRecordingId, long mChatId) {
+        this.mChatId = mChatId;
         this.mRecordingId = mRecordingId;
     }
 
-    public Message(long mRecordingId, long mRecipientContactId, String mEmailSubject, String mEmailBody) {
-        this.mRecipientContactId = mRecipientContactId;
+    public Message(long mRecordingId, long mChatId, String mEmailSubject, String mEmailBody) {
+        this.mChatId = mChatId;
         this.mRecordingId = mRecordingId;
         this.mEmailSubject = mEmailSubject;
         this.mEmailBody = mEmailBody;
     }
 
-    public Message(long mId, long mChatId, long mRecordingId, long mRecipientContactId, String mEmailSubject, String mEmailBody, String mRegistrationTimestamp, boolean mReceived, boolean mSent, boolean mPlayed, String mServerId, String mServerCanonicalUrl, String mServerShortUrl, String mServerTranscriptionUrl) {
+    public Message(long mId, long mChatId, long mRecordingId, long mAuthorId, String mEmailSubject, String mEmailBody, String mRegistrationTimestamp, boolean mReceived, boolean mSent, boolean mPlayed, String mServerId, String mServerCanonicalUrl, String mServerShortUrl, String mTranscription) {
         setId(mId);
         this.mChatId = mChatId;
         this.mRecordingId = mRecordingId;
-        this.mRecipientContactId = mRecipientContactId;
+        this.mAuthorId = mAuthorId;
         this.mEmailSubject = mEmailSubject;
         this.mEmailBody = mEmailBody;
         this.mRegistrationTimestamp = mRegistrationTimestamp;
@@ -64,7 +64,7 @@ public class Message implements Serializable {
         this.mServerId = mServerId;
         this.mServerCanonicalUrl = mServerCanonicalUrl;
         this.mServerShortUrl = mServerShortUrl;
-        this.mServerTranscriptionUrl = mServerTranscriptionUrl;
+        this.mTranscription = mTranscription;
     }
 
     public boolean isPlayed() {
@@ -79,12 +79,12 @@ public class Message implements Serializable {
         this.mChatId = mChatId;
     }
 
-    public long getRecipientContactId() {
-        return mRecipientContactId;
+    public long getAuthorId() {
+        return mAuthorId;
     }
 
-    public void setRecipientContactId(long mRecipientContactId) {
-        this.mRecipientContactId = mRecipientContactId;
+    public void setAuthorId(long mAuthorId) {
+        this.mAuthorId = mAuthorId;
     }
 
     public long getRecordingId() {
@@ -148,12 +148,12 @@ public class Message implements Serializable {
         this.mSent = mSent;
     }
 
-    public String getServerTranscriptionUrl() {
-        return mServerTranscriptionUrl;
+    public String getTranscription() {
+        return mTranscription;
     }
 
-    public void setServerTranscriptionUrl(String mServerTranscriptionUrl) {
-        this.mServerTranscriptionUrl = mServerTranscriptionUrl;
+    public void setTranscription(String mTranscription) {
+        this.mTranscription = mTranscription;
     }
 
     public String getServerId() {
@@ -185,12 +185,12 @@ public class Message implements Serializable {
         return this;
     }
 
-    public Recipient getRecipientParameter() {
-        return (Recipient) mParameters.get(PARAM_RECIPIENT);
+    public Chat getChatParameter() {
+        return (Chat) mParameters.get(PARAM_CHAT);
     }
 
-    public void setRecipientParameter(Recipient recipient) {
-        mParameters.put(PARAM_RECIPIENT, recipient);
+    public void setChatParameter(Chat chat) {
+        mParameters.put(PARAM_CHAT, chat);
     }
 
     public Recording getRecordingParameter() {
@@ -236,7 +236,7 @@ public class Message implements Serializable {
                 ", mId=" + mId +
                 ", mChatId=" + mChatId +
                 ", mRecordingId=" + mRecordingId +
-                ", mRecipientContactId=" + mRecipientContactId +
+                ", mAuthorId=" + mAuthorId +
                 ", mEmailSubject='" + mEmailSubject + '\'' +
                 ", mEmailBody='" + mEmailBody + '\'' +
                 ", mRegistrationTimestamp='" + mRegistrationTimestamp + '\'' +
@@ -246,7 +246,7 @@ public class Message implements Serializable {
                 ", mServerId='" + mServerId + '\'' +
                 ", mServerCanonicalUrl='" + mServerCanonicalUrl + '\'' +
                 ", mServerShortUrl='" + mServerShortUrl + '\'' +
-                ", mServerTranscriptionUrl='" + mServerTranscriptionUrl + '\'' +
+                ", mTranscription='" + mTranscription + '\'' +
                 ", mParameters=" + mParameters +
                 '}';
     }

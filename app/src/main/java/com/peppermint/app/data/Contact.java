@@ -7,7 +7,7 @@ import java.io.Serializable;
 /**
  * Created by Nuno Luz on 18-02-2016.
  *
- * Represents a way of contacting a particular recipient.
+ * Represents a {@link ContactsContract} single contact data entry.
  */
 public class Contact implements Serializable {
 

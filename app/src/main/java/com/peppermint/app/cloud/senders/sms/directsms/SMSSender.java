@@ -8,7 +8,6 @@ import com.peppermint.app.cloud.senders.Sender;
 import com.peppermint.app.cloud.senders.SenderObject;
 import com.peppermint.app.cloud.senders.SenderUploadListener;
 import com.peppermint.app.cloud.senders.SenderUploadTask;
-import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.Utils;
@@ -23,8 +22,8 @@ import java.util.UUID;
  */
 public class SMSSender extends Sender {
 
-    public SMSSender(Context context, TrackerManager trackerManager, Map<String, Object> parameters, DatabaseHelper databaseHelper, SenderUploadListener senderUploadListener) {
-        super(context, trackerManager, parameters, databaseHelper, senderUploadListener);
+    public SMSSender(Context context, TrackerManager trackerManager, Map<String, Object> parameters, SenderUploadListener senderUploadListener) {
+        super(context, trackerManager, parameters, senderUploadListener);
     }
 
     public SMSSender(SenderObject objToExtend, SenderUploadListener senderUploadListener) {

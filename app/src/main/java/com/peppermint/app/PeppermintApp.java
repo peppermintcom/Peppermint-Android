@@ -33,7 +33,7 @@ public class PeppermintApp extends Application {
         MessagesServiceManager messagesServiceManager = new MessagesServiceManager(this);
         messagesServiceManager.start();
 
-        startService(new Intent(ChatHeadService.ACTION_ENABLE, null, this, ChatHeadService.class));
+        /*startService(new Intent(ChatHeadService.ACTION_ENABLE, null, this, ChatHeadService.class));*/
     }
 
     public Typeface getFontSemibold() {

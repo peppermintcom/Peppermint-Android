@@ -3,6 +3,8 @@ package com.peppermint.app.data;
 import com.peppermint.app.utils.DateContainer;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
@@ -12,23 +14,19 @@ import java.io.Serializable;
 public class Chat implements Serializable {
 
     private long mId;
-
-    private long mMainRecipientId;
+    private String mTitle;
     private String mLastMessageTimestamp = DateContainer.getCurrentUTCTimestamp();
 
-    private Recipient mMainRecipientParameter;
+    private List<ChatRecipient> mRecipientList = new ArrayList<>();
     private int mAmountUnopened;
 
     public Chat() {
+        this.mRecipientList = new ArrayList<>();
     }
 
-    public Chat(long mainRecipientId) {
-        this.mMainRecipientId = mainRecipientId;
-    }
-
-    public Chat(long mainRecipientId, String lastMessageTimestamp) {
-        this(mainRecipientId);
-        this.mLastMessageTimestamp = lastMessageTimestamp;
+    public Chat(List<ChatRecipient> mRecipientList, String mLastMessageTimestamp) {
+        this.mRecipientList = mRecipientList;
+        this.mLastMessageTimestamp = mLastMessageTimestamp;
     }
 
     public long getId() {
@@ -39,28 +37,12 @@ public class Chat implements Serializable {
         this.mId = mId;
     }
 
-    public long getMainRecipientId() {
-        return mMainRecipientId;
-    }
-
-    public void setMainRecipientId(long mMainRecipientId) {
-        this.mMainRecipientId = mMainRecipientId;
-    }
-
     public String getLastMessageTimestamp() {
         return mLastMessageTimestamp;
     }
 
     public void setLastMessageTimestamp(String mLastMessageTimestamp) {
         this.mLastMessageTimestamp = mLastMessageTimestamp;
-    }
-
-    public Recipient getMainRecipientParameter() {
-        return mMainRecipientParameter;
-    }
-
-    public void setMainRecipientParameter(Recipient mMainRecipientParameter) {
-        this.mMainRecipientParameter = mMainRecipientParameter;
     }
 
     public int getAmountUnopened() {
@@ -71,13 +53,38 @@ public class Chat implements Serializable {
         this.mAmountUnopened = mAmountUnopened;
     }
 
+    public void addRecipient(ChatRecipient recipient) {
+        mRecipientList.add(recipient);
+    }
+
+    public boolean removeRecipient(ChatRecipient recipient) {
+        return mRecipientList.remove(recipient);
+    }
+
+    public List<ChatRecipient> getRecipientList() {
+        return mRecipientList;
+    }
+
+    public void setRecipientList(List<ChatRecipient> mRecipientList) {
+        this.mRecipientList = mRecipientList;
+    }
+
+    public String getTitle() {
+        return mTitle;
+    }
+
+    public void setTitle(String mTitle) {
+        this.mTitle = mTitle;
+    }
+
     @Override
     public String toString() {
         return "Chat{" +
                 "mId=" + mId +
+                ", mTitle='" + mTitle + '\'' +
+                ", mLastMessageTimestamp='" + mLastMessageTimestamp + '\'' +
+                ", mRecipientList=" + mRecipientList +
                 ", mAmountUnopened=" + mAmountUnopened +
-                ", mMainRecipientId=" + mMainRecipientId +
-                ", mLastMessageTimestamp=" + mLastMessageTimestamp +
                 '}';
     }
 }

@@ -120,6 +120,7 @@
     <string name="add_account_to_start"><u>Sign in with a new Google account to start using Peppermint</u></string>
     <string name="only_one_peppermint_account_supported">Only one Peppermint account is supported.</string>
     <string name="authenticating_">Authenticating…</string>
+    <string name="syncing_messages_">Syncing Messages…</string>
     <string name="msg_secure_connection">Could not establish a secure connection to the Peppermint server. Please try again later.</string>
     <string name="msg_authentication_error">It was not possible to sign in. Please try again later.</string>
     <string name="msg_google_api_denied">Google sign in is required to continue.</string>

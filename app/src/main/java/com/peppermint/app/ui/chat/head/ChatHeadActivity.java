@@ -13,6 +13,7 @@ import android.widget.ImageButton;
 import com.peppermint.app.R;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
+import com.peppermint.app.data.ChatRecipient;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.chat.ChatFragment;
@@ -70,20 +71,23 @@ public class ChatHeadActivity extends CustomActionBarActivity implements Recipie
         mLytRoot = (ViewGroup) findViewById(R.id.lytRoot);
 
         if(getIntent() != null && getIntent().hasExtra(ChatFragment.PARAM_CHAT_ID)) {
-            DatabaseHelper databaseHelper = new DatabaseHelper(this);
+            DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this);
             SQLiteDatabase db = databaseHelper.getReadableDatabase();
-            mChat = ChatManager.getChatById(this, db, getIntent().getLongExtra(ChatFragment.PARAM_CHAT_ID, 0));
-            db.close();
+            mChat = ChatManager.getChatById(db, getIntent().getLongExtra(ChatFragment.PARAM_CHAT_ID, 0));
         }
 
         mImgAvatar = (RoundImageView) findViewById(R.id.imgChatAvatar);
-        if(mChat.getMainRecipientParameter().getPhotoUri() != null) {
-            mImgAvatar.setImageURI(Uri.parse(mChat.getMainRecipientParameter().getPhotoUri()));
-        }
-        mTxtName.setText(mChat.getMainRecipientParameter().getDisplayName());
 
         mBtnClose = (ImageButton) findViewById(R.id.btnClose);
         mBtnClose.setOnClickListener(this);
+
+        if(mChat != null) {
+            ChatRecipient recipient = mChat.getRecipientList().get(0);
+            if(recipient.getPhotoUri() != null) {
+                mImgAvatar.setImageURI(Uri.parse(recipient.getPhotoUri()));
+            }
+            mTxtName.setText(recipient.getDisplayName());
+        }
 
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             int statusBarHeight = Utils.getStatusBarHeight(this);

@@ -12,8 +12,9 @@ import android.widget.CursorAdapter;
 import com.peppermint.app.R;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
+import com.peppermint.app.data.ChatRecipient;
+import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.MessageManager;
-import com.peppermint.app.data.Recipient;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.views.simple.CustomFontTextView;
@@ -35,11 +36,11 @@ public class ChatCursorAdapter extends CursorAdapter {
     private TrackerManager mTrackerManager;
     private Set<Long> mPeppermintSet;
 
-    public ChatCursorAdapter(Context context, Cursor cursor, Set<Long> peppermintSet, SQLiteDatabase db, TrackerManager mTrackerManager) {
+    public ChatCursorAdapter(Context context, Cursor cursor, Set<Long> peppermintSet, TrackerManager mTrackerManager) {
         super(context, cursor, 0);
         this.mContext = context;
         this.mPeppermintSet = peppermintSet;
-        this.mDb = db;
+        this.mDb = DatabaseHelper.getInstance(context).getReadableDatabase();
         this.mTrackerManager = mTrackerManager;
     }
 
@@ -51,7 +52,7 @@ public class ChatCursorAdapter extends CursorAdapter {
     @Override
     public synchronized void bindView(View view, Context context, Cursor cursor) {
         Chat chat = getChat(cursor);
-        Recipient recipient = chat.getMainRecipientParameter();
+        ChatRecipient recipient = chat.getRecipientList().get(0);
 
         AnimatedAvatarView imgPhoto = (AnimatedAvatarView) view.findViewById(R.id.imgPhoto);
         CustomFontTextView txtName = (CustomFontTextView) view.findViewById(R.id.txtName);
@@ -66,10 +67,10 @@ public class ChatCursorAdapter extends CursorAdapter {
 
         if(recipient != null) {
             txtName.setText(recipient.getDisplayName());
-            if(mPeppermintSet != null && mPeppermintSet.contains(recipient.getRawId())) {
+            if(mPeppermintSet != null && mPeppermintSet.contains(recipient.getRawContactId())) {
                 txtContact.setText(R.string.app_name);
             } else {
-                txtContact.setText(recipient.getEmail() != null ? recipient.getEmail().getVia() : recipient.getPhone().getVia());
+                txtContact.setText(recipient.getVia());
             }
         }
 
@@ -99,20 +100,12 @@ public class ChatCursorAdapter extends CursorAdapter {
 
     public Chat getChat(Cursor cursor) {
         // get recipient data as well
-        return ChatManager.getFromCursor(mContext, cursor);
+        return ChatManager.getChatFromCursor(mDb, cursor);
     }
 
     public Chat getChat(int position) {
         Cursor cursor = (Cursor) getItem(position);
         return getChat(cursor);
-    }
-
-    public SQLiteDatabase getDatabase() {
-        return mDb;
-    }
-
-    public synchronized void setDatabase(SQLiteDatabase mDb) {
-        this.mDb = mDb;
     }
 
     public Set<Long> getPeppermintSet() {

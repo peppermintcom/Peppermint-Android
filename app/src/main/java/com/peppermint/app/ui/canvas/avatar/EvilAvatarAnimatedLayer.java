@@ -4,12 +4,13 @@ import android.content.Context;
 import android.graphics.Paint;
 
 import com.peppermint.app.R;
+import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.ui.canvas.BitmapSequenceAnimatedLayer;
 
 /**
  * Created by Nuno Luz on 06-10-2015.
  *
- * An animated layer that represents an anonymous {@link com.peppermint.app.data.Recipient}'s avatar.
+ * An animated layer that represents an anonymous {@link ContactRaw}'s avatar.
  */
 public class EvilAvatarAnimatedLayer extends BitmapSequenceAnimatedLayer {
     public EvilAvatarAnimatedLayer(Context context, long duration, Paint paint) {

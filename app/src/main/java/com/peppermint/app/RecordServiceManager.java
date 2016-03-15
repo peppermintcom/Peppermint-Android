@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 
-import com.peppermint.app.data.Recipient;
+import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.Recording;
 
 /**
@@ -24,7 +24,7 @@ public class RecordServiceManager {
         /**
          * Invoked when a binding to the service is performed.
          */
-        void onBoundRecording(Recording recording, Recipient currentRecipient, float currentLoudness);
+        void onBoundRecording(Recording recording, Chat currentChat, float currentLoudness);
 
         /**
          * Invoked when a new recording starts.
@@ -115,7 +115,7 @@ public class RecordServiceManager {
             mIsBinding = false;
 
             if(mListener != null) {
-                mListener.onBoundRecording(mService.getCurrentRecording(), mService.getCurrentRecipient(), mService.getCurrentLoudness());
+                mListener.onBoundRecording(mService.getCurrentRecording(), mService.getCurrentChat(), mService.getCurrentLoudness());
             }
         }
 
@@ -181,10 +181,10 @@ public class RecordServiceManager {
      * Start a recording. You can only start a recording if no other recording is currently
      * active (even if it is paused).
      * @param filePrefix the filename prefix of the record
-     * @param recipient the recipient of the record
+     * @param chat the chat of the record
      */
-    public void startRecording(String filePrefix, Recipient recipient, long maxDurationMillis) {
-        mService.start(filePrefix, recipient, maxDurationMillis);
+    public void startRecording(String filePrefix, Chat chat, long maxDurationMillis) {
+        mService.start(filePrefix, chat, maxDurationMillis);
     }
 
     /**
@@ -237,8 +237,8 @@ public class RecordServiceManager {
         return mIsBound;
     }
 
-    public Recipient getCurrentRecipient() {
-        return mService.getCurrentRecipient();
+    public Chat getCurrentChat() {
+        return mService.getCurrentChat();
     }
 
     public Recording getCurrentRecording() {

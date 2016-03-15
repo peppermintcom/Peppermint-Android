@@ -1,7 +1,6 @@
 package com.peppermint.app.data;
 
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
@@ -21,60 +20,37 @@ public class MessageManager {
     /**
      * Gets the message data inside the Cursor's current position and puts it in an instance
      * of the Message structure.<br />
-     * <strong>If context is supplied, the recipient will be retrieved and available through {@link Message#getRecipientParameter()}<br />
+     * <strong>If db is supplied, the chat will be retrieved and available through {@link Message#getChatParameter()}<br />
      * The db is supplied, the recording will be available through {@link Message#getRecordingParameter()}</strong>
      *
-     * @param context the app context (optional)
      * @param db the local database connection (optional)
      * @param cursor the cursor
      * @return the Message instance
      */
-    public static Message getFromCursor(Context context, SQLiteDatabase db, Cursor cursor) {
+    public static Message getFromCursor(SQLiteDatabase db, Cursor cursor) {
         Message message = new Message();
         message.setId(cursor.getLong(cursor.getColumnIndex("message_id")));
 
         message.setEmailSubject(cursor.getString(cursor.getColumnIndex("email_subject")));
         message.setEmailBody(cursor.getString(cursor.getColumnIndex("email_body")));
 
-        message.setChatId(cursor.getLong(cursor.getColumnIndex("chat_id")));
-        message.setRecipientContactId(cursor.getLong(cursor.getColumnIndex("recipient_id")));
         message.setRecordingId(cursor.getLong(cursor.getColumnIndex("recording_id")));
+        message.setAuthorId(cursor.getLong(cursor.getColumnIndex("author_id")));
+        message.setChatId(cursor.getLong(cursor.getColumnIndex("chat_id")));
 
         message.setServerId(cursor.getString(cursor.getColumnIndex("server_message_id")));
         message.setServerShortUrl(cursor.getString(cursor.getColumnIndex("server_short_url")));
         message.setServerCanonicalUrl(cursor.getString(cursor.getColumnIndex("server_canonical_url")));
-        message.setServerTranscriptionUrl(cursor.getString(cursor.getColumnIndex("server_transcription_url")));
+        message.setTranscription(cursor.getString(cursor.getColumnIndex("transcription")));
 
         message.setRegistrationTimestamp(cursor.getString(cursor.getColumnIndex("registration_ts")));
         message.setSent(cursor.getInt(cursor.getColumnIndex("sent")) > 0);
         message.setReceived(cursor.getInt(cursor.getColumnIndex("received")) > 0);
         message.setPlayed(cursor.getInt(cursor.getColumnIndex("played")) > 0);
 
-        boolean containsContactFields = cursor.getColumnIndex("display_name") >= 0 && cursor.getColumnIndex("mimetype") >= 0 && cursor.getColumnIndex("via") >= 0;
-        if (containsContactFields) {
-            String displayName = cursor.getString(cursor.getColumnIndex("display_name"));
-            String via = cursor.getString(cursor.getColumnIndex("via"));
-            String mimetype = cursor.getString(cursor.getColumnIndex("mimetype"));
-
-            if(via != null && mimetype != null) {
-                Recipient recipient = new Recipient();
-                recipient.setDisplayName(displayName);
-                Contact contact = new Contact(0, 0, false, mimetype,
-                        via);
-                recipient.setContact(contact);
-                message.setRecipientParameter(recipient);
-            }
-        }
-
         if(db != null) {
             message.setRecordingParameter(RecordingManager.getRecordingById(db, message.getRecordingId()));
-        }
-
-        if(context != null) {
-            Recipient recipient = RecipientManager.getRecipientByContactId(context, message.getRecipientContactId());
-            if(recipient != null) {
-                message.setRecipientParameter(recipient);
-            }
+            message.setChatParameter(ChatManager.getChatById(db, message.getChatId()));
         }
 
         return message;
@@ -96,17 +72,16 @@ public class MessageManager {
     /**
      * Obtains the message with the supplied id or server id from the database.
      *
-     * @param context the app context (optional)
      * @param db the local database connection
      * @param messageId the message id
      * @param serverId the message server id
      * @return the message instance with all data
      */
-    public static Message getMessageByIdOrServerId(Context context, SQLiteDatabase db, long messageId, String serverId) {
+    public static Message getMessageByIdOrServerId(SQLiteDatabase db, long messageId, String serverId) {
         Message message = null;
         Cursor cursor = getByIdOrServerId(db, messageId, serverId);
         if(cursor.moveToFirst()) {
-            message = getFromCursor(context, db, cursor);
+            message = getFromCursor(db, cursor);
         }
         cursor.close();
         return message;
@@ -129,16 +104,15 @@ public class MessageManager {
     /**
      * Obtains a list with all queued messages stored in the local database.
      *
-     * @param context the app context (optional)
-     * @param db the local database connection
+     * @param db the database connection
      * @return the list of all queued messages
      */
-    public static List<Message> getMessagesQueued(Context context, SQLiteDatabase db) {
+    public static List<Message> getMessagesQueued(SQLiteDatabase db) {
         List<Message> list = new ArrayList<>();
         Cursor cursor = getQueued(db);
         if(cursor.moveToFirst()) {
             do {
-                Message message = getFromCursor(context, db, cursor);
+                Message message = getFromCursor(db, cursor);
                 list.add(message);
             } while(cursor.moveToNext());
         }
@@ -161,12 +135,12 @@ public class MessageManager {
      *
      * @param db the local database connection
      * @param chatId the message's chat id
-     * @param recipientContactId the message's recipient contact id
+     * @param authorId the message's author id
      * @param recordingId the message's recording id
      * @param serverId the message's server id
      * @param shortUrl the message's short URL
      * @param canonicalUrl the message's canonical URL
-     * @param transcriptionUrl the message's transcription URL
+     * @param transcription the message's transcription URL
      * @param emailSubject the message's email subject
      * @param emailBody the message's email body
      * @param registrationTimestamp the message's registration timestamp
@@ -175,12 +149,12 @@ public class MessageManager {
      * @param played if the message has been played
      * @throws SQLException
      */
-    public static Message insert(SQLiteDatabase db, long chatId, long recipientContactId, long recordingId,
-                                 String serverId, String shortUrl, String canonicalUrl, String transcriptionUrl,
+    public static Message insert(SQLiteDatabase db, long chatId, long authorId, long recordingId,
+                                 String serverId, String shortUrl, String canonicalUrl, String transcription,
                                  String emailSubject, String emailBody,
                                  String registrationTimestamp,
-                                 boolean sent, boolean received, boolean played,
-                                 String displayName, String via, String mimetype) throws SQLException {
+                                 boolean sent, boolean received, boolean played) throws SQLException {
+
         ContentValues cv = new ContentValues();
 
         cv.put("email_subject", emailSubject);
@@ -188,34 +162,18 @@ public class MessageManager {
 
         if(chatId > 0) {
             cv.put("chat_id", chatId);
-        } else {
-            cv.putNull("chat_id");
         }
-        if(recipientContactId > 0) {
-            cv.put("recipient_id", recipientContactId);
-        } else {
-            cv.putNull("recipient_id");
+        if(authorId > 0) {
+            cv.put("author_id", authorId);
         }
         if(recordingId > 0) {
             cv.put("recording_id", recordingId);
-        } else {
-            cv.putNull("recording_id");
-        }
-
-        if(displayName != null) {
-            cv.put("display_name", displayName);
-        }
-        if(via != null) {
-            cv.put("via", via);
-        }
-        if(mimetype != null) {
-            cv.put("mimetype", mimetype);
         }
 
         cv.put("server_message_id", serverId);
         cv.put("server_short_url", shortUrl);
         cv.put("server_canonical_url", canonicalUrl);
-        cv.put("server_transcription_url", transcriptionUrl);
+        cv.put("transcription", transcription);
         cv.put("registration_ts", registrationTimestamp);
 
         cv.put("sent", sent ? 1 : 0);
@@ -227,9 +185,9 @@ public class MessageManager {
             throw new SQLException("Unable to insert message!");
         }
 
-        return new Message(id, chatId, recordingId, recipientContactId, emailSubject, emailBody,
+        return new Message(id, chatId, recordingId, authorId, emailSubject, emailBody,
                 registrationTimestamp, received, sent, played, serverId, canonicalUrl,
-                shortUrl, transcriptionUrl);
+                shortUrl, transcription);
     }
 
     /**
@@ -239,12 +197,12 @@ public class MessageManager {
      * @param db the local database connection
      * @param messageId the message id
      * @param chatId the message's chat id
-     * @param recipientContactId the message's recipient contact id
+     * @param authorId the message's author id
      * @param recordingId the message's recording id
      * @param serverId the message's server id
      * @param shortUrl the message's short URL
      * @param canonicalUrl the message's canonical URL
-     * @param transcriptionUrl the message's transcription URL
+     * @param transcription the message's transcription URL
      * @param emailSubject the message's email subject
      * @param emailBody the message's email body
      * @param registrationTimestamp the message's registration timestamp
@@ -253,12 +211,11 @@ public class MessageManager {
      * @param played if the message has been played
      * @throws SQLException
      */
-    public static Message update(SQLiteDatabase db, long messageId, long chatId, long recipientContactId, long recordingId,
-                              String serverId, String shortUrl, String canonicalUrl, String transcriptionUrl,
+    public static Message update(SQLiteDatabase db, long messageId, long chatId, long authorId, long recordingId,
+                              String serverId, String shortUrl, String canonicalUrl, String transcription,
                               String emailSubject, String emailBody,
                               String registrationTimestamp,
-                              boolean sent, boolean received, boolean played,
-                              String displayName, String via, String mimetype) throws SQLException {
+                              boolean sent, boolean received, boolean played) throws SQLException {
         ContentValues cv = new ContentValues();
 
         cv.put("email_subject", emailSubject);
@@ -266,34 +223,20 @@ public class MessageManager {
 
         if(chatId > 0) {
             cv.put("chat_id", chatId);
-        } else {
-            cv.putNull("chat_id");
-        }
-        if(recipientContactId > 0) {
-            cv.put("recipient_id", recipientContactId);
-        } else {
-            cv.putNull("recipient_id");
-        }
-        if(recordingId > 0) {
-            cv.put("recording_id", recordingId);
-        } else {
-            cv.putNull("recording_id");
         }
 
-        if(displayName != null) {
-            cv.put("display_name", displayName);
+        if(authorId > 0) {
+            cv.put("author_id", authorId);
         }
-        if(via != null) {
-            cv.put("via", via);
-        }
-        if(mimetype != null) {
-            cv.put("mimetype", mimetype);
+
+        if(recordingId > 0) {
+            cv.put("recording_id", recordingId);
         }
 
         cv.put("server_message_id", serverId);
         cv.put("server_short_url", shortUrl);
         cv.put("server_canonical_url", canonicalUrl);
-        cv.put("server_transcription_url", transcriptionUrl);
+        cv.put("transcription", transcription);
         cv.put("registration_ts", registrationTimestamp);
 
         cv.put("sent", sent ? 1 : 0);
@@ -305,9 +248,9 @@ public class MessageManager {
             throw new SQLException("Unable to update message!");
         }
 
-        return new Message(messageId, chatId, recordingId, recipientContactId, emailSubject, emailBody,
+        return new Message(messageId, chatId, recordingId, authorId, emailSubject, emailBody,
                 registrationTimestamp, received, sent, played, serverId, canonicalUrl,
-                shortUrl, transcriptionUrl);
+                shortUrl, transcription);
     }
 
     /**
@@ -316,12 +259,12 @@ public class MessageManager {
      * @param db the local database connection
      * @param messageId the message id
      * @param chatId the message's chat id
-     * @param recipientContactId the message's recipient contact id
+     * @param authorId the message's author id
      * @param recordingId the message's recording id
      * @param serverId the message's server id
      * @param shortUrl the message's short URL
      * @param canonicalUrl the message's canonical URL
-     * @param transcriptionUrl the message's transcription URL
+     * @param transcription the message's transcription
      * @param emailSubject the message's email subject
      * @param emailBody the message's email body
      * @param registrationTimestamp the message's registration timestamp
@@ -330,27 +273,24 @@ public class MessageManager {
      * @param played if the message has been played
      * @throws SQLException
      */
-    public static Message insertOrUpdate(SQLiteDatabase db, long messageId, long chatId, long recipientContactId, long recordingId,
-                                      String serverId, String shortUrl, String canonicalUrl, String transcriptionUrl,
+    public static Message insertOrUpdate(SQLiteDatabase db, long messageId, long chatId, long authorId, long recordingId,
+                                      String serverId, String shortUrl, String canonicalUrl, String transcription,
                                       String emailSubject, String emailBody,
                                       String registrationTimestamp,
-                                      boolean sent, boolean received, boolean played,
-                                      String displayName, String via, String mimetype) throws  SQLException {
+                                      boolean sent, boolean received, boolean played) throws  SQLException {
 
         Message foundMessage = null;
         if(messageId > 0 || serverId != null) {
-            foundMessage = getMessageByIdOrServerId(null, db, messageId, serverId);
+            foundMessage = getMessageByIdOrServerId(db, messageId, serverId);
         }
 
         if(foundMessage == null) {
-            return insert(db, chatId, recipientContactId, recordingId, serverId, shortUrl, canonicalUrl,
-                    transcriptionUrl, emailSubject, emailBody, registrationTimestamp, sent, received, played,
-                    displayName, via, mimetype);
+            return insert(db, chatId, authorId, recordingId, serverId, shortUrl, canonicalUrl,
+                    transcription, emailSubject, emailBody, registrationTimestamp, sent, received, played);
         }
 
-        return update(db, foundMessage.getId(), chatId, recipientContactId, recordingId, serverId, shortUrl, canonicalUrl,
-                transcriptionUrl, emailSubject, emailBody, registrationTimestamp, sent, received, played,
-                displayName, via, mimetype);
+        return update(db, foundMessage.getId(), chatId, authorId, recordingId, serverId, shortUrl, canonicalUrl,
+                transcription, emailSubject, emailBody, registrationTimestamp, sent, received, played);
     }
 
     /**

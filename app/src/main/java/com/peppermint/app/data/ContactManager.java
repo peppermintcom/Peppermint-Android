@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.text.TextUtils;
 
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.Utils;
@@ -26,9 +27,10 @@ import java.util.List;
 /**
  * Created by Nuno Luz on 17-02-2016.
  *
- * Database operations for {@link Recipient} and {@link Contact}
+ * Database operations for {@link ContactRaw} and {@link Contact}.
+ * Data is obtained and stored through the {@link ContactsContract}.
  */
-public class RecipientManager {
+public class ContactManager {
 
     private static final String FILE_SCHEME = "file:/";
     private static final String GOOGLE_ACCOUNT_TYPE = "com.google";
@@ -51,16 +53,16 @@ public class RecipientManager {
 
     private static final String PEPPERMINT_GROUP_TITLE = "Peppermint";
 
-    /*private static Map<Long, WeakReference<Recipient>> mRecipientCache = new WeakHashMap<>();*/
+    /*private static Map<Long, WeakReference<ContactRaw>> mRecipientCache = new WeakHashMap<>();*/
 
     /**
      * Gets the data inside the Cursor's current position and puts it in an instance of the
-     * Recipient structure.
+     * ContactRaw structure.
      *
      * @param cursor the cursor
-     * @return the Recipient instance
+     * @return the ContactRaw instance
      */
-    public static Recipient getRecipientFromCursor(Cursor cursor) {
+    public static ContactRaw getRawContactFromCursor(Cursor cursor) {
         String name = cursor.getString(cursor.getColumnIndex(FIELD_DISPLAY_NAME));
         String photoUri = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Photo.PHOTO_URI));
 
@@ -68,7 +70,7 @@ public class RecipientManager {
         String accountType = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_TYPE));
 
         Contact contact = getContactFromCursor(cursor);
-        Recipient recipient = new Recipient(contact.getRawId(), false, accountType, accountName, name, photoUri);
+        ContactRaw recipient = new ContactRaw(contact.getRawId(), false, accountType, accountName, name, photoUri);
 
         if(contact.isEmail()) {
             recipient.setEmail(contact);
@@ -101,10 +103,10 @@ public class RecipientManager {
      * @param via the via value
      * @return the recipient instance with all data
      */
-    public static Recipient getRecipientByViaOrContactId(Context context, String via, long contactId) {
+    public static ContactRaw getRawContactByViaOrContactId(Context context, String via, long contactId) {
         /*if(contactId > 0 && mRecipientCache.containsKey(contactId)) {
-            WeakReference<Recipient> ref = mRecipientCache.get(contactId);
-            Recipient recipient = ref.get();
+            WeakReference<ContactRaw> ref = mRecipientCache.get(contactId);
+            ContactRaw recipient = ref.get();
             if(recipient == null) {
                 mRecipientCache.remove(contactId);
             } else {
@@ -112,7 +114,7 @@ public class RecipientManager {
             }
         }*/
 
-        Recipient result = null;
+        ContactRaw result = null;
 
         Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, null,
                 Utils.joinString(" OR ", via != null ?
@@ -121,7 +123,7 @@ public class RecipientManager {
                 null, null);
 
         if(cursor.moveToNext()) {
-            result = getRecipientFromCursor(cursor);
+            result = getRawContactFromCursor(cursor);
         }
         cursor.close();
 
@@ -139,10 +141,10 @@ public class RecipientManager {
      * @param contactId the recipient ID
      * @return the recipient instance with all data
      */
-    public static Recipient getRecipientByContactId(Context context, long contactId) {
+    public static ContactRaw getRawContactByContactId(Context context, long contactId) {
         /*if(mRecipientCache.containsKey(contactId)) {
-            WeakReference<Recipient> ref = mRecipientCache.get(contactId);
-            Recipient recipient = ref.get();
+            WeakReference<ContactRaw> ref = mRecipientCache.get(contactId);
+            ContactRaw recipient = ref.get();
             if(recipient == null) {
                 mRecipientCache.remove(contactId);
             } else {
@@ -150,14 +152,14 @@ public class RecipientManager {
             }
         }*/
 
-        Recipient result = null;
+        ContactRaw result = null;
 
         Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, null,
                 ContactsContract.Data._ID + " = " + contactId,
                 null, null);
 
         if(cursor.moveToNext()) {
-            result = getRecipientFromCursor(cursor);
+            result = getRawContactFromCursor(cursor);
         }
         cursor.close();
 
@@ -168,8 +170,8 @@ public class RecipientManager {
         return result;
     }
 
-    public static Recipient getRecipientWithMainEmailContactByRawId(Context context, long rawId) {
-        Recipient result = null;
+    public static ContactRaw getRawContactWithEmailByRawId(Context context, long rawId) {
+        ContactRaw result = null;
 
         Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, null,
                 ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE) +
@@ -177,7 +179,7 @@ public class RecipientManager {
                 null, ContactsContract.Data.IS_PRIMARY + " DESC");
 
         if(cursor.moveToNext()) {
-            result = getRecipientFromCursor(cursor);
+            result = getRawContactFromCursor(cursor);
         }
         cursor.close();
 
@@ -569,7 +571,7 @@ public class RecipientManager {
      * @param googleAccountName the google account name to insert the contact
      * @return a {@link Bundle} with results (can be passed on to an {@link Intent}
      */
-    public static Recipient insert(Context context, long rawId, String firstName, String lastName, String phone, String email, Uri photoUri, String googleAccountName, boolean hasPeppermint) throws InvalidNameException, InvalidEmailException, InvalidPhoneException {
+    public static ContactRaw insert(Context context, long rawId, String firstName, String lastName, String phone, String email, Uri photoUri, String googleAccountName, boolean hasPeppermint) throws InvalidNameException, InvalidEmailException, InvalidPhoneException {
         firstName = firstName == null ? "" : Utils.capitalizeFully(firstName.trim());
         lastName = lastName == null ? "" : Utils.capitalizeFully(lastName.trim());
         phone = phone == null ? "" : phone.trim();
@@ -582,7 +584,9 @@ public class RecipientManager {
             insertRaw(context, googleAccountName, ops);
         }
 
-        insertOrUpdateName(context, firstName, lastName, rawId, 0, ops);
+        if(!TextUtils.isEmpty(firstName) || !TextUtils.isEmpty(lastName)) {
+            insertOrUpdateName(context, firstName, lastName, rawId, 0, ops);
+        }
 
         if(email != null && email.length() > 0) {
             insertEmail(context, email, rawId, 0, ops);
@@ -602,10 +606,10 @@ public class RecipientManager {
 
         executeOperations(context, ops);
 
-        Recipient recipient = null;
+        ContactRaw recipient = null;
         Cursor cursor = getByEmailOrPhone(context, email, phone, googleAccountName);
         while(cursor.moveToNext() && (recipient == null || recipient.getRawId() != rawId)) {
-            recipient = getRecipientFromCursor(cursor);
+            recipient = getRawContactFromCursor(cursor);
         }
         cursor.close();
 
@@ -627,7 +631,7 @@ public class RecipientManager {
      * @param googleAccountName the google account name to insert the contact
      * @return a {@link Bundle} with results (can be passed on to an {@link Intent}
      */
-    public static Recipient insertOrUpdate(Context context, long rawId, String firstName, String lastName, String phone, String email, Uri photoUri, String googleAccountName, boolean hasPeppermint) throws InvalidPhoneException, InvalidNameException, InvalidEmailException {
+    public static ContactRaw insertOrUpdate(Context context, long rawId, String firstName, String lastName, String phone, String email, Uri photoUri, String googleAccountName, boolean hasPeppermint) throws InvalidPhoneException, InvalidNameException, InvalidEmailException {
         // try to find the rawId by email or phone
         if(rawId <= 0) {
             Cursor cursor = getByEmailOrPhone(context, email, phone, googleAccountName);

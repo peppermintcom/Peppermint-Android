@@ -19,12 +19,12 @@ import java.util.List;
  *
  * Activity for user authentication.
  */
-public class NewRecipientActivity extends CustomActionBarActivity {
+public class NewContactActivity extends CustomActionBarActivity {
 
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
-        navItems.add(new NavigationItem("New Contact", R.drawable.ic_settings_36dp, NewRecipientFragment.class, false, false, 0));
+        navItems.add(new NavigationItem("New Contact", R.drawable.ic_settings_36dp, NewContactFragment.class, false, false, 0));
         return navItems;
     }
 

@@ -17,16 +17,19 @@ import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.ReceiverEvent;
+import com.peppermint.app.cloud.SyncEvent;
 import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.cloud.senders.SenderPreferences;
+import com.peppermint.app.data.Chat;
+import com.peppermint.app.data.ChatRecipient;
+import com.peppermint.app.data.ContactManager;
+import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.data.Message;
-import com.peppermint.app.data.Recipient;
-import com.peppermint.app.data.RecipientManager;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.ui.OverlayManager;
 import com.peppermint.app.ui.TouchInterceptable;
-import com.peppermint.app.ui.recipients.add.NewRecipientActivity;
-import com.peppermint.app.ui.recipients.add.NewRecipientFragment;
+import com.peppermint.app.ui.recipients.add.NewContactActivity;
+import com.peppermint.app.ui.recipients.add.NewContactFragment;
 import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.utils.Utils;
@@ -36,14 +39,14 @@ import com.peppermint.app.utils.Utils;
  */
 public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordingFinishedCallback,
         MessagesServiceManager.ReceiverListener, MessagesServiceManager.SenderListener, MessagesServiceManager.ServiceListener,
-        PlayerServiceManager.PlayerListener, PlayerServiceManager.PlayServiceListener {
+        PlayerServiceManager.PlayerListener, PlayerServiceManager.PlayServiceListener, MessagesServiceManager.SyncListener {
 
     public interface Callbacks {
         void onNewContact(Intent intentToLaunchActivity);
     }
 
     // keys to save the instance state
-    private static final String RECIPIENT_TAPPED_KEY = "RecipientsFragment_RecipientTapped";
+    private static final String CHAT_TAPPED_KEY = "RecipientsFragment_ChatTapped";
     private static final String SAVED_DIALOG_STATE_KEY = "RecipientsFragment_SmsDialogState";
     private static final String RECORDING_FINAL_EVENT_KEY = "RecipientsFragment_RecordingFinalEvent";
     private static final String SMS_CONFIRMATION_STATE_KEY = "RecipientsFragment_SmsConfirmationState";
@@ -66,7 +69,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     private SMSConfirmationDialog mSmsConfirmationDialog;
     private CustomConfirmationDialog mSmsAddContactDialog;
 
-    private Recipient mRecipient;
+    private Chat mChat;
     private RecordService.Event mFinalEvent;
 
     private View mView;
@@ -92,7 +95,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         mSmsConfirmationDialog.setPositiveButtonListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendMessage(mFinalEvent.getRecipient(), mFinalEvent.getRecording());
+                sendMessage(mFinalEvent.getChat(), mFinalEvent.getRecording());
                 mFinalEvent = null;
                 mSmsConfirmationDialog.dismiss();
             }
@@ -109,13 +112,14 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         mSmsConfirmationDialog.setEmailClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Recipient emailRecipient = mSmsConfirmationDialog.getEmailRecipient();
+                ContactRaw emailRecipient = mSmsConfirmationDialog.getEmailRecipient();
                 if (emailRecipient != null) {
-                    sendMessage(emailRecipient, mFinalEvent.getRecording());
+                    mFinalEvent.getChat().getRecipientList().get(0).setFromRawContact(emailRecipient);
+                    sendMessage(mFinalEvent.getChat(), mFinalEvent.getRecording());
                     mFinalEvent = null;
                     mSmsConfirmationDialog.dismiss();
                 } else {
-                    launchNewRecipientActivity(mFinalEvent.getRecipient());
+                    launchNewRecipientActivity(mFinalEvent.getChat().getRecipientList().get(0));
                 }
             }
         });
@@ -127,7 +131,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         mSmsAddContactDialog.setPositiveButtonListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                launchNewRecipientActivity(mRecipient);
+                launchNewRecipientActivity(mChat.getRecipientList().get(0));
                 mSmsAddContactDialog.dismiss();
             }
         });
@@ -143,6 +147,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         mMessagesServiceManager.addServiceListener(this);
         mMessagesServiceManager.addSenderListener(this);
         mMessagesServiceManager.addReceiverListener(this);
+        mMessagesServiceManager.addSyncListener(this);
 
         mPlayerServiceManager = new PlayerServiceManager(mContext);
         mPlayerServiceManager.addServiceListener(this);
@@ -169,7 +174,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
                 mSmsConfirmationDialog.onRestoreInstanceState(smsDialogState);
             }
 
-            mRecipient = (Recipient) savedInstanceState.getSerializable(RECIPIENT_TAPPED_KEY);
+            mChat = (Chat) savedInstanceState.getSerializable(CHAT_TAPPED_KEY);
 
             Bundle dialogState = savedInstanceState.getBundle(SAVED_DIALOG_STATE_KEY);
             if (dialogState != null) {
@@ -184,7 +189,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
 
     public void saveInstanceState(Bundle outState) {
         // save tapped recipient in case add contact dialog is showing
-        outState.putSerializable(RECIPIENT_TAPPED_KEY, mRecipient);
+        outState.putSerializable(CHAT_TAPPED_KEY, mChat);
         // save add contact dialog state as well
         Bundle dialogState = mSmsAddContactDialog.onSaveInstanceState();
         if (dialogState != null) {
@@ -213,36 +218,38 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     public void deinit() {
         mMessagesServiceManager.removeReceiverListener(this);
         mMessagesServiceManager.removeSenderListener(this);
+        mMessagesServiceManager.removeSyncListener(this);
         mMessagesServiceManager.removeServiceListener(this);
         mPlayerServiceManager.removePlayerListener(this);
         mPlayerServiceManager.removeServiceListener(this);
     }
 
-    private void launchNewRecipientActivity(Recipient editRecipient) {
-        Intent intent = new Intent(mContext.getApplicationContext(), NewRecipientActivity.class);
+    private void launchNewRecipientActivity(ChatRecipient editRecipient) {
+        Intent intent = new Intent(mContext.getApplicationContext(), NewContactActivity.class);
         if (editRecipient != null) {
-            intent.putExtra(NewRecipientFragment.KEY_VIA, editRecipient.getEmail() != null ? editRecipient.getEmail().getVia() : editRecipient.getPhone().getVia());
-            intent.putExtra(NewRecipientFragment.KEY_NAME, editRecipient.getDisplayName());
-            intent.putExtra(NewRecipientFragment.KEY_RAW_ID, editRecipient.getRawId());
-            intent.putExtra(NewRecipientFragment.KEY_PHOTO_URL, editRecipient.getPhotoUri() == null ? null : Uri.parse(editRecipient.getPhotoUri()));
+            intent.putExtra(NewContactFragment.KEY_VIA, editRecipient.getVia());
+            intent.putExtra(NewContactFragment.KEY_NAME, editRecipient.getDisplayName());
+            intent.putExtra(NewContactFragment.KEY_RAW_ID, editRecipient.getRawContactId());
+            intent.putExtra(NewContactFragment.KEY_PHOTO_URL, editRecipient.getPhotoUri() == null ? null : Uri.parse(editRecipient.getPhotoUri()));
         }
         mCallbacks.onNewContact(intent);
     }
 
     public void handleNewContactResult(int resultCode, Intent data) {
         if(resultCode == Activity.RESULT_OK && mFinalEvent != null) {
-            Recipient emailRecipient = RecipientManager.getRecipientWithMainEmailContactByRawId(mContext, mFinalEvent.getRecipient().getRawId());
+            ContactRaw emailRecipient = ContactManager.getRawContactWithEmailByRawId(mContext, mFinalEvent.getChat().getRecipientList().get(0).getRawContactId());
             if(emailRecipient == null) {
                 CustomToast.makeText(mContext, R.string.msg_no_email_address, Toast.LENGTH_LONG).show();
             } else {
                 mSmsConfirmationDialog.dismiss();
-                sendMessage(emailRecipient, mFinalEvent.getRecording());
+                mFinalEvent.getChat().getRecipientList().get(0).setFromRawContact(emailRecipient);
+                sendMessage(mFinalEvent.getChat(), mFinalEvent.getRecording());
                 mFinalEvent = null;
             }
         }
     }
 
-    public boolean triggerRecording(View boundsView, Recipient recipient) {
+    public boolean triggerRecording(View boundsView, Chat chat) {
         AuthenticationData authData = mAuthenticationPolicyEnforcer.getAuthenticationData();
         if(authData == null) {
             return false;
@@ -253,9 +260,9 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
             userRef = authData.getEmail();
         }
 
-        this.mRecipient = recipient;
+        this.mChat = chat;
 
-        if (mRecipient.getPhone() != null && !Utils.isSimAvailable(mContext)) {
+        if (mChat.getRecipientList().get(0).isPhone() && !Utils.isSimAvailable(mContext)) {
             if(!mSmsAddContactDialog.isShowing()) {
                 mSmsAddContactDialog.show();
             }
@@ -264,7 +271,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
 
         // start recording
         mChatRecordOverlay.setViewBounds(boundsView);
-        mChatRecordOverlay.setRecipient(mRecipient);
+        mChatRecordOverlay.setChat(mChat);
         mChatRecordOverlay.setSenderName(userRef);
         mChatRecordOverlay.show(false);
 
@@ -274,19 +281,19 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     @Override
     public void onRecordingFinished(RecordService.Event event) {
         mFinalEvent = event;
-        if(!mPreferences.isShownSmsConfirmation() && event.getRecipient().getPhone() != null) {
-            Recipient emailRecipient = RecipientManager.getRecipientWithMainEmailContactByRawId(mContext, mFinalEvent.getRecipient().getRawId());
+        if(!mPreferences.isShownSmsConfirmation() && event.getChat().getRecipientList().get(0).isPhone()) {
+            ContactRaw emailRecipient = ContactManager.getRawContactWithEmailByRawId(mContext, mFinalEvent.getChat().getRecipientList().get(0).getRawContactId());
             mSmsConfirmationDialog.setEmailRecipient(emailRecipient);
             mSmsConfirmationDialog.show();
         } else {
-            sendMessage(mFinalEvent.getRecipient(), mFinalEvent.getRecording());
+            sendMessage(mFinalEvent.getChat(), mFinalEvent.getRecording());
             mFinalEvent = null;
         }
     }
 
-    protected Message sendMessage(Recipient recipient, Recording recording) {
+    protected Message sendMessage(Chat chat, Recording recording) {
         mFinalEvent = null;
-        return mMessagesServiceManager.send(recipient, recording);
+        return mMessagesServiceManager.send(chat, recording);
     }
 
     public ChatRecordOverlay getChatRecordOverlay() {
@@ -359,6 +366,14 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
 
     @Override
     public void onBoundPlayService() {
+    }
+
+    @Override
+    public void onSyncStarted(SyncEvent event) {
+    }
+
+    @Override
+    public void onSyncFinished(SyncEvent event) {
     }
 
 }

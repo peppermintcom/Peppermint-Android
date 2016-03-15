@@ -10,7 +10,7 @@ import android.widget.Toast;
 import com.peppermint.app.R;
 import com.peppermint.app.RecordService;
 import com.peppermint.app.RecordServiceManager;
-import com.peppermint.app.data.Recipient;
+import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.ui.Overlay;
 import com.peppermint.app.ui.OverlayManager;
@@ -53,7 +53,7 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
     private boolean mRecording = false;
 
     // sender and recipient data
-    private Recipient mRecipient;
+    private Chat mChat;
     private String mSenderName;
 
     // swipe-related
@@ -146,10 +146,10 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
             mRecordSoundPlayer.seekTo(0);
             mRecordSoundPlayer.start();
 
-            mView.setName(mRecipient.getDisplayName());
+            mView.setName(mChat.getTitle());
             String filename = getContext().getString(R.string.filename_message_from) + Utils.normalizeAndCleanString(mSenderName);
 
-            mRecordServiceManager.startRecording(filename, mRecipient, MAX_DURATION_MILLIS);
+            mRecordServiceManager.startRecording(filename, mChat, MAX_DURATION_MILLIS);
 
             mView.dispatchTouchEvent(MotionEvent.obtain(System.currentTimeMillis(), System.currentTimeMillis(), MotionEvent.ACTION_DOWN, 0, 0, 0));
         }
@@ -179,13 +179,13 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
     // RECORDER LISTENER METHODS
     @Override
     public void onStartRecording(RecordService.Event event) {
-        onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
+        onBoundRecording(event.getRecording(), event.getChat(), event.getLoudness());
         mRecording = true;
     }
 
     @Override
     public void onStopRecording(RecordService.Event event) {
-        onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
+        onBoundRecording(event.getRecording(), event.getChat(), event.getLoudness());
         boolean valid = false;
         if(mRecording) {
             valid = event.getRecording().getValidatedFile() != null;
@@ -199,12 +199,12 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
 
     @Override
     public void onResumeRecording(RecordService.Event event) {
-        onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
+        onBoundRecording(event.getRecording(), event.getChat(), event.getLoudness());
     }
 
     @Override
     public void onPauseRecording(RecordService.Event event) {
-        onBoundRecording(event.getRecording(), event.getRecipient(), event.getLoudness());
+        onBoundRecording(event.getRecording(), event.getChat(), event.getLoudness());
     }
 
     @Override
@@ -225,7 +225,7 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
     }
 
     @Override
-    public void onBoundRecording(Recording currentRecording, Recipient currentRecipient, float currentLoudness) {
+    public void onBoundRecording(Recording currentRecording, Chat currentChat, float currentLoudness) {
         setRecordDuration(currentRecording == null ? 0 : currentRecording.getDurationMillis());
     }
 
@@ -297,12 +297,12 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
         this.mViewBounds = mViewBounds;
     }
 
-    public Recipient getRecipient() {
-        return mRecipient;
+    public Chat getChat() {
+        return mChat;
     }
 
-    public void setRecipient(Recipient mRecipient) {
-        this.mRecipient = mRecipient;
+    public void setChat(Chat mChat) {
+        this.mChat = mChat;
     }
 
     public String getSenderName() {
@@ -318,7 +318,7 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
         super.assimilateFrom(overlay);
 
         this.mViewBounds = ((ChatRecordOverlay) overlay).mViewBounds;
-        this.mRecipient = ((ChatRecordOverlay) overlay).mRecipient;
+        this.mChat = ((ChatRecordOverlay) overlay).mChat;
         this.mOnRecordingFinishedCallback = null;
     }
 }

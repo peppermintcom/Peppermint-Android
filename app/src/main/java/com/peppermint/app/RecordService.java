@@ -12,7 +12,8 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.peppermint.app.data.Recipient;
+import com.peppermint.app.data.Chat;
+import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.views.simple.CustomToast;
@@ -43,12 +44,12 @@ public class RecordService extends Service {
     public static final String INTENT_DATA_FILEPREFIX = "RecordService_FilePrefix";
 
     /**
-        Intent extra key for the {@link Recipient} of the recorded file.
+        Intent extra key for the {@link ContactRaw} of the recorded file.
         This service doesn't handle the sending of files but the recipient is required to
         keep track of the sending process in case the interface (activity) gets closed.
         This <b>must</b> be supplied if the DOSTART flag is true.
      **/
-    public static final String INTENT_DATA_RECIPIENT = "RecordService_Recipient";
+    public static final String INTENT_DATA_CHAT = "RecordService_Chat";
 
     /**
      Intent extra key for a long with the max duration for the recorded file in millis.
@@ -109,11 +110,11 @@ public class RecordService extends Service {
          * Start a recording. You can only start a recording if no other recording is currently
          * active (even if it is paused).
          * @param filePrefix the filename prefix of the record
-         * @param recipient the recipient of the record
+         * @param chat the chat of the record
          */
-        void start(String filePrefix, Recipient recipient, long maxDurationMillis) {
+        void start(String filePrefix, Chat chat, long maxDurationMillis) {
             try {
-                RecordService.this.start(filePrefix, recipient, maxDurationMillis);
+                RecordService.this.start(filePrefix, chat, maxDurationMillis);
             } catch (NoAccessToExternalStorageException e) {
                 CustomToast.makeText(RecordService.this, R.string.msg_no_external_storage, Toast.LENGTH_LONG).show();
                 Log.e(TAG, e.getMessage(), e);
@@ -161,8 +162,8 @@ public class RecordService extends Service {
             return mRecorder == null ? null : mRecorder.getFilePath();
         }
 
-        Recipient getCurrentRecipient() {
-            return mRecipient;
+        Chat getCurrentChat() {
+            return mChat;
         }
 
         Recording getCurrentRecording() {
@@ -205,21 +206,21 @@ public class RecordService extends Service {
 
         // final relevant data
         private Recording mRecording;
-        private Recipient mRecipient;
+        private Chat mChat;
 
         // event data
         private int mType;              // type of the event
         private Throwable mError;
 
-        public Event(Recording recording, Recipient recipient, float loudness, int type) {
+        public Event(Recording recording, Chat chat, float loudness, int type) {
             this.mLoudness = loudness;
             this.mType = type;
-            this.mRecipient = recipient;
+            this.mChat = chat;
             this.mRecording = recording;
         }
 
-        public Event(Recording recording, Recipient recipient, Throwable error) {
-            this(recording, recipient, 0, EVENT_ERROR);
+        public Event(Recording recording, Chat chat, Throwable error) {
+            this(recording, chat, 0, EVENT_ERROR);
             this.mError = error;
         }
 
@@ -235,8 +236,8 @@ public class RecordService extends Service {
             return mType;
         }
 
-        public Recipient getRecipient() {
-            return mRecipient;
+        public Chat getChat() {
+            return mChat;
         }
 
         public Throwable getError() {
@@ -257,7 +258,7 @@ public class RecordService extends Service {
                 mIsInForegroundMode = true;
             }
 
-            Event e = new Event(newRecording(mRecorder), mRecipient, amplitude, EVENT_START);
+            Event e = new Event(newRecording(mRecorder), mChat, amplitude, EVENT_START);
             mEventBus.post(e);
         }
 
@@ -265,7 +266,7 @@ public class RecordService extends Service {
         public void onPause(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp) {
             updateNotification();
 
-            Event e = new Event(newRecording(mRecorder), mRecipient, amplitude, EVENT_PAUSE);
+            Event e = new Event(newRecording(mRecorder), mChat, amplitude, EVENT_PAUSE);
             mEventBus.post(e);
         }
 
@@ -274,7 +275,7 @@ public class RecordService extends Service {
             updateLoudness();
             updateNotification();
 
-            Event e = new Event(newRecording(mRecorder), mRecipient, amplitude, EVENT_RESUME);
+            Event e = new Event(newRecording(mRecorder), mChat, amplitude, EVENT_RESUME);
             mEventBus.post(e);
         }
 
@@ -284,7 +285,7 @@ public class RecordService extends Service {
                 stopForeground(true);
                 mIsInForegroundMode = false;
             }
-            Event e = new Event(newRecording(mRecorder), mRecipient, amplitude, EVENT_STOP);
+            Event e = new Event(newRecording(mRecorder), mChat, amplitude, EVENT_STOP);
             mEventBus.post(e);
         }
 
@@ -294,7 +295,7 @@ public class RecordService extends Service {
                 stopForeground(true);
                 mIsInForegroundMode = false;
             }
-            Event e = new Event(newRecording(mRecorder), mRecipient, t);
+            Event e = new Event(newRecording(mRecorder), mChat, t);
             mEventBus.post(e);
         }
     };
@@ -312,7 +313,7 @@ public class RecordService extends Service {
 
     private transient EventBus mEventBus;                 // event bus to send events to registered listeners
     private transient ExtendedAudioRecorder mRecorder;    // the recorder
-    private Recipient mRecipient;                         // the recipient of the current recording
+    private Chat mChat;                                   // the chat of the current recording
     private boolean mIsInForegroundMode = false;
 
     public RecordService() {
@@ -321,13 +322,13 @@ public class RecordService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(intent != null && intent.hasExtra(INTENT_DATA_DOSTART) && intent.hasExtra(INTENT_DATA_RECIPIENT)) {
+        if(intent != null && intent.hasExtra(INTENT_DATA_DOSTART) && intent.hasExtra(INTENT_DATA_CHAT)) {
             if(intent.getBooleanExtra(INTENT_DATA_DOSTART, false)) {
                 try {
                     if (intent.hasExtra(INTENT_DATA_FILEPREFIX)) {
-                        start(intent.getStringExtra(INTENT_DATA_FILEPREFIX), (Recipient) intent.getSerializableExtra(INTENT_DATA_RECIPIENT), intent.getLongExtra(INTENT_DATA_MAXDURATION, -1));
+                        start(intent.getStringExtra(INTENT_DATA_FILEPREFIX), (Chat) intent.getSerializableExtra(INTENT_DATA_CHAT), intent.getLongExtra(INTENT_DATA_MAXDURATION, -1));
                     } else {
-                        start(null, (Recipient) intent.getSerializableExtra(INTENT_DATA_RECIPIENT), intent.getLongExtra(INTENT_DATA_MAXDURATION, -1));
+                        start(null, (Chat) intent.getSerializableExtra(INTENT_DATA_CHAT), intent.getLongExtra(INTENT_DATA_MAXDURATION, -1));
                     }
                 } catch (NoAccessToExternalStorageException e) {
                     CustomToast.makeText(RecordService.this, R.string.msg_no_external_storage, Toast.LENGTH_LONG).show();
@@ -370,12 +371,12 @@ public class RecordService extends Service {
         return mRecorder != null && mRecorder.isPaused();
     }
 
-    void start(String filePrefix, Recipient recipient, long maxDurationMillis) throws NoAccessToExternalStorageException {
+    void start(String filePrefix, Chat chat, long maxDurationMillis) throws NoAccessToExternalStorageException {
         if(isRecording()) {
             throw new RuntimeException("A recording is already in progress. Available actions are pause, resume and stop.");
         }
 
-        mRecipient = recipient;
+        mChat = chat;
         mMaxAmplitude = 1500f;
 
         if(filePrefix == null) {
@@ -411,7 +412,7 @@ public class RecordService extends Service {
     private void updateLoudness() {
         if(isRecording()) {
             if(mEventBus.hasSubscriberForEvent(Event.class)) {
-                Event e = new Event(newRecording(mRecorder), mRecipient, getLoudnessFromAmplitude(mRecorder.getAmplitude()), EVENT_LOUDNESS);
+                Event e = new Event(newRecording(mRecorder), mChat, getLoudnessFromAmplitude(mRecorder.getAmplitude()), EVENT_LOUDNESS);
                 mEventBus.post(e);
             }
             mHandler.postDelayed(mLoudnessRunnable, 50);

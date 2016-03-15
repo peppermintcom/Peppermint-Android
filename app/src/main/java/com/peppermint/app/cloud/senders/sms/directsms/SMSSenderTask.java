@@ -80,7 +80,7 @@ public class SMSSenderTask extends SenderUploadTask {
                     PendingIntent.FLAG_UPDATE_CURRENT);
 
             SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(getMessage().getRecipientParameter().getPhone().getVia(), null, getMessage().getEmailBody(), sentPI, null);
+            smsManager.sendTextMessage(getMessage().getChatParameter().getRecipientList().get(0).getVia(), null, getMessage().getEmailBody(), sentPI, null);
 
             try {
                 // wait for SMS to be sent

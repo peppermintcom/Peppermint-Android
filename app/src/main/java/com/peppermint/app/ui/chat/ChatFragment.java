@@ -52,7 +52,7 @@ public class ChatFragment extends ListFragment implements ChatRecordOverlayContr
         }
 
         if(chatId <= 0) {
-            TrackerManager.getInstance(mActivity.getApplicationContext()).logException(new RuntimeException("Recipient is null on ChatActivity intent!"));
+            TrackerManager.getInstance(mActivity.getApplicationContext()).logException(new RuntimeException("ContactRaw is null on ChatActivity intent!"));
             mActivity.finish();
             return null;
         }

@@ -393,7 +393,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter implements MessagesS
 
     public Message getMessage(Cursor cursor) {
         // no need to get recipient data here
-        return MessageManager.getFromCursor(null, mDb, cursor);
+        return MessageManager.getFromCursor(mDb, cursor);
     }
 
     public Message getMessage(int position) {

@@ -6,7 +6,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 
 import com.peppermint.app.R;
-import com.peppermint.app.data.Recipient;
+import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.ui.views.simple.CustomFontTextView;
 
@@ -20,7 +20,7 @@ public class SMSConfirmationDialog extends CustomConfirmationDialog implements V
 
     private static final String EMAIL_RECIPIENT_KEY = SMSConfirmationDialog.class.getCanonicalName() + "_EmailRecipient";
 
-    private Recipient mEmailRecipient;
+    private ContactRaw mEmailRecipient;
 
     private CustomFontTextView mTxtEmailVia, mTxtEmailValue;
 
@@ -76,16 +76,16 @@ public class SMSConfirmationDialog extends CustomConfirmationDialog implements V
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         if(savedInstanceState != null) {
-            Recipient emailRecipient = (Recipient) savedInstanceState.getSerializable(EMAIL_RECIPIENT_KEY);
+            ContactRaw emailRecipient = (ContactRaw) savedInstanceState.getSerializable(EMAIL_RECIPIENT_KEY);
             setEmailRecipient(emailRecipient);
         }
     }
 
-    public Recipient getEmailRecipient() {
+    public ContactRaw getEmailRecipient() {
         return mEmailRecipient;
     }
 
-    public void setEmailRecipient(Recipient mEmailRecipient) {
+    public void setEmailRecipient(ContactRaw mEmailRecipient) {
         if(mTxtEmailValue != null) {
             if(mEmailRecipient == null) {
                 mTxtEmailValue.setText("");

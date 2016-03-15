@@ -1,7 +1,6 @@
 package com.peppermint.app.data;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
@@ -16,6 +15,7 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by Nuno Luz on 05/10/2015.
@@ -24,50 +24,42 @@ import java.util.List;
  */
 public class DatabaseHelper extends SQLiteOpenHelper {
 
+	public static synchronized DatabaseHelper getInstance(Context context) {
+        if(INSTANCE == null) {
+            INSTANCE = new DatabaseHelper(context.getApplicationContext());
+        }
+        return INSTANCE;
+    }
+
+	public static synchronized void clearInstance() {
+		INSTANCE = null;
+	}
+
+    private static DatabaseHelper INSTANCE;
+
 	private static final String TAG = DatabaseHelper.class.getSimpleName();
 	
 	private static final String DATABASE_NAME = "peppermint.db";        // database filename
-	private static final int DATABASE_VERSION = 16;                     // database version
+	private static final int DATABASE_VERSION = 15;                     // database version
 
 	private Context mContext;
-    private SQLiteDatabase mLocalDatabase;
+    private ReentrantLock mLock = new ReentrantLock();
 
 	public DatabaseHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 		this.mContext = context;
 	}
 
-    public SQLiteDatabase getLocalReadableDatabase() {
-        if(mLocalDatabase != null && mLocalDatabase.isOpen()) {
-            return mLocalDatabase;
-        }
-
-        if(mLocalDatabase != null) {
-            mLocalDatabase.close();
-        }
-
-        mLocalDatabase = getReadableDatabase();
-        return mLocalDatabase;
+    public void lock() {
+        mLock.lock();
     }
 
-    public SQLiteDatabase getLocalWritableDatabase() {
-        if(mLocalDatabase != null && mLocalDatabase.isOpen() && !mLocalDatabase.isReadOnly()) {
-            return mLocalDatabase;
-        }
-
-        if(mLocalDatabase != null) {
-            mLocalDatabase.close();
-        }
-
-        mLocalDatabase = getWritableDatabase();
-        return mLocalDatabase;
+    public void unlock() {
+        mLock.unlock();
     }
 
-    public void closeLocalDatabase() {
-        if(mLocalDatabase != null) {
-            mLocalDatabase.close();
-            mLocalDatabase = null;
-        }
+    public boolean tryLock() {
+        return mLock.tryLock();
     }
 
     /**
@@ -129,12 +121,48 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      */
 	@Override
     public void onUpgrade(SQLiteDatabase _db, int _oldVersion, int _newVersion) {
-        if(_oldVersion < 14) {
+		if(_oldVersion < 15) {
             dropAll(_db);
             onCreate(_db);
-        }
 
-		if(_oldVersion < 15) {
+			// move recent contacts to chats
+			SenderPreferences prefs = new SenderPreferences(mContext);
+			List<Long> contactIds = prefs.getRecentContactUris();
+			if(contactIds == null) {
+				return;
+			}
+
+			DateContainer dateContainer = new DateContainer(DateContainer.TYPE_DATETIME);
+			try {
+				String oldestTimestamp = ChatManager.getOldestChatTimestamp(_db);
+				if(oldestTimestamp != null) {
+					dateContainer.setFromString(oldestTimestamp);
+				}
+			} catch (ParseException e) {
+				TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
+			}
+
+			Calendar calendar = dateContainer.getCalendar();
+			calendar.add(Calendar.MINUTE, -1);
+
+			for (Long contactId : contactIds) {
+                ChatRecipient recipient = new ChatRecipient();
+                recipient.setContactId(contactId);
+				Chat chat = ChatManager.getChatByRecipients(_db, recipient);
+				if(chat == null) {
+					ContactRaw rawContact = ContactManager.getRawContactByContactId(mContext, contactId);
+                    recipient.setFromRawContact(rawContact);
+					try {
+						ChatManager.insert(_db, recipient.getDisplayName(), dateContainer.getAsString(DateContainer.UTC), recipient);
+					} catch (SQLException e) {
+						TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
+					}
+					calendar.add(Calendar.MINUTE, -1);
+				}
+			}
+		}
+
+		/*if(_oldVersion < 15) {
             // remove recipient table and use only contacts provider
             // also store recent contacts in database instead of prefs.
             try {
@@ -166,7 +194,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 			for (Long contactId : contactIds) {
 				Chat chat = ChatManager.getChatByMainRecipient(mContext, _db, contactId, null);
 				if(chat == null) {
-                    Recipient recipient = RecipientManager.getRecipientByContactId(mContext, contactId);
+                    ContactRaw recipient = ContactManager.getRecipientByContactId(mContext, contactId);
 					try {
 						ChatManager.insert(_db, contactId, recipient.getDisplayName(), recipient.getContactVia(), recipient.getContactMimetype(), dateContainer.getAsString(DateContainer.UTC));
 					} catch (SQLException e) {
@@ -189,7 +217,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 Cursor cursor = ChatManager.getAll(_db);
                 while(cursor.moveToNext()) {
                     Chat chat = ChatManager.getFromCursor(mContext, cursor);
-                    Recipient recipient = chat.getMainRecipientParameter();
+                    ContactRaw recipient = chat.getMainRecipientParameter();
                     if(recipient != null && recipient.getDisplayName() != null && recipient.getContactVia() != null) {
                         ChatManager.update(_db, chat.getId(), chat.getMainRecipientId(),
                                 recipient.getDisplayName(), recipient.getContactVia(),
@@ -213,6 +241,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 			} catch (Exception e) {
 				Log.e(TAG, "Unable to add chat table fields", e);
 			}
-		}
+		}*/
 	}
 }

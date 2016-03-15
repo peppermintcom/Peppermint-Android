@@ -22,8 +22,8 @@ import android.widget.Toast;
 
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
-import com.peppermint.app.data.Recipient;
-import com.peppermint.app.data.RecipientManager;
+import com.peppermint.app.data.ContactRaw;
+import com.peppermint.app.data.ContactManager;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.views.NavigationItem;
@@ -48,9 +48,9 @@ import java.util.Set;
  *
  * New recipient/contact fragment.
  */
-public class NewRecipientFragment extends Fragment implements View.OnClickListener, AdapterView.OnItemClickListener {
+public class NewContactFragment extends Fragment implements View.OnClickListener, AdapterView.OnItemClickListener {
 
-    private static final String TAG = NewRecipientFragment.class.getSimpleName();
+    private static final String TAG = NewContactFragment.class.getSimpleName();
 
     private static final String SCREEN_ID = "NewContact";
 
@@ -419,20 +419,20 @@ public class NewRecipientFragment extends Fragment implements View.OnClickListen
         String phone = mTxtPhone.getText().toString().trim();
         String email = mTxtMail.getText().toString().trim();
 
-        Recipient recipient = null;
+        ContactRaw recipient = null;
 
         try {
-            if((recipient = RecipientManager.insert(mActivity, rawId, firstName, lastName, phone, email, mAvatarUrl, authData.getEmail(), false)) == null) {
+            if((recipient = ContactManager.insert(mActivity, rawId, firstName, lastName, phone, email, mAvatarUrl, authData.getEmail(), false)) == null) {
                 Toast.makeText(mActivity, R.string.msg_unable_addcontact, Toast.LENGTH_LONG).show();
                 return;
             }
-        } catch (RecipientManager.InvalidNameException e) {
+        } catch (ContactManager.InvalidNameException e) {
             Toast.makeText(mActivity, R.string.msg_invalid_contactname, Toast.LENGTH_LONG).show();
             return;
-        } catch (RecipientManager.InvalidEmailException e) {
+        } catch (ContactManager.InvalidEmailException e) {
             Toast.makeText(mActivity, R.string.msg_insert_mail, Toast.LENGTH_LONG).show();
             return;
-        } catch (RecipientManager.InvalidPhoneException e) {
+        } catch (ContactManager.InvalidPhoneException e) {
             Toast.makeText(mActivity, R.string.msg_insert_phone, Toast.LENGTH_LONG).show();
             return;
         }

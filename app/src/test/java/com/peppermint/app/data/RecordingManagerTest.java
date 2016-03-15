@@ -28,7 +28,7 @@ public class RecordingManagerTest {
 
     @Before
     public void init() {
-        DatabaseHelper helper = new DatabaseHelper(RuntimeEnvironment.application);
+        DatabaseHelper helper = DatabaseHelper.getInstance(RuntimeEnvironment.application);
         mDatabase = helper.getWritableDatabase();
     }
 
