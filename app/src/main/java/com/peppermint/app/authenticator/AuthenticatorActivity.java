@@ -38,9 +38,11 @@ import com.peppermint.app.cloud.apis.PeppermintApi;
 import com.peppermint.app.cloud.apis.exceptions.GoogleApiDeniedAuthorizationException;
 import com.peppermint.app.cloud.apis.exceptions.GoogleApiNoAuthorizationException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
+import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
 import com.peppermint.app.cloud.senders.SenderSupportListener;
 import com.peppermint.app.cloud.senders.SenderSupportTask;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
+import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomAuthenticatorActivity;
 import com.peppermint.app.ui.views.simple.CustomNoScrollListView;
@@ -263,6 +265,18 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         // start the service so that we can receive GCM notifications
         MessagesServiceManager messagesServiceManager = new MessagesServiceManager(this);
         messagesServiceManager.start();
+
+        AuthenticationData authenticationData = null;
+
+        try {
+            mAuthenticatorUtils.getAccountData();
+        } catch (PeppermintApiNoAccountException e) {
+            mTrackerManager.logException(e);
+        }
+
+        if(authenticationData != null) {
+            PeppermintEventBus.postSignInEvent(authenticationData);
+        }
     }
 
     @Override

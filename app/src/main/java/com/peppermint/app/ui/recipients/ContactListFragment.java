@@ -35,9 +35,6 @@ import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
-import com.peppermint.app.cloud.ReceiverEvent;
-import com.peppermint.app.cloud.SyncEvent;
-import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
 import com.peppermint.app.data.ChatRecipient;
@@ -48,6 +45,9 @@ import com.peppermint.app.data.FilteredCursor;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.RecipientType;
 import com.peppermint.app.data.Recording;
+import com.peppermint.app.events.ReceiverEvent;
+import com.peppermint.app.events.SenderEvent;
+import com.peppermint.app.events.SyncEvent;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.Overlay;
 import com.peppermint.app.ui.OverlayManager;
@@ -388,32 +388,38 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
         mActivity = (CustomActionBarActivity) activity;
         mController = new ChatRecordOverlayController(mActivity, this) {
             @Override
-            public void onReceivedMessage(ReceiverEvent event) {
-                if(mSearchListBarView.getSelectedItemPosition() == 0) {
-                    onSearch(mSearchListBarView.getSearchText());
+            public void onEventMainThread(SyncEvent event) {
+                super.onEventMainThread(event);
+                if(event.getType() == SyncEvent.EVENT_FINISHED) {
+                    if (mSearchListBarView.getSelectedItemPosition() == 0) {
+                        onSearch(mSearchListBarView.getSearchText());
+                    }
                 }
             }
 
             @Override
-            public void onSendFinished(SenderEvent event) {
-                if(mSearchListBarView.getSelectedItemPosition() == 0) {
-                    onSearch(mSearchListBarView.getSearchText());
+            public void onEventMainThread(ReceiverEvent event) {
+                super.onEventMainThread(event);
+                if(event.getType() == ReceiverEvent.EVENT_RECEIVED) {
+                    if (mSearchListBarView.getSelectedItemPosition() == 0) {
+                        onSearch(mSearchListBarView.getSearchText());
+                    }
                 }
             }
 
             @Override
-            public void onSyncFinished(SyncEvent event) {
-                if(mSearchListBarView.getSelectedItemPosition() == 0) {
-                    onSearch(mSearchListBarView.getSearchText());
+            public void onEventMainThread(SenderEvent event) {
+                super.onEventMainThread(event);
+                if(event.getType() == SenderEvent.EVENT_FINISHED) {
+                    if(mSearchListBarView.getSelectedItemPosition() == 0) {
+                        onSearch(mSearchListBarView.getSearchText());
+                    }
                 }
             }
 
             @Override
             protected Message sendMessage(Chat chat, Recording recording) {
                 Message message = super.sendMessage(chat, recording);
-
-                // go back to recent contacts after sending a message
-                mSearchListBarView.setSelectedItemPositionBeforeSearch(0);
 
                 // if the user has gone through the sending process without
                 // discarding the recording, then clear the search filter
@@ -502,8 +508,7 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
 
         // inflate and init custom action bar view
         mSearchListBarView = (SearchListBarView) inflater.inflate(R.layout.f_recipients_actionbar, null, false);
-        SearchListBarAdapter<RecipientType> recipientTypeAdapter = new SearchListBarAdapter<>(app.getFontRegular(), mActivity, RecipientType.getAll(mActivity));
-        mSearchListBarView.setListAdapter(recipientTypeAdapter);
+        mSearchListBarView.setListCategories(RecipientType.getAll(mActivity));
         mSearchListBarView.setTypeface(app.getFontRegular());
 
         if (savedInstanceState != null) {
@@ -718,10 +723,6 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
     }
 
     public int clearFilters() {
-        /*if(mSearchListBarView.isShowingList()) {
-            mSearchListBarView.hideList();
-            return 2;
-        }*/
         return (mSearchListBarView.clearSearch(0) ? 1 : 0);
     }
 

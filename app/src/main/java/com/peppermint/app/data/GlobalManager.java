@@ -30,6 +30,11 @@ public class GlobalManager {
             return null;
         }
 
+        Message message = MessageManager.getMessageByIdOrServerId(db, 0, serverId);
+        if(message != null) {
+            return message;
+        }
+
         // add contact if necessary
         String rawContactKey = senderEmail + receiverEmail;
         if(!RAW_CONTACT_CACHE.containsKey(rawContactKey)) {
@@ -39,7 +44,6 @@ public class GlobalManager {
         ContactRaw contactRaw = RAW_CONTACT_CACHE.get(rawContactKey);
 
         Chat chat = null;
-        Message message = null;
         Recording recording = null;
 
         // insert chat and recipient
@@ -60,13 +64,13 @@ public class GlobalManager {
         }
 
         // insert recording
-        recording = RecordingManager.insertOrUpdate(db, 0, null, durationSeconds * 1000l, 0, false, createdTs, Recording.CONTENT_TYPE_AUDIO);
+        recording = RecordingManager.insert(db, null, durationSeconds * 1000l, 0, false, createdTs, Recording.CONTENT_TYPE_AUDIO);
 
         // insert message
-        message = MessageManager.insertOrUpdate(db, 0, chat.getId(), chat.getRecipientList().get(0).getId(), recording.getId(),
+        message = MessageManager.insert(db, chat.getId(), chat.getRecipientList().get(0).getId(), recording.getId(),
                 serverId, null, audioUrl, transcription, null, null, createdTs, false, true, false);
-        message.setChatParameter(chat);
         message.setRecordingParameter(recording);
+        message.setChatParameter(chat);
 
         return message;
     }
@@ -80,6 +84,11 @@ public class GlobalManager {
             return null;
         }
 
+        Message message = MessageManager.getMessageByIdOrServerId(db, 0, serverId);
+        if(message != null) {
+            return message;
+        }
+
         // add contact if necessary
         String rawContactKey = senderEmail + receiverEmail;
         if(!RAW_CONTACT_CACHE.containsKey(rawContactKey)) {
@@ -89,7 +98,6 @@ public class GlobalManager {
         ContactRaw contactRaw = RAW_CONTACT_CACHE.get(rawContactKey);
 
         Chat chat = null;
-        Message message = null;
         Recording recording = null;
 
         // insert chat and recipient
@@ -110,16 +118,15 @@ public class GlobalManager {
         }
 
         // insert recording
-        recording = RecordingManager.insertOrUpdate(db, 0, null, durationSeconds * 1000l, 0, false, createdTs, Recording.CONTENT_TYPE_AUDIO);
+        recording = RecordingManager.insert(db, null, durationSeconds * 1000l, 0, false, createdTs, Recording.CONTENT_TYPE_AUDIO);
 
         // insert message
-        message = MessageManager.insertOrUpdate(db, 0, chat.getId(), chat.getRecipientList().get(0).getId(), recording.getId(),
+        message = MessageManager.insert(db, chat.getId(), chat.getRecipientList().get(0).getId(), recording.getId(),
                 serverId, null, audioUrl, transcription, null, null, createdTs, true, false, false);
         message.setChatParameter(chat);
         message.setRecordingParameter(recording);
 
         return message;
-
     }
 
 }

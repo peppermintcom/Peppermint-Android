@@ -15,13 +15,14 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
-import com.peppermint.app.PlayerEvent;
 import com.peppermint.app.PlayerServiceManager;
 import com.peppermint.app.R;
 import com.peppermint.app.cloud.MessagesServiceManager;
-import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.MessageManager;
+import com.peppermint.app.events.PeppermintEventBus;
+import com.peppermint.app.events.PlayerEvent;
+import com.peppermint.app.events.SenderEvent;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.views.simple.CustomFontButton;
 import com.peppermint.app.ui.views.simple.CustomFontTextView;
@@ -38,7 +39,7 @@ import java.util.TimeZone;
  *
  * ArrayAdapter to show chat messages in a ListView.<br />
  */
-public class ChatMessageCursorAdapter extends CursorAdapter implements MessagesServiceManager.SenderListener {
+public class ChatMessageCursorAdapter extends CursorAdapter {
 
     public interface ExclamationClickListener {
         void onClick(View v, long messageId);
@@ -47,14 +48,14 @@ public class ChatMessageCursorAdapter extends CursorAdapter implements MessagesS
     private MessageController mPlayingController;
     private Map<Long, MessageController> mControllers = new HashMap<>();
 
-    private class MessageController implements View.OnClickListener, SeekBar.OnSeekBarChangeListener, PlayerServiceManager.PlayerListener {
+    private class MessageController implements View.OnClickListener, SeekBar.OnSeekBarChangeListener {
 
         private Message mMessage;
         private View mRootView;
 
         private MessageController(Message mMessage) {
             this.mMessage = mMessage;
-            mPlayerServiceManager.addPlayerListener(this);
+            PeppermintEventBus.registerAudio(this);
         }
 
         private void pause(boolean resetSeekbar) {
@@ -244,7 +245,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter implements MessagesS
         private void destroy() {
             // release some memory in case of lots of messages
             if(mRootView == null) {
-                mPlayerServiceManager.removePlayerListener(this);
+                PeppermintEventBus.unregisterAudio(this);
                 mControllers.remove(mMessage.getId());
             } else {
                 SeekBar seekBar = (SeekBar) mRootView.findViewById(R.id.seekBar);
@@ -290,8 +291,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter implements MessagesS
             }
         }
 
-        @Override
-        public void onPlayerEvent(PlayerEvent event) {
+        public void onEventMainThread(PlayerEvent event) {
             if(!event.getMessage().equals(mMessage)) {
                 return;
             }
@@ -356,7 +356,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter implements MessagesS
         this.mBalloonMargin = Utils.dpToPx(context, MARGIN_BALLOON_DP);
         this.mBalloonMarginWithExclamation = Utils.dpToPx(context, MARGIN_BALLOON_WITH_EXCLAMATION_DP);
 
-        mMessagesServiceManager.addSenderListener(this);
+        PeppermintEventBus.registerMessages(this);
     }
 
     @Override
@@ -410,7 +410,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter implements MessagesS
     }
 
     public void destroy() {
-        mMessagesServiceManager.removeSenderListener(this);
+        PeppermintEventBus.unregisterMessages(this);
 
         if(mPlayingController != null) {
             mPlayingController.pause(true);
@@ -419,44 +419,25 @@ public class ChatMessageCursorAdapter extends CursorAdapter implements MessagesS
         mControllers.clear();
     }
 
-    @Override
-    public void onSendStarted(SenderEvent event) {
+    public void onEventMainThread(SenderEvent event) {
         MessageController controller = mControllers.get(event.getSenderTask().getMessage().getId());
-        if(controller != null) {
-            controller.setStatusSending();
+        if(controller == null) {
+            return;
         }
-    }
 
-    @Override
-    public void onSendCancelled(SenderEvent event) {
-    }
-
-    @Override
-    public void onSendError(SenderEvent event) {
-        MessageController controller = mControllers.get(event.getSenderTask().getMessage().getId());
-        if(controller != null) {
-            controller.setStatusError();
-        }
-    }
-
-    @Override
-    public void onSendFinished(SenderEvent event) {
-        MessageController controller = mControllers.get(event.getSenderTask().getMessage().getId());
-        if(controller != null) {
-            controller.setStatusNormal();
-        }
-    }
-
-    @Override
-    public void onSendProgress(SenderEvent event) {
-
-    }
-
-    @Override
-    public void onSendQueued(SenderEvent event) {
-        MessageController controller = mControllers.get(event.getSenderTask().getMessage().getId());
-        if(controller != null) {
-            controller.setStatusError();
+        switch (event.getType()) {
+            case SenderEvent.EVENT_STARTED:
+                controller.setStatusSending();
+                break;
+            case SenderEvent.EVENT_ERROR:
+                controller.setStatusError();
+                break;
+            case SenderEvent.EVENT_FINISHED:
+                controller.setStatusNormal();
+                break;
+            case SenderEvent.EVENT_QUEUED:
+                controller.setStatusError();
+                break;
         }
     }
 

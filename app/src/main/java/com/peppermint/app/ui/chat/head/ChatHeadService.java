@@ -9,13 +9,14 @@ import android.os.IBinder;
 import android.view.View;
 
 import com.peppermint.app.cloud.MessagesServiceManager;
-import com.peppermint.app.cloud.ReceiverEvent;
-import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.MessageManager;
+import com.peppermint.app.events.PeppermintEventBus;
+import com.peppermint.app.events.ReceiverEvent;
+import com.peppermint.app.events.SenderEvent;
 import com.peppermint.app.ui.chat.ChatController;
 import com.peppermint.app.ui.chat.RecipientDataGUI;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
@@ -23,7 +24,7 @@ import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
 /**
  * Created by Nuno Luz on 24-02-2016.
  */
-public class ChatHeadService extends Service implements MessagesServiceManager.ReceiverListener, MessagesServiceManager.SenderListener, RecipientDataGUI, ChatRecordOverlayController.Callbacks {
+public class ChatHeadService extends Service implements RecipientDataGUI, ChatRecordOverlayController.Callbacks {
 
     public static final String ACTION_ENABLE = "com.peppermint.app.ChatHeadService.ENABLE";
     public static final String ACTION_DISABLE = "com.peppermint.app.ChatHeadService.DISABLE";
@@ -70,10 +71,11 @@ public class ChatHeadService extends Service implements MessagesServiceManager.R
     public void onCreate() {
         super.onCreate();
         mPreferences = new SenderPreferences(this);
+
         mMessagesServiceManager = new MessagesServiceManager(this);
         mMessagesServiceManager.startAndBind();
-        mMessagesServiceManager.addReceiverListener(this);
-        mMessagesServiceManager.addSenderListener(this);
+
+        PeppermintEventBus.registerMessages(this);
 
         /*OverlayManager overlayManager =
 
@@ -89,6 +91,8 @@ public class ChatHeadService extends Service implements MessagesServiceManager.R
             mChatHeadController.disable();
         }
         mMessagesServiceManager.unbind();
+
+        PeppermintEventBus.unregisterMessages(this);
     }
 
     private void refreshChatHeadController() {
@@ -116,45 +120,21 @@ public class ChatHeadService extends Service implements MessagesServiceManager.R
         }
     }
 
-    @Override
-    public void onReceivedMessage(ReceiverEvent event) {
+    public void onEventMainThread(ReceiverEvent event) {
         refreshChatHeadController();
     }
 
-    @Override
-    public void onSendStarted(SenderEvent event) {
-        refreshChatHeadController();
-    }
-
-    @Override
-    public void onSendCancelled(SenderEvent event) {
-
-    }
-
-    @Override
-    public void onSendError(SenderEvent event) {
-    }
-
-    @Override
-    public void onSendFinished(SenderEvent event) {
-    }
-
-    @Override
-    public void onSendProgress(SenderEvent event) {
-
-    }
-
-    @Override
-    public void onSendQueued(SenderEvent event) {
+    public void onEventMainThread(SenderEvent event) {
+        if(event.getType() == SenderEvent.EVENT_STARTED) {
+            refreshChatHeadController();
+        }
     }
 
     @Override
     public void onNewContact(Intent intentToLaunchActivity) {
-
     }
 
     @Override
     public void setRecipientData(String recipientName, String recipientVia, String recipientPhotoUri) {
-
     }
 }

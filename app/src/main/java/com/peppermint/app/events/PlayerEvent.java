@@ -1,5 +1,6 @@
-package com.peppermint.app;
+package com.peppermint.app.events;
 
+import com.peppermint.app.PlayerService;
 import com.peppermint.app.data.Message;
 
 /**
@@ -37,12 +38,16 @@ public class PlayerEvent {
         this.mCurrentMs = mCurrentMs;
     }
 
-    public PlayerEvent(Message mMessage, int mPercent, long mCurrentMs, int mErrorCode) {
-        this.mType = EVENT_ERROR;
+    public PlayerEvent(int mType, Message mMessage, int mPercent, long mCurrentMs, int mErrorCode) {
+        this.mType = mType;
         this.mMessage = mMessage;
         this.mPercent = mPercent;
         this.mCurrentMs = mCurrentMs;
         this.mErrorCode = mErrorCode;
+    }
+
+    public PlayerEvent(Message mMessage, int mPercent, long mCurrentMs, int mErrorCode) {
+        this(EVENT_ERROR, mMessage, mPercent, mCurrentMs, mErrorCode);
     }
 
     public int getErrorCode() {

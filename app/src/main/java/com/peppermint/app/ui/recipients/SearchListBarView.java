@@ -25,6 +25,8 @@ import android.widget.TextView;
 
 import com.peppermint.app.R;
 
+import java.util.List;
+
 /**
  * Created by Nuno Luz on 17-09-2015.
  *
@@ -45,19 +47,17 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         void onSearch(String searchText);
     }
 
-    public interface ListItem {
+    public interface ListCategory {
         boolean isSearchable();
         String getText();
-        int getDrawableResource();
     }
 
     private InputMethodManager mInputMethodManager;
 
-    private ImageButton /*mBtnList,*/ mBtnClear;
+    private ImageButton mBtnClear;
     private EditText mTxtSearch;
-    /*private ListPopupWindow mListPopupWindow;*/
 
-    private SearchListBarAdapter mAdapter;
+    private List<? extends ListCategory> mCategories;
     private int mMinSearchCharacters = MIN_SEARCH_CHARACTERS;
     private int mSelectedItemPosition = 0, mSelectedItemPositionBeforeSearch = 0;
 
@@ -83,8 +83,6 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
 
         @Override
         public void afterTextChanged(Editable s) {
-            /*mHandler.removeCallbacks(mSearchRunnable);
-            mHandler.postDelayed(mSearchRunnable, 10);*/
             if(_startVia < 0 && _endVia < 0) {
                 mSearchRunnable.run();
             } else {
@@ -113,9 +111,9 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
                 // position until one that allows searching is found
                 if(!getSelectedItem().isSearchable()) {
                     int searchableItemPos = -1;
-                    int count = mAdapter.getCount();
+                    int count = mCategories.size();
                     for(int i=0; i<count && searchableItemPos < 0; i++) {
-                        if(mAdapter.getItem(i).isSearchable()) {
+                        if(mCategories.get(i).isSearchable()) {
                             searchableItemPos = i;
                         }
                     }
@@ -166,19 +164,6 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
             }
         });
 
-        /*mBtnList = (ImageButton) findViewById(R.id.btnList);
-        mBtnList.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-            if(!mListPopupWindow.isShowing()) {
-                mListPopupWindow.show();
-                // this is required since setSelection() only works when the view is showing
-                mListPopupWindow.setSelection(mSelectedItemPosition);
-                mBtnList.setEnabled(false);
-            }
-            }
-        });*/
-
         mTxtSearch = (EditText) findViewById(R.id.txtSearch);
         // this disables default restore view state mechanism (it was triggering
         // the text watcher every time the screen was rotated)
@@ -195,26 +180,6 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
             }
         });
 
-        /*TypedArray a = getContext().getTheme().obtainStyledAttributes(new int[] {R.attr.normalBoxRadius});
-        int offset = a.getDimensionPixelSize(0, 0) + Utils.dpToPx(getContext(), 1);
-        a.recycle();*/
-
-        /*mListPopupWindow = new ListPopupWindow(getContext());
-        mListPopupWindow.setAnchorView(this);
-        mListPopupWindow.setVerticalOffset(-offset);
-        mListPopupWindow.setOnItemClickListener(this);
-        mListPopupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
-            @Override
-            public void onDismiss() {
-                postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        mBtnList.setEnabled(true);
-                    }
-                }, 250);
-            }
-        });*/
-
         if(attrs != null) {
             TypedArray a = getContext().getTheme().obtainStyledAttributes(
                     attrs,
@@ -223,18 +188,11 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
 
             try {
                 mTxtSearch.setHint(a.getString(R.styleable.SearchListBarView_hint));
-                /*mListPopupWindow.setListSelector(Utils.getDrawable(getContext(), a.getResourceId(R.styleable.SearchListBarView_listSelector, R.drawable.background_transparent_to_solid_pressed)));*/
             } finally {
                 a.recycle();
             }
         }
     }
-
-    /*public void hideList() {
-        if(mListPopupWindow.isShowing()) {
-            mListPopupWindow.dismiss();
-        }
-    }*/
 
     private void hideKeyboard() {
         requestFocus();
@@ -277,11 +235,9 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
 
     private void innerSetSelectedItemPosition(int position) {
         mSelectedItemPosition = position;
-        /*mListPopupWindow.setSelection(position);*/
 
         // set imagebutton drawable with selected contact list icon
-        ListItem item = mAdapter.getItem(position);
-        /*mBtnList.setImageResource(item.getDrawableResource());*/
+        ListCategory item = mCategories.get(position);
 
         // reset text if not searchable
         if(!item.isSearchable() && getSearchText() != null) {
@@ -292,40 +248,38 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
     }
 
     public void setSelectedItemPosition(int position) {
-        mSelectedItemPositionBeforeSearch = position;
+        /*mSelectedItemPositionBeforeSearch = position;*/
         innerSetSelectedItemPosition(position);
         innerTriggerSearch();
     }
 
-    public void setSelectedItemPositionBeforeSearch(int position) {
+    /*public void setSelectedItemPositionBeforeSearch(int position) {
         mSelectedItemPositionBeforeSearch = position;
     }
 
     public int getSelectedItemPositionBeforeSearch() {
         return mSelectedItemPositionBeforeSearch;
-    }
+    }*/
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         setSelectedItemPosition(position);
-        /*mListPopupWindow.dismiss();*/
     }
 
-    public void setListAdapter(SearchListBarAdapter adapter) {
-        mAdapter = adapter;
-        /*mListPopupWindow.setAdapter(adapter);*/
+    public void setListCategories(List<? extends ListCategory> categories) {
+        mCategories = categories;
     }
 
-    public SearchListBarAdapter getListAdapter() {
-        return mAdapter;
+    public List<? extends ListCategory> getListCategories() {
+        return mCategories;
     }
 
     public int getSelectedItemPosition() {
         return mSelectedItemPosition;
     }
 
-    public ListItem getSelectedItem() {
-        return mAdapter.getItem(getSelectedItemPosition());
+    public ListCategory getSelectedItem() {
+        return mCategories.get(getSelectedItemPosition());
     }
 
     public boolean clearSearch(int resetToPosition) {
@@ -376,14 +330,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         mTxtSearch.setText(text);
     }
 
-    /*public boolean isShowingList() {
-        return mListPopupWindow.isShowing();
-    }*/
-
     public void deinit() {
-        /*if(mListPopupWindow.isShowing()) {
-            mListPopupWindow.dismiss();
-        }*/
     }
 
     public EditText getSearchEditText() {

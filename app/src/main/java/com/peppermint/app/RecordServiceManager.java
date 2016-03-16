@@ -18,90 +18,22 @@ import com.peppermint.app.data.Recording;
 public class RecordServiceManager {
 
     /**
-     * Listener for recording events (see {@link com.peppermint.app.RecordService.Event}).
+     * RecordServiceListener for binding the service.
      */
-    public interface Listener {
+    public interface RecordServiceListener {
         /**
          * Invoked when a binding to the service is performed.
          */
         void onBoundRecording(Recording recording, Chat currentChat, float currentLoudness);
-
-        /**
-         * Invoked when a new recording starts.
-         * @param event the event
-         */
-        void onStartRecording(RecordService.Event event);
-
-        /**
-         * Invoked when the current recording stops.
-         * @param event the event
-         */
-        void onStopRecording(RecordService.Event event);
-
-        /**
-         * Invoked when the current recording is resumed (only after being paused).
-         * @param event the event
-         */
-        void onResumeRecording(RecordService.Event event);
-
-        /**
-         * Invoked when the current recording is paused.
-         * @param event the event
-         */
-        void onPauseRecording(RecordService.Event event);
-
-        /**
-         * Invoked in 100 ms intervals while the recording is in progress.
-         * It provides loudness (wave amplitude) information.
-         * @param event the event
-         */
-        void onLoudnessRecording(RecordService.Event event);
-
-        /**
-         * Invoked when an error occurs. The error can be obtained through
-         * {@link RecordService.Event#getError()}
-         * @param event the event
-         */
-        void onErrorRecording(RecordService.Event event);
     }
 
     private static final String TAG = RecordServiceManager.class.getSimpleName();
 
     private Context mContext;
     private RecordService.RecordServiceBinder mService;
-    private Listener mListener;
+    private RecordServiceListener mListener;
     protected boolean mIsBound = false;                                         // if the manager is bound to the service
     protected boolean mIsBinding = false;
-
-    /**
-     * Event callback triggered by the {@link RecordService} through an {@link de.greenrobot.event.EventBus}.<br />
-     * @param event the event (see {@link com.peppermint.app.RecordService.Event})
-     */
-    public void onEventMainThread(RecordService.Event event) {
-        if(mListener == null) {
-            return;
-        }
-
-        switch (event.getType()) {
-            case RecordService.EVENT_START:
-                mListener.onStartRecording(event);
-                break;
-            case RecordService.EVENT_STOP:
-                mListener.onStopRecording(event);
-                break;
-            case RecordService.EVENT_RESUME:
-                mListener.onResumeRecording(event);
-                break;
-            case RecordService.EVENT_PAUSE:
-                mListener.onPauseRecording(event);
-                break;
-            case RecordService.EVENT_ERROR:
-                mListener.onErrorRecording(event);
-                break;
-            default:
-                mListener.onLoudnessRecording(event);
-        }
-    }
 
     /**
      * Event listener associated with the service bind/unbind.
@@ -109,7 +41,6 @@ public class RecordServiceManager {
     protected ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder binder) {
             mService = (RecordService.RecordServiceBinder) binder;
-            mService.register(RecordServiceManager.this);
 
             mIsBound = true;
             mIsBinding = false;
@@ -166,10 +97,6 @@ public class RecordServiceManager {
      */
     public void unbind() {
         if (mIsBound || mIsBinding) {
-            // if we have received the service, and hence registered with it, then now is the time to unregister.
-            if (mService != null) {
-                mService.unregister(RecordServiceManager.this);
-            }
             // detach our existing connection.
             mContext.unbindService(mConnection);
             mIsBound = false;
@@ -225,12 +152,12 @@ public class RecordServiceManager {
         return mService.isPaused();
     }
 
-    public Listener getListener() {
+    public RecordServiceListener getListener() {
         return mListener;
     }
 
-    public void setListener(Listener mListener) {
-        this.mListener = mListener;
+    public void setListener(RecordServiceListener mRecordServiceListener) {
+        this.mListener = mRecordServiceListener;
     }
 
     public boolean isBound() {

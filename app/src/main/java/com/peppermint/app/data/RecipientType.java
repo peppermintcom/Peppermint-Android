@@ -15,7 +15,7 @@ import java.util.List;
  *
  * Represents the allowed types of Recipients and the restrictions that define them.
  */
-public class RecipientType implements SearchListBarView.ListItem {
+public class RecipientType implements SearchListBarView.ListCategory {
 
     /**
      * Get a list with all possible RecipientType instances.
@@ -79,14 +79,6 @@ public class RecipientType implements SearchListBarView.ListItem {
 
     public void setId(long mId) {
         this.mId = mId;
-    }
-
-    public int getDrawableResource() {
-        return mIconResId;
-    }
-
-    public void setDrawableResource(int mIconResId) {
-        this.mIconResId = mIconResId;
     }
 
     public List<String> getMimeTypes() {

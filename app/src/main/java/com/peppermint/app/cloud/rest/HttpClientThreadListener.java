@@ -4,7 +4,7 @@ package com.peppermint.app.cloud.rest;
  * Created by Nuno Luz (nluz@mobaton.com) on 02-07-2015.
  *
  * <p>
- *     Listener of events related to {@link HttpRequest}, executed by a {@link HttpClientThread}.<br />
+ *     RecordServiceListener of events related to {@link HttpRequest}, executed by a {@link HttpClientThread}.<br />
  *     These methods run in the {@link HttpClientThread}'s background_gradient thread.
  * </p>
  */

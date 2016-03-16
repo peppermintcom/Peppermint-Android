@@ -6,8 +6,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 
-import com.peppermint.app.RecordService;
-import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recording;
@@ -30,116 +28,11 @@ public class MessagesServiceManager {
         void onBoundSendService();
     }
 
-    /**
-     * Listener for send message events (see {@link SenderEvent}).
-     */
-    public interface SenderListener {
-        /**
-         * Invoked when a send message starts.
-         * @param event the event
-         */
-        void onSendStarted(SenderEvent event);
-
-        /**
-         * Invoked when a send message is cancelled.
-         * @param event the event
-         */
-        void onSendCancelled(SenderEvent event);
-
-        /**
-         * Invoked when a send message fails.
-         * @param event the event
-         */
-        void onSendError(SenderEvent event);
-
-        /**
-         * Invoked when a send message finishes.
-         * @param event the event
-         */
-        void onSendFinished(SenderEvent event);
-
-        /**
-         * Invoked when a send message progresses.
-         * @param event the event
-         */
-        void onSendProgress(SenderEvent event);
-
-        /**
-         * Invoked when a send message has been queued due to a recoverable error.
-         * @param event the event
-         */
-        void onSendQueued(SenderEvent event);
-    }
-
-    public interface ReceiverListener {
-        void onReceivedMessage(ReceiverEvent event);
-    }
-
-    public interface SyncListener {
-        void onSyncStarted(SyncEvent event);
-        void onSyncFinished(SyncEvent event);
-    }
-
     private Context mContext;
     private MessagesService.SendRecordServiceBinder mService;
-    private List<SenderListener> mSenderListenerList = new ArrayList<>();
-    private List<ReceiverListener> mReceiverListenerList = new ArrayList<>();
     private List<ServiceListener> mServiceListenerList = new ArrayList<>();
-    private List<SyncListener> mSyncListenerList = new ArrayList<>();
     protected boolean mIsBound = false;                                         // if the manager is bound to the service
     protected boolean mIsBinding = false;
-
-    public void onEventMainThread(SyncEvent event) {
-        for(SyncListener listener : mSyncListenerList) {
-            switch (event.getType()) {
-                case SyncEvent.EVENT_STARTED:
-                    listener.onSyncStarted(event);
-                    break;
-                default:
-                    listener.onSyncFinished(event);
-                    break;
-            }
-        }
-    }
-
-    public void onEventMainThread(ReceiverEvent event) {
-        switch(event.getType()) {
-            case ReceiverEvent.EVENT_RECEIVED:
-                for(ReceiverListener listener : mReceiverListenerList) {
-                    listener.onReceivedMessage(event);
-                }
-                break;
-        }
-    }
-
-    /**
-     * Event callback triggered by the {@link RecordService} through an {@link de.greenrobot.event.EventBus}.<br />
-     * @param event the event (see {@link RecordService.Event})
-     */
-    public void onEventMainThread(SenderEvent event) {
-        for(SenderListener listener : mSenderListenerList) {
-            switch (event.getType()) {
-                case SenderEvent.EVENT_STARTED:
-                    listener.onSendStarted(event);
-                    break;
-                case SenderEvent.EVENT_ERROR:
-                    listener.onSendError(event);
-                    break;
-                case SenderEvent.EVENT_CANCELLED:
-                    listener.onSendCancelled(event);
-                    break;
-                case SenderEvent.EVENT_FINISHED:
-                    listener.onSendFinished(event);
-                    break;
-                case SenderEvent.EVENT_PROGRESS:
-                    listener.onSendProgress(event);
-                    break;
-                case SenderEvent.EVENT_QUEUED:
-                    listener.onSendQueued(event);
-                    break;
-            }
-        }
-    }
 
     /**
      * Event listener associated with the service bind/unbind.
@@ -147,7 +40,6 @@ public class MessagesServiceManager {
     protected ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder binder) {
             mService = (MessagesService.SendRecordServiceBinder) binder;
-            mService.register(MessagesServiceManager.this);
 
             mIsBound = true;
             mIsBinding = false;
@@ -224,10 +116,6 @@ public class MessagesServiceManager {
      */
     public void unbind() {
         if (mIsBound || mIsBinding) {
-            // if we have received the service, and hence registered with it, then now is the time to unregister.
-            if (mService != null) {
-                mService.unregister(MessagesServiceManager.this);
-            }
             // detach our existing connection.
             mContext.unbindService(mConnection);
             mIsBound = false;
@@ -290,27 +178,4 @@ public class MessagesServiceManager {
         return mServiceListenerList.remove(listener);
     }
 
-    public void addReceiverListener(ReceiverListener listener) {
-        mReceiverListenerList.add(listener);
-    }
-
-    public boolean removeReceiverListener(ReceiverListener listener) {
-        return mReceiverListenerList.remove(listener);
-    }
-
-    public void addSyncListener(SyncListener listener) {
-        mSyncListenerList.add(listener);
-    }
-
-    public boolean removeSyncListener(SyncListener listener) {
-        return mSyncListenerList.remove(listener);
-    }
-
-    public void addSenderListener(SenderListener listener) {
-        mSenderListenerList.add(listener);
-    }
-
-    public boolean removeSenderListener(SenderListener listener) {
-        return mSenderListenerList.remove(listener);
-    }
 }

@@ -213,7 +213,7 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
 
     /**
      * Same as getDateAsStringRelativeTo(context, date, todayDate)
-     * See {@link #getDateAsStringRelativeTo(Context, DateContainer, DateContainer, DateTimeZone)}
+     * See {@link #getDateAsStringRelativeTo(Context, DateContainer, DateContainer, TimeZone)}
      * @param context the app context to get friendly label strings
      * @param date the date
      * @return the friendly label

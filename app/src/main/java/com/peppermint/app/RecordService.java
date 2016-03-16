@@ -15,14 +15,12 @@ import android.widget.Toast;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.data.Recording;
+import com.peppermint.app.events.PeppermintEventBus;
+import com.peppermint.app.events.RecorderEvent;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.utils.ExtendedAudioRecorder;
 import com.peppermint.app.utils.NoAccessToExternalStorageException;
-
-import java.io.Serializable;
-
-import de.greenrobot.event.EventBus;
 
 /**
  * Service that records audio messages.
@@ -57,13 +55,6 @@ public class RecordService extends Service {
      **/
     public static final String INTENT_DATA_MAXDURATION = "RecordService_MaxDuration";
 
-    public static final int EVENT_START = 1;
-    public static final int EVENT_RESUME = 2;
-    public static final int EVENT_PAUSE = 3;
-    public static final int EVENT_STOP = 4;
-    public static final int EVENT_LOUDNESS = 5;
-    public static final int EVENT_ERROR = 6;
-
     protected RecordServiceBinder mBinder = new RecordServiceBinder();
 
     private float mMaxAmplitude;
@@ -88,22 +79,6 @@ public class RecordService extends Service {
          */
         boolean isPaused() {
             return RecordService.this.isPaused();
-        }
-
-        /**
-         * Register an event listener to receive record events.
-         * @param listener the event listener
-         */
-        void register(Object listener) {
-            mEventBus.register(listener);
-        }
-
-        /**
-         * Unregister the specified event listener to stop receiving record events.
-         * @param listener the event listener
-         */
-        void unregister(Object listener) {
-            mEventBus.unregister(listener);
         }
 
         /**
@@ -197,54 +172,6 @@ public class RecordService extends Service {
         return recording;
     }
 
-    /**
-     * Event associated with the recording process of the {@link RecordService}.
-     */
-    public static class Event implements Serializable {
-        // intermediate process data
-        private float mLoudness;
-
-        // final relevant data
-        private Recording mRecording;
-        private Chat mChat;
-
-        // event data
-        private int mType;              // type of the event
-        private Throwable mError;
-
-        public Event(Recording recording, Chat chat, float loudness, int type) {
-            this.mLoudness = loudness;
-            this.mType = type;
-            this.mChat = chat;
-            this.mRecording = recording;
-        }
-
-        public Event(Recording recording, Chat chat, Throwable error) {
-            this(recording, chat, 0, EVENT_ERROR);
-            this.mError = error;
-        }
-
-        public float getLoudness() {
-            return mLoudness;
-        }
-
-        public Recording getRecording() {
-            return mRecording;
-        }
-
-        public int getType() {
-            return mType;
-        }
-
-        public Chat getChat() {
-            return mChat;
-        }
-
-        public Throwable getError() {
-            return mError;
-        }
-    }
-
     private final ExtendedAudioRecorder.Listener mAudioRecorderListener = new ExtendedAudioRecorder.Listener() {
 
         @Override
@@ -258,25 +185,20 @@ public class RecordService extends Service {
                 mIsInForegroundMode = true;
             }
 
-            Event e = new Event(newRecording(mRecorder), mChat, amplitude, EVENT_START);
-            mEventBus.post(e);
+            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_START, newRecording(mRecorder), mChat, amplitude, null);
         }
 
         @Override
         public void onPause(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp) {
             updateNotification();
-
-            Event e = new Event(newRecording(mRecorder), mChat, amplitude, EVENT_PAUSE);
-            mEventBus.post(e);
+            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_PAUSE, newRecording(mRecorder), mChat, amplitude, null);;
         }
 
         @Override
         public void onResume(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp) {
             updateLoudness();
             updateNotification();
-
-            Event e = new Event(newRecording(mRecorder), mChat, amplitude, EVENT_RESUME);
-            mEventBus.post(e);
+            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_RESUME, newRecording(mRecorder), mChat, amplitude, null);
         }
 
         @Override
@@ -285,8 +207,8 @@ public class RecordService extends Service {
                 stopForeground(true);
                 mIsInForegroundMode = false;
             }
-            Event e = new Event(newRecording(mRecorder), mChat, amplitude, EVENT_STOP);
-            mEventBus.post(e);
+
+            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_STOP, newRecording(mRecorder), mChat, amplitude, null);
         }
 
         @Override
@@ -295,8 +217,8 @@ public class RecordService extends Service {
                 stopForeground(true);
                 mIsInForegroundMode = false;
             }
-            Event e = new Event(newRecording(mRecorder), mChat, t);
-            mEventBus.post(e);
+
+            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_ERROR, newRecording(mRecorder), mChat, 0, t);
         }
     };
 
@@ -311,14 +233,9 @@ public class RecordService extends Service {
         }
     };
 
-    private transient EventBus mEventBus;                 // event bus to send events to registered listeners
     private transient ExtendedAudioRecorder mRecorder;    // the recorder
     private Chat mChat;                                   // the chat of the current recording
     private boolean mIsInForegroundMode = false;
-
-    public RecordService() {
-        mEventBus = new EventBus();
-    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -411,10 +328,7 @@ public class RecordService extends Service {
 
     private void updateLoudness() {
         if(isRecording()) {
-            if(mEventBus.hasSubscriberForEvent(Event.class)) {
-                Event e = new Event(newRecording(mRecorder), mChat, getLoudnessFromAmplitude(mRecorder.getAmplitude()), EVENT_LOUDNESS);
-                mEventBus.post(e);
-            }
+            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_LOUDNESS, newRecording(mRecorder), mChat, getLoudnessFromAmplitude(mRecorder.getAmplitude()), null);
             mHandler.postDelayed(mLoudnessRunnable, 50);
         }
     }

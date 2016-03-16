@@ -12,6 +12,8 @@ import com.peppermint.app.RecordService;
 import com.peppermint.app.RecordServiceManager;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.Recording;
+import com.peppermint.app.events.PeppermintEventBus;
+import com.peppermint.app.events.RecorderEvent;
 import com.peppermint.app.ui.Overlay;
 import com.peppermint.app.ui.OverlayManager;
 import com.peppermint.app.ui.TouchInterceptable;
@@ -22,10 +24,10 @@ import com.peppermint.app.utils.Utils;
 /**
  * Created by Nuno Luz on 06-02-2016.
  */
-public class ChatRecordOverlay extends Overlay implements RecordServiceManager.Listener, View.OnTouchListener, OverlayManager.OverlayVisibilityChangeListener {
+public class ChatRecordOverlay extends Overlay implements RecordServiceManager.RecordServiceListener, View.OnTouchListener, OverlayManager.OverlayVisibilityChangeListener {
 
     public interface OnRecordingFinishedCallback {
-        void onRecordingFinished(RecordService.Event event);
+        void onRecordingFinished(RecorderEvent event);
     }
 
     public static final String SCREEN_RECORDING_ID = "Recording";
@@ -79,6 +81,7 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
             mRecordServiceManager.bind();
         }
         mTouchInterceptable.addTouchEventInterceptor(this);
+        PeppermintEventBus.registerAudio(this);
     }
 
     /**
@@ -86,6 +89,7 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
      * Also stops listening for touch events that trigger the overlay.
      */
     public void unbindService() {
+        PeppermintEventBus.unregisterAudio(this);
         mTouchInterceptable.removeTouchEventInterceptor(this);
         if(mRecordServiceManager != null) {
             mRecordServiceManager.unbind();
@@ -176,52 +180,50 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.L
         return super.hide(animated, RECORDING_OVERLAY_HIDE_DELAY, cancel);
     }
 
-    // RECORDER LISTENER METHODS
-    @Override
-    public void onStartRecording(RecordService.Event event) {
-        onBoundRecording(event.getRecording(), event.getChat(), event.getLoudness());
-        mRecording = true;
-    }
+    public void onEventMainThread(RecorderEvent event) {
+         switch (event.getType()) {
 
-    @Override
-    public void onStopRecording(RecordService.Event event) {
-        onBoundRecording(event.getRecording(), event.getChat(), event.getLoudness());
-        boolean valid = false;
-        if(mRecording) {
-            valid = event.getRecording().getValidatedFile() != null;
-            if(valid && mOnRecordingFinishedCallback != null) {
-                mOnRecordingFinishedCallback.onRecordingFinished(event);
-            }
+            case RecorderEvent.EVENT_START:
+                onBoundRecording(event.getRecording(), event.getChat(), event.getLoudness());
+                mRecording = true;
+                break;
+
+            case RecorderEvent.EVENT_STOP:
+                onBoundRecording(event.getRecording(), event.getChat(), event.getLoudness());
+                boolean valid = false;
+                if(mRecording) {
+                    valid = event.getRecording().getValidatedFile() != null;
+                    if(valid && mOnRecordingFinishedCallback != null) {
+                        mOnRecordingFinishedCallback.onRecordingFinished(event);
+                    }
+                }
+                mRecording = false;
+                hide(false, RECORDING_OVERLAY_HIDE_DELAY, !valid);
+                break;
+
+            case RecorderEvent.EVENT_RESUME:
+                onBoundRecording(event.getRecording(), event.getChat(), event.getLoudness());
+                break;
+
+            case RecorderEvent.EVENT_PAUSE:
+                onBoundRecording(event.getRecording(), event.getChat(), event.getLoudness());
+                break;
+
+            case RecorderEvent.EVENT_ERROR:
+                if(event.getError() instanceof NoMicDataIOException) {
+                    Toast.makeText(getContext(), getContext().getString(R.string.msg_nomicdata_error), Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(getContext(), getContext().getString(R.string.msg_record_error), Toast.LENGTH_LONG).show();
+                }
+                mRecording = false;
+                hide(false, RECORDING_OVERLAY_HIDE_DELAY, true);
+                break;
+
+            case RecorderEvent.EVENT_LOUDNESS:
+                mView.setAmplitude(event.getLoudness());
+                setRecordDuration(event.getRecording().getDurationMillis());
+                break;
         }
-        mRecording = false;
-        hide(false, RECORDING_OVERLAY_HIDE_DELAY, !valid);
-    }
-
-    @Override
-    public void onResumeRecording(RecordService.Event event) {
-        onBoundRecording(event.getRecording(), event.getChat(), event.getLoudness());
-    }
-
-    @Override
-    public void onPauseRecording(RecordService.Event event) {
-        onBoundRecording(event.getRecording(), event.getChat(), event.getLoudness());
-    }
-
-    @Override
-    public void onLoudnessRecording(RecordService.Event event) {
-        mView.setAmplitude(event.getLoudness());
-        setRecordDuration(event.getRecording().getDurationMillis());
-    }
-
-    @Override
-    public void onErrorRecording(RecordService.Event event) {
-        if(event.getError() instanceof NoMicDataIOException) {
-            Toast.makeText(getContext(), getContext().getString(R.string.msg_nomicdata_error), Toast.LENGTH_LONG).show();
-        } else {
-            Toast.makeText(getContext(), getContext().getString(R.string.msg_record_error), Toast.LENGTH_LONG).show();
-        }
-        mRecording = false;
-        hide(false, RECORDING_OVERLAY_HIDE_DELAY, true);
     }
 
     @Override

@@ -17,15 +17,15 @@ import android.widget.RelativeLayout;
 
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
-import com.peppermint.app.cloud.ReceiverEvent;
-import com.peppermint.app.cloud.SyncEvent;
-import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
 import com.peppermint.app.data.ChatRecipient;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.MessageManager;
+import com.peppermint.app.events.ReceiverEvent;
+import com.peppermint.app.events.SenderEvent;
+import com.peppermint.app.events.SyncEvent;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.OverlayManager;
 import com.peppermint.app.ui.TouchInterceptable;
@@ -230,22 +230,31 @@ public class ChatController extends ChatRecordOverlayController implements View.
     }
 
     @Override
-    public void onSendStarted(SenderEvent event) {
-        // add to UI
-        refreshList();
-    }
-
-    @Override
-    public void onReceivedMessage(ReceiverEvent event) {
-        refreshList();
-        if(event.getMessage().getChatId() == mChat.getId()) {
-            event.setDoNotShowNotification(true);
+    public void onEventMainThread(SyncEvent event) {
+        super.onEventMainThread(event);
+        if(event.getType() == SyncEvent.EVENT_FINISHED) {
+            refreshList();
         }
     }
 
     @Override
-    public void onSyncFinished(SyncEvent event) {
-        refreshList();
+    public void onEventMainThread(ReceiverEvent event) {
+        super.onEventMainThread(event);
+        if(event.getType() == ReceiverEvent.EVENT_RECEIVED) {
+            refreshList();
+            if(event.getMessage().getChatId() == mChat.getId()) {
+                event.setDoNotShowNotification(true);
+            }
+        }
+    }
+
+    @Override
+    public void onEventMainThread(SenderEvent event) {
+        super.onEventMainThread(event);
+        if(event.getType() == SenderEvent.EVENT_STARTED || event.getType() == SenderEvent.EVENT_CANCELLED) {
+            // add to UI
+            refreshList();
+        }
     }
 
     @Override
@@ -255,11 +264,6 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
     @Override
     public void onBoundSendService() {
-        refreshList();
-    }
-
-    @Override
-    public void onSendCancelled(SenderEvent event) {
         refreshList();
     }
 
@@ -328,7 +332,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
     }
 
     private void dismissPopup() {
-        if(mHoldPopup.isShowing() && getContext() != null) {
+        if(mHoldPopup.isShowing() && getContext() != null && mRecordLayout.getWindowToken() != null) {
             mHoldPopup.dismiss();
             mHandler.removeCallbacks(mDismissPopupRunnable);
         }
@@ -336,7 +340,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
     // the method that displays the img_popup.
     private void showPopup() {
-        if(!mHoldPopup.isShowing() && getContext() != null) {
+        if(!mHoldPopup.isShowing() && getContext() != null && mRecordLayout.getWindowToken() != null) {
             mHandler.removeCallbacks(mShowPopupRunnable);
             dismissPopup();
             int[] location = new int[2];

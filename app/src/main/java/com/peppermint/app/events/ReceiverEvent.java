@@ -1,4 +1,4 @@
-package com.peppermint.app.cloud;
+package com.peppermint.app.events;
 
 import com.peppermint.app.cloud.MessagesService;
 import com.peppermint.app.data.Message;

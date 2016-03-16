@@ -9,6 +9,8 @@ import com.peppermint.app.cloud.senders.mail.nativemail.IntentMailSender;
 import com.peppermint.app.cloud.senders.sms.directsms.SMSSender;
 import com.peppermint.app.cloud.senders.sms.nativesms.IntentSMSSender;
 import com.peppermint.app.data.Message;
+import com.peppermint.app.events.PeppermintEventBus;
+import com.peppermint.app.events.SenderEvent;
 import com.peppermint.app.tracking.TrackerManager;
 
 import java.util.HashMap;
@@ -19,8 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import de.greenrobot.event.EventBus;
 
 /**
  * Created by Nuno Luz on 08-09-2015.
@@ -44,20 +44,18 @@ import de.greenrobot.event.EventBus;
  */
 public class SenderManager extends SenderObject implements SenderUploadListener {
 
-    private EventBus mEventBus;                                 // event bus (listener)
     private ThreadPoolExecutor mExecutor;                       // a thread pool for sending tasks
 
     private Map<String, Sender> mSenderMap;                     // map of senders <mime type, sender>
 
     private Map<UUID, SenderTask> mTaskMap;                     // map of sending tasks under execution
 
-    public SenderManager(Context context, EventBus eventBus, Map<String, Object> defaultSenderParameters) {
+    public SenderManager(Context context, Map<String, Object> defaultSenderParameters) {
         super(context,
                 TrackerManager.getInstance(context.getApplicationContext()),
                 defaultSenderParameters,
                 new SenderPreferences(context));
 
-        this.mEventBus = eventBus;
         this.mTaskMap = new ConcurrentHashMap<>();
         this.mSenderMap = new HashMap<>();
 
@@ -245,31 +243,21 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
 
     @Override
     public void onSendingUploadStarted(SenderUploadTask uploadTask) {
-        if(mEventBus != null) {
-            mEventBus.post(new SenderEvent(uploadTask, SenderEvent.EVENT_STARTED));
-        }
+        PeppermintEventBus.postSenderEvent(SenderEvent.EVENT_STARTED, uploadTask, null);
     }
 
     @Override
     public void onSendingUploadCancelled(SenderUploadTask uploadTask) {
         mTrackerManager.log("Cancelled SenderUploadTask " + uploadTask.getId());
-
         mTaskMap.remove(uploadTask.getId());
-
-        if(mEventBus != null) {
-            mEventBus.post(new SenderEvent(uploadTask, SenderEvent.EVENT_CANCELLED));
-        }
+        PeppermintEventBus.postSenderEvent(SenderEvent.EVENT_CANCELLED, uploadTask, null);
     }
 
     @Override
     public void onSendingUploadFinished(SenderUploadTask uploadTask) {
         mTrackerManager.log("Finished SenderUploadTask " + uploadTask.getId());
-
         mTaskMap.remove(uploadTask.getId());
-
-        if(mEventBus != null) {
-            mEventBus.post(new SenderEvent(uploadTask, SenderEvent.EVENT_FINISHED));
-        }
+        PeppermintEventBus.postSenderEvent(SenderEvent.EVENT_FINISHED, uploadTask, null);
     }
 
     @Override
@@ -287,9 +275,7 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
 
     @Override
     public void onSendingUploadProgress(SenderUploadTask uploadTask, float progressValue) {
-        if(mEventBus != null) {
-            mEventBus.post(new SenderEvent(uploadTask, SenderEvent.EVENT_PROGRESS));
-        }
+        PeppermintEventBus.postSenderEvent(SenderEvent.EVENT_PROGRESS, uploadTask, null);
     }
 
     @Override
@@ -306,27 +292,14 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
         if(nextSender == null || error instanceof ElectableForQueueingException) {
             mTaskMap.remove(previousUploadTask.getId());
             if (error instanceof ElectableForQueueingException) {
-                if (mEventBus != null) {
-                    mEventBus.post(new SenderEvent(previousUploadTask, SenderEvent.EVENT_QUEUED, error));
-                }
+                PeppermintEventBus.postSenderEvent(SenderEvent.EVENT_QUEUED, previousUploadTask, error);
             } else {
                 mTrackerManager.logException(error);
-
-                if (mEventBus != null) {
-                    mEventBus.post(new SenderEvent(previousUploadTask, error));
-                }
+                PeppermintEventBus.postSenderEvent(SenderEvent.EVENT_ERROR, previousUploadTask, error);
             }
         } else {
             send(message, nextSender, previousUploadTask);
         }
-    }
-
-    public EventBus getEventBus() {
-        return mEventBus;
-    }
-
-    public void setEventBus(EventBus mEventBus) {
-        this.mEventBus = mEventBus;
     }
 
     public Context getContext() {

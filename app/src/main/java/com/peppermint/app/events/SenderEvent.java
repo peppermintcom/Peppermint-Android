@@ -1,4 +1,7 @@
-package com.peppermint.app.cloud.senders;
+package com.peppermint.app.events;
+
+import com.peppermint.app.cloud.senders.SenderManager;
+import com.peppermint.app.cloud.senders.SenderTask;
 
 /**
  * Created by Nuno Luz on 01-10-2015.

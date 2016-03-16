@@ -26,22 +26,17 @@ public class PlayerServiceManager {
         void onBoundPlayService();
     }
 
-    public interface PlayerListener {
-        void onPlayerEvent(PlayerEvent event);
-    }
-
     private Context mContext;
     private PlayerService.PlayerServiceBinder mService;
-    private List<PlayerListener> mPlayerListenerList = new ArrayList<>();
     private List<PlayServiceListener> mServiceListenerList = new ArrayList<>();
     protected boolean mIsBound = false;
     protected boolean mIsBinding = false;
 
-    public void onEventMainThread(PlayerEvent event) {
+    /*public void onEventMainThread(PlayerEvent event) {
         for(PlayerListener listener : mPlayerListenerList) {
             listener.onPlayerEvent(event);
         }
-    }
+    }*/
 
     /**
      * Event listener associated with the service bind/unbind.
@@ -49,7 +44,6 @@ public class PlayerServiceManager {
     protected ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder binder) {
             mService = (PlayerService.PlayerServiceBinder) binder;
-            mService.register(PlayerServiceManager.this);
 
             mIsBound = true;
             mIsBinding = false;
@@ -129,11 +123,7 @@ public class PlayerServiceManager {
      */
     public void unbind() {
         if (mIsBound || mIsBinding) {
-            // if we have received the service, and hence registered with it, then now is the time to unregister.
-            if (mService != null) {
-                mService.unregister(PlayerServiceManager.this);
-            }
-            // detach our existing connection.
+             // detach our existing connection.
             mContext.unbindService(mConnection);
             mIsBound = false;
             mIsBinding = false;
@@ -174,13 +164,5 @@ public class PlayerServiceManager {
 
     public boolean removeServiceListener(PlayServiceListener listener) {
         return mServiceListenerList.remove(listener);
-    }
-
-    public void addPlayerListener(PlayerListener listener) {
-        mPlayerListenerList.add(listener);
-    }
-
-    public boolean removePlayerListener(PlayerListener listener) {
-        return mPlayerListenerList.remove(listener);
     }
 }

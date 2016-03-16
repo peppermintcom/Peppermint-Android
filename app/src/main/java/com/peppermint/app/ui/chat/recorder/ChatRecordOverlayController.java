@@ -9,16 +9,11 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
-import com.peppermint.app.PlayerEvent;
 import com.peppermint.app.PlayerServiceManager;
 import com.peppermint.app.R;
-import com.peppermint.app.RecordService;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.cloud.MessagesServiceManager;
-import com.peppermint.app.cloud.ReceiverEvent;
-import com.peppermint.app.cloud.SyncEvent;
-import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatRecipient;
@@ -26,6 +21,12 @@ import com.peppermint.app.data.ContactManager;
 import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recording;
+import com.peppermint.app.events.PeppermintEventBus;
+import com.peppermint.app.events.PlayerEvent;
+import com.peppermint.app.events.ReceiverEvent;
+import com.peppermint.app.events.RecorderEvent;
+import com.peppermint.app.events.SenderEvent;
+import com.peppermint.app.events.SyncEvent;
 import com.peppermint.app.ui.OverlayManager;
 import com.peppermint.app.ui.TouchInterceptable;
 import com.peppermint.app.ui.recipients.add.NewContactActivity;
@@ -38,8 +39,8 @@ import com.peppermint.app.utils.Utils;
  * Created by Nuno Luz on 04-03-2016.
  */
 public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordingFinishedCallback,
-        MessagesServiceManager.ReceiverListener, MessagesServiceManager.SenderListener, MessagesServiceManager.ServiceListener,
-        PlayerServiceManager.PlayerListener, PlayerServiceManager.PlayServiceListener, MessagesServiceManager.SyncListener {
+        MessagesServiceManager.ServiceListener,
+        PlayerServiceManager.PlayServiceListener {
 
     public interface Callbacks {
         void onNewContact(Intent intentToLaunchActivity);
@@ -70,9 +71,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     private CustomConfirmationDialog mSmsAddContactDialog;
 
     private Chat mChat;
-    private RecordService.Event mFinalEvent;
-
-    private View mView;
+    private RecorderEvent mFinalEvent;
 
     public ChatRecordOverlayController(Context context, Callbacks callbacks) {
         mContext = context;
@@ -145,17 +144,13 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         // services
         mMessagesServiceManager = new MessagesServiceManager(mContext);
         mMessagesServiceManager.addServiceListener(this);
-        mMessagesServiceManager.addSenderListener(this);
-        mMessagesServiceManager.addReceiverListener(this);
-        mMessagesServiceManager.addSyncListener(this);
+        PeppermintEventBus.registerMessages(this);
 
         mPlayerServiceManager = new PlayerServiceManager(mContext);
         mPlayerServiceManager.addServiceListener(this);
-        mPlayerServiceManager.addPlayerListener(this);
     }
 
     public void init(View rootView, OverlayManager overlayManager, TouchInterceptable touchInterceptable, AuthenticationPolicyEnforcer authenticationPolicyEnforcer, Bundle savedInstanceState) {
-        mView = rootView;
         mOverlayManager = overlayManager;
         mTouchInterceptable = touchInterceptable;
         mAuthenticationPolicyEnforcer = authenticationPolicyEnforcer;
@@ -166,7 +161,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
 
         if (savedInstanceState != null) {
             if (savedInstanceState.containsKey(RECORDING_FINAL_EVENT_KEY)) {
-                mFinalEvent = (RecordService.Event) savedInstanceState.getSerializable(RECORDING_FINAL_EVENT_KEY);
+                mFinalEvent = (RecorderEvent) savedInstanceState.getSerializable(RECORDING_FINAL_EVENT_KEY);
             }
 
             Bundle smsDialogState = savedInstanceState.getBundle(SMS_CONFIRMATION_STATE_KEY);
@@ -216,11 +211,8 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     }
 
     public void deinit() {
-        mMessagesServiceManager.removeReceiverListener(this);
-        mMessagesServiceManager.removeSenderListener(this);
-        mMessagesServiceManager.removeSyncListener(this);
+        PeppermintEventBus.unregisterMessages(this);
         mMessagesServiceManager.removeServiceListener(this);
-        mPlayerServiceManager.removePlayerListener(this);
         mPlayerServiceManager.removeServiceListener(this);
     }
 
@@ -279,7 +271,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     }
 
     @Override
-    public void onRecordingFinished(RecordService.Event event) {
+    public void onRecordingFinished(RecorderEvent event) {
         mFinalEvent = event;
         if(!mPreferences.isShownSmsConfirmation() && event.getChat().getRecipientList().get(0).isPhone()) {
             ContactRaw emailRecipient = ContactManager.getRawContactWithEmailByRawId(mContext, mFinalEvent.getChat().getRecipientList().get(0).getRawContactId());
@@ -328,52 +320,24 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         this.mTouchInterceptable = mTouchInterceptable;
     }
 
-    @Override
-    public void onReceivedMessage(ReceiverEvent event) {
+    public void onEventMainThread(SyncEvent event) {
     }
 
-    @Override
-    public void onSendStarted(SenderEvent event) {
+    public void onEventMainThread(ReceiverEvent event) {
     }
 
-    @Override
-    public void onSendCancelled(SenderEvent event) {
-    }
-
-    @Override
-    public void onSendError(SenderEvent event) {
-    }
-
-    @Override
-    public void onSendFinished(SenderEvent event) {
-    }
-
-    @Override
-    public void onSendProgress(SenderEvent event) {
-    }
-
-    @Override
-    public void onSendQueued(SenderEvent event) {
+    public void onEventMainThread(SenderEvent event) {
     }
 
     @Override
     public void onBoundSendService() {
     }
 
-    @Override
-    public void onPlayerEvent(PlayerEvent event) {
+    public void onEventMainThread(PlayerEvent event) {
     }
 
     @Override
     public void onBoundPlayService() {
-    }
-
-    @Override
-    public void onSyncStarted(SyncEvent event) {
-    }
-
-    @Override
-    public void onSyncFinished(SyncEvent event) {
     }
 
 }

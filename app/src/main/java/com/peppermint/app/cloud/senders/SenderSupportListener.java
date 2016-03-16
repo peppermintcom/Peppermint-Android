@@ -3,7 +3,7 @@ package com.peppermint.app.cloud.senders;
 /**
  * Created by Nuno Luz on 01-10-2015.
  *
- * Listener of sender events triggered by a {@link SenderSupportTask}.
+ * RecordServiceListener of sender events triggered by a {@link SenderSupportTask}.
  */
 public interface SenderSupportListener {
 

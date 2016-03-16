@@ -9,12 +9,12 @@ import android.os.Handler;
 import android.os.IBinder;
 
 import com.peppermint.app.data.Message;
+import com.peppermint.app.events.PeppermintEventBus;
+import com.peppermint.app.events.PlayerEvent;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.Utils;
 
 import java.io.File;
-
-import de.greenrobot.event.EventBus;
 
 /**
  * Service that plays {@link Message}s. Can be controlled and used from any other app component.
@@ -36,22 +36,6 @@ public class PlayerService extends Service {
      * The service binder used by external components to interact with the service.
      */
     public class PlayerServiceBinder extends Binder {
-
-        /**
-         * Register an event listener to receive events.
-         * @param listener the event listener
-         */
-        void register(Object listener) {
-            mEventBus.register(listener);
-        }
-
-        /**
-         * Unregister the specified event listener to stop receiving events.
-         * @param listener the event listener
-         */
-        void unregister(Object listener) {
-            mEventBus.unregister(listener);
-        }
 
         /**
          * Play the message starting at startPercent of the total duration.
@@ -98,7 +82,6 @@ public class PlayerService extends Service {
     }
 
     private TrackerManager mTrackerManager;
-    private EventBus mEventBus;
 
     private MediaPlayer mMediaPlayer;
     private Message mMessage;
@@ -110,7 +93,7 @@ public class PlayerService extends Service {
         @Override
         public void run() {
             if(mMessage != null && mMediaPlayer != null && mMediaPlayer.isPlaying()) {
-                mEventBus.post(new PlayerEvent(PlayerEvent.EVENT_PROGRESS, mMessage, Math.round((float) mMediaPlayer.getCurrentPosition() / (float) mMediaPlayer.getDuration() * 100f), mMediaPlayer.getCurrentPosition()));
+                PeppermintEventBus.postPlayerEvent(PlayerEvent.EVENT_PROGRESS, mMessage, Math.round((float) mMediaPlayer.getCurrentPosition() / (float) mMediaPlayer.getDuration() * 100f), mMediaPlayer.getCurrentPosition(), 0);
                 scheduleProgressMonitoring();
             }
         }
@@ -124,7 +107,7 @@ public class PlayerService extends Service {
     private MediaPlayer.OnCompletionListener mOnCompletionListener = new MediaPlayer.OnCompletionListener() {
         @Override
         public void onCompletion(MediaPlayer mp) {
-            mEventBus.post(new PlayerEvent(PlayerEvent.EVENT_COMPLETED, mMessage, 0, 0));
+            PeppermintEventBus.postPlayerEvent(PlayerEvent.EVENT_COMPLETED, mMessage, 0, 0, 0);
         }
     };
 
@@ -135,11 +118,14 @@ public class PlayerService extends Service {
                 return;
             }
 
-            mEventBus.post(new PlayerEvent(PlayerEvent.EVENT_PREPARED, mMessage, 0, 0));
+            PeppermintEventBus.postPlayerEvent(PlayerEvent.EVENT_PREPARED, mMessage, 0, 0, 0);
+
             int ms = Math.round(((float) mStartPercent / 100f) * (float) mMediaPlayer.getDuration());
             mMediaPlayer.seekTo(ms);
             mMediaPlayer.start();
-            mEventBus.post(new PlayerEvent(PlayerEvent.EVENT_STARTED, mMessage, 0, 0));
+
+            PeppermintEventBus.postPlayerEvent(PlayerEvent.EVENT_STARTED, mMessage, 0, 0, 0);
+
             scheduleProgressMonitoring();
         }
     };
@@ -150,8 +136,7 @@ public class PlayerService extends Service {
             if(mMediaPlayer == null) {
                 return;
             }
-
-            mEventBus.post(new PlayerEvent(PlayerEvent.EVENT_BUFFERING_UPDATE, mMessage, percent, mMediaPlayer.getCurrentPosition()));
+            PeppermintEventBus.postPlayerEvent(PlayerEvent.EVENT_BUFFERING_UPDATE, mMessage, percent, mMediaPlayer.getCurrentPosition(), 0);
         }
     };
 
@@ -167,14 +152,10 @@ public class PlayerService extends Service {
             }
             Message message = mMessage;
             mMessage = null;
-            mEventBus.post(new PlayerEvent(message, 0, 0, what));
+            PeppermintEventBus.postPlayerEvent(PlayerEvent.EVENT_ERROR, message, 0, 0, what);
             return false;
         }
     };
-
-    public PlayerService() {
-        mEventBus = new EventBus();
-    }
 
     @Override
     public void onCreate() {
@@ -206,12 +187,6 @@ public class PlayerService extends Service {
     @Override
     public boolean onUnbind(Intent intent) {
         return true;
-    }
-
-    @Override
-    public void onDestroy() {
-        mEventBus.unregister(this);
-        super.onDestroy();
     }
 
     private void play(Message message, int startPercent) {
@@ -270,7 +245,9 @@ public class PlayerService extends Service {
             if(resetProgress) {
                 mMediaPlayer.seekTo(0);
             }
-            mEventBus.post(new PlayerEvent(PlayerEvent.EVENT_PAUSED, mMessage, 0, mMediaPlayer.getCurrentPosition()));
+
+            PeppermintEventBus.postPlayerEvent(PlayerEvent.EVENT_PAUSED, mMessage, 0, mMediaPlayer.getCurrentPosition(), 0);
+
             return true;
         }
 
@@ -288,7 +265,9 @@ public class PlayerService extends Service {
 
         int ms = Math.round(((float) percent / 100f) * (float) mMediaPlayer.getDuration());
         mMediaPlayer.seekTo(ms);
-        mEventBus.post(new PlayerEvent(PlayerEvent.EVENT_PROGRESS, mMessage, percent, ms));
+
+        PeppermintEventBus.postPlayerEvent(PlayerEvent.EVENT_PROGRESS, mMessage, percent, ms, 0);
+
         return true;
     }
 

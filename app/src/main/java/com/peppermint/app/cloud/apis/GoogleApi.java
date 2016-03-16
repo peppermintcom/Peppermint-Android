@@ -62,6 +62,10 @@ public class GoogleApi implements Serializable {
 
             JSONObject jsonResponse = new JSONObject(String.valueOf(getBody()));
             if(!jsonResponse.isNull("error")) {
+                JSONObject jsonError = jsonResponse.getJSONObject("error");
+                if(!jsonError.isNull("code") && jsonError.getInt("code") == 401) {
+                    throw new GoogleApiInvalidAccessTokenException(String.valueOf(getBody()));
+                }
                 throw new JSONException("Google API Error for " + getBody());
             }
 

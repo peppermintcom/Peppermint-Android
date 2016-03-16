@@ -5,9 +5,8 @@ import android.content.Context;
 import com.peppermint.app.cloud.senders.SenderSupportListener;
 import com.peppermint.app.cloud.senders.SenderSupportTask;
 import com.peppermint.app.data.DatabaseHelper;
+import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.utils.Utils;
-
-import de.greenrobot.event.EventBus;
 
 /**
  * Created by Nuno Luz on 28-01-2016.
@@ -32,7 +31,7 @@ public class SignOutPeppermintTask extends SenderSupportTask {
 
         getPeppermintApi().removeReceiverRecorder(data.getAccountServerId(), data.getDeviceServerId());
 
-        EventBus.getDefault().post(new SignOutEvent());
+        PeppermintEventBus.postSignOutEvent();
 
         Utils.clearApplicationData(getContext());
         getSenderPreferences().clearAll();

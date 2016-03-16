@@ -5,7 +5,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.util.Log;
 
-import com.peppermint.app.authenticator.SignOutEvent;
 import com.peppermint.app.cloud.apis.data.MessageListResponse;
 import com.peppermint.app.cloud.apis.data.MessagesResponse;
 import com.peppermint.app.cloud.senders.SenderPreferences;
@@ -14,14 +13,14 @@ import com.peppermint.app.cloud.senders.SenderSupportTask;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.GlobalManager;
 import com.peppermint.app.data.Message;
+import com.peppermint.app.events.PeppermintEventBus;
+import com.peppermint.app.events.SignOutEvent;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.DateContainer;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-
-import de.greenrobot.event.EventBus;
 
 /**
  * Created by Nuno Luz on 28-01-2016.
@@ -92,6 +91,10 @@ public class MessagesSyncTask extends SenderSupportTask {
                                 messagesResponse.getCreatedTimestamp(), messagesResponse.getDuration());
                         if (message != null) {
                             _receivedMessages.add(message);
+                            if(!mNeverSyncedBefore && message.getParameter(Message.PARAM_INSERTED) != null &&
+                                    ((boolean) message.getParameter(Message.PARAM_INSERTED))) {
+                                PeppermintEventBus.postReceiverEvent(mLocalEmailAddress, message);
+                            }
                         }
                         db.setTransactionSuccessful();
                     } catch (Exception e) {
@@ -157,19 +160,19 @@ public class MessagesSyncTask extends SenderSupportTask {
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        EventBus.getDefault().register(this);
+        PeppermintEventBus.register(this);
     }
 
     @Override
     protected void onCancelled(Void aVoid) {
         super.onCancelled(aVoid);
-        EventBus.getDefault().unregister(this);
+        PeppermintEventBus.unregister(this);
     }
 
     @Override
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
-        EventBus.getDefault().unregister(this);
+        PeppermintEventBus.unregister(this);
         if(getError() == null) {
             getSenderPreferences().setLastSyncTimestamp(DateContainer.getCurrentUTCTimestamp());
         }
@@ -183,7 +186,7 @@ public class MessagesSyncTask extends SenderSupportTask {
         return _sentMessages;
     }
 
-    public boolean isNeverSyncedBefore() {
+    public boolean hasNeverSyncedBefore() {
         return mNeverSyncedBefore;
     }
 

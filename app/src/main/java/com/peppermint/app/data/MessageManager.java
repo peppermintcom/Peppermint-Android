@@ -185,9 +185,11 @@ public class MessageManager {
             throw new SQLException("Unable to insert message!");
         }
 
-        return new Message(id, chatId, recordingId, authorId, emailSubject, emailBody,
+        Message message = new Message(id, chatId, recordingId, authorId, emailSubject, emailBody,
                 registrationTimestamp, received, sent, played, serverId, canonicalUrl,
                 shortUrl, transcription);
+        message.setParameter(Message.PARAM_INSERTED, true);
+        return message;
     }
 
     /**

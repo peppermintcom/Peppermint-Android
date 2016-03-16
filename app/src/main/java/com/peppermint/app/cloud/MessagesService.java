@@ -27,7 +27,6 @@ import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticatorUtils;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
 import com.peppermint.app.cloud.gcm.RegistrationIntentService;
-import com.peppermint.app.cloud.senders.SenderEvent;
 import com.peppermint.app.cloud.senders.SenderManager;
 import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.cloud.senders.SenderSupportListener;
@@ -42,6 +41,10 @@ import com.peppermint.app.data.Message;
 import com.peppermint.app.data.MessageManager;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.data.RecordingManager;
+import com.peppermint.app.events.PeppermintEventBus;
+import com.peppermint.app.events.ReceiverEvent;
+import com.peppermint.app.events.SenderEvent;
+import com.peppermint.app.events.SyncEvent;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.PermissionsPolicyEnforcer;
 import com.peppermint.app.ui.chat.ChatActivity;
@@ -57,8 +60,6 @@ import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import de.greenrobot.event.EventBus;
 
 /**
  * Service handles sending and receiving {@link Message}s.
@@ -83,22 +84,6 @@ public class MessagesService extends Service {
      * The service binder used by external components to interact with the service.
      */
     public class SendRecordServiceBinder extends Binder {
-
-        /**
-         * Register an event listener to receive events.
-         * @param listener the event listener
-         */
-        void register(Object listener) {
-            mEventBus.register(listener);
-        }
-
-        /**
-         * Unregister the specified event listener to stop receiving events.
-         * @param listener the event listener
-         */
-        void unregister(Object listener) {
-            mEventBus.unregister(listener);
-        }
 
         /**
          * Start a send file request/task that will send the file at the supplied location to the specified recipient.
@@ -158,7 +143,6 @@ public class MessagesService extends Service {
 
     private TrackerManager mTrackerManager;
     private SenderPreferences mPreferences;
-    private EventBus mEventBus;
     private SenderManager mSenderManager;
     private AuthenticatorUtils mAuthenticatorUtils;
 
@@ -166,37 +150,23 @@ public class MessagesService extends Service {
     private SenderSupportListener mMessagesSyncTaskListener = new SenderSupportListener() {
         @Override
         public void onSendingSupportStarted(SenderSupportTask supportTask) {
-            SyncEvent ev = new SyncEvent(SyncEvent.EVENT_STARTED, mMessagesSyncTask.getReceivedMessages(), mMessagesSyncTask.getSentMessages());
-            mEventBus.post(ev);
+            PeppermintEventBus.postSyncEvent(SyncEvent.EVENT_STARTED, mMessagesSyncTask.getReceivedMessages(), mMessagesSyncTask.getSentMessages(), null);
         }
 
         @Override
         public void onSendingSupportCancelled(SenderSupportTask supportTask) {
-            SyncEvent ev = new SyncEvent(SyncEvent.EVENT_CANCELLED, mMessagesSyncTask.getReceivedMessages(), mMessagesSyncTask.getSentMessages());
-            mEventBus.post(ev);
+            PeppermintEventBus.postSyncEvent(SyncEvent.EVENT_CANCELLED, mMessagesSyncTask.getReceivedMessages(), mMessagesSyncTask.getSentMessages(), null);
         }
 
         @Override
         public void onSendingSupportFinished(SenderSupportTask supportTask) {
-            if(!mMessagesSyncTask.isNeverSyncedBefore()) {
-                for(Message message : mMessagesSyncTask.getReceivedMessages()) {
-                    ReceiverEvent ev = new ReceiverEvent();
-                    ev.setReceiverEmail(mMessagesSyncTask.getLocalEmailAddress());
-                    ev.setMessage(message);
-                    mEventBus.post(ev);
-                }
-            }
-
-            SyncEvent ev = new SyncEvent(SyncEvent.EVENT_FINISHED, mMessagesSyncTask.getReceivedMessages(), mMessagesSyncTask.getSentMessages());
-            mEventBus.post(ev);
+            PeppermintEventBus.postSyncEvent(SyncEvent.EVENT_FINISHED, mMessagesSyncTask.getReceivedMessages(), mMessagesSyncTask.getSentMessages(), null);
         }
 
         @Override
         public void onSendingSupportError(SenderSupportTask supportTask, Throwable error) {
             mTrackerManager.logException(error);
-            SyncEvent ev = new SyncEvent(SyncEvent.EVENT_ERROR, mMessagesSyncTask.getReceivedMessages(), mMessagesSyncTask.getSentMessages());
-            ev.setError(error);
-            mEventBus.post(ev);
+            PeppermintEventBus.postSyncEvent(SyncEvent.EVENT_ERROR, mMessagesSyncTask.getReceivedMessages(), mMessagesSyncTask.getSentMessages(), error);
         }
 
         @Override
@@ -342,8 +312,6 @@ public class MessagesService extends Service {
     };
 
     public MessagesService() {
-        mEventBus = new EventBus();
-
         // executor for the maintenance routine
         this.mScheduledExecutor = new ScheduledThreadPoolExecutor(1);
     }
@@ -355,12 +323,12 @@ public class MessagesService extends Service {
         mTrackerManager = TrackerManager.getInstance(getApplicationContext());
         mAuthenticatorUtils = new AuthenticatorUtils(this);
 
-        mEventBus.register(this, Integer.MAX_VALUE);
-        mEventBus.register(mNotificationEventReceiver, Integer.MIN_VALUE);
+        PeppermintEventBus.registerMessages(this, Integer.MAX_VALUE);
+        PeppermintEventBus.registerMessages(mNotificationEventReceiver, Integer.MIN_VALUE);
 
         mPreferences = new SenderPreferences(this);
 
-        mSenderManager = new SenderManager(this, mEventBus, new HashMap<String, Object>());
+        mSenderManager = new SenderManager(this, new HashMap<String, Object>());
         mSenderManager.init();
 
         mHandler.postDelayed(mNotificationRunnable, 180000); // after 3mins.
@@ -381,7 +349,6 @@ public class MessagesService extends Service {
                 send(chat, recording);
             } else if(intent.hasExtra(PARAM_MESSAGE_RECEIVE_DATA)) {
                 Bundle receivedMessageData = intent.getBundleExtra(PARAM_MESSAGE_RECEIVE_DATA);
-
                 Utils.logBundle(receivedMessageData, null);
 
                 String messageId = receivedMessageData.getString("message_id");
@@ -404,12 +371,8 @@ public class MessagesService extends Service {
 
                 // notify
                 if(message != null) {
-                    ReceiverEvent ev = new ReceiverEvent();
-                    ev.setReceiverEmail(receiverEmail);
-                    ev.setMessage(message);
-                    mEventBus.post(ev);
+                    PeppermintEventBus.postReceiverEvent(receiverEmail, message);
                 }
-
             } else if(intent.hasExtra(PARAM_DO_SYNC) && intent.getBooleanExtra(PARAM_DO_SYNC, false)) {
                 runMessagesSync();
             }
@@ -439,7 +402,8 @@ public class MessagesService extends Service {
 
         // unregister before deinit() to avoid removing cancelled messages
         // must retry these after reboot
-        mEventBus.unregister(this);
+        PeppermintEventBus.unregisterMessages(this);
+        PeppermintEventBus.unregisterMessages(mNotificationEventReceiver);
 
         mSenderManager.deinit();
 
