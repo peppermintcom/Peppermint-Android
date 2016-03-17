@@ -8,7 +8,6 @@ import com.peppermint.app.R;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.TimeZone;
 
 /**
@@ -37,7 +36,7 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
     public static final int TYPE_TIME = 2;
     public static final int TYPE_DATETIME = 3;
 
-	private int mType = TYPE_DATE;
+	private int mType = TYPE_DATETIME;
 	private Calendar mInputCalendar;
 
 	public DateContainer() {
@@ -54,6 +53,7 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
 
     public DateContainer(DateContainer dateContainer) {
         this(dateContainer.getType());
+        mInputCalendar.setTimeZone(dateContainer.mInputCalendar.getTimeZone());
         mInputCalendar.setTimeInMillis(dateContainer.mInputCalendar.getTimeInMillis());
     }
 
@@ -68,17 +68,6 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
 	}
 
 	public void setFromString(String dateTimeStr) throws ParseException {
-        /*switch (mType) {
-        case TYPE_DATE:
-            mInputCalendar = DateTime.parse(dateTimeStr, DATE_FORMATTER);
-            break;
-        case TYPE_DATETIME:
-            mInputCalendar = DateTime.parse(dateTimeStr, DATE_TIME_FORMATTER);
-            break;
-        case TYPE_TIME:
-            mInputCalendar = DateTime.parse(dateTimeStr, TIME_FORMATTER);
-            break;
-        }*/
         mInputCalendar.setTime(DATE_TIME_FORMATTER.parse(dateTimeStr));
 	}
 
@@ -87,7 +76,7 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
 		return getAsString(UTC);
 	}
 
-	public String getAsString(TimeZone timeZone) {
+	public synchronized String getAsString(TimeZone timeZone) {
         String dateTimeStr = null;
 		switch (mType) {
 		case TYPE_DATE:
@@ -141,12 +130,17 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
 
     @Override
     public boolean equals(Object o) {
+        return equals(o, UTC);
+    }
+
+    public boolean equals(Object o, TimeZone timeZone) {
         if(o instanceof DateContainer) {
-            return compareTo((DateContainer) o) == 0;
+            return compareTo((DateContainer) o, timeZone) == 0;
         }
 
         if(o instanceof Calendar) {
-            return mInputCalendar.compareTo((Calendar) o) == 0;
+            DateContainer tmpDateContainer = new DateContainer(mType, (Calendar) o);
+            return compareTo(tmpDateContainer) == 0;
         }
 
         return super.equals(o);
@@ -154,27 +148,22 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
 
     @Override
     public int compareTo(@NonNull DateContainer dateContainer) {
-        switch (mType) {
-            case TYPE_TIME:
-                return (int) (getMillisOfDay() - dateContainer.getMillisOfDay());
-            case TYPE_DATE:
-                DateContainer tmpOtherDateContainer = new DateContainer(dateContainer);
-                tmpOtherDateContainer.zeroTime();
-                DateContainer tmpThisDateContainer = new DateContainer(this);
-                tmpThisDateContainer.zeroTime();
-                return tmpThisDateContainer.getCalendar().compareTo(tmpOtherDateContainer.getCalendar());
-            case TYPE_DATETIME:
-                return mInputCalendar.compareTo(dateContainer.getCalendar());
-        }
+        return compareTo(dateContainer, UTC);
+    }
 
-        throw new IllegalArgumentException("Invalid date type " + mType);
+    public int compareTo(@NonNull DateContainer dateContainer, TimeZone timeZone) {
+        int originalType = dateContainer.getType();
+        dateContainer.setType(mType);
+        String dateString = dateContainer.getAsString(timeZone);
+        String thisDateString = getAsString(timeZone);
+        dateContainer.setType(originalType);
+        return thisDateString.compareTo(dateString);
     }
 
     /**
      * Zero the time part of the timestamp only (hours, minutes, seconds and ms)
      */
     public void zeroTime() {
-
         mInputCalendar.set(Calendar.HOUR_OF_DAY, 0);
         mInputCalendar.set(Calendar.MINUTE, 0);
         mInputCalendar.set(Calendar.SECOND, 0);
@@ -238,42 +227,42 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
      * @return the friendly label
      */
     public static String getDateAsStringRelativeTo(Context context, DateContainer date, DateContainer relativeToDate, TimeZone timeZone) {
-        int oldDateType = date.getType();
-        date.setType(TYPE_DATE);
-        Calendar tmpDate = Calendar.getInstance(UTC);
-        tmpDate.setTime((Date) relativeToDate.getCalendar().getTime().clone());
+        Calendar tmpDate = (Calendar) relativeToDate.getCalendar().clone();
+        tmpDate.setTimeZone(timeZone);
+
+        Calendar refDate = (Calendar) date.getCalendar().clone();
+        refDate.setTimeZone(timeZone);
 
         SimpleDateFormat friendlyFullDateFormat = new SimpleDateFormat(FRIENDLY_FULL_DATE_FORMAT);
         friendlyFullDateFormat.setTimeZone(timeZone);
-        String label = friendlyFullDateFormat.format(date.getCalendar().getTime());
+        String label = friendlyFullDateFormat.format(refDate.getTime());
 
-        boolean isSameDay = date.getCalendar().get(Calendar.DAY_OF_YEAR) == tmpDate.get(Calendar.DAY_OF_YEAR) &&
-                date.getCalendar().get(Calendar.YEAR) == tmpDate.get(Calendar.YEAR);
+        boolean isSameDay = refDate.get(Calendar.DAY_OF_YEAR) == tmpDate.get(Calendar.DAY_OF_YEAR) &&
+                refDate.get(Calendar.YEAR) == tmpDate.get(Calendar.YEAR);
         if(isSameDay) {
             label = context.getString(R.string.date_today);
         } else {
             tmpDate.add(Calendar.HOUR_OF_DAY, -24);
-            isSameDay = date.getCalendar().get(Calendar.DAY_OF_YEAR) == tmpDate.get(Calendar.DAY_OF_YEAR) &&
-                    date.getCalendar().get(Calendar.YEAR) == tmpDate.get(Calendar.YEAR);
+            isSameDay = refDate.get(Calendar.DAY_OF_YEAR) == tmpDate.get(Calendar.DAY_OF_YEAR) &&
+                    refDate.get(Calendar.YEAR) == tmpDate.get(Calendar.YEAR);
             if(isSameDay) {
                 label = context.getString(R.string.date_yesterday);
             } else {
                 tmpDate.add(Calendar.HOUR_OF_DAY, -144); // go 1 week back
-                if(date.getCalendar().compareTo(tmpDate) < 0) {
-                    if(date.getCalendar().get(Calendar.YEAR) == tmpDate.get(Calendar.YEAR)) {
+                if(refDate.compareTo(tmpDate) < 0) {
+                    if(refDate.get(Calendar.YEAR) == tmpDate.get(Calendar.YEAR)) {
                         SimpleDateFormat friendlyMonthDateFormat = new SimpleDateFormat(FRIENDLY_MONTH_DATE_FORMAT);
                         friendlyMonthDateFormat.setTimeZone(timeZone);
-                        label = friendlyMonthDateFormat.format(date.getCalendar().getTime());
+                        label = friendlyMonthDateFormat.format(refDate.getTime());
                     }
                 } else {
                     SimpleDateFormat friendlyWeekDateFormat = new SimpleDateFormat(FRIENDLY_WEEK_DATE_FORMAT);
                     friendlyWeekDateFormat.setTimeZone(timeZone);
-                    label = friendlyWeekDateFormat.format(date.getCalendar().getTime());
+                    label = friendlyWeekDateFormat.format(refDate.getTime());
                 }
             }
         }
 
-        date.setType(oldDateType);
         return label;
     }
 }

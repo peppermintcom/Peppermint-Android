@@ -50,7 +50,7 @@ public class MessagesSyncTask extends SenderSupportTask {
 
     @Override
     protected void execute() throws Throwable {
-        Log.d(TAG, "Starting Sync...");
+        Log.d(TAG, "Starting Message Sync...");
 
         setupPeppermintAuthentication();
         String serverAccountId = getAuthenticationData().getAccountServerId();
@@ -71,7 +71,6 @@ public class MessagesSyncTask extends SenderSupportTask {
         do {
             long ms = System.currentTimeMillis();
             MessageListResponse receivedResponse = getPeppermintApi().getMessages(serverAccountId, syncTimestamp, true);
-            Log.d(TAG, "GET TOOK = " + (System.currentTimeMillis() - ms) + "ms");
 
             int receivedAmount = receivedResponse.getMessages().size();
             for (int i=0; i<receivedAmount && !isCancelled(); i++) {
@@ -105,7 +104,6 @@ public class MessagesSyncTask extends SenderSupportTask {
                     }
                 }
             }
-            Log.d(TAG, "INSERTS FOR " + receivedResponse.getMessages().size() + " MESSAGES TOOK = " + (System.currentTimeMillis() - ms) + "ms");
 
             nextUrl = receivedResponse.getNextUrl();
             if (nextUrl != null) {

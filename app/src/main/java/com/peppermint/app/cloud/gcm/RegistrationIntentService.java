@@ -47,13 +47,13 @@ public class RegistrationIntentService extends IntentService {
             String token = instanceID.getToken(getString(R.string.gcm_default_sender_id), GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
             // [END get_token]
 
-            Log.d(TAG, "GCM Registration Token: " + token);
+            Log.d(TAG, "New GCM Registration Token: " + token);
 
             mPeppermintApi.updateRecorder(data.getDeviceServerId(), token);
             authenticatorUtils.updateAccountGcmRegistration(token);
             // [END register_for_gcm]
         } catch (Throwable e) {
-            Log.d(TAG, "Failed to complete token refresh", e);
+            Log.d(TAG, "Failed to Complete Token Refresh", e);
             error = e;
         }
 

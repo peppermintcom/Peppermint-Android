@@ -183,7 +183,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
 
                     if(prevMessage != null) {
                         DateContainer prevDate = new DateContainer(DateContainer.TYPE_DATE, prevMessage.getRegistrationTimestamp());
-                        if(prevDate.equals(curDate)) {
+                        if(prevDate.equals(curDate, TimeZone.getDefault())) {
                             txtDay.setVisibility(View.GONE);
                         }
                     }
