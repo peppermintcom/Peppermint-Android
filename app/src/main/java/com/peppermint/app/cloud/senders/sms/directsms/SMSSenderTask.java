@@ -65,6 +65,9 @@ public class SMSSenderTask extends SenderUploadTask {
         setupPeppermintAuthentication();
         uploadPeppermintMessage();
 
+        // send in-app
+        sendPeppermintMessage();
+
         String url = getMessage().getServerShortUrl();
 
         mSent = false;

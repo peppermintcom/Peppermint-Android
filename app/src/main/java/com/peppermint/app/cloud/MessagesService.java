@@ -439,23 +439,26 @@ public class MessagesService extends Service {
                 break;
             case SenderEvent.EVENT_FINISHED:
                 // message sending has finished, so update the saved data and mark as sent
-                databaseHelper.lock();
-                try {
-                    message.setSent(true);
-                    MessageManager.insertOrUpdate(db, message.getId(), message.getChatId(), message.getAuthorId(), message.getRecordingId(),
-                            message.getServerId(), message.getServerShortUrl(), message.getServerCanonicalUrl(), message.getTranscription(),
-                            message.getEmailSubject(), message.getEmailBody(),
-                            message.getRegistrationTimestamp(), message.isSent(), message.isReceived(), message.isPlayed());
-                } catch (SQLException e) {
-                    mTrackerManager.logException(e);
-                }
-                databaseHelper.unlock();
-
+                message.setSent(true);
                 // notifications
                 mPreferences.setHasSentMessage(true);
                 mHandler.removeCallbacks(mNotificationRunnable);
                 dismissFirstAudioMessageNotification();
                 break;
+        }
+
+        if(event.getType() != SenderEvent.EVENT_CANCELLED && event.getType() != SenderEvent.EVENT_PROGRESS) {
+            databaseHelper.lock();
+            try {
+                MessageManager.insertOrUpdate(db, message.getId(), message.getChatId(), message.getAuthorId(), message.getRecordingId(),
+                        message.getServerId(), message.getServerShortUrl(), message.getServerCanonicalUrl(), message.getTranscription(),
+                        message.getEmailSubject(), message.getEmailBody(),
+                        message.getRegistrationTimestamp(), message.isSent(), message.isReceived(), message.isPlayed(),
+                        message.getParameter(Message.PARAM_SENT_INAPP) != null && (boolean) message.getParameter(Message.PARAM_SENT_INAPP));
+            } catch (SQLException e) {
+                mTrackerManager.logException(e);
+            }
+            databaseHelper.unlock();
         }
     }
 
@@ -469,7 +472,8 @@ public class MessagesService extends Service {
                 MessageManager.update(db, message.getId(), message.getChatId(), message.getAuthorId(), message.getRecordingId(),
                         message.getServerId(), message.getServerShortUrl(), message.getServerCanonicalUrl(), message.getTranscription(),
                         message.getEmailSubject(), message.getEmailBody(),
-                        message.getRegistrationTimestamp(), message.isSent(), message.isReceived(), message.isPlayed());
+                        message.getRegistrationTimestamp(), message.isSent(), message.isReceived(), message.isPlayed(),
+                        message.getParameter(Message.PARAM_SENT_INAPP) != null && (boolean) message.getParameter(Message.PARAM_SENT_INAPP));
             } catch (SQLException e) {
                 mTrackerManager.logException(e);
             }
@@ -525,7 +529,7 @@ public class MessagesService extends Service {
 
             // insert message
             message = MessageManager.insertOrUpdate(db, 0, chat.getId(), 0, recording.getId(), null, null, null, null,
-                    getString(R.string.sender_default_mail_subject), body, DateContainer.getCurrentUTCTimestamp(), false, false, false);
+                    getString(R.string.sender_default_mail_subject), body, DateContainer.getCurrentUTCTimestamp(), false, false, false, false);
             message.setChatParameter(chat);
             message.setRecordingParameter(recording);
 

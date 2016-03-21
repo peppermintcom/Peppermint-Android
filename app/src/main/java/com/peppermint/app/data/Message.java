@@ -14,6 +14,7 @@ import java.util.UUID;
  */
 public class Message implements Serializable {
 
+    public static final String PARAM_SENT_INAPP = "paramSentInApp";
     public static final String PARAM_INSERTED = "paramInserted";
 
     private static final String PARAM_CHAT = "paramChat";

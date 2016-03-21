@@ -48,6 +48,8 @@ public class MessageManager {
         message.setReceived(cursor.getInt(cursor.getColumnIndex("received")) > 0);
         message.setPlayed(cursor.getInt(cursor.getColumnIndex("played")) > 0);
 
+        message.setParameter(Message.PARAM_SENT_INAPP, cursor.getInt(cursor.getColumnIndex("sent_inapp")) > 0);
+
         if(db != null) {
             message.setRecordingParameter(RecordingManager.getRecordingById(db, message.getRecordingId()));
             message.setChatParameter(ChatManager.getChatById(db, message.getChatId()));
@@ -217,7 +219,7 @@ public class MessageManager {
                               String serverId, String shortUrl, String canonicalUrl, String transcription,
                               String emailSubject, String emailBody,
                               String registrationTimestamp,
-                              boolean sent, boolean received, boolean played) throws SQLException {
+                              boolean sent, boolean received, boolean played, boolean sentInApp) throws SQLException {
         ContentValues cv = new ContentValues();
 
         cv.put("email_subject", emailSubject);
@@ -244,6 +246,7 @@ public class MessageManager {
         cv.put("sent", sent ? 1 : 0);
         cv.put("received", received ? 1 : 0);
         cv.put("played", played ? 1 : 0);
+        cv.put("sent_inapp", sentInApp ? 1 : 0);
 
         long id = db.update("tbl_message", cv, "message_id = " + messageId, null);
         if(id < 0) {
@@ -279,7 +282,7 @@ public class MessageManager {
                                       String serverId, String shortUrl, String canonicalUrl, String transcription,
                                       String emailSubject, String emailBody,
                                       String registrationTimestamp,
-                                      boolean sent, boolean received, boolean played) throws  SQLException {
+                                      boolean sent, boolean received, boolean played, boolean sentInApp) throws  SQLException {
 
         Message foundMessage = null;
         if(messageId > 0 || serverId != null) {
@@ -292,7 +295,7 @@ public class MessageManager {
         }
 
         return update(db, foundMessage.getId(), chatId, authorId, recordingId, serverId, shortUrl, canonicalUrl,
-                transcription, emailSubject, emailBody, registrationTimestamp, sent, received, played);
+                transcription, emailSubject, emailBody, registrationTimestamp, sent, received, played, sentInApp);
     }
 
     /**

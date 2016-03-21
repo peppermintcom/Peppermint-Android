@@ -17,7 +17,6 @@ import com.peppermint.app.data.Message;
  */
 public class IntentSMSSenderTask extends SenderUploadTask {
 
-
     public IntentSMSSenderTask(IntentSMSSenderTask uploadTask) {
         super(uploadTask);
     }
@@ -30,6 +29,10 @@ public class IntentSMSSenderTask extends SenderUploadTask {
     protected void execute() throws Throwable {
         setupPeppermintAuthentication();
         uploadPeppermintMessage();
+
+        // send in-app
+        sendPeppermintMessage();
+
         String url = getMessage().getServerShortUrl();
 
         Intent sendIntent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("smsto", getMessage().getChatParameter().getRecipientList().get(0).getVia(), null));

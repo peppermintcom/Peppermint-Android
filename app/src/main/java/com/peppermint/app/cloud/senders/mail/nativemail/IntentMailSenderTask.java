@@ -37,6 +37,9 @@ public class IntentMailSenderTask extends SenderUploadTask {
         AuthenticationData data = setupPeppermintAuthentication();
         uploadPeppermintMessage();
 
+        // send in-app
+        sendPeppermintMessage();
+
         String url = getMessage().getServerShortUrl();
         String displayName = getSenderPreferences().getFullName();
 

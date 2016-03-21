@@ -3,7 +3,6 @@ package com.peppermint.app.data;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import com.peppermint.app.R;
 import com.peppermint.app.cloud.senders.SenderPreferences;
@@ -40,7 +39,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	private static final String TAG = DatabaseHelper.class.getSimpleName();
 	
 	private static final String DATABASE_NAME = "peppermint.db";        // database filename
-	private static final int DATABASE_VERSION = 15;                     // database version
+	private static final int DATABASE_VERSION = 16;                     // database version
 
 	private Context mContext;
     private ReentrantLock mLock = new ReentrantLock();
@@ -94,7 +93,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		try {
 			execSQLScript(R.raw.db_create, _db);
 		} catch (Exception e) {
-			Log.e(TAG, "Unable to create database", e);
+			TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
 		}
 	}
 
@@ -107,7 +106,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		try {
 			execSQLScript(R.raw.db_drop, _db);
 		} catch (Exception e) {
-			Log.e(TAG, "Unable to remove database", e);
+			TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
 		}
 	}
 
@@ -159,6 +158,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 					}
 					calendar.add(Calendar.MINUTE, -1);
 				}
+			}
+		}
+
+		if(_oldVersion < 16) {
+			try {
+				execSQLScript(R.raw.db_16_add_fields, _db);
+			} catch (Exception e) {
+				TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
 			}
 		}
 

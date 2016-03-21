@@ -3,6 +3,12 @@ package com.peppermint.app.cloud.senders;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.cloud.apis.PeppermintApi;
 import com.peppermint.app.cloud.apis.data.RecordResponse;
+import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
+import com.peppermint.app.cloud.apis.exceptions.PeppermintApiRecipientNoAppException;
+import com.peppermint.app.cloud.apis.exceptions.PeppermintApiResponseCodeException;
+import com.peppermint.app.cloud.apis.exceptions.PeppermintApiTooManyRequestsException;
+import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
+import com.peppermint.app.data.ContactManager;
 import com.peppermint.app.data.Message;
 
 import java.io.File;
@@ -74,6 +80,28 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
             getMessage().setServerShortUrl(String.valueOf(response.getShortUrl()));
             getTrackerManager().log("Peppermint # Confirmed Upload at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
         }
+    }
+
+    protected void sendPeppermintMessage() throws PeppermintApiTooManyRequestsException, PeppermintApiInvalidAccessTokenException, PeppermintApiResponseCodeException, ContactManager.InvalidEmailException, NoInternetConnectionException {
+        if(isCancelled() || (getMessage().getParameter(Message.PARAM_SENT_INAPP) != null && (boolean) getMessage().getParameter(Message.PARAM_SENT_INAPP))) {
+            return;
+        }
+
+        AuthenticationData data = getAuthenticationData();
+        String canonicalUrl = getMessage().getServerCanonicalUrl();
+
+        String recipientEmail = getMessage().getChatParameter().getRecipientList().get(0).getVia();
+        long recipientRawId = getMessage().getChatParameter().getRecipientList().get(0).getRawContactId();
+
+        try {
+            getPeppermintApi().sendMessage(null, canonicalUrl, data.getEmail(), recipientEmail, (int) (getMessage().getRecordingParameter().getDurationMillis() / 1000));
+            getMessage().setParameter(Message.PARAM_SENT_INAPP, true);
+        } catch(PeppermintApiRecipientNoAppException e) {
+            getTrackerManager().log("Unable to send through Peppermint", e);
+            ContactManager.deletePeppermint(getContext(), recipientRawId, null);
+        }
+
+        ContactManager.insertPeppermint(getContext(), recipientEmail, recipientRawId, 0, null);
     }
 
     @Override
