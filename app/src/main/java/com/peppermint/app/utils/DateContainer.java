@@ -248,18 +248,19 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
             if(isSameDay) {
                 label = context.getString(R.string.date_yesterday);
             } else {
-                tmpDate.add(Calendar.HOUR_OF_DAY, -144); // go 1 week back
-                if(refDate.compareTo(tmpDate) < 0) {
+                /*tmpDate.add(Calendar.HOUR_OF_DAY, -144); // go 1 week back
+                if(refDate.compareTo(tmpDate) < 0) {*/
+                    refDate.add(Calendar.HOUR_OF_DAY, 24);
                     if(refDate.get(Calendar.YEAR) == tmpDate.get(Calendar.YEAR)) {
                         SimpleDateFormat friendlyMonthDateFormat = new SimpleDateFormat(FRIENDLY_MONTH_DATE_FORMAT);
                         friendlyMonthDateFormat.setTimeZone(timeZone);
                         label = friendlyMonthDateFormat.format(refDate.getTime());
                     }
-                } else {
+                /*} else {
                     SimpleDateFormat friendlyWeekDateFormat = new SimpleDateFormat(FRIENDLY_WEEK_DATE_FORMAT);
                     friendlyWeekDateFormat.setTimeZone(timeZone);
                     label = friendlyWeekDateFormat.format(refDate.getTime());
-                }
+                }*/
             }
         }
 
