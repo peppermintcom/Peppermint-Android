@@ -702,7 +702,10 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
         if(requestCode == REQUEST_NEWCONTACT) {
             mOnActivityResult = true;
             if(resultCode == Activity.RESULT_OK) {
-                mSearchListBarView.setSearchText(data.getStringExtra(NewContactFragment.KEY_NAME));
+                ContactRaw contact = (ContactRaw) data.getSerializableExtra(NewContactFragment.KEY_RECIPIENT);
+                if(contact != null) {
+                    mSearchListBarView.setSearchText(contact.getDisplayName());
+                }
             } else {
                 mSearchListBarView.clearSearch(0);
             }
