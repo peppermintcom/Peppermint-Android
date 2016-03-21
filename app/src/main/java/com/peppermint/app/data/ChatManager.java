@@ -1,9 +1,11 @@
 package com.peppermint.app.data;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 
 import com.peppermint.app.utils.Utils;
 
@@ -153,7 +155,12 @@ public class ChatManager {
         return db.rawQuery("SELECT tbl_chat.*, tbl_chat.chat_id as _id FROM tbl_chat ORDER BY last_message_ts DESC", null);
     }
 
-    public static ChatRecipient insertChatRecipient(SQLiteDatabase db, long chatId, long rawContactId, long contactId, String displayName, String via, String mimetype, String photoUri, String addedTimestamp) throws SQLException {
+    public static ChatRecipient insertChatRecipient(Context context, SQLiteDatabase db, long chatId, long rawContactId, long contactId, String displayName, String via, String mimetype, String photoUri, String addedTimestamp) throws SQLException {
+        if(photoUri != null && !photoUri.endsWith(".peppermintAv")) {
+            Uri uri = Utils.copyImageToLocalDir(context, Uri.parse(photoUri), chatId + ".peppermintAv");
+            photoUri = uri == null ? null : uri.toString();
+        }
+
         ContentValues cv = new ContentValues();
         cv.put("chat_id", chatId);
         cv.put("raw_contact_id", rawContactId);
@@ -180,7 +187,7 @@ public class ChatManager {
      * @param recipients list of recipients for this chat
      * @throws SQLException
      */
-    public static Chat insert(SQLiteDatabase db, String title, String lastMessageTimestamp, ChatRecipient... recipients) throws SQLException {
+    public static Chat insert(Context context, SQLiteDatabase db, String title, String lastMessageTimestamp, ChatRecipient... recipients) throws SQLException {
         /*db.beginTransaction();*/
 
         ContentValues cv = new ContentValues();
@@ -196,7 +203,7 @@ public class ChatManager {
         List<ChatRecipient> chatRecipientList = new ArrayList<>();
         for(ChatRecipient chatRecipient : recipients) {
             chatRecipient.setChatId(id);
-            ChatRecipient newChatRecipient = insertChatRecipient(db, chatRecipient.getChatId(),
+            ChatRecipient newChatRecipient = insertChatRecipient(context, db, chatRecipient.getChatId(),
                     chatRecipient.getRawContactId(), chatRecipient.getContactId(),
                     chatRecipient.getDisplayName(), chatRecipient.getVia(), chatRecipient.getMimeType(),
                     chatRecipient.getPhotoUri(), chatRecipient.getAddedTimestamp());
@@ -261,7 +268,7 @@ public class ChatManager {
      * @param recipients the recipients of the chat
      * @throws SQLException
      */
-    public static Chat insertOrUpdate(SQLiteDatabase db, long chatId, String title, String lastMessageTimestamp, ChatRecipient... recipients) throws  SQLException {
+    public static Chat insertOrUpdate(Context context, SQLiteDatabase db, long chatId, String title, String lastMessageTimestamp, ChatRecipient... recipients) throws  SQLException {
         if(chatId <= 0) {
             Chat searchedChat = null;
 
@@ -270,7 +277,7 @@ public class ChatManager {
             }
 
             if (searchedChat == null) {
-                return insert(db, title, lastMessageTimestamp, recipients);
+                return insert(context, db, title, lastMessageTimestamp, recipients);
             }
 
             chatId = searchedChat.getId();

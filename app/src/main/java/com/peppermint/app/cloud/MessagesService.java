@@ -514,7 +514,7 @@ public class MessagesService extends Service {
         db.beginTransaction();
         try {
             // insert chat
-            chat = ChatManager.insertOrUpdate(db, chat.getId(), chat.getTitle(),
+            chat = ChatManager.insertOrUpdate(this, db, chat.getId(), chat.getTitle(),
                     recording.getRecordedTimestamp(), chat.getRecipientList().toArray(new ChatRecipient[chat.getRecipientList().size()]));
 
             // insert recording

@@ -20,6 +20,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
@@ -37,6 +38,7 @@ import com.peppermint.app.tracking.TrackerManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -901,5 +903,20 @@ public class Utils {
             }
         }
         return dir.delete();
+    }
+
+    public static Uri copyImageToLocalDir(Context context, Uri imageUri, String newFileName) {
+        try {
+            Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), imageUri);
+            if(bitmap != null) {
+                FileOutputStream outStream = context.openFileOutput(newFileName, Context.MODE_PRIVATE);
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, outStream);
+                outStream.close();
+                return Uri.fromFile(new File(context.getFilesDir(), newFileName));
+            }
+        } catch (Exception e) {
+            Log.w(TAG, e);
+        }
+        return null;
     }
 }

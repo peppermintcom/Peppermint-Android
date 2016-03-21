@@ -153,7 +153,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 					ContactRaw rawContact = ContactManager.getRawContactByContactId(mContext, contactId);
                     recipient.setFromRawContact(rawContact);
 					try {
-						ChatManager.insert(_db, recipient.getDisplayName(), dateContainer.getAsString(DateContainer.UTC), recipient);
+						ChatManager.insert(mContext, _db, recipient.getDisplayName(), dateContainer.getAsString(DateContainer.UTC), recipient);
 					} catch (SQLException e) {
 						TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
 					}

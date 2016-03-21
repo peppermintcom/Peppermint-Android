@@ -60,7 +60,7 @@ public class GlobalManager {
             chat = foundChat;
         } else {
             // otherwise, just insert
-            chat = ChatManager.insert(db, chatRecipient.getDisplayName(), createdTs, chatRecipient);
+            chat = ChatManager.insert(context, db, chatRecipient.getDisplayName(), createdTs, chatRecipient);
         }
 
         // insert recording
@@ -114,7 +114,7 @@ public class GlobalManager {
             chat = foundChat;
         } else {
             // otherwise, just insert
-            chat = ChatManager.insert(db, chatRecipient.getDisplayName(), createdTs, chatRecipient);
+            chat = ChatManager.insert(context, db, chatRecipient.getDisplayName(), createdTs, chatRecipient);
         }
 
         // insert recording
