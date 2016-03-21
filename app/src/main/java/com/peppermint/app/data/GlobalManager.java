@@ -24,7 +24,7 @@ public class GlobalManager {
     public static Message insertReceivedMessage(Context context, SQLiteDatabase db, String receiverEmail,
                                                 String senderName, String senderEmail, String audioUrl,
                                                 String serverId, String transcription, String createdTs,
-                                                int durationSeconds) throws SQLException, ContactManager.InvalidPhoneException, ContactManager.InvalidNameException, ContactManager.InvalidEmailException {
+                                                int durationSeconds, String readTimestamp) throws SQLException, ContactManager.InvalidPhoneException, ContactManager.InvalidNameException, ContactManager.InvalidEmailException {
 
         if(audioUrl == null || senderEmail == null || receiverEmail == null) {
             return null;
@@ -68,7 +68,7 @@ public class GlobalManager {
 
         // insert message
         message = MessageManager.insert(db, chat.getId(), chat.getRecipientList().get(0).getId(), recording.getId(),
-                serverId, null, audioUrl, transcription, null, null, createdTs, false, true, false);
+                serverId, null, audioUrl, transcription, null, null, createdTs, false, true, readTimestamp != null);
         message.setRecordingParameter(recording);
         message.setChatParameter(chat);
 

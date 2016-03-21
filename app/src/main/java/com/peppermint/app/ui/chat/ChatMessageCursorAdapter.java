@@ -373,7 +373,9 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
             cursor.moveToNext();
         }
 
-        mMessagesServiceManager.markAsPlayed(message);
+        if(message.isReceived()) {
+            mMessagesServiceManager.markAsPlayed(message);
+        }
 
         if(view.getTag() != null) {
             MessageController prevController = mControllers.get(view.getTag());

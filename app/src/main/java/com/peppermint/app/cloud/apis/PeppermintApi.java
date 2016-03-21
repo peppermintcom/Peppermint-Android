@@ -63,6 +63,7 @@ public class PeppermintApi implements Serializable {
 
     protected static final String JWTS_ENDPOINT = BASE_ENDPOINT_URL + "jwts";
     protected static final String MESSAGES_ENDPOINT = BASE_ENDPOINT_URL + "messages";
+    protected static final String PLAYS_ENDPOINT = BASE_ENDPOINT_URL + "reads";
 
     protected static final String RECORD_ENDPOINT = BASE_ENDPOINT_URL + "record";
     protected static final String RECORDER_ENDPOINT = BASE_ENDPOINT_URL + "recorder";
@@ -85,6 +86,25 @@ public class PeppermintApi implements Serializable {
     }
 
     // MESSAGES
+    public void markAsPlayedMessage(String serverMessageId) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException, PeppermintApiTooManyRequestsException, PeppermintApiRecipientNoAppException {
+        HttpRequest request = new HttpRequest(PLAYS_ENDPOINT, HttpRequest.METHOD_POST);
+        request.setHeaderParam("Authorization", "Bearer " + getAccessToken());
+        request.setHeaderParam("X-Api-Key", API_KEY);
+        request.setHeaderParam("Content-Type", CONTENT_TYPE_JSON);
+        request.setBody("{ \"data\": { \"type\":\"reads\", \"id\":\"" + serverMessageId + "\" } }");
+        HttpResponse response = new HttpResponse();
+        request.execute(response);
+
+        if(response.getException() != null) {
+            throw new HttpResponseException(response.getException());
+        }
+        if(response.getCode() == 401 || response.getCode() == 403) {
+            throw new PeppermintApiInvalidAccessTokenException(request.toString());
+        }
+        if((response.getCode() / 100) != 2) {
+            throw new PeppermintApiResponseCodeException(response.getCode(), request.toString());
+        }
+    }
 
     public MessageListResponse getMessages(String serverAccountId, String sinceTimestamp, boolean received) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException, PeppermintApiTooManyRequestsException, PeppermintApiRecipientNoAppException {
         HttpRequest request = new HttpRequest(MESSAGES_ENDPOINT, HttpRequest.METHOD_GET, false);

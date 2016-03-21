@@ -87,7 +87,7 @@ public class MessagesSyncTask extends SenderSupportTask {
                     try {
                         Message message = GlobalManager.insertReceivedMessage(getContext(), db, messagesResponse.getRecipientEmail(), messagesResponse.getSenderName(),
                                 messagesResponse.getSenderEmail(), messagesResponse.getAudioUrl(), messagesResponse.getMessageId(), messagesResponse.getTranscription(),
-                                messagesResponse.getCreatedTimestamp(), messagesResponse.getDuration());
+                                messagesResponse.getCreatedTimestamp(), messagesResponse.getDuration(), messagesResponse.getReadTimestamp());
                         if (message != null) {
                             _receivedMessages.add(message);
                             if(!mNeverSyncedBefore && message.getParameter(Message.PARAM_INSERTED) != null &&

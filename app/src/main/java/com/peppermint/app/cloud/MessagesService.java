@@ -211,7 +211,7 @@ public class MessagesService extends Service {
 
         Message message = null;
         try {
-            message = GlobalManager.insertReceivedMessage(this, db, receiverEmail, senderName, senderEmail, audioUrl, serverId, transcription, createdTs, durationSeconds);
+            message = GlobalManager.insertReceivedMessage(this, db, receiverEmail, senderName, senderEmail, audioUrl, serverId, transcription, createdTs, durationSeconds, null);
             db.setTransactionSuccessful();
         } catch (ContactManager.InvalidViaException | ContactManager.InvalidNameException e) {
             mTrackerManager.log(senderName + " - " + senderEmail);
@@ -466,6 +466,7 @@ public class MessagesService extends Service {
     }
 
     private void markAsPlayed(Message message) {
+
         if(!message.isPlayed()) {
             DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this);
             SQLiteDatabase db = databaseHelper.getWritableDatabase();
@@ -477,8 +478,12 @@ public class MessagesService extends Service {
                         message.getEmailSubject(), message.getEmailBody(),
                         message.getRegistrationTimestamp(), message.isSent(), message.isReceived(), message.isPlayed(),
                         message.getParameter(Message.PARAM_SENT_INAPP) != null && (boolean) message.getParameter(Message.PARAM_SENT_INAPP));
+
+                MessagesMarkPlayedTask task = new MessagesMarkPlayedTask(this, message, null);
+                task.execute((Void) null);
             } catch (SQLException e) {
                 mTrackerManager.logException(e);
+                message.setPlayed(false);
             }
             databaseHelper.unlock();
         }
