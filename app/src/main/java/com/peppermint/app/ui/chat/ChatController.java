@@ -298,10 +298,12 @@ public class ChatController extends ChatRecordOverlayController implements View.
                     chosenIndex = i;
                 }
             }
-            mAutoPlayMessageId = 0;
 
-            mListView.setSelection(chosenIndex);
-            getPlayerServiceManager().play(chosenMessage, 0);
+            if(chosenMessage != null) {
+                mAutoPlayMessageId = 0;
+                mListView.setSelection(chosenIndex);
+                getPlayerServiceManager().play(chosenMessage, 0);
+            }
         } else if(mAutoPlayMessageId < 0) {
             mAutoPlayMessageId = 0;
             int chosenIndex = mAdapter.getCount() - 1;
