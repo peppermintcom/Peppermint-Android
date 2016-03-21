@@ -31,6 +31,7 @@ import com.peppermint.app.cloud.senders.SenderManager;
 import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.cloud.senders.SenderSupportListener;
 import com.peppermint.app.cloud.senders.SenderSupportTask;
+import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
 import com.peppermint.app.data.ChatRecipient;
@@ -165,7 +166,9 @@ public class MessagesService extends Service {
 
         @Override
         public void onSendingSupportError(SenderSupportTask supportTask, Throwable error) {
-            mTrackerManager.logException(error);
+            if(!(error instanceof NoInternetConnectionException)) {
+                mTrackerManager.logException(error);
+            }
             PeppermintEventBus.postSyncEvent(SyncEvent.EVENT_ERROR, mMessagesSyncTask.getReceivedMessages(), mMessagesSyncTask.getSentMessages(), error);
         }
 

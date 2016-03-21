@@ -268,7 +268,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
     }
 
     private void refreshList() {
-        if(!getMessagesServiceManager().isBound() || !getPlayerServiceManager().isBound()) {
+        if(mChat == null || !getMessagesServiceManager().isBound() || !getPlayerServiceManager().isBound()) {
             return;
         }
 
