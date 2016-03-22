@@ -243,7 +243,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
     @Override
     public void onEventMainThread(ReceiverEvent event) {
         super.onEventMainThread(event);
-        if(event.getType() == ReceiverEvent.EVENT_RECEIVED) {
+        if(mChat != null && event.getType() == ReceiverEvent.EVENT_RECEIVED) {
             refreshList();
             if(event.getMessage().getChatId() == mChat.getId()) {
                 event.setDoNotShowNotification(true);
@@ -290,6 +290,10 @@ public class ChatController extends ChatRecordOverlayController implements View.
             mAdapter.changeCursor(cursor);
         }
 
+        if(mAutoPlayMessageId < 0) {
+            mAutoPlayMessageId = MessageManager.getLastAutoPlayMessageIdByChat(getDatabase(), mChat.getId());
+        }
+
         if(mAutoPlayMessageId > 0) {
             int count = mAdapter.getCount();
             Message chosenMessage = null;
@@ -307,12 +311,6 @@ public class ChatController extends ChatRecordOverlayController implements View.
                 mListView.setSelection(chosenIndex);
                 getPlayerServiceManager().play(chosenMessage, 0);
             }
-        } else if(mAutoPlayMessageId < 0) {
-            mAutoPlayMessageId = 0;
-            int chosenIndex = mAdapter.getCount() - 1;
-            Message chosenMessage = mAdapter.getMessage(chosenIndex);
-            mListView.setSelection(chosenIndex);
-            getPlayerServiceManager().play(chosenMessage, 0);
         }
     }
 
@@ -370,6 +368,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
                     recipient.getVia(),
                     recipient.getPhotoUri());
         }
+        refreshList();
     }
 
     public long getAutoPlayMessageId() {

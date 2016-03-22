@@ -19,6 +19,7 @@ public class Chat implements Serializable {
 
     private List<ChatRecipient> mRecipientList = new ArrayList<>();
     private int mAmountUnopened;
+    private long mLastReceivedUnplayedId;
 
     public Chat() {
         this.mRecipientList = new ArrayList<>();
@@ -77,6 +78,14 @@ public class Chat implements Serializable {
         this.mTitle = mTitle;
     }
 
+    public long getLastReceivedUnplayedId() {
+        return mLastReceivedUnplayedId;
+    }
+
+    public void setLastReceivedUnplayedId(long mLastReceivedUnplayedId) {
+        this.mLastReceivedUnplayedId = mLastReceivedUnplayedId;
+    }
+
     @Override
     public String toString() {
         return "Chat{" +
@@ -85,6 +94,7 @@ public class Chat implements Serializable {
                 ", mLastMessageTimestamp='" + mLastMessageTimestamp + '\'' +
                 ", mRecipientList=" + mRecipientList +
                 ", mAmountUnopened=" + mAmountUnopened +
+                ", mLastReceivedUnplayedId=" + mLastReceivedUnplayedId +
                 '}';
     }
 }

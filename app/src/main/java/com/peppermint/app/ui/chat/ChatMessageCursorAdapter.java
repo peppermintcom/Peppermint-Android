@@ -300,6 +300,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
             switch(event.getType()) {
                 case PlayerEvent.EVENT_STARTED:
                     setVisibility(View.GONE, View.VISIBLE, View.GONE);
+                    mPlayingController = this;
                     break;
                 case PlayerEvent.EVENT_BUFFERING_UPDATE:
                     if(mRootView != null) {

@@ -132,6 +132,20 @@ public class MessageManager {
         return count;
     }
 
+    public static long getLastAutoPlayMessageIdByChat(SQLiteDatabase db, long chatId) {
+        long id = 0;
+        Cursor cursor = db.rawQuery("select * from tbl_message where chat_id = " + chatId + " ORDER BY registration_ts DESC", null);
+        if(cursor.moveToNext()) {
+            boolean received = cursor.getInt(cursor.getColumnIndex("received")) > 0;
+            boolean played = cursor.getInt(cursor.getColumnIndex("played")) > 0;
+            if(received && !played) {
+                id = cursor.getLong(cursor.getColumnIndex("message_id"));
+            }
+        }
+        cursor.close();
+        return id;
+    }
+
     /**
      * Inserts the supplied message into the supplied local database.
      *

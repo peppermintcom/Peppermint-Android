@@ -93,4 +93,9 @@ public class PeppermintEventBus {
             EVENT_BUS_AUDIO.post(new RecorderEvent(type, recording, chat, loudness, error));
         }
     }
+
+    // MESSAGE
+    public static void postMarkAsPlayedEvent(Message message) {
+        EVENT_BUS_MESSAGES.post(new MessageEvent(message));
+    }
 }

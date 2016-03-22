@@ -34,10 +34,10 @@ public class SenderPreferences {
     public static final String FIRST_NAME_KEY = "firstName";
     public static final String LAST_NAME_KEY = "lastName";
 
-    public static final String ALLOW_OVERLAY_KEY = "allowOverlay";
-
     public static final String CHAT_HEAD_POSITION_X_KEY = "chatHeadPositionX";
     public static final String CHAT_HEAD_POSITION_Y_KEY = "chatHeadPositionY";
+
+    public static final String ARE_CHATHEADS_ENABLED_KEY = "chatHeads";
 
     public static final String LAST_SYNC_TIMESTAMP_KEY = "lastSyncTimestmap";
 
@@ -72,16 +72,6 @@ public class SenderPreferences {
 
     public boolean isEnabled() {
         return getSharedPreferences().getBoolean(getEnabledPreferenceKey(this.getClass()), true);
-    }
-
-    public void setOverlayAllowed(boolean val) {
-        SharedPreferences.Editor editor = getSharedPreferences().edit();
-        editor.putBoolean(ALLOW_OVERLAY_KEY, val);
-        editor.commit();
-    }
-
-    public boolean isOverlayAllowed() {
-        return getSharedPreferences().getBoolean(ALLOW_OVERLAY_KEY, true);
     }
 
     public void addRecentContactUri(long id) {
@@ -160,6 +150,10 @@ public class SenderPreferences {
     }
 
     public void setChatHeadPosition(float x, float y) {
+        // do not allow 0 values since it will just reset the position
+        // 0 only in case there's no data
+        if(x < 0) { x = 1; }
+        if(y < 0) { y = 1; }
         Log.d("TAG", "SET X="+x+" Y="+y);
         SharedPreferences.Editor editor = getSharedPreferences().edit();
         editor.putFloat(CHAT_HEAD_POSITION_X_KEY, x);
@@ -257,6 +251,16 @@ public class SenderPreferences {
     public void setHasSentMessage(boolean val) {
         SharedPreferences.Editor editor = getSharedPreferences().edit();
         editor.putBoolean(HAS_SENT_KEY, val);
+        editor.commit();
+    }
+
+    public boolean areChatHeadsEnabled() {
+        return getSharedPreferences().getBoolean(ARE_CHATHEADS_ENABLED_KEY, false);
+    }
+
+    public void setChatHeadsEnabled(boolean val) {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putBoolean(ARE_CHATHEADS_ENABLED_KEY, val);
         editor.commit();
     }
 

@@ -94,6 +94,9 @@
     <string name="pref_title_gmailenabled">In-app Gmail</string>
     <string name="pref_summary_gmailenabled">Send messages through Gmail without leaving the app (requires extra permissions)</string>
     <string name="pref_title_emailcategory">Email</string>
+    <string name="sign_out_summary">Sign out from Peppermint</string>
+    <string name="chat_heads">Chat Heads</string>
+    <string name="chat_heads_summary">Chat heads will be drawn on top of apps and replace regular notifications</string>
 
     <!-- NEW CONTACT LAYOUT -->
     <string name="new_contact">New contact</string>
@@ -161,7 +164,5 @@
     <string name="loading_chats">Loading\\nConversations…</string>
     <string name="msg_no_conversations">No conversations have been found</string>
     <string name="chats">Conversations</string>
-
-
 
 </resources>

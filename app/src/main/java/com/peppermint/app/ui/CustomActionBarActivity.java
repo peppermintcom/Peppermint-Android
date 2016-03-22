@@ -2,6 +2,7 @@ package com.peppermint.app.ui;
 
 import android.animation.Animator;
 import android.animation.AnimatorSet;
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Intent;
@@ -30,6 +31,7 @@ import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.canvas.loading.LoadingView;
+import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
 import com.peppermint.app.ui.views.CustomActionBarView;
 import com.peppermint.app.ui.views.NavigationItem;
 import com.peppermint.app.ui.views.NavigationListAdapter;
@@ -43,11 +45,15 @@ import java.util.List;
  *
  * Abstract activity implementation that uses Peppermint's custom action bar.
  */
-public abstract class CustomActionBarActivity extends FragmentActivity implements SharedPreferences.OnSharedPreferenceChangeListener, TouchInterceptable {
+public abstract class CustomActionBarActivity extends FragmentActivity implements SharedPreferences.OnSharedPreferenceChangeListener,
+        TouchInterceptable, ChatHeadServiceManager.ChatHeadServiceBinderListener {
 
     private static final String TAG = CustomActionBarActivity.class.getSimpleName();
 
     private static final String SAVED_MENU_POSITION_KEY = TAG + "_SAVED_MENU_POSITION_KEY";
+
+    private static Activity CURRENT_ACTIVITY = null;
+    private ChatHeadServiceManager mChatHeadServiceManager;
 
     private List<NavigationItem> mNavigationItemList, mVisibleNavigationItemList;
 
@@ -178,6 +184,9 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mChatHeadServiceManager = new ChatHeadServiceManager(this);
+        mChatHeadServiceManager.addServiceBinderListener(this);
 
         setContentView(getContentViewResourceId());
         CustomActionBarView actionBar = getCustomActionBar();
@@ -328,6 +337,23 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     protected void onStart() {
         super.onStart();
         getWindow().setBackgroundDrawableResource(getBackgroundResourceId());
+        CURRENT_ACTIVITY = this;
+        mChatHeadServiceManager.startAndBind();
+    }
+
+    @Override
+    protected void onStop() {
+        if(CURRENT_ACTIVITY == this) {
+            CURRENT_ACTIVITY = null;
+            mChatHeadServiceManager.show();
+        }
+        mChatHeadServiceManager.unbind();
+        super.onStop();
+    }
+
+    @Override
+    public void onBoundChatHeadService() {
+        mChatHeadServiceManager.hide();
     }
 
     @Override

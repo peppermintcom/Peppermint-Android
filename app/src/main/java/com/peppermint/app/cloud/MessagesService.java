@@ -453,7 +453,7 @@ public class MessagesService extends Service {
         if(event.getType() != SenderEvent.EVENT_CANCELLED && event.getType() != SenderEvent.EVENT_PROGRESS) {
             databaseHelper.lock();
             try {
-                MessageManager.insertOrUpdate(db, message.getId(), message.getChatId(), message.getAuthorId(), message.getRecordingId(),
+                MessageManager.update(db, message.getId(), message.getChatId(), message.getAuthorId(), message.getRecordingId(),
                         message.getServerId(), message.getServerShortUrl(), message.getServerCanonicalUrl(), message.getTranscription(),
                         message.getEmailSubject(), message.getEmailBody(),
                         message.getRegistrationTimestamp(), message.isSent(), message.isReceived(), message.isPlayed(),
@@ -470,20 +470,20 @@ public class MessagesService extends Service {
         if(!message.isPlayed()) {
             DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this);
             SQLiteDatabase db = databaseHelper.getWritableDatabase();
-            message.setPlayed(true);
             databaseHelper.lock();
             try {
                 MessageManager.update(db, message.getId(), message.getChatId(), message.getAuthorId(), message.getRecordingId(),
                         message.getServerId(), message.getServerShortUrl(), message.getServerCanonicalUrl(), message.getTranscription(),
                         message.getEmailSubject(), message.getEmailBody(),
-                        message.getRegistrationTimestamp(), message.isSent(), message.isReceived(), message.isPlayed(),
+                        message.getRegistrationTimestamp(), message.isSent(), message.isReceived(), true,
                         message.getParameter(Message.PARAM_SENT_INAPP) != null && (boolean) message.getParameter(Message.PARAM_SENT_INAPP));
 
-                MessagesMarkPlayedTask task = new MessagesMarkPlayedTask(this, message, null);
+                MessagesMarkPlayedTask task = new MessagesMarkPlayedTask(this, new Message(message), null);
                 task.execute((Void) null);
+
+                message.setPlayed(true);
             } catch (SQLException e) {
                 mTrackerManager.logException(e);
-                message.setPlayed(false);
             }
             databaseHelper.unlock();
         }
@@ -536,8 +536,8 @@ public class MessagesService extends Service {
             recording.setId(newRecording.getId());
 
             // insert message
-            message = MessageManager.insertOrUpdate(db, 0, chat.getId(), 0, recording.getId(), null, null, null, null,
-                    getString(R.string.sender_default_mail_subject), body, DateContainer.getCurrentUTCTimestamp(), false, false, false, false);
+            message = MessageManager.insert(db, chat.getId(), 0, recording.getId(), null, null, null, null,
+                    getString(R.string.sender_default_mail_subject), body, DateContainer.getCurrentUTCTimestamp(), false, false, false);
             message.setChatParameter(chat);
             message.setRecordingParameter(recording);
 

@@ -1,48 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.peppermint.app.ui.views.simple.TouchInterceptorView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/lytRoot"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/black_50percent">
+    android:layout_height="match_parent">
 
-    <RelativeLayout android:id="@+id/lytHeader"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="10dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <ImageButton android:id="@+id/btnClose"
-            android:layout_alignParentRight="true"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:src="@drawable/ic_cross_11dp"
-            android:background="@drawable/background_ripple"
-            android:adjustViewBounds="true"
-            android:scaleType="center" />
-
-        <LinearLayout android:layout_toLeftOf="@id/btnClose"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <com.peppermint.app.ui.views.RoundImageView
-                android:id="@+id/imgChatAvatar"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@drawable/ic_anonymous_green_48dp"/>
-
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_arrow_up_20dp" />
-        </LinearLayout>
-
-    </RelativeLayout>
+    <EditText android:id="@+id/txtDummy"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="invisible" />
 
     <LinearLayout
-        android:layout_below="@id/lytHeader"
+        android:layout_alignParentTop="true"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
@@ -71,7 +39,9 @@
             <com.peppermint.app.ui.views.simple.FitsSystemWindowsFrameLayout
                 android:id="@+id/container"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent">
+                <include layout="@layout/f_chat" />
+            </com.peppermint.app.ui.views.simple.FitsSystemWindowsFrameLayout>
 
             <RelativeLayout
                 android:id="@+id/fragmentProgressContainer"
@@ -124,4 +94,4 @@
         android:layout_height="match_parent">
     </FrameLayout>
 
-</RelativeLayout>
+</com.peppermint.app.ui.views.simple.TouchInterceptorView>

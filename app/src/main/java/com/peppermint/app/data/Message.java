@@ -41,6 +41,24 @@ public class Message implements Serializable {
     public Message() {
     }
 
+    public Message(Message message) {
+        setId(message.mId);
+        mChatId = message.mChatId;
+        mRecordingId = message.mRecordingId;
+        mAuthorId = message.mAuthorId;
+        mEmailBody = message.mEmailBody;
+        mEmailSubject = message.mEmailSubject;
+        mRegistrationTimestamp = message.mRegistrationTimestamp;
+        mSent = message.mSent;
+        mReceived = message.mReceived;
+        mPlayed = message.mPlayed;
+        mServerId = message.mServerId;
+        mServerCanonicalUrl = message.mServerCanonicalUrl;
+        mServerShortUrl = message.mServerShortUrl;
+        mTranscription = message.mTranscription;
+        mParameters.putAll(message.mParameters);
+    }
+
     public Message(long mRecordingId, long mChatId) {
         this.mChatId = mChatId;
         this.mRecordingId = mRecordingId;

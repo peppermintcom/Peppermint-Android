@@ -4,15 +4,24 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
-import android.widget.FrameLayout;
+import android.widget.RelativeLayout;
+
+import com.peppermint.app.ui.KeyInterceptable;
+import com.peppermint.app.ui.TouchInterceptable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Nuno Luz on 07-02-2016.
  */
-public class TouchInterceptorView extends FrameLayout {
+public class TouchInterceptorView extends RelativeLayout implements TouchInterceptable, KeyInterceptable {
 
-    private View mRelayView;
+    private List<OnTouchListener> mTouchListeners = new ArrayList<>();
+    private List<OnKeyListener> mKeyListeners = new ArrayList<>();
 
     public TouchInterceptorView(Context context) {
         super(context);
@@ -37,22 +46,45 @@ public class TouchInterceptorView extends FrameLayout {
 
     private void init() {
     }
-/*
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if(mRelayView == null) {
-            return false;
-        }
-        Log.d("Interceptor", "" + ev);
-        mRelayView.dispatchTouchEvent(MotionEvent.obtain(ev.getDownTime(), ev.getEventTime(), ev.getAction(), ev.getX(), ev.getY(), ev.getPressure(), ev.getSize(), ev.getMetaState(), ev.getXPrecision(), ev.getYPrecision(), ev.getDeviceId(), ev.getEdgeFlags()));
-        return true;
-    }*/
 
-    public View getRelayView() {
-        return mRelayView;
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        for(OnTouchListener listener : mTouchListeners) {
+            listener.onTouch(this, ev);
+        }
+        return super.dispatchTouchEvent(ev);
     }
 
-    public void setRelayView(View view) {
-        this.mRelayView = view;
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        for(OnKeyListener listener : mKeyListeners) {
+            listener.onKey(this, event.getKeyCode(), event);
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    public void addTouchEventInterceptor(View.OnTouchListener listener) {
+        mTouchListeners.add(listener);
+    }
+
+    @Override
+    public boolean removeTouchEventInterceptor(View.OnTouchListener listener) {
+        return mTouchListeners.remove(listener);
+    }
+
+    @Override
+    public void addKeyEventInterceptor(OnKeyListener listener) {
+        mKeyListeners.add(listener);
+    }
+
+    @Override
+    public boolean removeKeyEventInterceptor(OnKeyListener listener) {
+        return mKeyListeners.remove(listener);
+    }
+
+    @Override
+    public void removeAllKeyEventInterceptors() {
+        mKeyListeners.clear();
     }
 }

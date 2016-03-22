@@ -27,8 +27,13 @@
 
     </com.peppermint.app.ui.settings.CustomPreferenceCategory>
 
+    <com.peppermint.app.ui.settings.CustomCheckBoxPreference
+        android:key="chatHeads"
+        android:title="@string/chat_heads"
+        android:summary="@string/chat_heads_summary" />
+
     <com.peppermint.app.ui.settings.CustomPreference
         android:key="signOut"
         android:title="@string/sign_out"
-        android:summary="Sign out from Peppermint" />
+        android:summary="@string/sign_out_summary" />
 </PreferenceScreen>

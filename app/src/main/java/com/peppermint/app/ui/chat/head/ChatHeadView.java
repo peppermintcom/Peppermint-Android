@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
@@ -45,25 +46,31 @@ public class ChatHeadView extends RoundImageView {
 
     private static final String DEF_BUTTON_BACKGROUND_COLOR = "#4D000000"; // black 30%
 
+    protected static final int DEF_SEL_LENGTH_DP = 15;
+
     private static final int DEF_TEXT_MAX_LINES = 2;
     private static final int DEF_TEXT_PADDING_DP = 5;
     private static final int DEF_TEXT_LINE_SPACING_DP = 1;
 
     private Chat mChat;
     private boolean mNameVisible = true;
+    private boolean mNameOnTop = false;
+    private boolean mSelected = false;
 
     // button-related
     private Bitmap mButtonBitmap;                               // bitmap of button
     private int mButtonBitmapHeight, mButtonBitmapWidth;
     private Paint mButtonBackgroundPaint;
-    private Paint mBitmapPaint;
+    private Paint mBitmapPaint, mSelectionTrianglePaint;
     private RectF mBounds = new RectF();
 
     // display name-related
     private Paint mTextPaint;
-    private int mTextPadding, mTextLineSpacing;
+    private int mTextPadding, mTextLineSpacing, mSelectionTriangleLength;
     private Rect mTextBounds = new Rect();
     private List<String> mDisplayNameList = new ArrayList<>();
+
+    private Path mSelectionTrianglePath;
 
     public ChatHeadView(Context context) {
         super(context);
@@ -83,10 +90,16 @@ public class ChatHeadView extends RoundImageView {
     private void init() {
         mTextPadding = Utils.dpToPx(getContext(), DEF_TEXT_PADDING_DP);
         mTextLineSpacing = Utils.dpToPx(getContext(), DEF_TEXT_LINE_SPACING_DP);
+        mSelectionTriangleLength = Utils.dpToPx(getContext(), DEF_SEL_LENGTH_DP);
 
         mButtonBackgroundPaint = new Paint();
         mButtonBackgroundPaint.setAntiAlias(true);
         mButtonBackgroundPaint.setColor(Color.parseColor(DEF_BUTTON_BACKGROUND_COLOR));
+
+        mSelectionTrianglePaint = new Paint();
+        mSelectionTrianglePaint.setAntiAlias(true);
+        mSelectionTrianglePaint.setStyle(Paint.Style.FILL);
+        mSelectionTrianglePaint.setColor(Color.WHITE);
 
         mBitmapPaint = new Paint();
         mBitmapPaint.setAntiAlias(true);
@@ -104,6 +117,15 @@ public class ChatHeadView extends RoundImageView {
         mTextPaint.setShadowLayer(dp1, dp1, dp1, Utils.getColor(getContext(), R.color.black));
 
         setKeepAspectRatio(false);
+
+        int halfTriangleLength = mSelectionTriangleLength / 2;
+        mSelectionTrianglePath = new Path();
+        mSelectionTrianglePath.moveTo(0, halfTriangleLength);
+        mSelectionTrianglePath.lineTo(halfTriangleLength, 0);
+        mSelectionTrianglePath.lineTo(mSelectionTriangleLength, halfTriangleLength);
+        mSelectionTrianglePath.close();
+
+        setImageResource(R.drawable.ic_anonymous_green_48dp);
     }
 
     @Override
@@ -114,31 +136,57 @@ public class ChatHeadView extends RoundImageView {
 
     @Override
     public synchronized void onDraw(Canvas canvas) {
+        if(getBitmap() == null) {
+            return;
+        }
+
+        canvas.save();
+        if(mNameOnTop) {
+            canvas.translate(0, (getLocalHeight() - getBitmap().getHeight()) - mSelectionTriangleLength - getBorderWidth());
+        }
+
         super.onDraw(canvas);
 
-        if(mChat == null && getLocalWidth() <= 0) {
+        if(mChat == null || getLocalWidth() <= 0) {
+            canvas.restore();
             return;
         }
 
         // draw play button if there are unopened messages
-        if(mChat.getAmountUnopened() > 0 && mButtonBitmap != null) {
+        if(mChat.getLastReceivedUnplayedId() != 0 && mButtonBitmap != null) {
             mBounds.set(getBorderWidth(), getBorderWidth(), getBitmap().getWidth() - getBorderWidth(), getBitmap().getHeight() - getBorderWidth());
             canvas.drawRoundRect(mBounds, getCornerRadius() - getBorderWidth(), getCornerRadius() - getBorderWidth(), mButtonBackgroundPaint);
 
-            int left = (getLocalWidth() / 2) - (mButtonBitmap.getWidth() / 2);
-            int top = (getLocalHeight() / 2) - (mButtonBitmap.getHeight() / 2);
+            int left = (getBitmap().getWidth() / 2) - (mButtonBitmap.getWidth() / 2);
+            int top = (getBitmap().getHeight() / 2) - (mButtonBitmap.getHeight() / 2);
             canvas.drawBitmap(mButtonBitmap, left, top, mBitmapPaint);
         }
 
-        if(mNameVisible) {
+        canvas.restore();
+
+        if(mNameVisible && mChat.getRecipientList().get(0).getPhotoUri() == null) {
+            canvas.save();
+            if(mNameOnTop) {
+                canvas.translate(0, -getBitmap().getHeight());
+            }
+
             int lines = mDisplayNameList.size();
             for (int i = 0; i < lines; i++) {
                 String line = mDisplayNameList.get(i);
                 canvas.drawText(line, 0, line.length(),
                         (float) getLocalWidth() / 2f,
-                        (float) (getBitmap().getHeight() + (mTextPaint.getTextSize() / 2) + mTextPadding + ((mTextPaint.getTextSize() + mTextLineSpacing) * i)),
+                        getBitmap().getHeight() + (mTextPaint.getTextSize() / 2) + mTextPadding + ((mTextPaint.getTextSize() + mTextLineSpacing) * i),
                         mTextPaint);
             }
+
+            canvas.restore();
+        }
+
+        if(mNameOnTop && mSelected) {
+            canvas.save();
+            canvas.translate(getWidth() / 2 - (mSelectionTriangleLength / 2), getHeight() - mSelectionTriangleLength);
+            canvas.drawPath(mSelectionTrianglePath, mSelectionTrianglePaint);
+            canvas.restore();
         }
     }
 
@@ -183,6 +231,9 @@ public class ChatHeadView extends RoundImageView {
         // setup avatar
         if(recipient.getPhotoUri() != null) {
             setImageURI(Uri.parse(recipient.getPhotoUri()));
+            if(getDrawable() == null) {
+                setImageResource(R.drawable.ic_anonymous_green_48dp);
+            }
         } else {
             setImageResource(R.drawable.ic_anonymous_green_48dp);
         }
@@ -265,5 +316,21 @@ public class ChatHeadView extends RoundImageView {
 
     public void setNameVisible(boolean mNameVisible) {
         this.mNameVisible = mNameVisible;
+    }
+
+    public boolean isNameOnTop() {
+        return mNameOnTop;
+    }
+
+    public void setNameOnTop(boolean mNameOnTop) {
+        this.mNameOnTop = mNameOnTop;
+    }
+
+    public boolean isSelected() {
+        return mSelected;
+    }
+
+    public void setSelected(boolean mSelected) {
+        this.mSelected = mSelected;
     }
 }

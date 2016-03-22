@@ -78,8 +78,8 @@ public class ChatHeadActivity extends CustomActionBarActivity implements Recipie
 
         mImgAvatar = (RoundImageView) findViewById(R.id.imgChatAvatar);
 
-        mBtnClose = (ImageButton) findViewById(R.id.btnClose);
-        mBtnClose.setOnClickListener(this);
+        /*mBtnClose = (ImageButton) findViewById(R.id.btnClose);
+        mBtnClose.setOnClickListener(this);*/
 
         if(mChat != null) {
             ChatRecipient recipient = mChat.getRecipientList().get(0);

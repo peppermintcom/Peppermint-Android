@@ -3,11 +3,15 @@ package com.peppermint.app.ui.settings;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
@@ -23,6 +27,7 @@ import com.peppermint.app.cloud.senders.SenderSupportTask;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
+import com.peppermint.app.ui.chat.head.ChatHeadService;
 import com.peppermint.app.utils.Utils;
 
 import javax.net.ssl.SSLException;
@@ -35,6 +40,9 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     private static final String PREF_SIGN_OUT_KEY = "signOut";
     private static final String PREF_DISPLAY_NAME_KEY = "displayName";
     private static final String PREF_GMAIL_ENABLED_KEY = "GmailSenderPreferences_isEnabled";
+    private static final String PREF_CHAT_HEADS_ENABLED_KEY = "chatHeads";
+
+    private static final int OVERLAY_PERMISSION_REQUEST_CODE = 122;
 
     private CustomActionBarActivity mActivity;
     private SenderPreferences mPreferences;
@@ -59,6 +67,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         addPreferencesFromResource(R.xml.pref_global);
 
         String displayName = mPreferences.getFullName();
+
         final Preference mPrefDisplayName = findPreference(PREF_DISPLAY_NAME_KEY);
         if(displayName != null && displayName.length() >= 0) {
             mPrefDisplayName.setTitle(displayName);
@@ -72,6 +81,22 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
                 Toast.makeText(mActivity, R.string.msg_insert_name, Toast.LENGTH_LONG).show();
                 return false;
+            }
+        });
+
+        final CheckBoxPreference mPrefChatHeads = (CheckBoxPreference) findPreference(PREF_CHAT_HEADS_ENABLED_KEY);
+        mPrefChatHeads.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                if ((boolean) newValue && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (!Settings.canDrawOverlays(mActivity)) {
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                Uri.parse("package:" + mActivity.getPackageName()));
+                        startActivityForResult(intent, OVERLAY_PERMISSION_REQUEST_CODE);
+                        return false;
+                    }
+                }
+                return true;
             }
         });
 
@@ -118,6 +143,13 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     public void onResume() {
         super.onResume();
         TrackerManager.getInstance(getActivity().getApplicationContext()).trackScreenView(SCREEN_ID);
+
+        // in case the user remove the permission outside the app
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!Settings.canDrawOverlays(mActivity)) {
+                mPreferences.setChatHeadsEnabled(false);
+            }
+        }
     }
 
     @Override
@@ -151,14 +183,35 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         Preference pref = findPreference(key);
         if (pref != null) {
             mPreferences.getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
-
             if (key.compareTo(PREF_GMAIL_ENABLED_KEY) == 0) {
                 CheckBoxPreference checkPref = (CheckBoxPreference) pref;
                 checkPref.setChecked(sharedPreferences.getBoolean(PREF_GMAIL_ENABLED_KEY, true));
             } else if(key.compareTo(PREF_DISPLAY_NAME_KEY) == 0) {
                 pref.setTitle(sharedPreferences.getString(PREF_DISPLAY_NAME_KEY, getString(R.string.pref_title_displayname)));
+            } else if(key.compareTo(PREF_CHAT_HEADS_ENABLED_KEY) == 0) {
+                boolean isEnabled = mPreferences.areChatHeadsEnabled();
+                CheckBoxPreference checkPref = (CheckBoxPreference) pref;
+                checkPref.setChecked(isEnabled);
+                if(isEnabled) {
+                    mActivity.startService(new Intent(ChatHeadService.ACTION_ENABLE, null, mActivity, ChatHeadService.class));
+                } else {
+                    mActivity.startService(new Intent(ChatHeadService.ACTION_DISABLE, null, mActivity, ChatHeadService.class));
+                }
             }
             mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode == OVERLAY_PERMISSION_REQUEST_CODE) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (Settings.canDrawOverlays(mActivity)) {
+                    mPreferences.setChatHeadsEnabled(true);
+                }
+            }
         }
     }
 

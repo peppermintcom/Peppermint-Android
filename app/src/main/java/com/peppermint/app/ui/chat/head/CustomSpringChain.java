@@ -63,6 +63,7 @@ public class CustomSpringChain implements SpringListener {
             new CopyOnWriteArrayList<SpringListener>();
     private final CopyOnWriteArrayList<Spring> mSprings = new CopyOnWriteArrayList<Spring>();
     private int mControlSpringIndex = -1;
+    private boolean mChainEnabled = true;
 
     // The main spring config defines the tension and friction for the control spring. Keeping these
     // values separate allows the behavior of the trailing springs to be different than that of the
@@ -123,6 +124,16 @@ public class CustomSpringChain implements SpringListener {
         return this;
     }
 
+    public Spring removeSpring(int i) {
+        mListeners.remove(i);
+        return mSprings.remove(i);
+    }
+
+    public void removeAllSprings() {
+        mListeners.clear();
+        mSprings.clear();
+    }
+
     /**
      * Set the index of the control spring. This spring will drive the positions of all the springs
      * before and after it in the list when moved.
@@ -140,6 +151,15 @@ public class CustomSpringChain implements SpringListener {
         }
         getControlSpring().setSpringConfig(mMainSpringConfig);
         return this;
+    }
+
+    public void enable() {
+        mChainEnabled = true;
+        setControlSpringIndex(mControlSpringIndex);
+    }
+
+    public void disable() {
+        mChainEnabled = false;
     }
 
     /**
@@ -165,22 +185,26 @@ public class CustomSpringChain implements SpringListener {
         // spring collection triggering a cascading effect.
         int idx = mSprings.indexOf(spring);
         SpringListener listener = mListeners.get(idx);
-        int above = -1;
-        int below = -1;
-        if (idx == mControlSpringIndex) {
-            below = idx - 1;
-            above = idx + 1;
-        } else if (idx < mControlSpringIndex) {
-            below = idx - 1;
-        } else if (idx > mControlSpringIndex) {
-            above = idx + 1;
+
+        if(mChainEnabled) {
+            int above = -1;
+            int below = -1;
+            if (idx == mControlSpringIndex) {
+                below = idx - 1;
+                above = idx + 1;
+            } else if (idx < mControlSpringIndex) {
+                below = idx - 1;
+            } else if (idx > mControlSpringIndex) {
+                above = idx + 1;
+            }
+            if (above > -1 && above < mSprings.size()) {
+                mSprings.get(above).setEndValue(spring.getCurrentValue());
+            }
+            if (below > -1 && below < mSprings.size()) {
+                mSprings.get(below).setEndValue(spring.getCurrentValue());
+            }
         }
-        if (above > -1 && above < mSprings.size()) {
-            mSprings.get(above).setEndValue(spring.getCurrentValue());
-        }
-        if (below > -1 && below < mSprings.size()) {
-            mSprings.get(below).setEndValue(spring.getCurrentValue());
-        }
+
         listener.onSpringUpdate(spring);
     }
 

@@ -2,6 +2,7 @@ package com.peppermint.app.authenticator;
 
 import android.app.Activity;
 import android.app.Application;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
@@ -37,6 +38,7 @@ public class AuthenticationPolicyEnforcer {
     private static final int AUTH_REQUEST_CODE = 3432;
 
     private Activity mActivity;
+    private Context mContext;
     private TrackerManager mTrackerManager;
     private AuthenticatorUtils mAuthenticatorUtils;
 
@@ -62,7 +64,7 @@ public class AuthenticationPolicyEnforcer {
 
         @Override
         public void onActivityResumed(Activity activity) {
-            if(activity.equals(mActivity)) {
+            if(mActivity != null && activity.equals(mActivity)) {
                 if (isRequiresAuthentication()) {
                     getAuthenticationData();
                 }
@@ -71,29 +73,32 @@ public class AuthenticationPolicyEnforcer {
 
         @Override
         public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-            if(activity.equals(mActivity)) {
+            if(mActivity != null && activity.equals(mActivity)) {
                 saveInstanceState(outState);
             }
         }
 
         @Override
         public void onActivityDestroyed(Activity activity) {
-            if(activity.equals(mActivity)) {
+            if(mActivity != null && activity.equals(mActivity)) {
                 mActivity.getApplication().unregisterActivityLifecycleCallbacks(this);
                 mAuthenticationDoneCallbacks.clear();
             }
         }
     };
 
-    public AuthenticationPolicyEnforcer(Activity activityWithAuthentication, Bundle savedInstanceState) {
+    public AuthenticationPolicyEnforcer(Context context, Bundle savedInstanceState) {
         this.mAuthenticationDoneCallbacks = new ArrayList<>();
-        this.mActivity = activityWithAuthentication;
-        this.mTrackerManager = TrackerManager.getInstance(activityWithAuthentication.getApplicationContext());
-        this.mAuthenticatorUtils = new AuthenticatorUtils(activityWithAuthentication);
+        this.mContext = context;
+        this.mTrackerManager = TrackerManager.getInstance(mContext.getApplicationContext());
+        this.mAuthenticatorUtils = new AuthenticatorUtils(mContext);
 
         restoreInstanceState(savedInstanceState);
 
-        this.mActivity.getApplication().registerActivityLifecycleCallbacks(mActivityLifecycleCallback);
+        if(mContext instanceof Activity) {
+            mActivity = (Activity) mContext;
+            mActivity.getApplication().registerActivityLifecycleCallbacks(mActivityLifecycleCallback);
+        }
     }
 
     public void restoreInstanceState(Bundle savedInstanceState) {
@@ -122,13 +127,17 @@ public class AuthenticationPolicyEnforcer {
                     mTrackerManager.logException(e);
 
                     if(isRequiresAuthentication()) {
-                        Toast.makeText(mActivity, R.string.msg_must_authenticate_using_account, Toast.LENGTH_LONG).show();
-                        mActivity.finish();
+                        Toast.makeText(mContext, R.string.msg_must_authenticate_using_account, Toast.LENGTH_LONG).show();
+                        if(mActivity != null) {
+                            mActivity.finish();
+                        }
                     }
                 }
             } else if(isRequiresAuthentication()) {
-                Toast.makeText(mActivity, R.string.msg_must_authenticate_using_account, Toast.LENGTH_LONG).show();
-                mActivity.finish();
+                Toast.makeText(mContext, R.string.msg_must_authenticate_using_account, Toast.LENGTH_LONG).show();
+                if(mActivity != null) {
+                    mActivity.finish();
+                }
             }
             mIsAuthenticating = false;
         }
@@ -151,7 +160,7 @@ public class AuthenticationPolicyEnforcer {
             }
             return data;
         } catch(PeppermintApiNoAccountException e) {
-            if(!mIsAuthenticating) {
+            if(mActivity != null && !mIsAuthenticating) {
                 mIsAuthenticating = true;
                 Intent intent = new Intent(mActivity, AuthenticatorActivity.class);
                 mActivity.startActivityForResult(intent, AUTH_REQUEST_CODE);

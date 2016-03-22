@@ -139,12 +139,12 @@
         </activity>
 
         <!-- UI: CHAT OVERLAY -->
-        <!--<activity
+        <activity
             android:name=".ui.chat.head.ChatHeadActivity"
             android:label="@string/app_name"
             android:theme="@style/Peppermint.Theme.Transparent"
             android:windowSoftInputMode="stateHidden">
-        </activity>-->
+        </activity>
 
         <!-- UI: HELPER GET RESULT (utilitary invisible activity that allows services to
             launch other activities and obtain a result through "onActivityResult") -->
@@ -153,7 +153,7 @@
             android:theme="@style/Theme.Transparent" >
         </activity>
 
-        <!--<service
+        <service
             android:name=".ui.chat.head.ChatHeadService"
             android:enabled="true"
             android:exported="false" >
@@ -161,7 +161,7 @@
                 <action android:name="com.peppermint.app.ChatHeadService.ENABLE" />
                 <action android:name="com.peppermint.app.ChatHeadService.DISABLE" />
             </intent-filter>
-        </service>-->
+        </service>
 
         <!-- SERV: RECORDING -->
         <service
