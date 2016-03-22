@@ -53,6 +53,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
     // GENERIC
     private DatabaseHelper mDatabaseHelper;
     private SQLiteDatabase mDatabase;
+    private boolean mSavedInstanceState = false;
 
     // UI
     private RecipientDataGUI mRecipientDataGUI;
@@ -178,6 +179,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
             outState.putBundle(STATE_DIALOG, dialogState);
         }
         outState.putLong(STATE_MESSAGE_ID_WITH_ERROR, mMessageIdWithError);
+        mSavedInstanceState = true;
     }
 
     @Override
@@ -211,9 +213,10 @@ public class ChatController extends ChatRecordOverlayController implements View.
     @Override
     public void deinit() {
         if(mAdapter != null) {
-            mAdapter.destroy();
+            mAdapter.destroy(!mSavedInstanceState);
         }
         dismissErrorDialog();
+        mSavedInstanceState = false;
 
         super.deinit();
     }

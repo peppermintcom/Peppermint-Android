@@ -155,6 +155,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
 
                 // play/pause buttons
                 if(mPlayerServiceManager.isPlaying(mMessage)) {
+                    mPlayingController = this;
                     setVisibility(View.GONE, View.VISIBLE, View.GONE);
                 } else {
                     setVisibility(View.VISIBLE, View.GONE, View.GONE);
@@ -411,11 +412,13 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
         this.mDb = mDb;
     }
 
-    public void destroy() {
+    public void destroy(boolean stopPlaying) {
         PeppermintEventBus.unregisterMessages(this);
 
         if(mPlayingController != null) {
-            mPlayingController.pause(true);
+            if(stopPlaying) {
+                mPlayingController.pause(true);
+            }
             mPlayingController.destroy();
         }
         mControllers.clear();
