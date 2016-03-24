@@ -235,11 +235,12 @@ public class GoogleApi implements Serializable {
         UserInfoResponse response = new UserInfoResponse();
         request.execute(response);
 
-        if(response.getException() != null) {
-            throw new HttpResponseException(response.getException());
-        }
         if(response.getCode() == 401) {
             throw new GoogleApiInvalidAccessTokenException(request.toString());
+        }
+
+        if(response.getException() != null) {
+            throw new HttpResponseException(response.getException());
         }
 
         return response;
@@ -249,7 +250,7 @@ public class GoogleApi implements Serializable {
      * Creates a Gmail draft on the Google account.
      *
      * @param subject the email subject
-     * @param body the email body
+     * @param bodyPlain the email body
      * @param destEmail the destination email address
      * @param contentType the content type of the attachment
      * @param emailDate the email date
@@ -278,11 +279,12 @@ public class GoogleApi implements Serializable {
         DraftResponse response = new DraftResponse();
         request.execute(response);
 
-        if(response.getException() != null) {
-            throw new HttpResponseException(response.getException());
-        }
         if(response.getCode() == 401) {
             throw new GoogleApiInvalidAccessTokenException(request.toString());
+        }
+
+        if(response.getException() != null) {
+            throw new HttpResponseException(response.getException());
         }
 
         return response;

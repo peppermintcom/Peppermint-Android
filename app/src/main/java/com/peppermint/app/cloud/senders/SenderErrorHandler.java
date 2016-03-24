@@ -18,6 +18,7 @@ import com.peppermint.app.cloud.apis.exceptions.GoogleApiInvalidAccessTokenExcep
 import com.peppermint.app.cloud.apis.exceptions.GoogleApiNoAuthorizationException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
 import com.peppermint.app.cloud.senders.mail.gmail.GmailSender;
+import com.peppermint.app.cloud.senders.mail.gmail.GmailSenderPreferences;
 import com.peppermint.app.data.Message;
 
 import java.util.HashMap;
@@ -157,6 +158,9 @@ public class SenderErrorHandler extends SenderObject {
                 checkRetries(recoveringTask);
                 return;
             }
+
+            GmailSenderPreferences gmailSenderPreferences = new GmailSenderPreferences(mContext);
+            gmailSenderPreferences.setEnabled(false);
             Toast.makeText(getContext(), R.string.sender_msg_cancelled_gmail_api, Toast.LENGTH_LONG).show();
         }
 
@@ -175,6 +179,8 @@ public class SenderErrorHandler extends SenderObject {
                 return;
             }
 
+            GmailSenderPreferences gmailSenderPreferences = new GmailSenderPreferences(mContext);
+            gmailSenderPreferences.setEnabled(false);
             Toast.makeText(getContext(), R.string.sender_msg_cancelled_gmail_api, Toast.LENGTH_LONG).show();
         }
 
@@ -435,6 +441,12 @@ public class SenderErrorHandler extends SenderObject {
 
             if(error instanceof UserRecoverableAuthIOException || error instanceof UserRecoverableAuthException) {
                 Intent intent = error instanceof UserRecoverableAuthIOException ? ((UserRecoverableAuthIOException) error).getIntent() : ((UserRecoverableAuthException) error).getIntent();
+                startActivityForResult(supportTask, REQUEST_AUTHORIZATION_GOOGLE, intent);
+                return;
+            }
+
+            if(error instanceof GoogleApiNoAuthorizationException) {
+                Intent intent = ((GoogleApiNoAuthorizationException) error).getHandleIntent();
                 startActivityForResult(supportTask, REQUEST_AUTHORIZATION_GOOGLE, intent);
                 return;
             }

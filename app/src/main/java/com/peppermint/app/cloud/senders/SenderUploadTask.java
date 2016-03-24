@@ -9,9 +9,12 @@ import com.peppermint.app.cloud.apis.exceptions.PeppermintApiResponseCodeExcepti
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiTooManyRequestsException;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.data.ContactManager;
+import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.Message;
+import com.peppermint.app.data.MessageManager;
 
 import java.io.File;
+import java.sql.SQLException;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
@@ -88,18 +91,32 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         }
 
         AuthenticationData data = getAuthenticationData();
-        String canonicalUrl = getMessage().getServerCanonicalUrl();
+        Message message = getMessage();
+        String canonicalUrl = message.getServerCanonicalUrl();
 
-        String recipientEmail = getMessage().getChatParameter().getRecipientList().get(0).getVia();
-        long recipientRawId = getMessage().getChatParameter().getRecipientList().get(0).getRawContactId();
+        String recipientEmail = message.getChatParameter().getRecipientList().get(0).getVia();
+        long recipientRawId = message.getChatParameter().getRecipientList().get(0).getRawContactId();
 
         try {
-            getPeppermintApi().sendMessage(null, canonicalUrl, data.getEmail(), recipientEmail, (int) (getMessage().getRecordingParameter().getDurationMillis() / 1000));
-            getMessage().setParameter(Message.PARAM_SENT_INAPP, true);
+            getPeppermintApi().sendMessage(null, canonicalUrl, data.getEmail(), recipientEmail, (int) (message.getRecordingParameter().getDurationMillis() / 1000));
+            message.setParameter(Message.PARAM_SENT_INAPP, true);
         } catch(PeppermintApiRecipientNoAppException e) {
             getTrackerManager().log("Unable to send through Peppermint", e);
             ContactManager.deletePeppermint(getContext(), recipientRawId, null);
         }
+
+        DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getContext());
+        databaseHelper.lock();
+        try {
+            MessageManager.update(databaseHelper.getWritableDatabase(), message.getId(), message.getChatId(), message.getAuthorId(), message.getRecordingId(),
+                    message.getServerId(), message.getServerShortUrl(), message.getServerCanonicalUrl(), message.getTranscription(),
+                    message.getEmailSubject(), message.getEmailBody(),
+                    message.getRegistrationTimestamp(), message.isSent(), message.isReceived(), message.isPlayed(),
+                    message.getParameter(Message.PARAM_SENT_INAPP) != null && (boolean) message.getParameter(Message.PARAM_SENT_INAPP));
+        } catch (SQLException e) {
+            getTrackerManager().logException(e);
+        }
+        databaseHelper.unlock();
 
         ContactManager.insertPeppermint(getContext(), recipientEmail, recipientRawId, 0, null);
     }

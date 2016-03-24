@@ -74,9 +74,6 @@ public class GmailSenderTask extends SenderUploadTask {
         AuthenticationData data = setupPeppermintAuthentication();
         uploadPeppermintMessage();
 
-        // send in-app
-        sendPeppermintMessage();
-
         String url = getMessage().getServerShortUrl();
         String canonicalUrl = getMessage().getServerCanonicalUrl();
 
@@ -124,16 +121,25 @@ public class GmailSenderTask extends SenderUploadTask {
             }
 
             if(!isCancelled()) {
+                // send in-app
+                try {
+                    sendPeppermintMessage();
+                } catch(Throwable e) {
+                    // try to delete the draft if something goes wrong
+                    googleApi.deleteGmailDraft(draft);
+                    throw e;
+                }
+            }
+
+            if(!isCancelled()) {
                 try {
                     // send the draft
                     googleApi.sendGmailDraft(draft);
                     getTrackerManager().log("Gmail # Sent Draft at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
                 } catch (InterruptedIOException e) {
-                    if(!isCancelled()) {
-                        // try to delete the draft if something goes wrong
-                        googleApi.deleteGmailDraft(draft);
-                        throw e;
-                    }
+                    // try to delete the draft if something goes wrong
+                    googleApi.deleteGmailDraft(draft);
+                    throw e;
                 }
             }
 
