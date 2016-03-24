@@ -2,7 +2,6 @@ package com.peppermint.app.ui.recipients;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,14 +39,14 @@ public class ContactCursorAdapter extends CursorAdapter {
 
     private TrackerManager mTrackerManager;
     private Context mContext;
-    private SQLiteDatabase mDb;
+    private DatabaseHelper mDatabaseHelper;
     private Map<Long, Chat> mChats = new HashMap<>();
 
     public ContactCursorAdapter(Context context, Cursor cursor) {
         super(context, cursor, 0);
         this.mTrackerManager = TrackerManager.getInstance(context.getApplicationContext());
         this.mContext = context;
-        this.mDb = DatabaseHelper.getInstance(context).getReadableDatabase();
+        this.mDatabaseHelper = DatabaseHelper.getInstance(context);
     }
 
     @Override
@@ -97,7 +96,7 @@ public class ContactCursorAdapter extends CursorAdapter {
 
             int unreadAmount = 0;
             if(chat != null) {
-                unreadAmount = MessageManager.getUnopenedCountByChat(mDb, chat.getId());
+                unreadAmount = MessageManager.getUnopenedCountByChat(mDatabaseHelper.getReadableDatabase(), chat.getId());
             }
 
             if(unreadAmount > 0) {
@@ -121,7 +120,7 @@ public class ContactCursorAdapter extends CursorAdapter {
             if(!mChats.containsKey(id)) {
                 ChatRecipient recipient = new ChatRecipient();
                 recipient.setContactId(id);
-                chat = ChatManager.getChatByRecipients(mDb, recipient);
+                chat = ChatManager.getChatByRecipients(mDatabaseHelper.getReadableDatabase(), recipient);
                 mChats.put(id, chat);
             } else {
                 chat = mChats.get(id);
@@ -155,13 +154,21 @@ public class ContactCursorAdapter extends CursorAdapter {
 
     @Override
     public void notifyDataSetChanged() {
-        super.notifyDataSetChanged();
         mChats.clear();
+        super.notifyDataSetChanged();
     }
 
     @Override
     public void notifyDataSetInvalidated() {
-        super.notifyDataSetInvalidated();
         mChats.clear();
+        super.notifyDataSetInvalidated();
+    }
+
+    @Override
+    public void changeCursor(Cursor cursor) {
+        if(cursor != getCursor()) {
+            mChats.clear();
+        }
+        super.changeCursor(cursor);
     }
 }

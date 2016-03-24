@@ -2,7 +2,6 @@ package com.peppermint.app.ui.chat;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,7 +31,7 @@ import java.util.TimeZone;
 public class ChatCursorAdapter extends CursorAdapter {
 
     private Context mContext;
-    private SQLiteDatabase mDb;
+    private DatabaseHelper mDatabaseHelper;
     private TrackerManager mTrackerManager;
     private Set<Long> mPeppermintSet;
 
@@ -40,8 +39,8 @@ public class ChatCursorAdapter extends CursorAdapter {
         super(context, cursor, 0);
         this.mContext = context;
         this.mPeppermintSet = peppermintSet;
-        this.mDb = DatabaseHelper.getInstance(context).getReadableDatabase();
         this.mTrackerManager = mTrackerManager;
+        this.mDatabaseHelper = DatabaseHelper.getInstance(context);
     }
 
     @Override
@@ -89,7 +88,7 @@ public class ChatCursorAdapter extends CursorAdapter {
             txtLastMessageDate.setText("");
         }
 
-        int unreadAmount = MessageManager.getUnopenedCountByChat(mDb, chat.getId());
+        int unreadAmount = MessageManager.getUnopenedCountByChat(mDatabaseHelper.getReadableDatabase(), chat.getId());
         if(unreadAmount > 0) {
             txtUnreadMessages.setText(String.valueOf(unreadAmount));
             txtUnreadMessages.setVisibility(View.VISIBLE);
@@ -100,7 +99,7 @@ public class ChatCursorAdapter extends CursorAdapter {
 
     public Chat getChat(Cursor cursor) {
         // get recipient data as well
-        return ChatManager.getChatFromCursor(mDb, cursor);
+        return ChatManager.getChatFromCursor(mDatabaseHelper.getReadableDatabase(), cursor);
     }
 
     public Chat getChat(int position) {

@@ -52,7 +52,6 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
     // GENERIC
     private DatabaseHelper mDatabaseHelper;
-    private SQLiteDatabase mDatabase;
     private boolean mSavedInstanceState = false;
 
     // UI
@@ -228,6 +227,10 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
     @Override
     public boolean onLongClick(View v) {
+        if(mAdapter == null) {
+            return false;
+        }
+
         mAdapter.stopAllPlayers();
         return triggerRecording(v, mChat);
     }
@@ -315,10 +318,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
     }
 
     private SQLiteDatabase getDatabase() {
-        if(mDatabase == null || !mDatabase.isOpen()) {
-            mDatabase = mDatabaseHelper.getReadableDatabase();
-        }
-        return mDatabase;
+        return mDatabaseHelper.getReadableDatabase();
     }
 
     private void showErrorDialog(long messageIdWithError) {

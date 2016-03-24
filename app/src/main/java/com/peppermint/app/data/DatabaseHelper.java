@@ -31,7 +31,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
 	public static synchronized void clearInstance() {
-		INSTANCE = null;
+		if(INSTANCE != null) {
+			INSTANCE.close();
+		}
 	}
 
     private static DatabaseHelper INSTANCE;

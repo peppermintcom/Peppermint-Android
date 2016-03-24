@@ -254,9 +254,7 @@ public class MessagesService extends Service {
                 if (Utils.isInternetAvailable(MessagesService.this)) {
                     doGcmRegistration();
 
-                    DatabaseHelper databaseHelper = DatabaseHelper.getInstance(MessagesService.this);
-                    SQLiteDatabase db = databaseHelper.getReadableDatabase();
-                    List<Message> queued = MessageManager.getMessagesQueued(db);
+                    List<Message> queued = MessageManager.getMessagesQueued(DatabaseHelper.getInstance(MessagesService.this).getReadableDatabase());
                     if (queued.size() > 0 && Utils.isInternetActive(MessagesService.this)) {
                         // try to resend all queued recordings..
                         for (Message message : queued) {
@@ -501,9 +499,8 @@ public class MessagesService extends Service {
             return false;
         }
 
-        DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this);
-        SQLiteDatabase db = databaseHelper.getReadableDatabase();
-        message = MessageManager.getMessageByIdOrServerId(db, message.getId(), message.getServerId());
+        message = MessageManager.getMessageByIdOrServerId(DatabaseHelper.getInstance(this).getReadableDatabase(),
+                message.getId(), message.getServerId());
 
         mSenderManager.send(message);
         return true;

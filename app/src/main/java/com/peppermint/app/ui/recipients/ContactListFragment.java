@@ -205,6 +205,7 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
                     mRecipientAdapter.changeCursor((Cursor) data);
                     if(getListView().getAdapter() != mRecipientAdapter) {
                         getListView().setAdapter(mRecipientAdapter);
+
                     }
                     mChatAdapter.changeCursor(null);
                 } else {
