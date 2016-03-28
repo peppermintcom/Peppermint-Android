@@ -591,10 +591,18 @@ public class MessagesService extends Service {
         notificationIntent.putExtra(ChatFragment.PARAM_CHAT_ID, message.getChatId());
         PendingIntent pendingIntent = PendingIntent.getActivity(MessagesService.this, (int) message.getId(), notificationIntent, 0);
 
+        String title = message.getChatParameter().getTitle();
+        if(title == null && message.getChatParameter().getRecipientList().size() > 0) {
+            title = message.getChatParameter().getRecipientList().get(0).getDisplayName();
+            if(title == null) {
+                title = message.getChatParameter().getRecipientList().get(0).getVia();
+            }
+        }
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(MessagesService.this)
                 .setSmallIcon(R.drawable.ic_mail_36dp)
                 .setContentTitle(getString(R.string.new_message))
-                .setContentText(message.getChatParameter().getTitle() + " " + getString(R.string.sent_you_a_message))
+                .setContentText(title + " " + getString(R.string.sent_you_a_message))
                 .setContentIntent(pendingIntent)
                 .setSound(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.waterdrop))
                 .setGroup(String.valueOf(message.getChatId()));

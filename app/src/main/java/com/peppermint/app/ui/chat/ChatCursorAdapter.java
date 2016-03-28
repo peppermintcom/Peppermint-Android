@@ -51,6 +51,12 @@ public class ChatCursorAdapter extends CursorAdapter {
     @Override
     public synchronized void bindView(View view, Context context, Cursor cursor) {
         Chat chat = getChat(cursor);
+
+        if(chat == null || chat.getRecipientList().size() <= 0) {
+            // for some reason this might happen, perhaps due to synchronization
+            return;
+        }
+
         ChatRecipient recipient = chat.getRecipientList().get(0);
 
         AnimatedAvatarView imgPhoto = (AnimatedAvatarView) view.findViewById(R.id.imgPhoto);

@@ -48,6 +48,7 @@ public class GlobalManager {
 
         // insert chat and recipient
         ChatRecipient chatRecipient = new ChatRecipient(0, contactRaw, DateContainer.getCurrentUTCTimestamp());
+        String chatTitle = chatRecipient.getDisplayName() == null ? chatRecipient.getVia() : chatRecipient.getDisplayName();
         // try to find already existent chat
         Chat foundChat = ChatManager.getChatByRecipients(db, chatRecipient);
         if(foundChat != null) {
@@ -56,11 +57,11 @@ public class GlobalManager {
             if(foundChat.getLastMessageTimestamp() != null && foundChat.getLastMessageTimestamp().compareToIgnoreCase(createdTs) > 0) {
                 chatTimestamp = foundChat.getLastMessageTimestamp();
             }
-            ChatManager.update(db, foundChat.getId(), chatRecipient.getDisplayName(), chatTimestamp);
+            ChatManager.update(db, foundChat.getId(), chatTitle, chatTimestamp);
             chat = foundChat;
         } else {
             // otherwise, just insert
-            chat = ChatManager.insert(context, db, chatRecipient.getDisplayName(), createdTs, chatRecipient);
+            chat = ChatManager.insert(context, db, chatTitle, createdTs, chatRecipient);
         }
 
         // insert recording
