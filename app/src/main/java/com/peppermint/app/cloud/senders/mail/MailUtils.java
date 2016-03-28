@@ -15,15 +15,12 @@ import java.net.URLEncoder;
  */
 public class MailUtils {
 
-    public static String buildEmailFromTemplate(Context context, int templateResId, String shortUrl, String canonicalUrl, long durationInMillis, String contentType, String replyName, String replyEmail, boolean isHtml)
+    public static String buildEmailFromTemplate(Context context, int templateResId, String shortUrl, String canonicalUrl, long durationInMillis, String contentType, String replyName, String replyEmail)
             throws UnsupportedEncodingException {
 
         StringBuilder bodyBuilder = new StringBuilder();
 
         String friendlyDuration = Utils.getFriendlyDuration(durationInMillis);
-        if(isHtml) {
-            friendlyDuration = friendlyDuration.replaceAll(".(?=.)", "$0<span>&#8203;</span>");
-        }
 
         ScriptFileReader templateReader = new ScriptFileReader(context, templateResId);
         templateReader.open();

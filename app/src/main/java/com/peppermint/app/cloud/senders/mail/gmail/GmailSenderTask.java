@@ -88,12 +88,12 @@ public class GmailSenderTask extends SenderUploadTask {
         String bodyPlain = MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_plain, url, canonicalUrl,
                 getMessage().getRecordingParameter().getDurationMillis(),
                 getMessage().getRecordingParameter().getContentType(),
-                fullName, data.getEmail(), false);
+                fullName, data.getEmail());
 
         String bodyHtml = MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_html, url, canonicalUrl,
                 getMessage().getRecordingParameter().getDurationMillis(),
                 getMessage().getRecordingParameter().getContentType(),
-                fullName, data.getEmail(), true);
+                fullName, data.getEmail());
 
         getMessage().setEmailBody(bodyPlain);
 

@@ -48,7 +48,7 @@ public class IntentMailSenderTask extends SenderUploadTask {
             getMessage().setEmailBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_plain, url, getMessage().getServerCanonicalUrl(),
                     getMessage().getRecordingParameter().getDurationMillis(),
                     getMessage().getRecordingParameter().getContentType(),
-                    displayName, data.getEmail(), false));
+                    displayName, data.getEmail()));
 
             File file = getMessage().getRecordingParameter().getFile();
 
