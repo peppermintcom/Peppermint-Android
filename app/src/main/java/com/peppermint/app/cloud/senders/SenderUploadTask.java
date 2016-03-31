@@ -100,6 +100,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         try {
             getPeppermintApi().sendMessage(null, canonicalUrl, data.getEmail(), recipientEmail, (int) (message.getRecordingParameter().getDurationMillis() / 1000));
             message.setParameter(Message.PARAM_SENT_INAPP, true);
+            ContactManager.insertPeppermint(getContext(), recipientEmail, recipientRawId, 0, null);
         } catch(PeppermintApiRecipientNoAppException e) {
             getTrackerManager().log("Unable to send through Peppermint", e);
             ContactManager.deletePeppermint(getContext(), recipientRawId, null);
@@ -117,8 +118,6 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
             getTrackerManager().logException(e);
         }
         databaseHelper.unlock();
-
-        ContactManager.insertPeppermint(getContext(), recipientEmail, recipientRawId, 0, null);
     }
 
     @Override
