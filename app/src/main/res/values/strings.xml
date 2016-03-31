@@ -154,6 +154,7 @@
     <string name="account_settings_desc">Your name, message channels, and more</string>
 
     <!-- CHAT -->
+    <string name="cancel_sending">Cancel\nSending</string>
     <string name="record_a_message">Record a Message</string>
     <string name="retry">Retry</string>
     <string name="delete">Delete</string>
