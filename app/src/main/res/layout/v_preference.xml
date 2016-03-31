@@ -17,7 +17,8 @@
 <!-- Layout for a Preference in a PreferenceActivity. The
      Preference is able to place a specific widget for its particular
      type in the "widget_frame" layout. -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" 
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="?android:attr/listPreferredItemHeight"
@@ -44,29 +45,32 @@
         android:layout_marginBottom="6dip"
         android:layout_weight="1">
 
-        <TextView android:id="@android:id/title"
+        <com.peppermint.app.ui.views.simple.CustomFontTextView android:id="@android:id/title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            custom:textFont="@string/font_semibold"
             android:singleLine="true"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:ellipsize="marquee"
             android:fadingEdge="horizontal" />
 
-        <TextView android:id="@+id/content"
+        <com.peppermint.app.ui.views.simple.CustomFontTextView android:id="@+id/content"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@android:id/title"
             android:layout_alignStart="@android:id/title"
             android:layout_alignLeft="@android:id/title"
+            custom:textFont="@string/font_regular"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:maxLines="4" />
 
-        <TextView android:id="@android:id/summary"
+        <com.peppermint.app.ui.views.simple.CustomFontTextView android:id="@android:id/summary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/content"
             android:layout_alignStart="@android:id/title"
             android:layout_alignLeft="@android:id/title"
+            custom:textFont="@string/font_regular"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:textColor="?android:attr/textColorSecondary"
             android:maxLines="4" />

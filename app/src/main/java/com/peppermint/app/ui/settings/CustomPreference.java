@@ -71,11 +71,6 @@ public class CustomPreference extends Preference {
         txtSummary.setTextColor(Utils.getColor(getContext(), R.color.dark_grey_text));
         mTxtContent.setTextColor(Utils.getColor(getContext(), R.color.black));
 
-        PeppermintApp app = (PeppermintApp) ((Activity) getContext()).getApplication();
-        txtTitle.setTypeface(app.getFontSemibold());
-        txtSummary.setTypeface(app.getFontRegular());
-        mTxtContent.setTypeface(app.getFontRegular());
-
         try {
             txtTitle.setTextColor(ContextCompat.getColorStateList(getContext(), R.color.color_black_to_darkgrey_disabled));
         } catch (Exception e) {

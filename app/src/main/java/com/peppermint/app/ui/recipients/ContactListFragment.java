@@ -15,7 +15,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
-import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.view.Gravity;
@@ -29,9 +28,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
-import android.widget.TextView;
 
-import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
@@ -63,7 +60,6 @@ import com.peppermint.app.ui.views.simple.CustomVisibilityListView;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
-import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -187,9 +183,7 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
                     return cursor;
                 }
             } catch(Throwable e) {
-                if(!(e instanceof InterruptedIOException)) {
-                    mActivity.getTrackerManager().logException(e);
-                }
+                mActivity.getTrackerManager().logException(e);
             }
 
             return null;
@@ -338,9 +332,6 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
                     mSearchListBarView.setSearchText(name);
                 } else {
                     // if mail is supplied, check if the contact exists
-                    List<String> mimeTypes = new ArrayList<>();
-                    mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
-                    mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
                     ContactRaw foundRecipient = ContactManager.getRawContactByViaOrContactId(mActivity, mail, 0);
 
                     // if not, add the contact
@@ -370,7 +361,10 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
                 mBtnAddContact.getGlobalVisibleRect(mBtnAddContactHitRect);
                 if (!mBtnAddContactHitRect.contains((int) event.getX(), (int) event.getY())) {
                     mSearchListBarView.removeSearchTextFocus(event);
-                    getView().requestFocus();
+                    View view = getView();
+                    if(view != null) {
+                        view.requestFocus();
+                    }
                 }
 
                 dismissPopup();
@@ -437,7 +431,6 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        PeppermintApp app = (PeppermintApp) mActivity.getApplication();
 
         mChatAdapter = new ChatCursorAdapter(mActivity, null, null, mActivity.getTrackerManager());
         mRecipientAdapter = new ContactCursorAdapter(mActivity, null);
@@ -510,7 +503,6 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
         // inflate and init custom action bar view
         mSearchListBarView = (SearchListBarView) inflater.inflate(R.layout.f_recipients_actionbar, null, false);
         mSearchListBarView.setListCategories(RecipientType.getAll(mActivity));
-        mSearchListBarView.setTypeface(app.getFontRegular());
 
         if (savedInstanceState != null) {
             mHasSavedInstanceState = true;
@@ -527,7 +519,6 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
         mLytAddContactContainer = (ViewGroup) v.findViewById(R.id.lytAddContactContainer);
 
         mBtnAddContact = (Button) v.findViewById(R.id.btnAddContact);
-        mBtnAddContact.setTypeface(app.getFontSemibold());
         mBtnAddContact.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -547,9 +538,6 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
                 startActivityForResult(intent, REQUEST_NEWCONTACT);
             }
         });
-
-        TextView txtEmpty1 = (TextView) v.findViewById(R.id.txtEmpty1);
-        txtEmpty1.setTypeface(app.getFontSemibold());
 
         return v;
     }
@@ -648,7 +636,11 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
             mHasSavedInstanceState = false;
         }
         mSearchListBarView.removeSearchTextFocus(null);
-        getView().requestFocus();
+
+        View v = getView();
+        if(v != null) {
+            v.requestFocus();
+        }
 
         if(mController.getPreferences().isFirstRun()) {
             mHandler.postDelayed(mTipRunnable, 100);

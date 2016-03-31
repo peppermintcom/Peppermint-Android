@@ -4,7 +4,6 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
-import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -270,10 +269,6 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         mCategories = categories;
     }
 
-    public List<? extends ListCategory> getListCategories() {
-        return mCategories;
-    }
-
     public int getSelectedItemPosition() {
         return mSelectedItemPosition;
     }
@@ -299,20 +294,8 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         return false;
     }
 
-    public OnSearchListener getOnSearchListener() {
-        return mListener;
-    }
-
     public void setOnSearchListener(OnSearchListener mListener) {
         this.mListener = mListener;
-    }
-
-    public void setTypeface(Typeface font) {
-        mTxtSearch.setTypeface(font);
-    }
-
-    public boolean isSearchFocused() {
-        return mTxtSearch.isFocused();
     }
 
     public String getSearchText() {

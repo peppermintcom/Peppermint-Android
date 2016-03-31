@@ -1,7 +1,6 @@
 package com.peppermint.app.ui.settings;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
 import android.preference.CheckBoxPreference;
@@ -11,7 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.Utils;
@@ -70,11 +68,6 @@ public class CustomCheckBoxPreference extends CheckBoxPreference {
         txtTitle.setTextColor(Utils.getColor(getContext(), R.color.black));
         txtSummary.setTextColor(Utils.getColor(getContext(), R.color.dark_grey_text));
         mTxtContent.setTextColor(Utils.getColor(getContext(), R.color.black));
-
-        PeppermintApp app = (PeppermintApp) ((Activity) getContext()).getApplication();
-        txtTitle.setTypeface(app.getFontSemibold());
-        txtSummary.setTypeface(app.getFontRegular());
-        mTxtContent.setTypeface(app.getFontRegular());
 
         try {
             txtTitle.setTextColor(ContextCompat.getColorStateList(getContext(), R.color.color_black_to_darkgrey_disabled));

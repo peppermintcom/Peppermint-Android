@@ -88,13 +88,14 @@
                     custom:roundBorderColor="@color/white"
                 />
 
-                <TextView
+                <com.peppermint.app.ui.views.simple.CustomFontTextView
                     android:id="@+id/txtUserName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/app_name"
                     android:textColor="#fff"
                     android:textSize="16dp"
+                    custom:textFont="@string/font_semibold"
                     android:singleLine="true"/>
             </LinearLayout>
 

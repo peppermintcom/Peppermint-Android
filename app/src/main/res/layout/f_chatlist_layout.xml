@@ -30,13 +30,14 @@
             android:gravity="center"
             android:orientation="vertical">
 
-            <TextView
+            <com.peppermint.app.ui.views.simple.CustomFontTextView
                 android:id="@+id/txtEmpty1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="30dp"
                 android:layout_marginRight="30dp"
                 android:gravity="center"
+                custom:textFont="@string/font_semibold"
                 android:textSize="16dp"
                 android:textColor="@color/grey_text"
                 android:text="@string/msg_no_conversations" />
