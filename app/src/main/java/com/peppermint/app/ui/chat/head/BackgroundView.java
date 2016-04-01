@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.PixelFormat;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
 
 import com.peppermint.app.R;
@@ -13,6 +12,10 @@ import com.peppermint.app.ui.views.simple.TouchInterceptorView;
 
 /**
  * Created by Nuno Luz on 19-03-2016.
+ *
+ * Dummy view that stays on the background and captures key events.
+ * It also dims the background using the native layout dim feature.
+ *
  */
 public class BackgroundView extends WindowManagerViewGroup implements KeyInterceptable {
 
@@ -26,14 +29,14 @@ public class BackgroundView extends WindowManagerViewGroup implements KeyInterce
         mView.setVisibility(View.GONE);
 
         WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT,
+                0,      // w and h 0
+                0,
                 WindowManager.LayoutParams.TYPE_PHONE,
-                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED | WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_DIM_BEHIND,
                 PixelFormat.TRANSLUCENT);
-        layoutParams.gravity = Gravity.TOP | Gravity.LEFT;
+        layoutParams.dimAmount = 0.5f;
+        layoutParams.gravity = Gravity.TOP | Gravity.START;
 
-        super.show();
         addView(mView, layoutParams);
     }
 

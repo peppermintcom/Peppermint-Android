@@ -17,7 +17,6 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.SignOutPeppermintTask;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
@@ -27,20 +26,20 @@ import com.peppermint.app.cloud.senders.SenderSupportTask;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
-import com.peppermint.app.ui.chat.head.ChatHeadService;
+import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
 import com.peppermint.app.utils.Utils;
 
 import javax.net.ssl.SSLException;
 
 public class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener, SenderSupportListener {
 
-    private static final String TAG = SettingsFragment.class.getSimpleName();
     private static final String SCREEN_ID = "Settings";
 
     private static final String PREF_SIGN_OUT_KEY = "signOut";
     private static final String PREF_DISPLAY_NAME_KEY = "displayName";
-    private static final String PREF_GMAIL_ENABLED_KEY = "GmailSenderPreferences_isEnabled";
     private static final String PREF_CHAT_HEADS_ENABLED_KEY = "chatHeads";
+
+    private static final String PREF_GMAIL_ENABLED_KEY = "GmailSenderPreferences_isEnabled";
 
     private static final int OVERLAY_PERMISSION_REQUEST_CODE = 122;
 
@@ -80,7 +79,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                 }
 
                 Toast.makeText(mActivity, R.string.msg_insert_name, Toast.LENGTH_LONG).show();
-                return false;
+                return false; // does not allow the preference to change
             }
         });
 
@@ -93,7 +92,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                         Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                                 Uri.parse("package:" + mActivity.getPackageName()));
                         startActivityForResult(intent, OVERLAY_PERMISSION_REQUEST_CODE);
-                        return false;
+                        return false;   // does not allow the preference to change
                     }
                 }
                 return true;
@@ -131,11 +130,9 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        PeppermintApp app = (PeppermintApp) mActivity.getApplication();
 
         // inflate and init custom action bar view
         TextView actionBarView = (TextView) LayoutInflater.from(mActivity).inflate(R.layout.v_settings_actionbar, null, false);
-        actionBarView.setTypeface(app.getFontSemibold());
         mActivity.getCustomActionBar().setContents(actionBarView, false);
     }
 
@@ -193,9 +190,9 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                 CheckBoxPreference checkPref = (CheckBoxPreference) pref;
                 checkPref.setChecked(isEnabled);
                 if(isEnabled) {
-                    mActivity.startService(new Intent(ChatHeadService.ACTION_ENABLE, null, mActivity, ChatHeadService.class));
+                    ChatHeadServiceManager.startAndEnable(mActivity);
                 } else {
-                    mActivity.startService(new Intent(ChatHeadService.ACTION_DISABLE, null, mActivity, ChatHeadService.class));
+                    ChatHeadServiceManager.startAndDisable(mActivity);
                 }
             }
             mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
@@ -206,6 +203,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        // check the result of the overlay permission request
         if(requestCode == OVERLAY_PERMISSION_REQUEST_CODE) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 if (Settings.canDrawOverlays(mActivity)) {
@@ -216,9 +214,10 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     }
 
     @Override
-    public void onSendingSupportStarted(SenderSupportTask supportTask) {
+    public void onSendingSupportStarted(SenderSupportTask supportTask) { /* nothing to do here */  }
 
-    }
+    @Override
+    public void onSendingSupportProgress(SenderSupportTask supportTask, float progressValue) { /* nothing to do here */ }
 
     @Override
     public void onSendingSupportCancelled(SenderSupportTask supportTask) {
@@ -253,11 +252,6 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
         Toast.makeText(mActivity, R.string.msg_authentication_error, Toast.LENGTH_LONG).show();
         mActivity.getTrackerManager().logException(error);
-    }
-
-    @Override
-    public void onSendingSupportProgress(SenderSupportTask supportTask, float progressValue) {
-
     }
 
     private void showProgress() {

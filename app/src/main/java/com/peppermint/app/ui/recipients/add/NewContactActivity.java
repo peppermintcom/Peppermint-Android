@@ -3,10 +3,7 @@ package com.peppermint.app.ui.recipients.add;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
 
-import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.views.NavigationItem;
@@ -31,17 +28,9 @@ public class NewContactActivity extends CustomActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        PeppermintApp app = (PeppermintApp) getApplication();
 
         // inflate custom action bar
         View v = getLayoutInflater().inflate(R.layout.v_newcontact_actionbar, null, false);
-
-        TextView txtTitle = ((TextView) v.findViewById(R.id.txtTitle));
-        txtTitle.setTypeface(app.getFontSemibold());
-
-        Button btnSave = (Button) v.findViewById(R.id.btnSave);
-        btnSave.setTypeface(app.getFontSemibold());
-
         getCustomActionBar().setContents(v, false);
 
         // cancel new contact icon

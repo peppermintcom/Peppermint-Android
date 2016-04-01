@@ -6,13 +6,15 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 
-import com.peppermint.app.data.Message;
+import com.peppermint.app.tracking.TrackerManager;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by Nuno Luz on 22/03/2016.
+ *
+ * Manager that helps external components to interact with the {@link ChatHeadService}.
  */
 public class ChatHeadServiceManager {
 
@@ -56,20 +58,21 @@ public class ChatHeadServiceManager {
         this.mContext = context;
     }
 
-    /**
-     * Starts the service and plays the supplied message.
-     * @param message the message
-     * @param startProgress the starting point in percentage of the total duration of the message
-     */
-    public void startAndEnable(Message message, int startProgress) {
-        Intent intent = new Intent(mContext, ChatHeadService.class);
+    public static void startAndEnable(Context context) {
+        Intent intent = new Intent(context, ChatHeadService.class);
         intent.setAction(ChatHeadService.ACTION_ENABLE);
-        mContext.startService(intent);
+        context.startService(intent);
     }
 
-    public void start() {
-        Intent intent = new Intent(mContext, ChatHeadService.class);
-        mContext.startService(intent);
+    public static void startAndDisable(Context context) {
+        Intent intent = new Intent(context, ChatHeadService.class);
+        intent.setAction(ChatHeadService.ACTION_DISABLE);
+        context.startService(intent);
+    }
+
+    public static void start(Context context) {
+        Intent intent = new Intent(context, ChatHeadService.class);
+        context.startService(intent);
     }
 
     /**
@@ -77,7 +80,7 @@ public class ChatHeadServiceManager {
      * <b>Also binds this manager to the service.</b>
      */
     public void startAndBind() {
-        start();
+        start(mContext);
         bind();
     }
 
@@ -101,14 +104,49 @@ public class ChatHeadServiceManager {
         }
     }
 
-    public boolean isBound() {
-        return mIsBound;
+    public void enable() {
+        if(mService != null) {
+            mService.enable();
+        } else {
+            TrackerManager.getInstance(mContext).logException(new NullPointerException("Service not bound! mService is null!"));
+        }
+    }
+    public void disable() {
+        if(mService != null) {
+            mService.disable();
+        } else {
+            TrackerManager.getInstance(mContext).logException(new NullPointerException("Service not bound! mService is null!"));
+        }
+    }
+    public void show() {
+        if(mService != null) {
+            mService.show();
+        } else {
+            TrackerManager.getInstance(mContext).logException(new NullPointerException("Service not bound! mService is null!"));
+        }
+    }
+    public void hide() {
+        if(mService != null) {
+            mService.hide();
+        } else {
+            TrackerManager.getInstance(mContext).logException(new NullPointerException("Service not bound! mService is null!"));
+        }
     }
 
-    public void enable() { mService.enable(); }
-    public void disable() { mService.disable(); }
-    public void show() { mService.show(); }
-    public void hide() { mService.hide(); }
+    public void addVisibleActivity(String activityFullClassName) {
+        if(mService != null) {
+            mService.addVisibleActivity(activityFullClassName);
+        } else {
+            TrackerManager.getInstance(mContext).logException(new NullPointerException("Service not bound! mService is null!"));
+        }
+    }
+    public boolean removeVisibleActivity(String activityFullClassName) {
+        if(mService == null) {
+            TrackerManager.getInstance(mContext).logException(new NullPointerException("Service not bound! mService is null!"));
+            return false;
+        }
+        return mService.removeVisibleActivity(activityFullClassName);
+    }
 
     public void addServiceBinderListener(ChatHeadServiceBinderListener listener) {
         mBinderListeners.add(listener);

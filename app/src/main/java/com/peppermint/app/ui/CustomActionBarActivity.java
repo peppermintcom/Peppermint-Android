@@ -2,7 +2,6 @@ package com.peppermint.app.ui;
 
 import android.animation.Animator;
 import android.animation.AnimatorSet;
-import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Intent;
@@ -24,7 +23,6 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
@@ -52,7 +50,6 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
 
     private static final String SAVED_MENU_POSITION_KEY = TAG + "_SAVED_MENU_POSITION_KEY";
 
-    private static Activity CURRENT_ACTIVITY = null;
     private ChatHeadServiceManager mChatHeadServiceManager;
 
     private List<NavigationItem> mNavigationItemList, mVisibleNavigationItemList;
@@ -90,6 +87,7 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
             doFragmentLoading(false);
         }
     };
+    // fragment loading animations
     private AnimatorChain mFragmentLoadingAnimatorChain;
     private Animator.AnimatorListener mFragmentLoadingAnimatorListener = new Animator.AnimatorListener() {
         @Override
@@ -215,17 +213,12 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
             }
         });
 
-        PeppermintApp app = (PeppermintApp) getApplication();
-
         // init loading recipients view
         mFragmentLoadingContainer = findViewById(R.id.fragmentProgressContainer);
         mFragmentLoadingView = (LoadingView) findViewById(R.id.loading);
 
         mImgUserAvatar = (ImageView) findViewById(R.id.imgUserAvatar);
         mTxtUsername = (TextView) findViewById(R.id.txtUserName);
-        if(mTxtUsername != null) {
-            mTxtUsername.setTypeface(app.getFontSemibold());
-        }
         mLytDrawer = (DrawerLayout) findViewById(R.id.drawer);
 
         mNavigationItemList = getNavigationItems();
@@ -337,23 +330,19 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     protected void onStart() {
         super.onStart();
         getWindow().setBackgroundDrawableResource(getBackgroundResourceId());
-        CURRENT_ACTIVITY = this;
         mChatHeadServiceManager.startAndBind();
     }
 
     @Override
     protected void onStop() {
-        if(CURRENT_ACTIVITY == this) {
-            CURRENT_ACTIVITY = null;
-            mChatHeadServiceManager.show();
-        }
+        mChatHeadServiceManager.removeVisibleActivity(this.getClass().getName());
         mChatHeadServiceManager.unbind();
         super.onStop();
     }
 
     @Override
     public void onBoundChatHeadService() {
-        mChatHeadServiceManager.hide();
+        mChatHeadServiceManager.addVisibleActivity(this.getClass().getName());
     }
 
     @Override

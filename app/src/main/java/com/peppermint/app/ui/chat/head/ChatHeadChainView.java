@@ -5,10 +5,10 @@ import android.content.SharedPreferences;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 
 import com.facebook.rebound.BaseSpringSystem;
@@ -17,7 +17,6 @@ import com.facebook.rebound.Spring;
 import com.facebook.rebound.SpringConfig;
 import com.facebook.rebound.SpringSystem;
 import com.facebook.rebound.SpringSystemListener;
-import com.peppermint.app.R;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.utils.Utils;
 
@@ -26,9 +25,15 @@ import java.util.List;
 
 /**
  * Created by Nuno Luz on 19-03-2016.
+ *
+ * Represents a chain of chat heads that can be moved and controlled by the user.
+ *
  */
 public class ChatHeadChainView extends WindowManagerViewGroup {
 
+    /**
+     * Chat head chain state change listener.
+     */
     public interface OnStateChangedListener {
         void onSnapped(int viewIndex);
         void onShrinkStarted();
@@ -37,6 +42,7 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
         void onChatSelected(Chat chat);
     }
 
+    // listens for updates from the X-axis chat head spring
     private class ReboundSpringXListener extends SimpleSpringListener {
         protected int _i;
         public ReboundSpringXListener(int index) {
@@ -48,6 +54,7 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
         }
     }
 
+    // listens for updates from the Y-axis chat head spring
     private class ReboundSpringYListener extends SimpleSpringListener {
         protected int _i;
         public ReboundSpringYListener(int index) {
@@ -60,6 +67,7 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
         @Override
         public void onSpringAtRest(Spring spring) {
             if(mState == STATE_SNAP) {
+                // invoke state listener after snap finishes
                 for (OnStateChangedListener listener : mOnStateChangedListeners) {
                     listener.onSnapped(_i);
                 }
@@ -67,13 +75,7 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
                     saveChatHeadPosition();
                 }
             } else if(mState == STATE_EXPAND && _i == 0) {
-                int viewSize = mViews.size();
-                for(int i=0; i<viewSize; i++) {
-                    ChatHeadView v = (ChatHeadView) mViews.get(i);
-                    v.setNameOnTop(true);
-                    v.setNameVisible(true);
-                    v.invalidate();
-                }
+                // invoke state listener after expand finishes
                 for(OnStateChangedListener listener : mOnStateChangedListeners) {
                     listener.onExpandFinished();
                 }
@@ -86,8 +88,6 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
     private static final String CHAT_HEAD_POSITION_X_KEY = TAG + "_chatHeadPositionX";
     private static final String CHAT_HEAD_POSITION_Y_KEY = TAG + "_chatHeadPositionY";
 
-    protected static final int CHATHEAD_SIZE_DP = 48;
-    protected static final int CHATHEAD_TEXT_HEIGHT_DP = 30;
     protected static final float INITIAL_POSITION_PERCENT_Y = 0.2f;
     protected static final int EXPANDED_TOP_MARGIN_DP = 10;
     protected static final int EXPANDED_CHATHEAD_SPACING_DP = 10;
@@ -95,18 +95,17 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
     protected static final int MAX_CHAT_HEADS = 4;
 
     // possible states of the main chat head
-    public static final int STATE_DRAGGING = 1;
-    public static final int STATE_SNAP_TRIGGER = 2;        // a state that monitors the vel. and pos. of the chat head and triggers the snap
-    public static final int STATE_SNAP = 3;                // snaps the chat head
-    public static final int STATE_EXPAND = 4;
+    public static final int STATE_DRAGGING = 1;             // while the user drags the chat head chain
+    public static final int STATE_SNAP_TRIGGER = 2;         // a state that monitors the vel. and pos. of the chat head chain and triggers the snap
+    public static final int STATE_SNAP = 3;                 // snaps the chat head to a particular position
+    public static final int STATE_EXPAND = 4;               // while the chat head chain is expanded/expanding
 
     private int mState, mPreviousState;
     private List<OnStateChangedListener> mOnStateChangedListeners = new ArrayList<>();
 
-    private List<Chat> mChats = new ArrayList<>();
+    private List<Chat> mChats = new ArrayList<>();          // list of chats mapped to chat head views
 
     // measurements
-    private final int mChatHeadWidth, mChatHeadHeight;
     private int mScreenWidth, mScreenHeight;
     private final int mExpandedTopMargin, mExpandedChatHeadSpacing;
 
@@ -118,7 +117,6 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
     private OnInteractionListener mOnInteractionListener = new OnInteractionListener() {
         @Override
         public boolean onClick(int viewIndex, View view) {
-            Log.d(TAG, "onClick " + viewIndex);
             if(mState == STATE_EXPAND) {
                 ChatHeadView v = (ChatHeadView) view;
                 if(v.isSelected()) {
@@ -134,7 +132,8 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
 
         @Override
         public boolean onDragStarted(int viewIndex, View view, float offsetX, float offsetY, MotionEvent event) {
-            setReboundXY(MAX_CHAT_HEADS - 1, event.getRawX() - (mChatHeadWidth / 2), event.getRawY() - (mChatHeadHeight / 2), true);
+            ChatHeadView v = (ChatHeadView) mViews.get(MAX_CHAT_HEADS - 1);
+            setReboundXY(MAX_CHAT_HEADS - 1, event.getRawX() - (v.getWidth() / 2), event.getRawY() - (v.getHeight() / 2), true);
             return onDrag(viewIndex, view, offsetX, offsetY, event);
         }
 
@@ -162,6 +161,10 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
         public void onAfterIntegrate(BaseSpringSystem springSystem) {
             switch(mState) {
                 case STATE_SNAP_TRIGGER:
+                    // keep checking the vel. and position of the chat head chain
+                    // if its vel. is below a certain threshold, or it has touched a screen edge
+                    // snap it
+
                     int controlIndex = MAX_CHAT_HEADS - 1;
                     int x = getViewPositionX(controlIndex);
                     int y = getViewPositionY(controlIndex);
@@ -177,7 +180,7 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
 
                     if ((stickToLeftEdge || stickToRightEdge || stickToBottomEdge || stickToTopEdge || normalVel < 300)) {
                         // either an edge has been reached or the spring velocity is too slow
-                        // in this case, activate the spring that snaps the chat head to the closest edge
+                        // in this case, activate the spring that snaps the chat head chain to the closest edge
                         setState(STATE_SNAP);
                         setReboundXY(x < (mScreenWidth / 2f) ? 0 : mScreenWidth,
                                 stickToTopEdge || stickToBottomEdge ? (stickToTopEdge ? 0 : mScreenHeight) : y,
@@ -187,29 +190,44 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
                     break;
             }
 
-            for(Spring spring : mPositionSpringX.getAllSprings()) {
-                if(Math.abs(spring.getCurrentValue() - spring.getEndValue()) < 2) {
-                    spring.setAtRest();
-                }
-            }
+            // do not use Spring.setCurrentValue! it will re-activate the Spring and enter into an infinite loop!
+            int size = mViews.size();
+            for(int i=0; i<size; i++) {
+                Spring springX = mPositionSpringX.getAllSprings().get(i);
+                Spring springY = mPositionSpringY.getAllSprings().get(i);
 
-            for(Spring spring : mPositionSpringY.getAllSprings()) {
-                if(Math.abs(spring.getCurrentValue() - spring.getEndValue()) < 2) {
-                    spring.setAtRest();
+                if(Math.abs(springX.getCurrentValue() - springX.getEndValue()) < 2 &&
+                        Math.abs(springY.getCurrentValue() - springY.getEndValue()) < 2) {
+                    int x = (int) springX.getEndValue();
+                    int y = (int) springY.getEndValue();
+                    springX.setAtRest();
+                    springY.setAtRest();
+                    setViewPosition(i, x, y);
                 }
             }
         }
     };
 
     protected void setSelected(ChatHeadView v) {
+        if(v.isSelected()) {
+            return;
+        }
+
         for(View view : mViews) {
             ChatHeadView otherView = (ChatHeadView) view;
             if(v.equals(otherView)) {
-                otherView.setSelected(true);
+                if(!otherView.isSelected()) {
+                    otherView.setSelected(true);
+                    otherView.requestLayout();
+                    otherView.invalidate();
+                }
             } else {
-                otherView.setSelected(false);
+                if(otherView.isSelected()) {
+                    otherView.setSelected(false);
+                    otherView.requestLayout();
+                    otherView.invalidate();
+                }
             }
-            otherView.invalidate();
         }
 
         for(OnStateChangedListener listener : mOnStateChangedListeners) {
@@ -217,6 +235,11 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
         }
     }
 
+    /**
+     * Gets the selected chat.
+     *
+     * @return the selected chat
+     */
     public Chat getSelectedChat() {
         for(View view : mViews) {
             ChatHeadView v = (ChatHeadView) view;
@@ -235,24 +258,24 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
         mPreviousState = mState;
         mState = newState;
 
-        Log.d("TAG", "Switching State OLD=" + mPreviousState + " NEW=" + mState);
-
-        // deinit old state
+        // de-init old state
         switch(mPreviousState) {
             case STATE_EXPAND:
                 // shrink
                 enableReboundChain();
 
+                ChatHeadView selectedView = null;
                 int viewSize = mViews.size();
                 for(int i=0; i<viewSize; i++) {
                     ChatHeadView v = (ChatHeadView) mViews.get(i);
-                    v.setNameOnTop(false);
-                    if(i == MAX_CHAT_HEADS - 1) {
-                        v.setNameVisible(true);
-                    } else {
-                        v.setNameVisible(false);
+                    v.setSelectMode(false);
+                    if(v.isSelected()) {
+                        selectedView = v;
                     }
-                    v.invalidate();
+                }
+
+                if(selectedView != null) {
+                    addChat(selectedView.getChat());
                 }
 
                 for(OnStateChangedListener listener : mOnStateChangedListeners) {
@@ -275,8 +298,14 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
 
                 int viewSize = mViews.size();
                 for(int i=0; i<viewSize; i++) {
+                    int viewWidth = mViews.get(viewSize - 1 - i).getWidth();
                     setSpringConfig(viewSize - 1 - i, mSpringConfigSnap);
-                    setReboundXY(viewSize - 1 - i, mScreenWidth - ((mChatHeadWidth * i) + (mExpandedChatHeadSpacing * (i + 1))), mExpandedTopMargin, false);
+                    setReboundXY(viewSize - 1 - i, mScreenWidth - ((viewWidth * i) + (mExpandedChatHeadSpacing * (i + 1))), mExpandedTopMargin, false);
+
+                    ChatHeadView v = (ChatHeadView) mViews.get(i);
+                    v.setSelectMode(true);
+                    v.requestLayout();
+                    v.invalidate();
                 }
 
                 for(OnStateChangedListener listener : mOnStateChangedListeners) {
@@ -297,27 +326,21 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
         mSpringConfigDrag = SpringConfig.fromOrigamiTensionAndFriction(0, 0.5);
         mSpringConfigSnap = SpringConfig.fromOrigamiTensionAndFriction(30, 5);
 
+        // springs that control the position of the chat head chain
         mPositionSpringX = CustomSpringChain.create(mSpringSystem);
         mPositionSpringY = CustomSpringChain.create(mSpringSystem);
 
-        this.mChatHeadWidth = Utils.dpToPx(mContext, CHATHEAD_SIZE_DP);
-        this.mChatHeadHeight = mChatHeadWidth + Utils.dpToPx(mContext, CHATHEAD_TEXT_HEIGHT_DP) + Utils.dpToPx(mContext, ChatHeadView.DEF_SEL_LENGTH_DP + 3);
         this.mExpandedTopMargin = Utils.dpToPx(mContext, EXPANDED_TOP_MARGIN_DP);
         this.mExpandedChatHeadSpacing = Utils.dpToPx(mContext, EXPANDED_CHATHEAD_SPACING_DP);
 
-        // chat heads
+        // chat head views
         for(int i=0; i < MAX_CHAT_HEADS; i++) {
             ChatHeadView v = new ChatHeadView(mContext);
-            v.setButtonImageResource(R.drawable.ic_play_15dp);
             v.setVisibility(View.GONE);
-            if(i == (MAX_CHAT_HEADS - 1)) {
-                v.setNameVisible(true);
-                v.setSelected(true);
-            }
 
             WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(
-                    mChatHeadWidth,
-                    mChatHeadHeight,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
                     WindowManager.LayoutParams.TYPE_PHONE,
                     WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED |
                             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
@@ -339,12 +362,7 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
 
         float[] startPos = loadChatHeadPosition();
 
-        boolean goLeft = true;
-        if(startPos[0] > 0) {
-            goLeft = startPos[0] < 0.5f ? true : false;
-        }
-
-        float x = goLeft ? 0 : mScreenWidth;
+        float x = startPos[0] < 0.5f ? 0 : mScreenWidth;
         float y = startPos[1] * (float) mScreenHeight;
 
         // setup position of chat head
@@ -358,8 +376,8 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
 
     public void requestLayout() {
         Point point = Utils.getScreenSize(mContext);
-        this.mScreenWidth = point.x - mChatHeadWidth;
-        this.mScreenHeight = point.y - mChatHeadHeight;
+        this.mScreenWidth = point.x - Utils.dpToPx(mContext, 54);   //FIXME
+        this.mScreenHeight = point.y - Utils.dpToPx(mContext, 54) - Utils.getNavigationBarHeight(mContext);
         snapToSavedPosition(false);
     }
 
@@ -399,6 +417,9 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
         invalidateChats();
     }
 
+    /**
+     * Re-maps all chats to their {@link ChatHeadView}s.
+     */
     public void invalidateChats() {
         Chat selectedChat = getSelectedChat();
         boolean gotSelected = false;
@@ -407,9 +428,9 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
         for(int i=0; i<MAX_CHAT_HEADS; i++) {
             ChatHeadView v = (ChatHeadView) mViews.get(i);
             if(i < startsAt) {
+                v.setChat(null);
                 v.setVisibility(View.GONE);
             } else {
-                v.setChat(mChats.get(j));
                 v.setVisibility(View.VISIBLE);
 
                 if(selectedChat != null && selectedChat.getId() == mChats.get(j).getId()) {
@@ -419,12 +440,20 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
                     v.setSelected(false);
                 }
 
+                v.setChat(mChats.get(j));
+
                 j++;
             }
         }
 
         if(!gotSelected) {
-            ((ChatHeadView) mViews.get(MAX_CHAT_HEADS - 1)).setSelected(true);
+            mViews.get(MAX_CHAT_HEADS - 1).setSelected(true);
+        }
+
+        // re-layout and re-draw all chat head views
+        for(View v : mViews) {
+            v.requestLayout();
+            v.invalidate();
         }
     }
 
@@ -434,14 +463,6 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
 
     public float getReboundY() {
         return (float) mPositionSpringY.getControlSpring().getCurrentValue();
-    }
-
-    public void setReboundX(float x, boolean atRest) {
-        setReboundXY(x, getReboundY(), atRest);
-    }
-
-    public void setReboundY(float y, boolean atRest) {
-        setReboundXY(getReboundX(), y, atRest);
     }
 
     public void setReboundXY(float x, float y, boolean atRest) {
@@ -522,11 +543,65 @@ public class ChatHeadChainView extends WindowManagerViewGroup {
         return mState;
     }
 
-    public int getChatHeadWidth() {
-        return mChatHeadWidth;
+    @Override
+    public boolean show() {
+        int size = mViews.size();
+        for(int i=0; i<size; i++) {
+            if(i >= (MAX_CHAT_HEADS - 1)) {
+                mViews.get(i).setSelected(true);
+            } else {
+                mViews.get(i).setSelected(false);
+            }
+        }
+        return super.show();
     }
 
-    public int getChatHeadHeight() {
-        return mChatHeadHeight;
+    public void setShowBadge(boolean val) {
+        for(View view : mViews) {
+            ChatHeadView v = (ChatHeadView) view;
+            v.setShowBadge(val);
+            v.invalidate();
+        }
+    }
+
+    public int getWidth() {
+        if(mViews.size() <= 0) {
+            return 0;
+        }
+        return mViews.get(0).getMeasuredWidth();
+    }
+
+    public int getHeight() {
+        if(mViews.size() <= 0) {
+            return 0;
+        }
+        return mViews.get(0).getMeasuredHeight();
+    }
+
+    public int getSelectModeHeight() {
+        if(mViews.size() <= 0) {
+            return 0;
+        }
+        return ((ChatHeadView) mViews.get(0)).getSelectModeHeight();
+    }
+
+    @Override
+    public void setViewPosition(int i, int x, int y) {
+        for(View view : mViews) {
+            ChatHeadView v = (ChatHeadView) view;
+            if(x < (mScreenWidth / 2)) {
+                if(v.getBadgeOrientation() != ChatHeadView.BADGE_ORIENTATION_TOP_RIGHT) {
+                    v.setBadgeOrientation(ChatHeadView.BADGE_ORIENTATION_TOP_RIGHT);
+                    v.invalidate();
+                }
+            } else {
+                if(v.getBadgeOrientation() != ChatHeadView.BADGE_ORIENTATION_TOP_LEFT) {
+                    v.setBadgeOrientation(ChatHeadView.BADGE_ORIENTATION_TOP_LEFT);
+                    v.invalidate();
+                }
+            }
+        }
+
+        super.setViewPosition(i, x, y);
     }
 }

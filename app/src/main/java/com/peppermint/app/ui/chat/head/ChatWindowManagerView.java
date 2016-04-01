@@ -44,14 +44,9 @@ public class ChatWindowManagerView extends WindowManagerViewGroup implements Cha
     public ChatWindowManagerView(Context mContext) {
         super(mContext, null);
 
-        this.mTopMargin = Utils.dpToPx(mContext, ChatHeadChainView.CHATHEAD_SIZE_DP) +
-                Utils.dpToPx(mContext, ChatHeadChainView.CHATHEAD_TEXT_HEIGHT_DP) +
-                Utils.dpToPx(mContext, ChatHeadView.DEF_SEL_LENGTH_DP + 18) +
-                Utils.dpToPx(mContext, ChatHeadChainView.EXPANDED_TOP_MARGIN_DP);
-
         this.mChatView = (TouchInterceptorView) LayoutInflater.from(mContext).inflate(R.layout.a_chat_head_layout, null);
         this.mChatViewLayoutParams = new WindowManager.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 PixelFormat.TRANSLUCENT);
@@ -97,9 +92,10 @@ public class ChatWindowManagerView extends WindowManagerViewGroup implements Cha
     }
 
     public void requestLayout() {
+        int statusBarHeight = Utils.getStatusBarHeight(mContext);
         Point point = Utils.getScreenSize(mContext);
-        mChatViewLayoutParams.height = point.y - mTopMargin;
-        setViewPosition(0, 0, mTopMargin);
+        mChatViewLayoutParams.height = point.y - mTopMargin - statusBarHeight;
+        setViewPosition(0, 0, mTopMargin + statusBarHeight);
     }
 
     @Override
@@ -146,5 +142,13 @@ public class ChatWindowManagerView extends WindowManagerViewGroup implements Cha
             TextView txtName = (TextView) mChatView.findViewById(R.id.txtName);
             txtName.setText(recipientName);
         }
+    }
+
+    public int getTopMargin() {
+        return mTopMargin;
+    }
+
+    public void setTopMargin(int mTopMargin) {
+        this.mTopMargin = mTopMargin;
     }
 }

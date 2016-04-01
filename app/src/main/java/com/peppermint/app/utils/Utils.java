@@ -5,6 +5,8 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -27,7 +29,10 @@ import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Display;
+import android.view.KeyCharacterMap;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
@@ -862,6 +867,11 @@ public class Utils {
         return b.toString();
     }
 
+    /**
+     * Logs all key-value pairs in a {@link Bundle}.
+     * @param bundle the bundle
+     * @param parent the parent bundle name (or null if none)
+     */
     public static void logBundle(Bundle bundle, String parent) {
         for (String key : bundle.keySet()) {
             key = (parent == null ? key : parent + "." + key);
@@ -905,6 +915,13 @@ public class Utils {
         return dir.delete();
     }
 
+    /**
+     * Copies the image in the specified Uri to the local app file directory, with the specified file name.
+     * @param context the app context
+     * @param imageUri the origin image Uri
+     * @param newFileName the destination file name
+     * @return the Uri of the newly created file (null if unable to copy)
+     */
     public static Uri copyImageToLocalDir(Context context, Uri imageUri, String newFileName) {
         try {
             Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), imageUri);
@@ -918,5 +935,47 @@ public class Utils {
             Log.w(TAG, e);
         }
         return null;
+    }
+
+    /**
+     * Gets the navigation bar height. Tries to find out if the device has a soft navigation bar.
+     * If not, returns 0.
+     *
+     * @param context the app context
+     * @return the height in pixels
+     */
+    public static int getNavigationBarHeight(Context context) {
+        int result = 0;
+        boolean hasMenuKey = ViewConfiguration.get(context).hasPermanentMenuKey();
+        boolean hasBackKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_BACK);
+
+        if(!hasMenuKey && !hasBackKey) {
+            //The device has a navigation bar
+            Resources resources = context.getResources();
+
+            int orientation = resources.getConfiguration().orientation;
+            int resourceId;
+            if (isTablet(context)){
+                resourceId = resources.getIdentifier(orientation == Configuration.ORIENTATION_PORTRAIT ? "navigation_bar_height" : "navigation_bar_height_landscape", "dimen", "android");
+            }  else {
+                resourceId = resources.getIdentifier(orientation == Configuration.ORIENTATION_PORTRAIT ? "navigation_bar_height" : "navigation_bar_width", "dimen", "android");
+            }
+
+            if (resourceId > 0) {
+                return resources.getDimensionPixelSize(resourceId);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Checks if the device is a tablet, according to layout configuration and parameters.
+     * @param context the app context
+     * @return true if it's a tablet; false otherwise
+     */
+    public static boolean isTablet(Context context) {
+        return (context.getResources().getConfiguration().screenLayout
+                & Configuration.SCREENLAYOUT_SIZE_MASK)
+                >= Configuration.SCREENLAYOUT_SIZE_LARGE;
     }
 }

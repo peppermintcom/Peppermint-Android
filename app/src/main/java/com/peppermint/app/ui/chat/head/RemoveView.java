@@ -17,10 +17,11 @@ import com.peppermint.app.utils.Utils;
 
 /**
  * Created by Nuno Luz on 19-03-2016.
+ *
+ * View representing the container on top of which the chat head chain has to be dragged to
+ * in order to hide it.
  */
 public class RemoveView extends WindowManagerViewGroup {
-
-    private static final String TAG = RemoveView.class.getSimpleName();
 
     private static final int BOTTOM_MARGIN_DP = 36;
     private static final int INFLUENCE_RADIUS_DP = 50;
@@ -28,16 +29,14 @@ public class RemoveView extends WindowManagerViewGroup {
     private static final float EXPANDED_SCALE = 1.25f;
 
     // measurements
-    private int mScreenWidth, mScreenHeight;
     private int mInfluenceRadius;
     private int mViewSize;
 
     // rebound
     private SpringSystem mSpringSystem;
-    private SpringConfig mSpringConfigScale;
     private Spring mScaleSpring;
 
-    private SpringListener mScaleSpringListener = new SimpleSpringListener() {
+    private final SpringListener mScaleSpringListener = new SimpleSpringListener() {
         @Override
         public void onSpringUpdate(Spring spring) {
             setViewScale(0, (float) mScaleSpring.getCurrentValue(), (float) mScaleSpring.getCurrentValue());
@@ -49,16 +48,14 @@ public class RemoveView extends WindowManagerViewGroup {
 
         mSpringSystem = SpringSystem.create();
 
-        mSpringConfigScale = SpringConfig.fromOrigamiTensionAndFriction(20, 2);
-
         mScaleSpring = mSpringSystem.createSpring();
-        mScaleSpring.setSpringConfig(mSpringConfigScale);
+        mScaleSpring.setSpringConfig(SpringConfig.fromOrigamiTensionAndFriction(20, 2));
         mScaleSpring.addListener(mScaleSpringListener);
 
         mInfluenceRadius = Utils.dpToPx(mContext, INFLUENCE_RADIUS_DP);
 
         // view
-        mViewSize = Utils.dpToPx(mContext, ChatHeadChainView.CHATHEAD_SIZE_DP);
+        mViewSize = Utils.dpToPx(mContext, ChatHeadView.DEF_AVATAR_SIZE_DP + (ChatHeadView.DEF_AVATAR_BORDER_WIDTH_DP * 2));
 
         ImageView view = new ImageView(mContext);
         view.setImageResource(R.drawable.ic_remove_48dp);
@@ -77,12 +74,19 @@ public class RemoveView extends WindowManagerViewGroup {
 
     public void requestLayout() {
         Point point = Utils.getScreenSize(mContext);
-        this.mScreenWidth = point.x - mViewSize;
-        this.mScreenHeight = point.y - mViewSize;
-        setViewPosition(0, (int) (mScreenWidth / 2f),
-                mScreenHeight - Utils.dpToPx(mContext, BOTTOM_MARGIN_DP));
+        float width = point.x - mViewSize;
+        float height = point.y - mViewSize;
+        setViewPosition(0, (int) (width / 2f),
+                (int) (height - Utils.dpToPx(mContext, BOTTOM_MARGIN_DP)));
     }
 
+    /**
+     * Checks whether the supplied coordinates are inside this views area.
+     *
+     * @param x the X coordinate
+     * @param y the Y coordinate
+     * @return true if inside the area; false otherwise
+     */
     public boolean isInsideInfluence(float x, float y) {
         int posX = getViewPositionX(0);
         int posY = getViewPositionY(0);

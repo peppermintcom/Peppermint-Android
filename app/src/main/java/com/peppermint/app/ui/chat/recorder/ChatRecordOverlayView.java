@@ -3,6 +3,7 @@ package com.peppermint.app.ui.chat.recorder;
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -166,7 +167,8 @@ public class ChatRecordOverlayView extends FrameLayout {
     public void setContentPosition(Rect rect) {
         int factor = 0;
 
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+        // not necessary when using the overlay
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP && getContext() instanceof Activity) {
             factor = mStatusBarHeight;
         }
 

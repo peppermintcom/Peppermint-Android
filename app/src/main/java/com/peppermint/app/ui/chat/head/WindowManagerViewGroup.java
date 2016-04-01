@@ -7,18 +7,28 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 
+import com.peppermint.app.tracking.TrackerManager;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by Nuno Luz on 19-03-2016.
+ * <p/>
+ * Base class for handling groups of Views in an overlay.
  */
 public class WindowManagerViewGroup {
 
+    /**
+     * Listener of user-view interaction.
+     */
     public interface OnInteractionListener {
         boolean onClick(int viewIndex, View view);
+
         boolean onDragStarted(int viewIndex, View view, float offsetX, float offsetY, MotionEvent event);
+
         boolean onDrag(int viewIndex, View view, float offsetX, float offsetY, MotionEvent event);
+
         boolean onDragFinished(int viewIndex, View view, float[] velocity, MotionEvent event);
     }
 
@@ -27,7 +37,7 @@ public class WindowManagerViewGroup {
 
     // ui
     private List<OnInteractionListener> mOnInteractionListeners = new ArrayList<>();
-    private GestureDetector mClickDetector;
+    private GestureDetector mClickDetector, mDragDetector;
 
     // views
     protected boolean mVisible = false;
@@ -35,10 +45,10 @@ public class WindowManagerViewGroup {
     protected List<WindowManager.LayoutParams> mLayoutParams = new ArrayList<>();
     protected List<WindowManager.LayoutParams> mOriginalLayoutParams = new ArrayList<>();
 
-     // UI
+    // UI
     private View.OnTouchListener mOnTouchListener = new View.OnTouchListener() {
         private float lastX, lastY;
-        private int wait = 3;
+        private boolean dragging = false;
 
         // custom velocity tracking code
         // Android's VelocityTracker implementation has severe issues,
@@ -48,7 +58,7 @@ public class WindowManagerViewGroup {
 
         private void pushMotionEvent(MotionEvent event) {
             // keep track of the 5 last motion events
-            if(lastEvents.size() >= 5) {
+            if (lastEvents.size() >= 5) {
                 lastEvents.remove(0);
                 lastTimes.remove(0);
             }
@@ -67,11 +77,12 @@ public class WindowManagerViewGroup {
 
         @Override
         public boolean onTouch(View v, MotionEvent event) {
-            if(mOnInteractionListeners.size() == 0) {
+            if (mOnInteractionListeners.size() == 0) {
                 return false;
             }
 
             boolean localClick = mClickDetector.onTouchEvent(event);
+            boolean localDrag = mDragDetector.onTouchEvent(event);
 
             float touchX = event.getRawX();
             float touchY = event.getRawY();
@@ -81,7 +92,6 @@ public class WindowManagerViewGroup {
                 case MotionEvent.ACTION_DOWN:
                     pushMotionEvent(event);
 
-                    wait = 3;
                     lastX = touchX;
                     lastY = touchY;
 
@@ -89,20 +99,23 @@ public class WindowManagerViewGroup {
                     break;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    if(!localClick) {
+                    if (dragging && !localClick) {
                         int listenerSize = mOnInteractionListeners.size();
                         boolean stopIteration = false;
-                        for(int i=0; i<listenerSize && !stopIteration; i++) {
+                        for (int i = 0; i < listenerSize && !stopIteration; i++) {
                             stopIteration = mOnInteractionListeners.get(i).onDragFinished(mViews.indexOf(v), v, getVelocity(), event);
                         }
                     } else {
                         int listenerSize = mOnInteractionListeners.size();
                         boolean stopIteration = false;
-                        for(int i=0; i<listenerSize && !stopIteration; i++) {
+                        for (int i = 0; i < listenerSize && !stopIteration; i++) {
                             stopIteration = mOnInteractionListeners.get(i).onClick(mViews.indexOf(v), v);
                         }
                     }
-                    mClickDetector = new GestureDetector(mContext, mOnGestureListener);
+                    // re-create the gesture detectors to avoid remnants of past events messing up detected actions
+                    mClickDetector = new GestureDetector(mContext, mOnTapGestureListener);
+                    mDragDetector = new GestureDetector(mContext, mOnScrollGestureListener);
+                    dragging = false;
                     ret = true;
                     break;
                 case MotionEvent.ACTION_MOVE:
@@ -111,22 +124,22 @@ public class WindowManagerViewGroup {
                     float offsetX = lastX - touchX;
                     float offsetY = lastY - touchY;
 
-                    if(wait <= 0) {    // try to avoid movement on tap
-                        if(wait == 0) {
+                    if (localDrag && !localClick) {    // try to avoid movement on tap
+                        if (!dragging) {
                             int listenerSize = mOnInteractionListeners.size();
                             boolean stopIteration = false;
-                            for(int i=0; i<listenerSize && !stopIteration; i++) {
+                            for (int i = 0; i < listenerSize && !stopIteration; i++) {
                                 stopIteration = mOnInteractionListeners.get(i).onDragStarted(mViews.indexOf(v), v, offsetX, offsetY, event);
                             }
+                            dragging = true;
                         } else {
                             int listenerSize = mOnInteractionListeners.size();
                             boolean stopIteration = false;
-                            for(int i=0; i<listenerSize && !stopIteration; i++) {
+                            for (int i = 0; i < listenerSize && !stopIteration; i++) {
                                 stopIteration = mOnInteractionListeners.get(i).onDrag(mViews.indexOf(v), v, offsetX, offsetY, event);
                             }
                         }
                     }
-                    wait--;
 
                     ret = true;
                     break;
@@ -139,20 +152,30 @@ public class WindowManagerViewGroup {
         }
     };
 
-    private GestureDetector.SimpleOnGestureListener mOnGestureListener = new GestureDetector.SimpleOnGestureListener() {
+    private GestureDetector.SimpleOnGestureListener mOnTapGestureListener = new GestureDetector.SimpleOnGestureListener() {
         @Override
-        public boolean onSingleTapUp(MotionEvent e) { return true; }
+        public boolean onSingleTapUp(MotionEvent e) {
+            return true;
+        }
+    };
+
+    private GestureDetector.SimpleOnGestureListener mOnScrollGestureListener = new GestureDetector.SimpleOnGestureListener() {
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            return true;
+        }
     };
 
     public WindowManagerViewGroup(Context mContext) {
         this.mContext = mContext;
         this.mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
-        this.mClickDetector = new GestureDetector(mContext, mOnGestureListener);
+        this.mClickDetector = new GestureDetector(mContext, mOnTapGestureListener);
+        this.mDragDetector = new GestureDetector(mContext, mOnScrollGestureListener);
     }
 
     public WindowManagerViewGroup(Context mContext, OnInteractionListener mOnInteractionListener) {
         this(mContext);
-        if(mOnInteractionListener != null) {
+        if (mOnInteractionListener != null) {
             this.mOnInteractionListeners.add(mOnInteractionListener);
         }
     }
@@ -175,18 +198,18 @@ public class WindowManagerViewGroup {
                 layoutParams.width, layoutParams.height,
                 layoutParams.type, layoutParams.flags, layoutParams.format));
 
-        if(mVisible) {
+        if (mVisible) {
             mWindowManager.addView(v, layoutParams);
         }
     }
 
     public void removeView(View v) {
         int i = mViews.indexOf(v);
-        if(i < 0) {
+        if (i < 0) {
             return;
         }
 
-        if(mVisible) {
+        if (mVisible) {
             mWindowManager.removeView(v);
         }
 
@@ -197,22 +220,22 @@ public class WindowManagerViewGroup {
     }
 
     public void invalidate() {
-        if(!mVisible) {
+        /*if (!mVisible) {
             return;
-        }
+        }*/
 
-        for(View v : mViews) {
+        for (View v : mViews) {
             v.invalidate();
         }
     }
 
-    public boolean show() {
-        if(mVisible) {
+    protected boolean addViewsToWindow() {
+        if (mVisible) {
             return false;
         }
 
         int size = mViews.size();
-        for(int i=0; i<size; i++) {
+        for (int i = 0; i < size; i++) {
             View v = mViews.get(i);
             if (v.getWindowToken() != null) {
                 v.invalidate();
@@ -222,17 +245,24 @@ public class WindowManagerViewGroup {
         }
 
         mVisible = true;
+
         return true;
     }
 
+    public boolean show() {
+        return addViewsToWindow();
+    }
+
     public boolean hide() {
-        if(!mVisible) {
+        if (!mVisible) {
             return false;
         }
 
-        for(View v : mViews) {
-            if (v.getWindowToken() != null) {
+        for (View v : mViews) {
+            try {
                 mWindowManager.removeView(v);
+            } catch (IllegalArgumentException e) {
+                TrackerManager.getInstance(mContext).log(e.getMessage(), e);
             }
         }
 
@@ -241,21 +271,21 @@ public class WindowManagerViewGroup {
     }
 
     public int getViewPositionX(int i) {
-        if(i < 0 || i >= mLayoutParams.size()) {
+        if (i < 0 || i >= mLayoutParams.size()) {
             return 0;
         }
         return mLayoutParams.get(i).x;
     }
 
     public int getViewPositionY(int i) {
-        if(i < 0 || i >= mLayoutParams.size()) {
+        if (i < 0 || i >= mLayoutParams.size()) {
             return 0;
         }
         return mLayoutParams.get(i).y;
     }
 
     public void setViewPositionX(int i, int x) {
-        if(i < 0 || i >= mLayoutParams.size()) {
+        if (i < 0 || i >= mLayoutParams.size()) {
             return;
         }
 
@@ -263,7 +293,7 @@ public class WindowManagerViewGroup {
     }
 
     public void setViewPositionY(int i, int y) {
-        if(i < 0 || i >= mLayoutParams.size()) {
+        if (i < 0 || i >= mLayoutParams.size()) {
             return;
         }
 
@@ -271,7 +301,7 @@ public class WindowManagerViewGroup {
     }
 
     public void setViewPosition(int i, int x, int y) {
-        if(i < 0 || i >= mLayoutParams.size()) {
+        if (i < 0 || i >= mLayoutParams.size()) {
             return;
         }
 
@@ -283,7 +313,7 @@ public class WindowManagerViewGroup {
     }
 
     public void setViewScale(int i, float w, float h) {
-        if(i < 0 || i >= mLayoutParams.size()) {
+        if (i < 0 || i >= mLayoutParams.size()) {
             return;
         }
 
@@ -301,6 +331,32 @@ public class WindowManagerViewGroup {
         }
     }
 
+    public void enableDim(float dimAmount) {
+        if (mLayoutParams.size() <= 0) {
+            return;
+        }
+
+        mLayoutParams.get(0).dimAmount = dimAmount;
+        mLayoutParams.get(0).flags = mOriginalLayoutParams.get(0).flags | WindowManager.LayoutParams.FLAG_DIM_BEHIND;
+
+        if (mVisible && mViews.get(0).getWindowToken() != null) {
+            mWindowManager.updateViewLayout(mViews.get(0), mLayoutParams.get(0));
+        }
+    }
+
+    public void disableDim() {
+        if (mLayoutParams.size() <= 0) {
+            return;
+        }
+
+        mLayoutParams.get(0).dimAmount = mOriginalLayoutParams.get(0).dimAmount;
+        mLayoutParams.get(0).flags = mOriginalLayoutParams.get(0).flags;
+
+        if (mVisible && mViews.get(0).getWindowToken() != null) {
+            mWindowManager.updateViewLayout(mViews.get(0), mLayoutParams.get(0));
+        }
+    }
+
     public boolean isVisible() {
         return mVisible;
     }
@@ -310,7 +366,7 @@ public class WindowManagerViewGroup {
     }
 
     public void addOnInteractionListener(OnInteractionListener onInteractionListener) {
-        if(onInteractionListener == null) {
+        if (onInteractionListener == null) {
             return;
         }
         mOnInteractionListeners.add(0, onInteractionListener);

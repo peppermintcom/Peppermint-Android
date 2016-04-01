@@ -18,8 +18,10 @@ import com.peppermint.app.R;
 import com.peppermint.app.utils.Utils;
 
 // Inspired on https://github.com/lopspower/CircularImageView/blob/master/CircularImageView/src/com/mikhaellopez/circularimageview/CircularImageView.java
+
 /**
  * {@link ImageView} that supports round corners.
+ *
  */
 public class RoundImageView extends ImageView {
 
@@ -48,7 +50,7 @@ public class RoundImageView extends ImageView {
     public RoundImageView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        // init paint
+        // init paints
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
 
@@ -102,6 +104,7 @@ public class RoundImageView extends ImageView {
         if(mWidth != tmpWidth || mHeight != tmpHeight || (mDrawable != null && !mDrawable.equals(getDrawable()))) {
             mWidth = tmpWidth;
             mHeight = tmpHeight;
+            // update the image bitmap
             onSizeChanged();
         }
 
@@ -112,13 +115,14 @@ public class RoundImageView extends ImageView {
         Drawable drawable = getDrawable();
 
         if (drawable == null) {
+            // no drawable, no bitmap
             mBitmap = null;
             return;
         }
 
         mDrawable = drawable;
 
-        // draw to bitmap
+        // draw to bitmap, unless there's already a bitmap available
         Bitmap tmpBitmap;
         boolean recycleBitmap = false;
         if(drawable instanceof BitmapDrawable) {
@@ -132,7 +136,7 @@ public class RoundImageView extends ImageView {
             recycleBitmap = true;
         }
 
-        // set paint
+        // get the view size (image is always drawn in a square area)
         int mCanvasSize = mWidth;
         if(mHeight < mCanvasSize) {
             mCanvasSize = mHeight;
@@ -148,6 +152,7 @@ public class RoundImageView extends ImageView {
             bitmapHeight = Math.round((float) tmpBitmap.getHeight() * scale);
         }
 
+        // scale the image and obtain a bitmap with the exact size required
         mBitmap = Bitmap.createScaledBitmap(tmpBitmap, bitmapWidth, bitmapHeight, true);
         mPaint.setShader(new BitmapShader(mBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
 
@@ -156,10 +161,21 @@ public class RoundImageView extends ImageView {
         }
     }
 
+    /**
+     * See {@link #setKeepAspectRatio(boolean)} for more information.
+     *
+     * @return if the aspect ratio of the original image is to be kept
+     */
     public boolean isKeepAspectRatio() {
         return mKeepAspectRatio;
     }
 
+    /**
+     * Defines if the aspect ratio of the original image should be kept. <br />
+     * Otherwise, it stretches both the width and height of the image to fit the view.
+     *
+     * @param mKeepAspectRatio
+     */
     public void setKeepAspectRatio(boolean mKeepAspectRatio) {
         this.mKeepAspectRatio = mKeepAspectRatio;
     }
@@ -188,15 +204,15 @@ public class RoundImageView extends ImageView {
         return mWidth;
     }
 
+    protected void setLocalWidth(int mWidth) {
+        this.mWidth = mWidth;
+    }
+
+    protected void setLocalHeight(int mHeight) {
+        this.mHeight = mHeight;
+    }
+
     protected Bitmap getBitmap() {
         return mBitmap;
-    }
-
-    protected Paint getBorderPaint() {
-        return mBorderPaint;
-    }
-
-    protected Paint getBitmapPaint() {
-        return mPaint;
     }
 }

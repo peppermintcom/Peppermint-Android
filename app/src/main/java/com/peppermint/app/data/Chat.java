@@ -87,6 +87,17 @@ public class Chat implements Serializable {
     }
 
     @Override
+    public boolean equals(Object o) {
+        // to allow comparison operations performed by native Java lists
+        if(o instanceof Chat) {
+            if(((Chat) o).mId > 0 && mId > 0) {
+                return ((Chat) o).mId == mId;
+            }
+        }
+        return super.equals(o);
+    }
+
+    @Override
     public String toString() {
         return "Chat{" +
                 "mId=" + mId +

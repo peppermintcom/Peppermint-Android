@@ -11,7 +11,6 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.provider.Settings;
-import android.util.Log;
 
 import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.senders.SenderPreferences;
@@ -22,13 +21,14 @@ import com.peppermint.app.data.MessageManager;
 import com.peppermint.app.events.MessageEvent;
 import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.events.ReceiverEvent;
-import com.peppermint.app.events.SenderEvent;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by Nuno Luz on 24-02-2016.
+ *
+ * Service that controls the chat head overlay UI.
  */
 public class ChatHeadService extends Service {
 
@@ -38,11 +38,13 @@ public class ChatHeadService extends Service {
     public static final String ACTION_SHOW = "com.peppermint.app.ChatHeadService.SHOW";
     public static final String ACTION_HIDE = "com.peppermint.app.ChatHeadService.HIDE";
 
+    private List<String> mVisibleActivities = new ArrayList<>();
     private List<Chat> mChats = new ArrayList<>();
     private ChatHeadController mChatHeadController;
 
     private SenderPreferences mPreferences;
     private MessagesServiceManager mMessagesServiceManager;
+    private boolean mWasVisible = false;
 
     private final BroadcastReceiver mRotationBroadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -67,7 +69,23 @@ public class ChatHeadService extends Service {
         void enable() { refreshChatHeadController(); }
         void disable() { stopSelf(); }
         void show() { refreshChatHeadController(); }
-        void hide() { if(mChatHeadController != null) { mChatHeadController.hide(); } }
+        boolean hide() { if(mChatHeadController != null) { return mChatHeadController.hide(); } return false; }
+
+        void addVisibleActivity(String activityFullClassName) {
+            mVisibleActivities.add(activityFullClassName);
+            boolean hidden = hide();
+            if(mVisibleActivities.size() <= 1) {
+                mWasVisible = hidden;
+            }
+        }
+
+        boolean removeVisibleActivity(String activityFullClassName) {
+            boolean ret = mVisibleActivities.remove(activityFullClassName);
+            if(mWasVisible) {
+                show();
+            }
+            return ret;
+        }
     }
 
     @Override public IBinder onBind(Intent intent) {
@@ -77,7 +95,6 @@ public class ChatHeadService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent != null && intent.getAction() != null) {
-            Log.d("TAG", intent.getAction());
             if(intent.getAction().compareTo(ACTION_ENABLE) == 0) {
                 refreshChatHeadController();
             } else if(intent.getAction().compareTo(ACTION_DISABLE) == 0) {
@@ -127,9 +144,14 @@ public class ChatHeadService extends Service {
             return false;
         }
 
+        mWasVisible = true;
+
+        if(mVisibleActivities.size() > 0) {
+            return false;
+        }
+
         mChats.clear();
-        DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this);
-        SQLiteDatabase db = databaseHelper.getReadableDatabase();
+        SQLiteDatabase db = DatabaseHelper.getInstance(this).getReadableDatabase();
         Cursor chatCursor = ChatManager.getAll(db);
         int i = 0;
         while(chatCursor.moveToNext() && i < ChatHeadChainView.MAX_CHAT_HEADS) {
@@ -152,11 +174,7 @@ public class ChatHeadService extends Service {
     }
 
     public void onEventMainThread(ReceiverEvent event) {
-        refreshChatHeadController();
-    }
-
-    public void onEventMainThread(SenderEvent event) {
-        if(event.getType() == SenderEvent.EVENT_STARTED) {
+        if(event.getType() == ReceiverEvent.EVENT_RECEIVED) {
             refreshChatHeadController();
         }
     }
@@ -168,8 +186,7 @@ public class ChatHeadService extends Service {
             }
 
             if(mChats.size() > 0) {
-                DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this);
-                SQLiteDatabase db = databaseHelper.getReadableDatabase();
+                SQLiteDatabase db = DatabaseHelper.getInstance(this).getReadableDatabase();
 
                 for(Chat chat : mChats) {
                     if(chat.getId() == event.getMessage().getChatId()) {

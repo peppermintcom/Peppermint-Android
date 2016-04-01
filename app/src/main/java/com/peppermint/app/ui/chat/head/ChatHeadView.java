@@ -27,7 +27,7 @@ import java.util.WeakHashMap;
 /**
  * Created by Nuno Luz on 01-03-2016.
  *
- * UI components (View) that represents a single chat head.
+ * View that represents a single chat head.
  */
 public class ChatHeadView extends RoundImageView {
 
@@ -44,33 +44,65 @@ public class ChatHeadView extends RoundImageView {
         return tf;
     }
 
+    public static final int BADGE_ORIENTATION_TOP_LEFT = 1;
+    public static final int BADGE_ORIENTATION_TOP_RIGHT = 2;
+
+    // avatar and button
     private static final String DEF_BUTTON_BACKGROUND_COLOR = "#4D000000"; // black 30%
 
-    protected static final int DEF_SEL_LENGTH_DP = 15;
+    protected static final int DEF_AVATAR_SIZE_DP = 42;
+    protected static final int DEF_AVATAR_BORDER_WIDTH_DP = 3;
 
+    // badge
+    private static final String DEF_BADGE_BACKGROUND_COLOR = "#f1693f";
+
+    protected static final int DEF_BADGE_DISPLACEMENT_DP = 5;
+    private static final int DEF_BADGE_RADIUS_DP = 10;
+    private static final int DEF_BADGE_BORDER_DP = 2;
+
+    // selector
+    protected static final int DEF_SELECTOR_LENGTH_DP = 15;
+    protected static final int DEF_SELECTOR_MARGIN_DP = 5;
+
+    // text
     private static final int DEF_TEXT_MAX_LINES = 2;
     private static final int DEF_TEXT_PADDING_DP = 5;
-    private static final int DEF_TEXT_LINE_SPACING_DP = 1;
+    private static final int DEF_TEXT_LINE_SPACING_DP = 5;
 
+    // -------------
     private Chat mChat;
-    private boolean mNameVisible = true;
-    private boolean mNameOnTop = false;
+    private boolean mSelectMode = false;
     private boolean mSelected = false;
+    private boolean mShowBadge = true;
 
-    // button-related
-    private Bitmap mButtonBitmap;                               // bitmap of button
+    // global
+    private int mWidth, mHeight;
+    private Paint mBitmapPaint;
+
+    // button (play)
+    private Bitmap mButtonBitmap;
     private int mButtonBitmapHeight, mButtonBitmapWidth;
     private Paint mButtonBackgroundPaint;
-    private Paint mBitmapPaint, mSelectionTrianglePaint;
-    private RectF mBounds = new RectF();
+    private RectF mButtonBounds = new RectF();
 
-    // display name-related
+    // text (display name)
     private Paint mTextPaint;
-    private int mTextPadding, mTextLineSpacing, mSelectionTriangleLength;
+    private int mTextPadding, mTextLineSpacing, mTextHeight;
     private Rect mTextBounds = new Rect();
-    private List<String> mDisplayNameList = new ArrayList<>();
+    private List<String> mTextList = new ArrayList<>();
 
+    // badge
+    private Paint mBadgePaint, mBadgeBorderPaint, mBadgeTextPaint;
+    private int mBadgeRadius, mBadgeBorderWidth, mBadgeDisplacement, mBadgeTextHeight;
+    private int mBadgeOrientation = BADGE_ORIENTATION_TOP_RIGHT;
+
+    // avatar
+    private int mAvatarSize, mAvatarBorderWidth;
+
+    // selector (triangle)
+    private Paint mSelectionTrianglePaint;
     private Path mSelectionTrianglePath;
+    private int mSelectionTriangleLength, mSelectionTriangleMargin;
 
     public ChatHeadView(Context context) {
         super(context);
@@ -88,35 +120,69 @@ public class ChatHeadView extends RoundImageView {
     }
 
     private void init() {
-        mTextPadding = Utils.dpToPx(getContext(), DEF_TEXT_PADDING_DP);
-        mTextLineSpacing = Utils.dpToPx(getContext(), DEF_TEXT_LINE_SPACING_DP);
-        mSelectionTriangleLength = Utils.dpToPx(getContext(), DEF_SEL_LENGTH_DP);
+        Context context = getContext();
 
-        mButtonBackgroundPaint = new Paint();
-        mButtonBackgroundPaint.setAntiAlias(true);
+        // global
+        setKeepAspectRatio(false);
+        setImageResource(R.drawable.ic_anonymous_green_48dp);
+        setButtonImageResource(R.drawable.ic_play_15dp);
+
+        String tfPath = context.getString(R.string.font_regular);
+
+        mBitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+        // button (play)
+        mButtonBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mButtonBackgroundPaint.setColor(Color.parseColor(DEF_BUTTON_BACKGROUND_COLOR));
 
-        mSelectionTrianglePaint = new Paint();
-        mSelectionTrianglePaint.setAntiAlias(true);
-        mSelectionTrianglePaint.setStyle(Paint.Style.FILL);
-        mSelectionTrianglePaint.setColor(Color.WHITE);
+        // text (display name)
+        mTextPadding = Utils.dpToPx(context, DEF_TEXT_PADDING_DP);
+        mTextLineSpacing = Utils.dpToPx(context, DEF_TEXT_LINE_SPACING_DP);
 
-        mBitmapPaint = new Paint();
-        mBitmapPaint.setAntiAlias(true);
-
-        mTextPaint = new Paint();
-        mTextPaint.setAntiAlias(true);
+        mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setTextAlign(Paint.Align.CENTER);
-        mTextPaint.setTextSize(Utils.dpToPx(getContext(), 10));
-        String tfPath = getContext().getString(R.string.font_regular);
+        mTextPaint.setTextSize(Utils.dpToPx(context, 10));
         if(tfPath != null) {
-            mTextPaint.setTypeface(getTypeface(getContext(), tfPath));
+            mTextPaint.setTypeface(getTypeface(context, tfPath));
         }
-        mTextPaint.setColor(Utils.getColor(getContext(), R.color.white));
-        final int dp1 = Utils.dpToPx(getContext(), 1);
-        mTextPaint.setShadowLayer(dp1, dp1, dp1, Utils.getColor(getContext(), R.color.black));
+        mTextPaint.setColor(Utils.getColor(context, R.color.white));
+        final int dp1 = Utils.dpToPx(context, 1);
+        mTextPaint.setShadowLayer(dp1, dp1, dp1, Utils.getColor(context, R.color.black));
 
-        setKeepAspectRatio(false);
+        mTextPaint.getTextBounds("W", 0, 1, mTextBounds);
+        mTextHeight = mTextBounds.height();
+
+        // badge
+        mBadgeDisplacement = Utils.dpToPx(context, DEF_BADGE_DISPLACEMENT_DP);
+        mBadgeRadius = Utils.dpToPx(context, DEF_BADGE_RADIUS_DP);
+        mBadgeBorderWidth = Utils.dpToPx(context, DEF_BADGE_BORDER_DP);
+
+        mBadgePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBadgePaint.setColor(Color.parseColor(DEF_BADGE_BACKGROUND_COLOR));
+        mBadgePaint.setStyle(Paint.Style.FILL);
+
+        mBadgeBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBadgeBorderPaint.setColor(Color.WHITE);
+        mBadgeBorderPaint.setStyle(Paint.Style.FILL);
+
+        mBadgeTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBadgeTextPaint.setTextAlign(Paint.Align.CENTER);
+        mBadgeTextPaint.setTextSize(Utils.dpToPx(context, 10));
+        if(tfPath != null) {
+            mBadgeTextPaint.setTypeface(getTypeface(context, tfPath));
+        }
+        mBadgeTextPaint.setColor(Color.WHITE);
+
+        mBadgeTextPaint.getTextBounds("9", 0, 1, mTextBounds);
+        mBadgeTextHeight = mTextBounds.height();
+
+        // avatar
+        mAvatarSize = Utils.dpToPx(context, DEF_AVATAR_SIZE_DP);
+        mAvatarBorderWidth = Utils.dpToPx(context, DEF_AVATAR_BORDER_WIDTH_DP);
+
+        // selector (triangle)
+        mSelectionTriangleMargin = Utils.dpToPx(context, DEF_SELECTOR_MARGIN_DP);
+        mSelectionTriangleLength = Utils.dpToPx(context, DEF_SELECTOR_LENGTH_DP);
 
         int halfTriangleLength = mSelectionTriangleLength / 2;
         mSelectionTrianglePath = new Path();
@@ -125,13 +191,57 @@ public class ChatHeadView extends RoundImageView {
         mSelectionTrianglePath.lineTo(mSelectionTriangleLength, halfTriangleLength);
         mSelectionTrianglePath.close();
 
-        setImageResource(R.drawable.ic_anonymous_green_48dp);
+        mSelectionTrianglePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mSelectionTrianglePaint.setStyle(Paint.Style.FILL);
+        mSelectionTrianglePaint.setColor(Color.WHITE);
+
+        setLocalHeight(mAvatarSize + (mAvatarBorderWidth * 2));
+        setLocalWidth(mAvatarSize + (mAvatarBorderWidth * 2));
+        setBorderWidth(mAvatarBorderWidth);
+        onSizeChanged();
+    }
+
+    /**
+     * Returns the expected height of the view when in select mode.<br />
+     * See {@link #setSelectMode(boolean)} for more information.
+     * @return the expected height of the view when in select mode
+     */
+    public int getSelectModeHeight() {
+        return mAvatarSize + (mAvatarBorderWidth * 2) + mBadgeDisplacement +
+                (mTextHeight * 2) + mTextLineSpacing + mTextPadding +
+                mSelectionTriangleMargin + (mSelectionTriangleLength / 2);
+    }
+
+    private boolean hasAvatar() {
+        return mChat != null && mChat.getRecipientList().size() > 0;
+    }
+
+    private boolean hasBadge() {
+        return mShowBadge && hasAvatar() && (mSelected || mSelectMode) && mChat.getAmountUnopened() > 0;
+    }
+
+    private boolean hasName() {
+        return hasAvatar() && (mSelected || mSelectMode) && mChat.getRecipientList().get(0).getPhotoUri() == null;
     }
 
     @Override
-    protected void onSizeChanged() {
-        super.onSizeChanged();
-        refreshDisplayName();
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int tmpHeight = mAvatarSize + (mAvatarBorderWidth * 2) + (mShowBadge ? mBadgeDisplacement : 0);
+        int tmpWidth = tmpHeight + (mShowBadge ? mBadgeDisplacement : 0);      // fixed width
+
+        if(isSelectMode()) {
+            tmpHeight += (mTextHeight * 2) + mTextLineSpacing + mTextPadding;
+            tmpHeight += mSelectionTriangleMargin + (mSelectionTriangleLength / 2);
+        } else {
+            if(hasName()) {
+                tmpHeight += (mTextHeight * 2) + mTextLineSpacing + (mTextPadding * 2);
+            }
+        }
+
+        mWidth = tmpWidth;
+        mHeight = tmpHeight;
+
+        setMeasuredDimension(tmpWidth, tmpHeight);
     }
 
     @Override
@@ -140,51 +250,81 @@ public class ChatHeadView extends RoundImageView {
             return;
         }
 
-        canvas.save();
-        if(mNameOnTop) {
-            canvas.translate(0, (getLocalHeight() - getBitmap().getHeight()) - mSelectionTriangleLength - getBorderWidth());
+        boolean validChatAndAvatar = hasAvatar();
+        boolean hasBadge = hasBadge();
+        boolean hasName = hasName();
+        boolean hasButton = validChatAndAvatar && mChat.getLastReceivedUnplayedId() != 0 && mButtonBitmap != null;
+
+        if(mShowBadge && !mSelectMode && mBadgeOrientation == BADGE_ORIENTATION_TOP_LEFT) {
+            canvas.translate(mBadgeDisplacement, 0);
         }
+
+        int textTotalHeight = (mTextHeight * 2) + mTextLineSpacing + mTextPadding;
+
+        // draw avatar
+        canvas.save();
+        canvas.translate(0, (mShowBadge ? mBadgeDisplacement : 0) + (mSelectMode ? textTotalHeight : 0));
 
         super.onDraw(canvas);
 
-        if(mChat == null || getLocalWidth() <= 0) {
+        if(!validChatAndAvatar) {
             canvas.restore();
             return;
         }
 
         // draw play button if there are unopened messages
-        if(mChat.getLastReceivedUnplayedId() != 0 && mButtonBitmap != null) {
-            mBounds.set(getBorderWidth(), getBorderWidth(), getBitmap().getWidth() - getBorderWidth(), getBitmap().getHeight() - getBorderWidth());
-            canvas.drawRoundRect(mBounds, getCornerRadius() - getBorderWidth(), getCornerRadius() - getBorderWidth(), mButtonBackgroundPaint);
+        if(hasButton) {
+            mButtonBounds.set(getBorderWidth(), getBorderWidth(), getBitmap().getWidth() - getBorderWidth(), getBitmap().getHeight() - getBorderWidth());
+            canvas.drawRoundRect(mButtonBounds, getCornerRadius() - getBorderWidth(), getCornerRadius() - getBorderWidth(), mButtonBackgroundPaint);
 
             int left = (getBitmap().getWidth() / 2) - (mButtonBitmap.getWidth() / 2);
             int top = (getBitmap().getHeight() / 2) - (mButtonBitmap.getHeight() / 2);
             canvas.drawBitmap(mButtonBitmap, left, top, mBitmapPaint);
         }
 
+        // draw badge
+        if(hasBadge) {
+            String amountText = String.valueOf(mChat.getAmountUnopened());
+            int centerX = mWidth - mBadgeBorderWidth - mBadgeRadius;
+            int centerY = mBadgeRadius + mBadgeBorderWidth - mBadgeDisplacement;
+            if(!mSelectMode && mBadgeOrientation == BADGE_ORIENTATION_TOP_LEFT) {
+                centerX = mBadgeRadius + mBadgeBorderWidth - mBadgeDisplacement;
+            }
+            canvas.drawCircle(centerX, centerY, mBadgeRadius + mBadgeBorderWidth, mBadgeBorderPaint);
+            canvas.drawCircle(centerX, centerY, mBadgeRadius, mBadgePaint);
+            canvas.drawText(amountText, 0, amountText.length(), centerX, centerY + (mBadgeTextHeight / 2), mBadgeTextPaint);
+        }
+
         canvas.restore();
 
-        if(mNameVisible && mChat.getRecipientList().get(0).getPhotoUri() == null) {
+        // draw text
+        if(hasName) {
             canvas.save();
-            if(mNameOnTop) {
-                canvas.translate(0, -getBitmap().getHeight());
+            int lines = mTextList.size();
+
+            if(!mSelectMode) {
+                canvas.translate(0, mAvatarSize + (mAvatarBorderWidth * 2) + (mShowBadge ? mBadgeDisplacement : 0) + mTextPadding);
+            } else {
+                if(lines < 2) {
+                    canvas.translate(0, mTextHeight + mTextLineSpacing);
+                }
             }
 
-            int lines = mDisplayNameList.size();
             for (int i = 0; i < lines; i++) {
-                String line = mDisplayNameList.get(i);
+                String line = mTextList.get(i);
                 canvas.drawText(line, 0, line.length(),
                         (float) getLocalWidth() / 2f,
-                        getBitmap().getHeight() + (mTextPaint.getTextSize() / 2) + mTextPadding + ((mTextPaint.getTextSize() + mTextLineSpacing) * i),
+                        mTextHeight + ((mTextHeight + mTextLineSpacing) * i),
                         mTextPaint);
             }
 
             canvas.restore();
         }
 
-        if(mNameOnTop && mSelected) {
+        // draw selector triangle
+        if(mSelectMode && mSelected) {
             canvas.save();
-            canvas.translate(getWidth() / 2 - (mSelectionTriangleLength / 2), getHeight() - mSelectionTriangleLength);
+            canvas.translate((mAvatarSize + (mAvatarBorderWidth * 2)) / 2 - (mSelectionTriangleLength / 2), mHeight - (mSelectionTriangleLength / 2));
             canvas.drawPath(mSelectionTrianglePath, mSelectionTrianglePaint);
             canvas.restore();
         }
@@ -220,32 +360,37 @@ public class ChatHeadView extends RoundImageView {
     }
 
     public void setChat(Chat mChat) {
-        this.mChat = mChat;
+        if(mChat != null && mChat.getRecipientList().size() > 0) {
+            String oldRecipientPhotoUri = this.mChat == null ? null : this.mChat.getRecipientList().get(0).getPhotoUri();
+            String newRecipientPhotoUri = mChat == null ? null : mChat.getRecipientList().get(0).getPhotoUri();
+            boolean samePhotoUri = (oldRecipientPhotoUri == newRecipientPhotoUri) ||
+                    (oldRecipientPhotoUri != null && newRecipientPhotoUri != null && oldRecipientPhotoUri.compareTo(newRecipientPhotoUri) == 0);
 
-        if(mChat == null || mChat.getRecipientList().size() <= 0) {
-            return;
-        }
+            if (!samePhotoUri) {
+                // setup avatar
+                if (newRecipientPhotoUri != null) {
+                    setImageURI(Uri.parse(newRecipientPhotoUri));
+                    if (getDrawable() == null) {
+                        setImageResource(R.drawable.ic_anonymous_green_48dp);
+                    }
+                } else {
+                    setImageResource(R.drawable.ic_anonymous_green_48dp);
+                }
 
-        ChatRecipient recipient = mChat.getRecipientList().get(0);
-
-        // setup avatar
-        if(recipient.getPhotoUri() != null) {
-            setImageURI(Uri.parse(recipient.getPhotoUri()));
-            if(getDrawable() == null) {
-                setImageResource(R.drawable.ic_anonymous_green_48dp);
+                onSizeChanged();
             }
         } else {
-            setImageResource(R.drawable.ic_anonymous_green_48dp);
+            setImageBitmap(null);
         }
+
+        this.mChat = mChat;
 
         // setup display name
         refreshDisplayName();
-
-        invalidate();
     }
 
-    private void refreshDisplayName() {
-        mDisplayNameList.clear();
+    private synchronized void refreshDisplayName() {
+        mTextList.clear();
 
         if(mChat == null || mChat.getRecipientList().size() <= 0) {
             return;
@@ -263,17 +408,17 @@ public class ChatHeadView extends RoundImageView {
             // try to cut by space
             String[] splitRes = displayName.split("\\s+");
             String displayNameLine = "";
-            for(int i=0; i<splitRes.length && mDisplayNameList.size() < DEF_TEXT_MAX_LINES; i++) {
+            for(int i=0; i<splitRes.length && mTextList.size() < DEF_TEXT_MAX_LINES; i++) {
                 String tmpLine = displayNameLine + (displayNameLine.length() > 0 ? " " : "") + splitRes[i];
                 mTextPaint.getTextBounds(tmpLine, 0, tmpLine.length(), mTextBounds);
                 if(mTextBounds.width() > getLocalWidth()) {
                     if(displayNameLine.trim().length() > 0) {
-                        mDisplayNameList.add(displayNameLine);
+                        mTextList.add(displayNameLine);
                         displayNameLine = splitRes[i];
                     } else {
                         // just cut the string, even if it has no spaces
                         int cutoffIndex = getCutIndex(splitRes[i]);
-                        mDisplayNameList.add(splitRes[i].substring(0, cutoffIndex));
+                        mTextList.add(splitRes[i].substring(0, cutoffIndex));
                         splitRes[i] = splitRes[i].substring(cutoffIndex);
                         i--;
                     }
@@ -282,11 +427,21 @@ public class ChatHeadView extends RoundImageView {
                 }
             }
             if(displayNameLine.length() > 0) {
-                mDisplayNameList.add(displayNameLine);
+                mTextList.add(displayNameLine);
             }
+
+            /*mTextTotalHeight = 0;
+            if(mTextList.size() > 0) {
+                mTextTotalHeight = mTextLineSpacing * (mTextList.size() - 1);
+                for (String nameLine : mTextList) {
+                    mTextPaint.getTextBounds(nameLine, 0, nameLine.length(), mTextBounds);
+                    mTextTotalHeight += mTextBounds.height();
+                }
+            }*/
         } else {
             // whole name fits
-            mDisplayNameList.add(displayName);
+            mTextList.add(displayName);
+            /*mTextTotalHeight = mTextBounds.height();*/
         }
     }
 
@@ -310,20 +465,16 @@ public class ChatHeadView extends RoundImageView {
         return 0;
     }
 
-    public boolean isNameVisible() {
-        return mNameVisible;
+    public boolean isSelectMode() {
+        return mSelectMode;
     }
 
-    public void setNameVisible(boolean mNameVisible) {
-        this.mNameVisible = mNameVisible;
-    }
-
-    public boolean isNameOnTop() {
-        return mNameOnTop;
-    }
-
-    public void setNameOnTop(boolean mNameOnTop) {
-        this.mNameOnTop = mNameOnTop;
+    /**
+     * Select mode draws the chat head display name on top of the avatar.
+     * @param mSelectMode
+     */
+    public void setSelectMode(boolean mSelectMode) {
+        this.mSelectMode = mSelectMode;
     }
 
     public boolean isSelected() {
@@ -332,5 +483,21 @@ public class ChatHeadView extends RoundImageView {
 
     public void setSelected(boolean mSelected) {
         this.mSelected = mSelected;
+    }
+
+    public int getBadgeOrientation() {
+        return mBadgeOrientation;
+    }
+
+    public void setBadgeOrientation(int mBadgeOrientation) {
+        this.mBadgeOrientation = mBadgeOrientation;
+    }
+
+    public boolean isShowBadge() {
+        return mShowBadge;
+    }
+
+    public void setShowBadge(boolean mShowBadge) {
+        this.mShowBadge = mShowBadge;
     }
 }
