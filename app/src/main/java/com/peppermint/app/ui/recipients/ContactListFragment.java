@@ -27,7 +27,8 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
+import android.widget.HeaderViewListAdapter;
+import android.widget.ListAdapter;
 import android.widget.PopupWindow;
 
 import com.peppermint.app.R;
@@ -95,7 +96,6 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
     // the recipient list
     private ContactCursorAdapter mRecipientAdapter;
     private Button mBtnAddContact, mBtnAddContactEmpty;
-    private ImageView mImgListBorder;
     private PopupDialog mTipPopup;
     private ViewGroup mListFooterView;
 
@@ -197,7 +197,7 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
                 if (data instanceof FilteredCursor) {
                     // re-use adapter and replace cursor
                     mRecipientAdapter.changeCursor((Cursor) data);
-                    if(getListView().getAdapter() != mRecipientAdapter) {
+                    if(getRealAdapter() != mRecipientAdapter) {
                         getListView().setAdapter(mRecipientAdapter);
 
                     }
@@ -205,7 +205,7 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
                 } else {
                     // use new adapter
                     mChatAdapter.changeCursor((Cursor) data);
-                    if(getListView().getAdapter() != mChatAdapter) {
+                    if(getRealAdapter() != mChatAdapter) {
                          getListView().setAdapter(mChatAdapter);
                     }
                     mRecipientAdapter.changeCursor(null);
@@ -507,8 +507,6 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
         View v = inflater.inflate(R.layout.f_recipients_layout, container, false);
 
         // init no recipients view
-        mImgListBorder = (ImageView) v.findViewById(R.id.imgListBorder);
-
         View.OnClickListener addContactClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -715,7 +713,7 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
     public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
         Intent intent = new Intent(mActivity, ChatActivity.class);
 
-        if(getListView().getAdapter() instanceof ContactCursorAdapter) {
+        if(getRealAdapter() instanceof ContactCursorAdapter) {
             showPopup(view);
         } else {
             intent.putExtra(ChatFragment.PARAM_CHAT_ID, mChatAdapter.getChat(position).getId());
@@ -725,7 +723,7 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
 
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        if(getListView().getAdapter() instanceof ChatCursorAdapter) {
+        if(getRealAdapter() instanceof ChatCursorAdapter) {
             return mController.triggerRecording(view, mChatAdapter.getChat(position));
         }
 
@@ -766,5 +764,14 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
             mHoldPopup.showAtLocation(parent, Gravity.NO_GRAVITY, mLastTouchPoint.x - Utils.dpToPx(mActivity, 120), mLastTouchPoint.y + Utils.dpToPx(mActivity, 10));
             mHandler.postDelayed(mDismissPopupRunnable, 6000);
         }
+    }
+
+    /**
+     * When a footer or header is added to the ListView, the adapter set through setAdapter gets
+     * wrapped by a HeaderViewListAdapter. This returns the wrapped adapter.
+     * @return
+     */
+    private ListAdapter getRealAdapter() {
+        return getListView().getAdapter() == null ? null : ((HeaderViewListAdapter) getListView().getAdapter()).getWrappedAdapter();
     }
 }

@@ -19,14 +19,6 @@
         android:layout_marginBottom="1dp"
         android:footerDividersEnabled="true"/>
 
-    <ImageView
-        android:id="@+id/imgListBorder"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_gravity="bottom"
-        android:src="@color/divider_grey"
-        android:visibility="gone"/>
-
     <RelativeLayout
         android:id="@id/android:empty"
         android:layout_width="match_parent"
