@@ -22,8 +22,10 @@ import android.widget.Toast;
 
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
-import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.data.ContactManager;
+import com.peppermint.app.data.ContactRaw;
+import com.peppermint.app.data.DatabaseHelper;
+import com.peppermint.app.data.GlobalManager;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.views.NavigationItem;
@@ -32,10 +34,12 @@ import com.peppermint.app.ui.views.dialogs.CustomListDialog;
 import com.peppermint.app.ui.views.simple.CustomFontEditText;
 import com.peppermint.app.ui.views.simple.CustomToast;
 import com.peppermint.app.ui.views.simple.EditTextValidatorLayout;
+import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -435,6 +439,13 @@ public class NewContactFragment extends Fragment implements View.OnClickListener
         } catch (ContactManager.InvalidPhoneException e) {
             Toast.makeText(mActivity, R.string.msg_insert_phone, Toast.LENGTH_LONG).show();
             return;
+        }
+
+        // add new contact to recent contact list (i.e. create a chat record for it)
+        try {
+            GlobalManager.insertOrUpdateTimestampChatAndRecipient(mActivity, DatabaseHelper.getInstance(mActivity).getWritableDatabase(), recipient, DateContainer.getCurrentUTCTimestamp());
+        } catch (SQLException e) {
+            TrackerManager.getInstance(mActivity.getApplicationContext()).log("Unable to set new contact as recent contact!", e);
         }
 
         Toast.makeText(mActivity, R.string.msg_contact_added, Toast.LENGTH_LONG).show();
