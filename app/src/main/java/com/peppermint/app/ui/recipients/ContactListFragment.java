@@ -3,6 +3,7 @@ package com.peppermint.app.ui.recipients;
 import android.Manifest;
 import android.app.Activity;
 import android.app.ListFragment;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -56,7 +57,6 @@ import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
 import com.peppermint.app.ui.recipients.add.NewContactActivity;
 import com.peppermint.app.ui.recipients.add.NewContactFragment;
 import com.peppermint.app.ui.views.dialogs.PopupDialog;
-import com.peppermint.app.ui.views.simple.CustomVisibilityListView;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
@@ -94,10 +94,10 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
 
     // the recipient list
     private ContactCursorAdapter mRecipientAdapter;
-    private Button mBtnAddContact;
-    private ViewGroup mLytAddContactContainer;
+    private Button mBtnAddContact, mBtnAddContactEmpty;
     private ImageView mImgListBorder;
     private PopupDialog mTipPopup;
+    private ViewGroup mListFooterView;
 
     private Point mLastTouchPoint = new Point();
     private PopupWindow mHoldPopup;
@@ -213,8 +213,6 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
 
                 mActivity.stopFragmentLoading(true);
             }
-
-            handleAddContactButtonVisibility();
         }
 
         @Override
@@ -223,17 +221,8 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
                 ((Cursor) o).close();
             }
 
-            handleAddContactButtonVisibility();
             if(mActivity != null) {
                 mActivity.stopFragmentLoading(false);
-            }
-        }
-
-        private void handleAddContactButtonVisibility() {
-            if(mSearchListBarView.getSearchText() != null || mRecipientAdapter == null || mRecipientAdapter.getCount() <= 0) {
-                mLytAddContactContainer.setVisibility(View.VISIBLE);
-            } else {
-                mLytAddContactContainer.setVisibility(View.GONE);
             }
         }
     }
@@ -247,7 +236,7 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
             List<AnimatedAvatarView> possibleAnimationsList = new ArrayList<>();
 
             // get all anonymous avatar instances
-            for (int i = 0; i < getListView().getChildCount(); i++) {
+            for (int i = 0; i < getListView().getChildCount() - 1; i++) {
                 AnimatedAvatarView v = (AnimatedAvatarView) getListView().getChildAt(i).findViewById(R.id.imgPhoto);
                 if (!v.isShowStaticAvatar()) {
                     possibleAnimationsList.add(v);
@@ -274,6 +263,7 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
     };
 
     private final Rect mBtnAddContactHitRect = new Rect();
+    private final Rect mBtnAddContactEmptyHitRect = new Rect();
     private PointF mTipPoint;
 
     private final Runnable mTipRunnable = new Runnable() {
@@ -359,7 +349,10 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
                 // since this might be causing the tap event to not work
                 // the onClick event already has instructions to do this
                 mBtnAddContact.getGlobalVisibleRect(mBtnAddContactHitRect);
-                if (!mBtnAddContactHitRect.contains((int) event.getX(), (int) event.getY())) {
+                mBtnAddContactEmpty.getGlobalVisibleRect(mBtnAddContactEmptyHitRect);
+
+                if (!mBtnAddContactHitRect.contains((int) event.getX(), (int) event.getY()) &&
+                        !mBtnAddContactEmptyHitRect.contains((int) event.getX(), (int) event.getY())) {
                     mSearchListBarView.removeSearchTextFocus(event);
                     View view = getView();
                     if(view != null) {
@@ -516,10 +509,7 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
         // init no recipients view
         mImgListBorder = (ImageView) v.findViewById(R.id.imgListBorder);
 
-        mLytAddContactContainer = (ViewGroup) v.findViewById(R.id.lytAddContactContainer);
-
-        mBtnAddContact = (Button) v.findViewById(R.id.btnAddContact);
-        mBtnAddContact.setOnClickListener(new View.OnClickListener() {
+        View.OnClickListener addContactClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(mActivity, NewContactActivity.class);
@@ -537,7 +527,17 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
                 }
                 startActivityForResult(intent, REQUEST_NEWCONTACT);
             }
-        });
+        };
+
+        LayoutInflater layoutInflater = (LayoutInflater) mActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        mListFooterView = (ViewGroup) layoutInflater.inflate(R.layout.v_recipients_footer_layout, null);
+
+        mBtnAddContact = (Button) mListFooterView.findViewById(R.id.btnAddContact);
+        mBtnAddContact.setId(0);
+        mBtnAddContact.setOnClickListener(addContactClickListener);
+
+        mBtnAddContactEmpty = (Button) v.findViewById(R.id.btnAddContact);
+        mBtnAddContactEmpty.setOnClickListener(addContactClickListener);
 
         return v;
     }
@@ -554,18 +554,7 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
         getListView().setLongClickable(true);
         getListView().setOnItemLongClickListener(this);
 
-        // apply visibility of list view to its border too
-        // not using drawables to avoid overdraws
-        ((CustomVisibilityListView) getListView()).setCanScrollListener(new CustomVisibilityListView.CanScrollListener() {
-            @Override
-            public synchronized void canScrollChanged(boolean canScroll, int visibility) {
-                if (canScroll) {
-                    mImgListBorder.setVisibility(visibility);
-                } else {
-                    mImgListBorder.setVisibility(View.GONE);
-                }
-            }
-        });
+        getListView().addFooterView(mListFooterView);
 
         synchronized (mLock) {
             mCreated = true;

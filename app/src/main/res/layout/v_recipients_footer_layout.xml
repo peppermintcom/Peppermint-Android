@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
+
+    <com.peppermint.app.ui.views.simple.CustomFontButton
+        android:id="@+id/btnAddContact"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_margin="15dp"
+        android:paddingTop="5dp"
+        android:paddingLeft="30dp"
+        android:paddingRight="30dp"
+        android:paddingBottom="8dp"
+        custom:textFont="@string/font_semibold"
+        android:textSize="16dp"
+        android:text="@string/add_contact"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:background="@drawable/background_btn_alt"
+        android:drawableLeft="@drawable/ic_plus_14dp"
+        android:drawablePadding="10dp"
+        style="?android:attr/borderlessButtonStyle" />
+
+</FrameLayout>
