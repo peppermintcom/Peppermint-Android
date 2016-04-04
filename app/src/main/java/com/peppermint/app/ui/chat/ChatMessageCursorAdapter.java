@@ -164,7 +164,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
                 // time received/sent
                 try {
                     DateContainer curTime = new DateContainer(DateContainer.TYPE_TIME, message.getRegistrationTimestamp());
-                    txtTime.setText(curTime.getAsString(DateContainer.FRIENDLY_AMPM_TIME_FORMAT, TimeZone.getDefault()).replace(".", ""));
+                    txtTime.setText(curTime.getAsFriendlyTime(mContext, TimeZone.getDefault()));
                 } catch(ParseException e) {
                     txtTime.setText(message.getRegistrationTimestamp());
                     mTrackerManager.logException(e);

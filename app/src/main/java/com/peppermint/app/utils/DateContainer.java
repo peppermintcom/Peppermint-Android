@@ -2,6 +2,7 @@ package com.peppermint.app.utils;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.text.format.DateFormat;
 
 import com.peppermint.app.R;
 
@@ -23,6 +24,7 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
     public static final String TIME_FORMAT = "HH:mm:ss";
     public static final String DATETIME_FORMAT = "yyyy-MM-dd' 'HH:mm:ss";
 
+    public static final String FRIENDLY_24H_TIME_FORMAT = "H:mm";
     public static final String FRIENDLY_AMPM_TIME_FORMAT = "K:mm a";
     public static final String FRIENDLY_FULL_DATE_FORMAT = "d MMM yyyy";
     public static final String FRIENDLY_MONTH_DATE_FORMAT = "d MMM";
@@ -106,6 +108,24 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
         formatter.setTimeZone(timeZone);
         return formatter.format(mInputCalendar.getTime());
 	}
+
+    /**
+     * Returns a friendly text version of the time.<br />
+     * If the context is supplied, it adjust sets the format (24h or am/pm) according
+     * to the device's settings.
+     * @param context the app context
+     * @param timeZone the time zone
+     * @return the friendly text
+     */
+    public String getAsFriendlyTime(Context context, TimeZone timeZone) {
+        if(context != null && !DateFormat.is24HourFormat(context)) {
+            // am/pm
+            return getAsString(FRIENDLY_AMPM_TIME_FORMAT, timeZone).replace(".", "");
+        } else {
+            // 24h
+            return getAsString(FRIENDLY_24H_TIME_FORMAT, timeZone);
+        }
+    }
 
     public Calendar getCalendar() {
         return mInputCalendar;
