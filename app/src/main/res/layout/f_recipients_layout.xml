@@ -5,7 +5,7 @@
     android:focusableInTouchMode="true"
     android:id="@+id/lytContents"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="match_parent">
 
     <ListView android:id="@id/android:list"
         android:fillViewport="true"
@@ -19,7 +19,7 @@
         android:layout_marginBottom="1dp"
         android:footerDividersEnabled="true"/>
 
-    <RelativeLayout
+    <LinearLayout
         android:id="@id/android:empty"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -32,34 +32,33 @@
 
         <com.peppermint.app.ui.views.simple.CustomFontTextView
             android:id="@+id/txtEmpty1"
-            android:layout_alignParentTop="true"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="30dp"
             android:layout_marginRight="30dp"
+            android:layout_gravity="center"
             android:gravity="center"
             custom:textFont="@string/font_semibold"
             android:textSize="16dp"
             android:textColor="@color/grey_text"
             android:text="@string/msg_no_contacts" />
 
-        <include android:id="@+id/btnAddContactEmptyContainer"
-            android:layout_alignParentBottom="true"
-            layout="@layout/v_recipients_footer_layout"
-            android:layout_height="80dp"
-            android:layout_width="match_parent" />
-
         <com.peppermint.app.ui.views.simple.CustomMinHeightImageView
             android:id="@+id/imgNoContacts"
-            android:layout_below="@id/txtEmpty1"
-            android:layout_above="@id/btnAddContactEmptyContainer"
-            android:layout_centerHorizontal="true"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:layout_marginTop="20dp"
             android:layout_marginBottom="5dp"
+            android:layout_gravity="center"
             android:src="@drawable/img_no_contacts"
             custom:minVisibilityHeight="50dp" />
-    </RelativeLayout>
+
+        <include android:id="@+id/btnAddContactEmptyContainer"
+            layout="@layout/v_recipients_footer_layout"
+            android:layout_gravity="center"
+            android:layout_height="80dp"
+            android:layout_width="match_parent" />
+    </LinearLayout>
 
 </FrameLayout>
