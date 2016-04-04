@@ -7,7 +7,7 @@
     android:gravity="center"
     android:orientation="horizontal">
 
-    <com.peppermint.app.ui.views.RoundImageView
+    <com.peppermint.app.ui.base.views.RoundImageView
         android:id="@+id/imgChatAvatar"
         android:layout_width="35dp"
         android:layout_height="35dp"
@@ -23,7 +23,7 @@
         android:gravity="center"
         android:orientation="vertical">
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView
+        <com.peppermint.app.ui.base.views.CustomFontTextView
             android:id="@+id/txtChatName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -33,9 +33,9 @@
             android:textColor="@color/white"
             android:text="@string/app_name"
             android:singleLine="true">
-        </com.peppermint.app.ui.views.simple.CustomFontTextView>
+        </com.peppermint.app.ui.base.views.CustomFontTextView>
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView
+        <com.peppermint.app.ui.base.views.CustomFontTextView
             android:id="@+id/txtChatVia"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -45,7 +45,7 @@
             android:textColor="@color/dark_green_text"
             android:text="123456879"
             android:singleLine="true">
-        </com.peppermint.app.ui.views.simple.CustomFontTextView>
+        </com.peppermint.app.ui.base.views.CustomFontTextView>
 
     </LinearLayout>
 

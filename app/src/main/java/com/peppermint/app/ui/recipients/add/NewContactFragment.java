@@ -28,12 +28,12 @@ import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.GlobalManager;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomActionBarActivity;
-import com.peppermint.app.ui.views.NavigationItem;
-import com.peppermint.app.ui.views.NavigationListAdapter;
-import com.peppermint.app.ui.views.dialogs.CustomListDialog;
-import com.peppermint.app.ui.views.simple.CustomFontEditText;
-import com.peppermint.app.ui.views.simple.CustomToast;
-import com.peppermint.app.ui.views.simple.EditTextValidatorLayout;
+import com.peppermint.app.ui.base.NavigationItem;
+import com.peppermint.app.ui.base.NavigationListAdapter;
+import com.peppermint.app.ui.base.dialogs.CustomListDialog;
+import com.peppermint.app.ui.base.views.CustomFontEditText;
+import com.peppermint.app.ui.base.views.CustomToast;
+import com.peppermint.app.ui.base.views.EditTextValidatorLayout;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 

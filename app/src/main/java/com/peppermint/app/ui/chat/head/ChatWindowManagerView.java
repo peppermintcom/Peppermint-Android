@@ -22,7 +22,7 @@ import com.peppermint.app.ui.OverlayManager;
 import com.peppermint.app.ui.chat.ChatController;
 import com.peppermint.app.ui.chat.RecipientDataGUI;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
-import com.peppermint.app.ui.views.simple.TouchInterceptorView;
+import com.peppermint.app.ui.base.views.TouchInterceptorView;
 import com.peppermint.app.utils.Utils;
 
 /**

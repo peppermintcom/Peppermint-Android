@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.views.dialogs;
+package com.peppermint.app.ui.base.dialogs;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -10,8 +10,8 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 
 import com.peppermint.app.R;
-import com.peppermint.app.ui.views.simple.CustomFontButton;
-import com.peppermint.app.ui.views.simple.CustomFontTextView;
+import com.peppermint.app.ui.base.views.CustomFontButton;
+import com.peppermint.app.ui.base.views.CustomFontTextView;
 
 import java.util.ArrayList;
 import java.util.List;

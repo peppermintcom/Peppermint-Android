@@ -30,7 +30,7 @@
         android:orientation="vertical"
         android:fitsSystemWindows="true">
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView
+        <com.peppermint.app.ui.base.views.CustomFontTextView
             android:id="@+id/txtEmpty1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -43,7 +43,7 @@
             android:textColor="@color/grey_text"
             android:text="@string/msg_no_contacts" />
 
-        <com.peppermint.app.ui.views.simple.CustomMinHeightImageView
+        <com.peppermint.app.ui.base.views.CustomMinHeightImageView
             android:id="@+id/imgNoContacts"
             android:layout_width="wrap_content"
             android:layout_height="0dp"

@@ -31,8 +31,8 @@ import com.peppermint.app.ui.OverlayManager;
 import com.peppermint.app.ui.TouchInterceptable;
 import com.peppermint.app.ui.recipients.add.NewContactActivity;
 import com.peppermint.app.ui.recipients.add.NewContactFragment;
-import com.peppermint.app.ui.views.dialogs.CustomConfirmationDialog;
-import com.peppermint.app.ui.views.simple.CustomToast;
+import com.peppermint.app.ui.base.dialogs.CustomConfirmationDialog;
+import com.peppermint.app.ui.base.views.CustomToast;
 import com.peppermint.app.utils.Utils;
 
 /**

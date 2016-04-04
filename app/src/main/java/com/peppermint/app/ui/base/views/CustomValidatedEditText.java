@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.views.simple;
+package com.peppermint.app.ui.base.views;
 
 import android.animation.Animator;
 import android.annotation.TargetApi;

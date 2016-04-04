@@ -8,7 +8,7 @@ import android.view.WindowManager;
 
 import com.peppermint.app.R;
 import com.peppermint.app.ui.KeyInterceptable;
-import com.peppermint.app.ui.views.simple.TouchInterceptorView;
+import com.peppermint.app.ui.base.views.TouchInterceptorView;
 
 /**
  * Created by Nuno Luz on 19-03-2016.

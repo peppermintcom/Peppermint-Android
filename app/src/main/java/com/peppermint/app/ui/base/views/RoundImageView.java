@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.views;
+package com.peppermint.app.ui.base.views;
 
 import android.content.Context;
 import android.content.res.TypedArray;

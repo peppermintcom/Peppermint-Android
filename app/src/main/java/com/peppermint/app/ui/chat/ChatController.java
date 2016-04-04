@@ -30,9 +30,9 @@ import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.OverlayManager;
 import com.peppermint.app.ui.TouchInterceptable;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
-import com.peppermint.app.ui.views.NavigationItem;
-import com.peppermint.app.ui.views.NavigationListAdapter;
-import com.peppermint.app.ui.views.dialogs.CustomListDialog;
+import com.peppermint.app.ui.base.NavigationItem;
+import com.peppermint.app.ui.base.NavigationListAdapter;
+import com.peppermint.app.ui.base.dialogs.CustomListDialog;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;

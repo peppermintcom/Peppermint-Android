@@ -6,7 +6,7 @@
     android:orientation="horizontal"
     android:padding="5dp">
 
-    <com.peppermint.app.ui.views.simple.CustomFontTextView
+    <com.peppermint.app.ui.base.views.CustomFontTextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/hold_record_release_send_p1"
@@ -15,7 +15,7 @@
         android:textSize="14dp"
         custom:textFont="@string/font_bold" />
 
-    <com.peppermint.app.ui.views.simple.CustomFontTextView
+    <com.peppermint.app.ui.base.views.CustomFontTextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/hold_record_release_send_p2"

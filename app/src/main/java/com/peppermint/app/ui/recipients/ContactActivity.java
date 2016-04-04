@@ -15,9 +15,9 @@ import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.PermissionsPolicyEnforcer;
 import com.peppermint.app.ui.about.AboutActivity;
 import com.peppermint.app.ui.settings.SettingsActivity;
-import com.peppermint.app.ui.views.NavigationItem;
-import com.peppermint.app.ui.views.NavigationItemAction;
-import com.peppermint.app.ui.views.NavigationItemSimpleAction;
+import com.peppermint.app.ui.base.NavigationItem;
+import com.peppermint.app.ui.base.NavigationItemAction;
+import com.peppermint.app.ui.base.NavigationItemSimpleAction;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;

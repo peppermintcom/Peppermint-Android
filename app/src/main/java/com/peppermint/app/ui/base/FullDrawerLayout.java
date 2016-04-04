@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.views;
+package com.peppermint.app.ui.base;
 
 import android.content.Context;
 import android.support.v4.view.GravityCompat;

@@ -15,7 +15,7 @@
         android:layout_alignParentBottom="true"
         android:background="@drawable/background_border_top">
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView
+        <com.peppermint.app.ui.base.views.CustomFontTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"

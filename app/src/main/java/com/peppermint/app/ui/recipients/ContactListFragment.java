@@ -57,7 +57,7 @@ import com.peppermint.app.ui.chat.ChatFragment;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
 import com.peppermint.app.ui.recipients.add.NewContactActivity;
 import com.peppermint.app.ui.recipients.add.NewContactFragment;
-import com.peppermint.app.ui.views.dialogs.PopupDialog;
+import com.peppermint.app.ui.base.dialogs.PopupDialog;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 

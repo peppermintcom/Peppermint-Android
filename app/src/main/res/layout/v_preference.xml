@@ -45,7 +45,8 @@
         android:layout_marginBottom="6dip"
         android:layout_weight="1">
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView android:id="@android:id/title"
+        <com.peppermint.app.ui.base.views.CustomFontTextView
+            android:id="@android:id/title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             custom:textFont="@string/font_semibold"
@@ -54,7 +55,8 @@
             android:ellipsize="marquee"
             android:fadingEdge="horizontal" />
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView android:id="@+id/content"
+        <com.peppermint.app.ui.base.views.CustomFontTextView
+            android:id="@+id/content"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@android:id/title"
@@ -64,7 +66,8 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:maxLines="4" />
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView android:id="@android:id/summary"
+        <com.peppermint.app.ui.base.views.CustomFontTextView
+            android:id="@android:id/summary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/content"

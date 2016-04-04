@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:padding="10dp">
 
-    <com.peppermint.app.ui.views.simple.CustomFontEditText
+    <com.peppermint.app.ui.base.views.CustomFontEditText
         android:id="@+id/text1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -26,7 +26,7 @@
         android:hint="@string/first_name"
         style="@style/Peppermint.CustomEditText" />
 
-    <com.peppermint.app.ui.views.simple.CustomFontEditText
+    <com.peppermint.app.ui.base.views.CustomFontEditText
         android:id="@+id/text2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

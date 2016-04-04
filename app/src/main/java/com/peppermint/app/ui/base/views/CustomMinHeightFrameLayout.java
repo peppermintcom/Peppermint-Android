@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.views.simple;
+package com.peppermint.app.ui.base.views;
 
 import android.annotation.TargetApi;
 import android.content.Context;

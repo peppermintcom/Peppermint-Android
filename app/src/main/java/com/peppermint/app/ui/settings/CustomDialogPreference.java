@@ -18,7 +18,7 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import com.peppermint.app.R;
-import com.peppermint.app.ui.views.dialogs.CustomDialog;
+import com.peppermint.app.ui.base.dialogs.CustomDialog;
 
 /**
  * Created by Nuno Luz on 02-12-2015.

@@ -18,7 +18,7 @@
         android:background="@drawable/background_ripple"
         android:visibility="gone" />
 
-    <com.peppermint.app.ui.views.simple.CustomFontEditText
+    <com.peppermint.app.ui.base.views.CustomFontEditText
         android:id="@+id/txtSearch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

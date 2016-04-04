@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.views.dialogs;
+package com.peppermint.app.ui.base.dialogs;
 
 import android.app.Dialog;
 import android.content.Context;

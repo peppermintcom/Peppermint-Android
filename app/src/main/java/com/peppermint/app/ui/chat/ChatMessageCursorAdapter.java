@@ -24,8 +24,8 @@ import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.events.PlayerEvent;
 import com.peppermint.app.events.SenderEvent;
 import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.ui.views.simple.CustomFontButton;
-import com.peppermint.app.ui.views.simple.CustomFontTextView;
+import com.peppermint.app.ui.base.views.CustomFontButton;
+import com.peppermint.app.ui.base.views.CustomFontTextView;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 

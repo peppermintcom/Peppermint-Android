@@ -45,7 +45,7 @@ import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException
 import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.CustomAuthenticatorActivity;
-import com.peppermint.app.ui.views.simple.CustomNoScrollListView;
+import com.peppermint.app.ui.base.views.CustomNoScrollListView;
 
 import javax.net.ssl.SSLException;
 

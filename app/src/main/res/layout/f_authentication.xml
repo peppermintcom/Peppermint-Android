@@ -14,7 +14,7 @@
         android:orientation="vertical"
         android:background="@drawable/background_ripple">
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView
+        <com.peppermint.app.ui.base.views.CustomFontTextView
             android:id="@+id/txtDontWantAccount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -23,7 +23,7 @@
             android:textSize="14dp"
             android:text="@string/dont_want_to_use_account"/>
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView
+        <com.peppermint.app.ui.base.views.CustomFontTextView
             android:layout_below="@id/txtDontWantAccount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -54,7 +54,7 @@
                 android:layout_marginRight="15dp"
                 android:orientation="vertical">
 
-                <com.peppermint.app.ui.views.simple.CustomFontTextView
+                <com.peppermint.app.ui.base.views.CustomFontTextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
@@ -65,7 +65,7 @@
                     android:textSize="16dp"
                     android:text="@string/pick_account" />
 
-                <com.peppermint.app.ui.views.simple.CustomFontTextView
+                <com.peppermint.app.ui.base.views.CustomFontTextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
@@ -85,7 +85,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
 
-                    <com.peppermint.app.ui.views.simple.CustomNoScrollListView
+                    <com.peppermint.app.ui.base.views.CustomNoScrollListView
                         android:id="@id/android:list"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -100,7 +100,7 @@
                         android:orientation="vertical"
                         android:gravity="center">
 
-                        <com.peppermint.app.ui.views.simple.CustomFontTextView
+                        <com.peppermint.app.ui.base.views.CustomFontTextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="10dp"
@@ -110,7 +110,7 @@
                             android:textSize="18dp"
                             android:text="@string/no_google_accounts_found" />
 
-                        <com.peppermint.app.ui.views.simple.CustomFontTextView
+                        <com.peppermint.app.ui.base.views.CustomFontTextView
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:gravity="center"
@@ -124,7 +124,7 @@
 
                 </FrameLayout>
 
-                <com.peppermint.app.ui.views.simple.CustomFontButton
+                <com.peppermint.app.ui.base.views.CustomFontButton
                     android:id="@+id/btnSignIn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

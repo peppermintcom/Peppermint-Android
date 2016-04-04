@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.views;
+package com.peppermint.app.ui.base;
 
 import android.app.Fragment;
 
@@ -6,7 +6,7 @@ import android.app.Fragment;
  * Created by Nuno Luz on 04-04-2016.
  *
  * Avoid having to implements all methods from
- * {@link com.peppermint.app.ui.views.NavigationItemAction} every time.
+ * {@link com.peppermint.app.ui.base.NavigationItemAction} every time.
  */
 public class NavigationItemSimpleAction implements NavigationItemAction {
     @Override

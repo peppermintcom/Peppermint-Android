@@ -1,10 +1,10 @@
-package com.peppermint.app.ui.views.dialogs;
+package com.peppermint.app.ui.base.dialogs;
 
 import android.content.Context;
 import android.os.Bundle;
 
 import com.peppermint.app.R;
-import com.peppermint.app.ui.views.simple.CustomFontEditText;
+import com.peppermint.app.ui.base.views.CustomFontEditText;
 import com.peppermint.app.utils.Utils;
 
 /**

@@ -1,12 +1,12 @@
-package com.peppermint.app.ui.views.dialogs;
+package com.peppermint.app.ui.base.dialogs;
 
 import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 
 import com.peppermint.app.R;
-import com.peppermint.app.ui.views.simple.CustomFontButton;
-import com.peppermint.app.ui.views.simple.CustomFontTextView;
+import com.peppermint.app.ui.base.views.CustomFontButton;
+import com.peppermint.app.ui.base.views.CustomFontTextView;
 
 /**
  * Created by Nuno Luz on 13-11-2015.

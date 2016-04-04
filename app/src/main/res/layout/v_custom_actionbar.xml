@@ -36,7 +36,7 @@
             android:layout_marginLeft="10dp"
             android:layout_toRightOf="@id/btnMenu">
 
-            <com.peppermint.app.ui.views.simple.CustomFontTextView
+            <com.peppermint.app.ui.base.views.CustomFontTextView
                 android:id="@+id/txtTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

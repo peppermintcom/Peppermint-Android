@@ -6,7 +6,7 @@ import android.view.View;
 
 import com.peppermint.app.R;
 import com.peppermint.app.ui.CustomActionBarActivity;
-import com.peppermint.app.ui.views.NavigationItem;
+import com.peppermint.app.ui.base.NavigationItem;
 
 import java.util.ArrayList;
 import java.util.List;

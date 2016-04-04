@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.views.simple;
+package com.peppermint.app.ui.base.views;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -6,7 +6,7 @@ import android.content.res.TypedArray;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.widget.EditText;
+import android.widget.Button;
 
 import com.peppermint.app.R;
 
@@ -14,13 +14,13 @@ import java.util.WeakHashMap;
 
 /**
  * Created by Nuno Luz on 10-11-2015.
- * {@link EditText} with the custom textFont attribute.
+ * {@link Button} with the custom textFont attribute.
  */
-public class CustomFontEditText extends EditText {
+public class CustomFontButton extends Button {
 
     private static WeakHashMap<String, Typeface> mTypefaceCache = new WeakHashMap<>();
 
-    protected static Typeface getTypeface(Context context, String fontPath) {
+    private static Typeface getTypeface(Context context, String fontPath) {
         if(mTypefaceCache.containsKey(fontPath)) {
             return mTypefaceCache.get(fontPath);
         }
@@ -31,23 +31,23 @@ public class CustomFontEditText extends EditText {
         return tf;
     }
 
-    public CustomFontEditText(Context context) {
+    public CustomFontButton(Context context) {
         super(context);
         init(null);
     }
 
-    public CustomFontEditText(Context context, AttributeSet attrs) {
+    public CustomFontButton(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(attrs);
     }
 
-    public CustomFontEditText(Context context, AttributeSet attrs, int defStyleAttr) {
+    public CustomFontButton(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(attrs);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public CustomFontEditText(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public CustomFontButton(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         init(attrs);
     }
@@ -61,16 +61,12 @@ public class CustomFontEditText extends EditText {
 
             try {
                 String tfPath = a.getString(R.styleable.PeppermintView_textFont);
-                setTypeface(tfPath);
+                if(tfPath != null) {
+                    setTypeface(getTypeface(getContext(), tfPath));
+                }
             } finally {
                 a.recycle();
             }
-        }
-    }
-
-    public void setTypeface(String tfPath) {
-        if(tfPath != null) {
-            setTypeface(getTypeface(getContext(), tfPath));
         }
     }
 }

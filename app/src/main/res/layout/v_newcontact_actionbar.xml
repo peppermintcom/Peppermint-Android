@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:layout_width="match_parent">
 
-    <com.peppermint.app.ui.views.simple.CustomFontButton
+    <com.peppermint.app.ui.base.views.CustomFontButton
         android:id="@+id/btnSave"
         android:layout_alignParentRight="true"
         android:layout_width="wrap_content"
@@ -19,7 +19,7 @@
         android:background="@drawable/background_ripple"
         style="?android:attr/borderlessButtonStyle"/>
 
-    <com.peppermint.app.ui.views.simple.CustomFontTextView
+    <com.peppermint.app.ui.base.views.CustomFontTextView
         android:id="@+id/txtTitle"
         android:layout_toLeftOf="@id/btnSave"
         android:layout_width="match_parent"
@@ -31,6 +31,6 @@
         android:textSize="20dp"
         android:textColor="@color/white"
         android:text="@string/new_contact">
-    </com.peppermint.app.ui.views.simple.CustomFontTextView>
+    </com.peppermint.app.ui.base.views.CustomFontTextView>
 
 </RelativeLayout>

@@ -19,7 +19,7 @@
         android:layout_height="wrap_content"
         android:src="@drawable/ic_check_circular" />-->
 
-    <com.peppermint.app.ui.views.simple.CustomFontTextView
+    <com.peppermint.app.ui.base.views.CustomFontTextView
         android:id="@+id/txtName"
         android:layout_alignParentLeft="true"
         android:layout_centerVertical="true"

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:orientation="vertical">
 
-    <com.peppermint.app.ui.views.simple.CustomFontTextView
+    <com.peppermint.app.ui.base.views.CustomFontTextView
         android:id="@+id/text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -19,7 +19,7 @@
         android:textColor="@color/black"
         android:text="Empty Text"/>
 
-    <com.peppermint.app.ui.views.simple.CustomFontButton
+    <com.peppermint.app.ui.base.views.CustomFontButton
         android:id="@+id/check"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

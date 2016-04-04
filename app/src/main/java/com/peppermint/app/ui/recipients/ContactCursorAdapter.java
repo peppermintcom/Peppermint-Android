@@ -20,7 +20,7 @@ import com.peppermint.app.data.MessageManager;
 import com.peppermint.app.data.PeppermintFilteredCursor;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
-import com.peppermint.app.ui.views.simple.CustomFontTextView;
+import com.peppermint.app.ui.base.views.CustomFontTextView;
 import com.peppermint.app.utils.DateContainer;
 
 import java.text.ParseException;
