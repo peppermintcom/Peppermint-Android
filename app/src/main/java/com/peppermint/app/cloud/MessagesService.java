@@ -22,7 +22,7 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.peppermint.app.MainActivity;
+import com.peppermint.app.ui.recipients.ContactActivity;
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticatorUtils;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
@@ -638,7 +638,7 @@ public class MessagesService extends Service {
             NotificationManager notificationManager =
                     (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-            Intent notificationIntent = new Intent(MessagesService.this, MainActivity.class);
+            Intent notificationIntent = new Intent(MessagesService.this, ContactActivity.class);
             PendingIntent pendingIntent = PendingIntent.getActivity(MessagesService.this, 0, notificationIntent, 0);
 
             NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)

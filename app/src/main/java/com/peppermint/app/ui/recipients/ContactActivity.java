@@ -1,4 +1,4 @@
-package com.peppermint.app;
+package com.peppermint.app.ui.recipients;
 
 import android.Manifest;
 import android.app.Fragment;
@@ -9,18 +9,21 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.widget.Toast;
 
+import com.peppermint.app.BuildConfig;
+import com.peppermint.app.R;
 import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.PermissionsPolicyEnforcer;
 import com.peppermint.app.ui.about.AboutActivity;
-import com.peppermint.app.ui.recipients.ContactListFragment;
 import com.peppermint.app.ui.settings.SettingsActivity;
 import com.peppermint.app.ui.views.NavigationItem;
+import com.peppermint.app.ui.views.NavigationItemAction;
+import com.peppermint.app.ui.views.NavigationItemSimpleAction;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends CustomActionBarActivity {
+public class ContactActivity extends CustomActionBarActivity {
 
     private static final String SUPPORT_EMAIL = "support@peppermint.com";
     private static final String SUPPORT_SUBJECT = "Feedback or question about Peppermint Android app";
@@ -41,17 +44,29 @@ public class MainActivity extends CustomActionBarActivity {
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
-        navItems.add(new NavigationItem(getString(R.string.drawer_menu_contacts), R.drawable.ic_drawer_contacts, ContactListFragment.class, false, false, R.string.loading_contacts));
-        navItems.add(new NavigationItem(getString(R.string.drawer_menu_settings), R.drawable.ic_drawer_settings, new Runnable() {
+        navItems.add(new NavigationItem(getString(R.string.drawer_menu_contacts), R.drawable.ic_drawer_contacts, ContactListFragment.class, false, false, R.string.loading_contacts, new NavigationItemAction() {
             @Override
-            public void run() {
-                Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+            public void onPreFragmentInit() {
+
+            }
+
+            @Override
+            public void onPostFragmentInit(Fragment currentFragment, boolean isNewInstance) {
+                if(!isNewInstance) {
+
+                }
+            }
+        }));
+        navItems.add(new NavigationItem(getString(R.string.drawer_menu_settings), R.drawable.ic_drawer_settings, new NavigationItemSimpleAction() {
+            @Override
+            public void onPreFragmentInit() {
+                Intent intent = new Intent(ContactActivity.this, SettingsActivity.class);
                 startActivity(intent);
             }
         }, true));
-        navItems.add(new NavigationItem(getString(R.string.drawer_menu_help_feedback), R.drawable.ic_drawer_feedback, new Runnable() {
+        navItems.add(new NavigationItem(getString(R.string.drawer_menu_help_feedback), R.drawable.ic_drawer_feedback, new NavigationItemSimpleAction() {
             @Override
-            public void run() {
+            public void onPreFragmentInit() {
                 Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + SUPPORT_EMAIL));
                 i.putExtra(Intent.EXTRA_SUBJECT, SUPPORT_SUBJECT);
                 i.putExtra(Intent.EXTRA_TEXT, String.format(SUPPORT_BODY, Utils.getDeviceName(), Utils.getAndroidVersion()));
@@ -59,10 +74,10 @@ public class MainActivity extends CustomActionBarActivity {
                 startActivity(Intent.createChooser(i, getString(R.string.send_email)));
             }
         }, true));
-        navItems.add(new NavigationItem(getString(R.string.drawer_menu_about), R.drawable.ic_drawer_help, new Runnable() {
+        navItems.add(new NavigationItem(getString(R.string.drawer_menu_about), R.drawable.ic_drawer_help, new NavigationItemSimpleAction() {
             @Override
-            public void run() {
-                Intent intent = new Intent(MainActivity.this, AboutActivity.class);
+            public void onPreFragmentInit() {
+                Intent intent = new Intent(ContactActivity.this, AboutActivity.class);
                 startActivity(intent);
             }
         }, true));
@@ -108,7 +123,7 @@ public class MainActivity extends CustomActionBarActivity {
             }
 
             if (stepsLeft <= 1) {
-                Toast.makeText(MainActivity.this, R.string.msg_press_back_again_exit, Toast.LENGTH_SHORT).show();
+                Toast.makeText(ContactActivity.this, R.string.msg_press_back_again_exit, Toast.LENGTH_SHORT).show();
             }
             return;
         }

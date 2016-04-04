@@ -21,7 +21,7 @@ public class NewContactActivity extends CustomActionBarActivity {
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
-        navItems.add(new NavigationItem("New Contact", R.drawable.ic_settings_36dp, NewContactFragment.class, false, false, 0));
+        navItems.add(new NavigationItem("New Contact", R.drawable.ic_settings_36dp, NewContactFragment.class, false, false, 0, null));
         return navItems;
     }
 

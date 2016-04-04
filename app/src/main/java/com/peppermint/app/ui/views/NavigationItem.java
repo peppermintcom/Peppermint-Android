@@ -9,14 +9,17 @@ import android.app.Fragment;
  */
 public class NavigationItem {
 
-    protected String mTitle;
-    protected int mIconResId;
-    protected Class<? extends Fragment> mFragmentClass;
-    protected Runnable mRunnable;
-    protected String mTag;
-    protected boolean mShowSeparator = false;
-    protected boolean mVisible = true;
-    protected int mLoadingTextResId = 0;
+    protected String mTitle;                                // label to present in the drawer menu
+    protected int mIconResId;                               // icon to present in the drawer menu
+    protected boolean mShowSeparator = false;               // show a separator in the drawer menu?
+    protected boolean mVisible = true;                      // is it visible in the drawer menu?
+
+    // one of the following must be specified (action, fragment, or both)
+    protected NavigationItemAction mAction;                               // to execute when tapped
+    protected Class<? extends Fragment> mFragmentClass;     // fragment to show when tapped
+
+    protected int mLoadingTextResId = 0;                    // text to present while loading the fragment
+    protected String mTag;                                  // tag of the fragment
 
     public NavigationItem(String title, int iconResId, Class<? extends Fragment> fragmentClass) {
         this.mIconResId = iconResId;
@@ -27,17 +30,18 @@ public class NavigationItem {
         }
     }
 
-    public NavigationItem(String title, int iconResId, Class<? extends Fragment> fragmentClass, boolean showSeparator, boolean isVisible, int mLoadingTextResId) {
+    public NavigationItem(String title, int iconResId, Class<? extends Fragment> fragmentClass, boolean showSeparator, boolean isVisible, int mLoadingTextResId, NavigationItemAction action) {
         this(title, iconResId, fragmentClass);
         this.mShowSeparator = showSeparator;
         this.mVisible = isVisible;
         this.mLoadingTextResId = mLoadingTextResId;
+        this.mAction = action;
     }
 
-    public NavigationItem(String title, int iconResId, Runnable runnable, boolean showSeparator) {
+    public NavigationItem(String title, int iconResId, NavigationItemAction action, boolean showSeparator) {
         this(title, iconResId, null);
         this.mShowSeparator = showSeparator;
-        this.mRunnable = runnable;
+        this.mAction = action;
     }
 
     public int getLoadingTextResId() {
@@ -88,12 +92,12 @@ public class NavigationItem {
         this.mShowSeparator = mShowSeparator;
     }
 
-    public Runnable getRunnable() {
-        return mRunnable;
+    public NavigationItemAction getAction() {
+        return mAction;
     }
 
-    public void setRunnable(Runnable mRunnable) {
-        this.mRunnable = mRunnable;
+    public void setAction(NavigationItemAction mAction) {
+        this.mAction = mAction;
     }
 
     public boolean isVisible() {
@@ -103,4 +107,6 @@ public class NavigationItem {
     public void setVisible(boolean mVisible) {
         this.mVisible = mVisible;
     }
+
+
 }

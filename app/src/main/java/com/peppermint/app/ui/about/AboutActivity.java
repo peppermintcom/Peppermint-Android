@@ -20,7 +20,7 @@ public class AboutActivity extends CustomActionBarActivity {
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
-        navItems.add(new NavigationItem("About", R.drawable.ic_settings_36dp, AboutFragment.class, false, false, 0));
+        navItems.add(new NavigationItem("About", R.drawable.ic_settings_36dp, AboutFragment.class, false, false, 0, null));
         return navItems;
     }
 

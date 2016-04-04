@@ -462,31 +462,39 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     protected void selectItemFromDrawer(final int position) {
         NavigationItem navItem = mVisibleNavigationItemList.get(position);
 
+        Fragment fragment = null;
+        boolean isNewInstance = false;
+
+        if(navItem.getAction() != null) {
+            navItem.getAction().onPreFragmentInit();
+        }
+
+        // switch fragment if available
         if(navItem.getFragmentClass() != null) {
             doFragmentLoading(navItem.getLoadingTextResId(), true, false);
-
-            Fragment currentFragment = getFragmentManager().findFragmentByTag(navItem.getTag());
-            if (currentFragment != null && currentFragment.isVisible()) {
-                mLytDrawer.closeDrawers();
-                return;
-            }
-
-            Fragment fragment;
-            try {
-                fragment = navItem.getFragmentClass().newInstance();
-                if(getIntent() != null) {
-                    fragment.setArguments(getIntent().getExtras());
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-
-            FragmentManager fragmentManager = getFragmentManager();
-            fragmentManager.beginTransaction().replace(R.id.container, fragment, navItem.getTag()).commit();
-
             mLstDrawer.setItemChecked(position, true);
-        } else {
-            navItem.getRunnable().run();
+
+            fragment = getFragmentManager().findFragmentByTag(navItem.getTag());
+            if (fragment == null || !fragment.isVisible()) {
+                try {
+                    fragment = navItem.getFragmentClass().newInstance();
+                    if (getIntent() != null) {
+                        fragment.setArguments(getIntent().getExtras());
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+                FragmentManager fragmentManager = getFragmentManager();
+                fragmentManager.beginTransaction().replace(R.id.container, fragment, navItem.getTag()).commit();
+
+                isNewInstance = true;
+            }
+        }
+
+        // execute runnable if available
+        if(navItem.getAction() != null) {
+            navItem.getAction().onPostFragmentInit(fragment, isNewInstance);
         }
 
         mLytDrawer.closeDrawers();

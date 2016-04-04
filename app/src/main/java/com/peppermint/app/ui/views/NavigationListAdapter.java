@@ -21,7 +21,6 @@ public class NavigationListAdapter extends BaseAdapter {
 
     protected Context mContext;
     protected List<NavigationItem> mList;
-    protected List<NavigationItem> mHiddenList;
 
     public NavigationListAdapter(Context context, List<NavigationItem> list) {
         this.mContext = context;
