@@ -11,19 +11,19 @@ import android.widget.Toast;
 
 import com.peppermint.app.BuildConfig;
 import com.peppermint.app.R;
-import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.PermissionsPolicyEnforcer;
 import com.peppermint.app.ui.about.AboutActivity;
-import com.peppermint.app.ui.settings.SettingsActivity;
 import com.peppermint.app.ui.base.NavigationItem;
 import com.peppermint.app.ui.base.NavigationItemAction;
 import com.peppermint.app.ui.base.NavigationItemSimpleAction;
+import com.peppermint.app.ui.base.activities.CustomActionBarDrawerActivity;
+import com.peppermint.app.ui.settings.SettingsActivity;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ContactActivity extends CustomActionBarActivity {
+public class ContactActivity extends CustomActionBarDrawerActivity {
 
     private static final String SUPPORT_EMAIL = "support@peppermint.com";
     private static final String SUPPORT_SUBJECT = "Feedback or question about Peppermint Android app";

@@ -1,4 +1,4 @@
-package com.peppermint.app.ui;
+package com.peppermint.app.ui.base.activities;
 
 import android.animation.Animator;
 import android.animation.AnimatorSet;
@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -27,12 +26,12 @@ import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.cloud.senders.SenderPreferences;
-import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.ui.canvas.loading.LoadingView;
-import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
+import com.peppermint.app.ui.AnimatorBuilder;
+import com.peppermint.app.ui.AnimatorChain;
 import com.peppermint.app.ui.base.CustomActionBarView;
 import com.peppermint.app.ui.base.NavigationItem;
 import com.peppermint.app.ui.base.NavigationListAdapter;
+import com.peppermint.app.ui.canvas.loading.LoadingView;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
@@ -43,38 +42,32 @@ import java.util.List;
  *
  * Abstract activity implementation that uses Peppermint's custom action bar.
  */
-public abstract class CustomActionBarActivity extends FragmentActivity implements SharedPreferences.OnSharedPreferenceChangeListener,
-        TouchInterceptable, ChatHeadServiceManager.ChatHeadServiceBinderListener {
+public abstract class CustomActionBarDrawerActivity extends CustomActionBarActivity implements
+        SharedPreferences.OnSharedPreferenceChangeListener {
 
-    private static final String TAG = CustomActionBarActivity.class.getSimpleName();
+    private static final String TAG = CustomActionBarDrawerActivity.class.getSimpleName();
 
     private static final String SAVED_MENU_POSITION_KEY = TAG + "_SAVED_MENU_POSITION_KEY";
 
-    private ChatHeadServiceManager mChatHeadServiceManager;
+    private SenderPreferences mPreferences;
 
+    // list of items in the drawer menu
     private List<NavigationItem> mNavigationItemList, mVisibleNavigationItemList;
 
+    // drawer menu toggle button
     private ActionBarDrawerToggle mDrawerToggle;
+
     private DrawerLayout mLytDrawer;
     private ListView mLstDrawer;
     private ImageView mImgUserAvatar;
     private TextView mTxtUsername;
 
-    private OverlayManager mOverlayManager;
-    protected SenderPreferences mPreferences;
-    private TrackerManager mTrackerManager;
-    private AuthenticationPolicyEnforcer mAuthenticationPolicyEnforcer;
+    // authentication data
     private AuthenticationData mAuthenticationData;
-
-    private List<View.OnTouchListener> mTouchEventInterceptorList = new ArrayList<>();
 
     protected List<NavigationItem> getNavigationItems() {
         return null;
     }
-    protected int getContentViewResourceId() {
-        return R.layout.a_custom_actionbar_layout;
-    }
-    protected int getBackgroundResourceId() { return R.color.background0; }
 
     // fragment loading
     private final Handler mHandler = new Handler();
@@ -183,14 +176,10 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mChatHeadServiceManager = new ChatHeadServiceManager(this);
-        mChatHeadServiceManager.addServiceBinderListener(this);
+        mPreferences = new SenderPreferences(this);
 
-        setContentView(getContentViewResourceId());
-        CustomActionBarView actionBar = getCustomActionBar();
-
+        final CustomActionBarView actionBar = getCustomActionBar();
         if(actionBar != null) {
-            actionBar.initViews();
             actionBar.getTouchInterceptor().setOnTouchListener(new View.OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
@@ -200,11 +189,6 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
             });
         }
 
-        mPreferences = new SenderPreferences(this);
-
-        mTrackerManager = TrackerManager.getInstance(getApplicationContext());
-        mOverlayManager = new OverlayManager(this, null, (FrameLayout) findViewById(R.id.lytOverlay));
-        mAuthenticationPolicyEnforcer = new AuthenticationPolicyEnforcer(this, savedInstanceState);
         mAuthenticationPolicyEnforcer.addAuthenticationDoneCallback(new AuthenticationPolicyEnforcer.AuthenticationDoneCallback() {
             @Override
             public void done(AuthenticationData data) {
@@ -235,7 +219,6 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
         }
 
         if(mLytDrawer != null) {
-
             if (mNavigationItemList == null || mVisibleNavigationItemList.size() <= 0) {
                 mLytDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
                 if (actionBar != null) {
@@ -243,7 +226,7 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
                     actionBar.getMenuButton().setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            Utils.hideKeyboard(CustomActionBarActivity.this);
+                            Utils.hideKeyboard(CustomActionBarDrawerActivity.this);
                             finish();
                         }
                     });
@@ -277,6 +260,7 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
                 mLytDrawer.setDrawerListener(mDrawerToggle);
 
                 if (actionBar != null) {
+                    actionBar.setDisplayMenuAsUpEnabled(false);
                     actionBar.getMenuButton().setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
@@ -327,27 +311,7 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        getWindow().setBackgroundDrawableResource(getBackgroundResourceId());
-        mChatHeadServiceManager.startAndBind();
-    }
-
-    @Override
-    protected void onStop() {
-        mChatHeadServiceManager.removeVisibleActivity(this.getClass().getName());
-        mChatHeadServiceManager.unbind();
-        super.onStop();
-    }
-
-    @Override
-    public void onBoundChatHeadService() {
-        mChatHeadServiceManager.addVisibleActivity(this.getClass().getName());
-    }
-
-    @Override
     protected void onDestroy() {
-        mOverlayManager.destroyAllOverlays();
         mPreferences.getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
         super.onDestroy();
     }
@@ -394,14 +358,6 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
         }
     }
 
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        for(View.OnTouchListener listener : mTouchEventInterceptorList) {
-            listener.onTouch(null, ev);
-        }
-        return super.dispatchTouchEvent(ev);
-    }
-
     protected void refreshFragment(Intent intent) {
         Fragment fragment = getFragmentManager().findFragmentById(R.id.container);
         if(fragment == null) {
@@ -416,12 +372,6 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
 
         doFragmentLoading(getLoadingTextResId(fragment), true, false);
         getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        mAuthenticationPolicyEnforcer.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
@@ -505,7 +455,6 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
         if(mLstDrawer != null) {
             outState.putInt(SAVED_MENU_POSITION_KEY, mLstDrawer.getSelectedItemPosition());
         }
-        mAuthenticationPolicyEnforcer.saveInstanceState(outState);
         super.onSaveInstanceState(outState);
     }
 
@@ -520,38 +469,12 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
         return mLytDrawer.isDrawerOpen(GravityCompat.START);
     }
 
-    public CustomActionBarView getCustomActionBar() {
-        return (CustomActionBarView) findViewById(R.id.actionBar);
-    }
-
     public FrameLayout getFragmentContainer() {
         return (FrameLayout) findViewById(R.id.container);
     }
 
     public Fragment getCurrentFragment() {
         return getFragmentManager().findFragmentById(R.id.container);
-    }
-
-    @Override
-    public void addTouchEventInterceptor(View.OnTouchListener interceptor) {
-        mTouchEventInterceptorList.add(interceptor);
-    }
-
-    @Override
-    public boolean removeTouchEventInterceptor(View.OnTouchListener mTouchEventInterceptor) {
-        return mTouchEventInterceptorList.remove(mTouchEventInterceptor);
-    }
-
-    public TrackerManager getTrackerManager() {
-        return mTrackerManager;
-    }
-
-    public OverlayManager getOverlayManager() {
-        return mOverlayManager;
-    }
-
-    public AuthenticationPolicyEnforcer getAuthenticationPolicyEnforcer() {
-        return mAuthenticationPolicyEnforcer;
     }
 
     public SenderPreferences getPreferences() {

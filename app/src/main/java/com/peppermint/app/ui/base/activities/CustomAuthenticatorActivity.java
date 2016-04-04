@@ -1,4 +1,4 @@
-package com.peppermint.app.ui;
+package com.peppermint.app.ui.base.activities;
 
 import android.accounts.AccountAuthenticatorResponse;
 import android.accounts.AccountManager;
@@ -7,7 +7,7 @@ import android.os.Bundle;
 /**
  * Created by Nuno Luz on 27-01-2016.
  *
- * Copy paste of {@link com.peppermint.app.authenticator.AuthenticatorActivity}
+ * Copy paste of {@link android.accounts.AccountAuthenticatorActivity}
  * that extends {@link CustomActionBarActivity}.
  */
 public class CustomAuthenticatorActivity extends CustomActionBarActivity {

@@ -29,14 +29,15 @@ import com.peppermint.app.events.SenderEvent;
 import com.peppermint.app.events.SyncEvent;
 import com.peppermint.app.ui.OverlayManager;
 import com.peppermint.app.ui.TouchInterceptable;
-import com.peppermint.app.ui.recipients.add.NewContactActivity;
-import com.peppermint.app.ui.recipients.add.NewContactFragment;
 import com.peppermint.app.ui.base.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.ui.base.views.CustomToast;
+import com.peppermint.app.ui.recipients.add.NewContactActivity;
 import com.peppermint.app.utils.Utils;
 
 /**
  * Created by Nuno Luz on 04-03-2016.
+ *
+ * Controls the "tap and hold to record, release to send" record overlay.
  */
 public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordingFinishedCallback,
         MessagesServiceManager.ServiceListener,
@@ -219,10 +220,10 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     private void launchNewRecipientActivity(ChatRecipient editRecipient) {
         Intent intent = new Intent(mContext.getApplicationContext(), NewContactActivity.class);
         if (editRecipient != null) {
-            intent.putExtra(NewContactFragment.KEY_VIA, editRecipient.getVia());
-            intent.putExtra(NewContactFragment.KEY_NAME, editRecipient.getDisplayName());
-            intent.putExtra(NewContactFragment.KEY_RAW_ID, editRecipient.getRawContactId());
-            intent.putExtra(NewContactFragment.KEY_PHOTO_URL, editRecipient.getPhotoUri() == null ? null : Uri.parse(editRecipient.getPhotoUri()));
+            intent.putExtra(NewContactActivity.KEY_VIA, editRecipient.getVia());
+            intent.putExtra(NewContactActivity.KEY_NAME, editRecipient.getDisplayName());
+            intent.putExtra(NewContactActivity.KEY_RAW_ID, editRecipient.getRawContactId());
+            intent.putExtra(NewContactActivity.KEY_PHOTO_URL, editRecipient.getPhotoUri() == null ? null : Uri.parse(editRecipient.getPhotoUri()));
         }
         mCallbacks.onNewContact(intent);
     }

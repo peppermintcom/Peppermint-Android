@@ -47,17 +47,15 @@ import com.peppermint.app.data.Recording;
 import com.peppermint.app.events.ReceiverEvent;
 import com.peppermint.app.events.SenderEvent;
 import com.peppermint.app.events.SyncEvent;
-import com.peppermint.app.ui.CustomActionBarActivity;
 import com.peppermint.app.ui.Overlay;
 import com.peppermint.app.ui.OverlayManager;
+import com.peppermint.app.ui.base.activities.CustomActionBarDrawerActivity;
+import com.peppermint.app.ui.base.dialogs.PopupDialog;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.chat.ChatActivity;
 import com.peppermint.app.ui.chat.ChatCursorAdapter;
-import com.peppermint.app.ui.chat.ChatFragment;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
 import com.peppermint.app.ui.recipients.add.NewContactActivity;
-import com.peppermint.app.ui.recipients.add.NewContactFragment;
-import com.peppermint.app.ui.base.dialogs.PopupDialog;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
@@ -86,7 +84,7 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
     private static final int FIXED_AVATAR_ANIMATION_INTERVAL_MS = 7500;
     private static final int VARIABLE_AVATAR_ANIMATION_INTERVAL_MS = 7500;
 
-    private CustomActionBarActivity mActivity;
+    private CustomActionBarDrawerActivity mActivity;
     private ChatRecordOverlayController mController;
     private DatabaseHelper mDatabaseHelper;
 
@@ -373,7 +371,7 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         mDatabaseHelper = DatabaseHelper.getInstance(activity);
-        mActivity = (CustomActionBarActivity) activity;
+        mActivity = (CustomActionBarDrawerActivity) activity;
         mController = new ChatRecordOverlayController(mActivity, this) {
             @Override
             public void onEventMainThread(SyncEvent event) {
@@ -515,12 +513,12 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
                 String filter = mSearchListBarView.getSearchText();
                 if (filter != null) {
                     String[] viaName = getSearchData(filter);
-                    intent.putExtra(NewContactFragment.KEY_VIA, viaName[0]);
+                    intent.putExtra(NewContactActivity.KEY_VIA, viaName[0]);
 
                     if (viaName[0] == null && (Utils.isValidPhoneNumber(viaName[1]) || Utils.isValidEmail(viaName[1]))) {
-                        intent.putExtra(NewContactFragment.KEY_VIA, viaName[1]);
+                        intent.putExtra(NewContactActivity.KEY_VIA, viaName[1]);
                     } else {
-                        intent.putExtra(NewContactFragment.KEY_NAME, viaName[1]);
+                        intent.putExtra(NewContactActivity.KEY_NAME, viaName[1]);
                     }
                 }
                 startActivityForResult(intent, REQUEST_NEWCONTACT);
@@ -682,7 +680,7 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
         if(requestCode == REQUEST_NEWCONTACT) {
             mOnActivityResult = true;
             if(resultCode == Activity.RESULT_OK) {
-                ContactRaw contact = (ContactRaw) data.getSerializableExtra(NewContactFragment.KEY_RECIPIENT);
+                ContactRaw contact = (ContactRaw) data.getSerializableExtra(NewContactActivity.KEY_RECIPIENT);
                 if(contact != null) {
                     mSearchListBarView.setSearchText(contact.getDisplayName());
                 }
@@ -701,7 +699,7 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
 
     protected void launchChatActivity(long chatId) {
         Intent chatIntent = new Intent(mActivity, ChatActivity.class);
-        chatIntent.putExtra(ChatFragment.PARAM_CHAT_ID, chatId);
+        chatIntent.putExtra(ChatActivity.PARAM_CHAT_ID, chatId);
         startActivity(chatIntent);
     }
 
@@ -716,7 +714,7 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
         if(getRealAdapter() instanceof ContactCursorAdapter) {
             showPopup(view);
         } else {
-            intent.putExtra(ChatFragment.PARAM_CHAT_ID, mChatAdapter.getChat(position).getId());
+            intent.putExtra(ChatActivity.PARAM_CHAT_ID, mChatAdapter.getChat(position).getId());
             startActivity(intent);
         }
     }
@@ -769,7 +767,7 @@ public class ContactListFragment extends ListFragment implements ChatRecordOverl
     /**
      * When a footer or header is added to the ListView, the adapter set through setAdapter gets
      * wrapped by a HeaderViewListAdapter. This returns the wrapped adapter.
-     * @return
+     * @return the real, wrapped adapter
      */
     private ListAdapter getRealAdapter() {
         return getListView().getAdapter() == null ? null : ((HeaderViewListAdapter) getListView().getAdapter()).getWrappedAdapter();
