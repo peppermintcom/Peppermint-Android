@@ -155,7 +155,7 @@
 
     <!-- CHAT -->
     <string name="cancel_sending">Cancel\nSending</string>
-    <string name="record_a_message">Record a Message</string>
+    <string name="record_a_message">Press and Hold to Record</string>
     <string name="retry">Retry</string>
     <string name="delete">Delete</string>
     <string name="unable_to_send_message">Unable to Send Message</string>
