@@ -10,7 +10,7 @@ import android.app.Fragment;
  */
 public class NavigationItemSimpleAction implements NavigationItemAction {
     @Override
-    public void onPreFragmentInit() {
+    public void onPreFragmentInit(Fragment newFragment, boolean isNewInstance) {
         /* nothing to do */
     }
 

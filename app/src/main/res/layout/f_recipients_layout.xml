@@ -13,11 +13,9 @@
         android:layout_height="match_parent"
         android:listSelector="@null"
         android:drawSelectorOnTop="false"
-        android:divider="@color/divider_grey"
-        android:dividerHeight="1dp"
-        android:background="@null"
-        android:layout_marginBottom="1dp"
-        android:footerDividersEnabled="true"/>
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        android:background="@null" />
 
     <LinearLayout
         android:id="@id/android:empty"

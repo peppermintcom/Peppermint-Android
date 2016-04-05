@@ -60,12 +60,6 @@ public class NavigationListAdapter extends BaseAdapter {
         titleView.setText(mList.get(position).getTitle());
         iconView.setImageResource(mList.get(position).getIconResId());
 
-        if(!mList.get(position).isVisible()) {
-            parent.setVisibility(View.GONE);
-        } else {
-            parent.setVisibility(View.VISIBLE);
-        }
-
         return view;
     }
 }

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.widget.FrameLayout;
 
 import com.peppermint.app.R;
@@ -58,11 +59,10 @@ public class CustomMinHeightFrameLayout extends FrameLayout {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
-        int height = MeasureSpec.getSize(heightMeasureSpec);
-
-        if(height < mMinVisibilityHeight && getVisibility() == VISIBLE) {
+        int height = getMeasuredHeight();
+        if (height < mMinVisibilityHeight && getVisibility() == VISIBLE) {
             setVisibility(INVISIBLE);
-        } else if(height >= mMinVisibilityHeight && getVisibility() == INVISIBLE) {
+        } else if (height >= mMinVisibilityHeight && getVisibility() == INVISIBLE) {
             setVisibility(VISIBLE);
         }
     }

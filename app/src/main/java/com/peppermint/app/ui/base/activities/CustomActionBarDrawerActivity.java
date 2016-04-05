@@ -1,14 +1,10 @@
 package com.peppermint.app.ui.base.activities;
 
-import android.animation.Animator;
-import android.animation.AnimatorSet;
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -16,8 +12,8 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -26,15 +22,11 @@ import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.cloud.senders.SenderPreferences;
-import com.peppermint.app.ui.AnimatorBuilder;
-import com.peppermint.app.ui.AnimatorChain;
 import com.peppermint.app.ui.base.CustomActionBarView;
 import com.peppermint.app.ui.base.NavigationItem;
 import com.peppermint.app.ui.base.NavigationListAdapter;
-import com.peppermint.app.ui.canvas.loading.LoadingView;
 import com.peppermint.app.utils.Utils;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -49,127 +41,27 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
 
     private static final String SAVED_MENU_POSITION_KEY = TAG + "_SAVED_MENU_POSITION_KEY";
 
-    private SenderPreferences mPreferences;
+    protected SenderPreferences mPreferences;
 
     // list of items in the drawer menu
-    private List<NavigationItem> mNavigationItemList, mVisibleNavigationItemList;
+    private List<NavigationItem> mNavigationItemList;
 
     // drawer menu toggle button
     private ActionBarDrawerToggle mDrawerToggle;
 
+    // drawer UI
     private DrawerLayout mLytDrawer;
     private ListView mLstDrawer;
     private ImageView mImgUserAvatar;
     private TextView mTxtUsername;
+
+    private int mCheckedItemPosition = -1;
 
     // authentication data
     private AuthenticationData mAuthenticationData;
 
     protected List<NavigationItem> getNavigationItems() {
         return null;
-    }
-
-    // fragment loading
-    private final Handler mHandler = new Handler();
-    private AnimatorBuilder mAnimatorBuilder = new AnimatorBuilder();
-    private View mFragmentLoadingContainer;
-    private LoadingView mFragmentLoadingView;
-    private final Runnable mShowFragmentLoadingRunnable = new Runnable() {
-        @Override
-        public void run() {
-            doFragmentLoading(false);
-        }
-    };
-    // fragment loading animations
-    private AnimatorChain mFragmentLoadingAnimatorChain;
-    private Animator.AnimatorListener mFragmentLoadingAnimatorListener = new Animator.AnimatorListener() {
-        @Override
-        public void onAnimationStart(Animator animation) {
-            mFragmentLoadingView.startAnimations();
-            mFragmentLoadingView.startDrawingThread();
-            mFragmentLoadingContainer.setVisibility(View.VISIBLE);
-        }
-        @Override
-        public void onAnimationEnd(Animator animation) {
-            mFragmentLoadingContainer.setVisibility(View.INVISIBLE);
-            mFragmentLoadingView.stopAnimations();
-            mFragmentLoadingView.stopDrawingThread();
-            mFragmentLoadingAnimatorChain = null;
-        }
-        @Override
-        public void onAnimationCancel(Animator animation) { }
-        @Override
-        public void onAnimationRepeat(Animator animation) { }
-    };
-
-    public void startFragmentLoading(Fragment fragment) {
-        startFragmentLoading(getLoadingTextResId(fragment));
-    }
-
-    private int getLoadingTextResId(Fragment fragment) {
-        int loadingTextResId = 0;
-        Class<?> fragmentClass = fragment.getClass();
-        int count = mNavigationItemList.size();
-        for(int i=0; i<count && loadingTextResId == 0; i++) {
-            if(mNavigationItemList.get(i).getFragmentClass() != null && mNavigationItemList.get(i).getFragmentClass().equals(fragmentClass)) {
-                loadingTextResId = mNavigationItemList.get(i).getLoadingTextResId();
-                if(loadingTextResId <= 0) {
-                    loadingTextResId = -1;
-                }
-            }
-        }
-        return loadingTextResId;
-    }
-
-    public void startFragmentLoading(int loadingTextResId) {
-        if(loadingTextResId > 0) {
-            mFragmentLoadingView.setProgressText(getString(loadingTextResId));
-        }
-        mHandler.postDelayed(mShowFragmentLoadingRunnable, 100);
-    }
-
-    private void doFragmentLoading(int loadingTextResId, boolean avoidIfLeqZero, boolean noFadeInAnimation) {
-        if(!avoidIfLeqZero || loadingTextResId > 0) {
-            if(loadingTextResId > 0) {
-                mFragmentLoadingView.setProgressText(getString(loadingTextResId));
-            }
-            doFragmentLoading(noFadeInAnimation);
-        }
-    }
-
-    protected void doFragmentLoading(boolean noFadeInAnimation) {
-        if(mFragmentLoadingAnimatorChain != null) {
-            return;
-        }
-
-        FrameLayout fragmentContainer = getFragmentContainer();
-
-        Animator fadeOut = mAnimatorBuilder.buildFadeOutAnimator(400, fragmentContainer);
-        Animator fadeIn = mAnimatorBuilder.buildFadeInAnimator(400, mFragmentLoadingContainer);
-        AnimatorSet startLoadingSet = new AnimatorSet();
-        startLoadingSet.playTogether(fadeOut, fadeIn);
-
-        fadeOut = mAnimatorBuilder.buildFadeOutAnimator(600, mFragmentLoadingContainer);
-        fadeIn = mAnimatorBuilder.buildFadeInAnimator(600, fragmentContainer);
-        AnimatorSet stopLoadingSet = new AnimatorSet();
-        stopLoadingSet.playTogether(fadeOut, fadeIn);
-
-        mFragmentLoadingAnimatorChain = new AnimatorChain(startLoadingSet, stopLoadingSet);
-        mFragmentLoadingAnimatorChain.setAnimatorListener(mFragmentLoadingAnimatorListener);
-
-        if(noFadeInAnimation) {
-            mFragmentLoadingContainer.setAlpha(1f);
-            mFragmentLoadingAnimatorListener.onAnimationStart(null);
-        } else {
-            mFragmentLoadingAnimatorChain.start();
-        }
-    }
-
-    public void stopFragmentLoading(boolean finishAnimation) {
-        mHandler.removeCallbacks(mShowFragmentLoadingRunnable);
-        if(finishAnimation && mFragmentLoadingAnimatorChain != null) {
-            mFragmentLoadingAnimatorChain.allowNext(false);
-        }
     }
 
     @Override
@@ -197,110 +89,80 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
             }
         });
 
-        // init loading recipients view
-        mFragmentLoadingContainer = findViewById(R.id.fragmentProgressContainer);
-        mFragmentLoadingView = (LoadingView) findViewById(R.id.loading);
-
         mImgUserAvatar = (ImageView) findViewById(R.id.imgUserAvatar);
         mTxtUsername = (TextView) findViewById(R.id.txtUserName);
+
         mLytDrawer = (DrawerLayout) findViewById(R.id.drawer);
+        mLstDrawer = (ListView) findViewById(R.id.list);
 
         mNavigationItemList = getNavigationItems();
-        mVisibleNavigationItemList = new ArrayList<>();
-        NavigationItem firstNavigationItem = null;
+        NavigationListAdapter adapter = new NavigationListAdapter(this, mNavigationItemList);
+        mLstDrawer.setAdapter(adapter);
 
-        if(mNavigationItemList != null && mNavigationItemList.size() > 0) {
-            for (NavigationItem item : mNavigationItemList) {
-                if (item.isVisible()) {
-                    mVisibleNavigationItemList.add(item);
-                }
+        // drawer Item click listeners
+        mLstDrawer.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                selectItemFromDrawer(position);
             }
-            firstNavigationItem = mNavigationItemList.get(0);
-        }
+        });
 
-        if(mLytDrawer != null) {
-            if (mNavigationItemList == null || mVisibleNavigationItemList.size() <= 0) {
-                mLytDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
-                if (actionBar != null) {
-                    actionBar.setDisplayMenuAsUpEnabled(true);
-                    actionBar.getMenuButton().setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            Utils.hideKeyboard(CustomActionBarDrawerActivity.this);
-                            finish();
-                        }
-                    });
-                }
-            } else {
-                mLstDrawer = (ListView) findViewById(R.id.list);
-                NavigationListAdapter adapter = new NavigationListAdapter(this, mVisibleNavigationItemList);
-                mLstDrawer.setAdapter(adapter);
-
-                // Drawer Item click listeners
-                mLstDrawer.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        selectItemFromDrawer(position);
-                    }
-                });
-
-                mDrawerToggle = new ActionBarDrawerToggle(this, mLytDrawer, null, R.string.drawer_open_desc, R.string.drawer_closed_desc) {
-                    @Override
-                    public void onDrawerOpened(View drawerView) {
-                        super.onDrawerOpened(drawerView);
-                        invalidateOptionsMenu();
-                    }
-
-                    @Override
-                    public void onDrawerClosed(View drawerView) {
-                        super.onDrawerClosed(drawerView);
-                        invalidateOptionsMenu();
-                    }
-                };
-                mLytDrawer.setDrawerListener(mDrawerToggle);
-
-                if (actionBar != null) {
-                    actionBar.setDisplayMenuAsUpEnabled(false);
-                    actionBar.getMenuButton().setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            if (mLytDrawer.isDrawerOpen(GravityCompat.START)) {
-                                mLytDrawer.closeDrawers();
-                            } else {
-                                mLytDrawer.openDrawer(GravityCompat.START);
-                            }
-                        }
-                    });
-                }
+        mDrawerToggle = new ActionBarDrawerToggle(this, mLytDrawer, null, R.string.drawer_open_desc, R.string.drawer_closed_desc) {
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                invalidateOptionsMenu();
             }
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+                invalidateOptionsMenu();
+            }
+        };
+        mLytDrawer.setDrawerListener(mDrawerToggle);
+
+        if (actionBar != null) {
+            actionBar.setDisplayMenuAsUpEnabled(false);
+            actionBar.getMenuButton().setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (mLytDrawer.isDrawerOpen(GravityCompat.START)) {
+                        mLytDrawer.closeDrawers();
+                    } else {
+                        mLytDrawer.openDrawer(GravityCompat.START);
+                    }
+                }
+            });
         }
 
         mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
 
+        mLstDrawer.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
+        mLstDrawer.setSelection(0);
+
         if (savedInstanceState != null) {
-            if(mLytDrawer != null) {
-                int pos = savedInstanceState.getInt(SAVED_MENU_POSITION_KEY, -1);
-                if(pos >= 0) {
-                    selectItemFromDrawer(pos);
-                } else if(mNavigationItemList != null && mNavigationItemList.size() > 0) {
-                    doFragmentLoading(mNavigationItemList.get(0).getLoadingTextResId(), true, true);
-                }
+            int pos = savedInstanceState.getInt(SAVED_MENU_POSITION_KEY, -1);
+            if(pos >= 0) {
+                mCheckedItemPosition = pos;
+                mLstDrawer.setItemChecked(pos, true);
             }
-            return; // avoids duplicate fragments
         }
+    }
 
-        if(firstNavigationItem != null) {
-            // show intro screen
-            Fragment introScreenFragment;
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+        // perform one action from the drawer (init the default fragment)
+        selectItemFromDrawer(mLstDrawer.getCheckedItemPosition() >= 0 ? mLstDrawer.getCheckedItemPosition() : 0);
+
+        if(mDrawerToggle != null) {
             try {
-                introScreenFragment = firstNavigationItem.getFragmentClass().newInstance();
-                setFragmentArgumentsFromIntent(introScreenFragment, getIntent());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+                mDrawerToggle.syncState();
+            } catch(Throwable t) {
+                // just ignore; Android 4 launches an exception because there's no actionbar
             }
-
-            doFragmentLoading(firstNavigationItem.getLoadingTextResId(), true, true);
-            getFragmentManager().beginTransaction().add(R.id.container, introScreenFragment).commit();
         }
     }
 
@@ -314,18 +176,6 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
     protected void onDestroy() {
         mPreferences.getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
         super.onDestroy();
-    }
-
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        if(mDrawerToggle != null) {
-            try {
-                mDrawerToggle.syncState();
-            } catch(Throwable t) {
-                // just ignore; Android 4 launches an exception because there's no actionbar
-            }
-        }
     }
 
     @Override
@@ -370,7 +220,6 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
             throw new RuntimeException(e);
         }
 
-        doFragmentLoading(getLoadingTextResId(fragment), true, false);
         getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
     }
 
@@ -382,11 +231,6 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
     }
 
     protected boolean refreshProfileData() {
-        if(mVisibleNavigationItemList == null || mVisibleNavigationItemList.size() <= 0) {
-            Log.d(TAG, "Drawer is locked and profile is hidden. Skipping profile info refresh...");
-            return false;
-        }
-
         String[] data = Utils.getUserData(this);
         if(data[1] != null) {
             mImgUserAvatar.setImageURI(Uri.parse(data[1]));
@@ -409,22 +253,26 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
         return true;
     }
 
-    protected void selectItemFromDrawer(final int position) {
-        NavigationItem navItem = mVisibleNavigationItemList.get(position);
+    protected boolean selectItemFromDrawer(final int position) {
+        NavigationItem navItem = mNavigationItemList.get(position);
+
+        mLstDrawer.setItemChecked(position, true);
+
+        if(navItem.getFragmentClass() != null && mCheckedItemPosition == position) {
+            // already selected
+            mLytDrawer.closeDrawers();
+            return false;
+        }
 
         Fragment fragment = null;
         boolean isNewInstance = false;
 
-        if(navItem.getAction() != null) {
-            navItem.getAction().onPreFragmentInit();
-        }
-
         // switch fragment if available
         if(navItem.getFragmentClass() != null) {
-            doFragmentLoading(navItem.getLoadingTextResId(), true, false);
-            mLstDrawer.setItemChecked(position, true);
+            mCheckedItemPosition = position;
 
             fragment = getFragmentManager().findFragmentByTag(navItem.getTag());
+
             if (fragment == null || !fragment.isVisible()) {
                 try {
                     fragment = navItem.getFragmentClass().newInstance();
@@ -435,25 +283,34 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
                     throw new RuntimeException(e);
                 }
 
-                FragmentManager fragmentManager = getFragmentManager();
-                fragmentManager.beginTransaction().replace(R.id.container, fragment, navItem.getTag()).commit();
-
                 isNewInstance = true;
+            }
+
+            if(navItem.getAction() != null) {
+                navItem.getAction().onPreFragmentInit(fragment, isNewInstance);
+            }
+
+            getFragmentManager().beginTransaction()
+                    .replace(R.id.container, fragment, navItem.getTag()).commit();
+        } else {
+            if(navItem.getAction() != null) {
+                navItem.getAction().onPreFragmentInit(null, false);
             }
         }
 
         // execute runnable if available
-        if(navItem.getAction() != null) {
+        if (navItem.getAction() != null) {
             navItem.getAction().onPostFragmentInit(fragment, isNewInstance);
         }
 
         mLytDrawer.closeDrawers();
+        return true;
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        if(mLstDrawer != null) {
-            outState.putInt(SAVED_MENU_POSITION_KEY, mLstDrawer.getSelectedItemPosition());
+        if (mLstDrawer != null) {
+            outState.putInt(SAVED_MENU_POSITION_KEY, mLstDrawer.getCheckedItemPosition());
         }
         super.onSaveInstanceState(outState);
     }
@@ -469,15 +326,7 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
         return mLytDrawer.isDrawerOpen(GravityCompat.START);
     }
 
-    public FrameLayout getFragmentContainer() {
-        return (FrameLayout) findViewById(R.id.container);
-    }
-
     public Fragment getCurrentFragment() {
         return getFragmentManager().findFragmentById(R.id.container);
-    }
-
-    public SenderPreferences getPreferences() {
-        return mPreferences;
     }
 }

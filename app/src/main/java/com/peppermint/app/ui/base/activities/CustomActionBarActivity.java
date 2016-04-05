@@ -1,8 +1,9 @@
 package com.peppermint.app.ui.base.activities;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -14,8 +15,10 @@ import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.OverlayManager;
+import com.peppermint.app.ui.PermissionsPolicyEnforcer;
 import com.peppermint.app.ui.TouchInterceptable;
 import com.peppermint.app.ui.base.CustomActionBarView;
+import com.peppermint.app.ui.base.LoadingController;
 import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
 import com.peppermint.app.utils.Utils;
 
@@ -30,6 +33,9 @@ import java.util.List;
 public abstract class CustomActionBarActivity extends FragmentActivity implements TouchInterceptable,
         ChatHeadServiceManager.ChatHeadServiceBinderListener {
 
+    // loading controller
+    protected LoadingController mLoadingController;
+
     // chat head overlay manager
     private ChatHeadServiceManager mChatHeadServiceManager;
 
@@ -38,6 +44,18 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
 
     // authentication
     protected AuthenticationPolicyEnforcer mAuthenticationPolicyEnforcer;
+
+    // permissions
+    protected PermissionsPolicyEnforcer mPermissionsManager = new PermissionsPolicyEnforcer(
+            Manifest.permission.READ_CONTACTS,
+            Manifest.permission.WRITE_CONTACTS,
+            "android.permission.READ_PROFILE",
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.INTERNET,
+            Manifest.permission.ACCESS_NETWORK_STATE,
+            Manifest.permission.GET_ACCOUNTS,
+            "android.permission.USE_CREDENTIALS");
 
     // utility
     protected TrackerManager mTrackerManager;
@@ -52,6 +70,8 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mLoadingController = new LoadingController(this, R.id.fragmentProgressContainer, R.id.loading);
 
         mChatHeadServiceManager = new ChatHeadServiceManager(this);
         mChatHeadServiceManager.addServiceBinderListener(this);
@@ -79,6 +99,9 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
                 }
             });
         }
+
+        // one more permission required
+        mPermissionsManager.addPermission(Manifest.permission.SEND_SMS, true, PackageManager.FEATURE_TELEPHONY);
 
         mTrackerManager = TrackerManager.getInstance(getApplicationContext());
 
@@ -142,9 +165,9 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
+    protected void onSaveInstanceState(Bundle outState) {
         mAuthenticationPolicyEnforcer.saveInstanceState(outState);
-        super.onSaveInstanceState(outState, outPersistentState);
+        super.onSaveInstanceState(outState);
     }
 
     public CustomActionBarView getCustomActionBar() {
@@ -169,12 +192,11 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
         return mOverlayManager;
     }
 
-    public AuthenticationPolicyEnforcer getAuthenticationPolicyEnforcer() {
-        return mAuthenticationPolicyEnforcer;
-    }
-
     public ViewGroup getContainerView() {
         return (ViewGroup) findViewById(R.id.container);
     }
 
+    public LoadingController getLoadingController() {
+        return mLoadingController;
+    }
 }

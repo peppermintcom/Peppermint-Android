@@ -33,46 +33,10 @@
             />
 
         <com.peppermint.app.ui.base.views.FitsSystemWindowsFrameLayout
+            android:id="@+id/container"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-
-            <com.peppermint.app.ui.base.views.FitsSystemWindowsFrameLayout
-                android:id="@+id/container"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <include layout="@layout/f_chat" />
-            </com.peppermint.app.ui.base.views.FitsSystemWindowsFrameLayout>
-
-            <RelativeLayout
-                android:id="@+id/fragmentProgressContainer"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@color/dark_green_60percent"
-                android:visibility="gone"
-                android:gravity="center">
-
-                <ImageView
-                    android:layout_width="170dp"
-                    android:layout_height="170dp"
-                    android:layout_marginBottom="40dp"
-                    android:layout_marginTop="40dp"
-                    android:layout_marginRight="40dp"
-                    android:layout_marginLeft="40dp"
-                    android:src="@drawable/img_static_loading_170dp" />
-
-                <com.peppermint.app.ui.canvas.loading.LoadingView
-                    android:id="@+id/loading"
-                    android:layout_width="170dp"
-                    android:layout_height="170dp"
-                    android:layout_marginBottom="40dp"
-                    android:layout_marginTop="40dp"
-                    android:layout_marginRight="40dp"
-                    android:layout_marginLeft="40dp"
-                    custom:text="@string/loading_contacts" />
-
-            </RelativeLayout>
-
+            <include layout="@layout/f_chat" />
         </com.peppermint.app.ui.base.views.FitsSystemWindowsFrameLayout>
 
     </LinearLayout>
