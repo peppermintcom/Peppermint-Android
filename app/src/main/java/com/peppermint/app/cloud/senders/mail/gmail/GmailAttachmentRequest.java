@@ -103,19 +103,25 @@ public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
         email.setSubject(subject);
         email.setSentDate(dateSent);
 
-        Multipart multipart = new MimeMultipart("alternative");
+        Multipart multipartMixed = new MimeMultipart("mixed");
 
-        // Plain text message
-        MimeBodyPart mimeBodyPart = new MimeBodyPart();
-        mimeBodyPart.setContent(bodyPlainText, "text/plain");
-        mimeBodyPart.setHeader("Content-Type", "text/plain; charset=\"UTF-8\"");
-        multipart.addBodyPart(mimeBodyPart);
+            MimeBodyPart mixedPart = new MimeBodyPart();
+            Multipart multipart = new MimeMultipart("alternative");
+            mixedPart.setContent(multipart);
 
-        // HTML message
-        mimeBodyPart = new MimeBodyPart();
-        mimeBodyPart.setContent(bodyHtmlText, "text/html");
-        mimeBodyPart.setHeader("Content-Type", "text/html; charset=\"UTF-8\"");
-        multipart.addBodyPart(mimeBodyPart);
+            // Plain text message
+            MimeBodyPart mimeBodyPart = new MimeBodyPart();
+            mimeBodyPart.setContent(bodyPlainText, "text/plain");
+            mimeBodyPart.setHeader("Content-Type", "text/plain; charset=UTF-8");
+            multipart.addBodyPart(mimeBodyPart);
+
+            // HTML message
+            mimeBodyPart = new MimeBodyPart();
+            mimeBodyPart.setContent(bodyHtmlText, "text/html");
+            mimeBodyPart.setHeader("Content-Type", "text/html; charset=UTF-8");
+            multipart.addBodyPart(mimeBodyPart);
+
+            multipartMixed.addBodyPart(mixedPart);
 
         // Attachment
         mimeBodyPart = new MimeBodyPart();
@@ -124,9 +130,9 @@ public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
         mimeBodyPart.setFileName(filename);
         mimeBodyPart.setHeader("Content-Type", contentType + "; name=\"" + filename + "\"");
         mimeBodyPart.setHeader("Content-Transfer-Encoding", "binary");
-        multipart.addBodyPart(mimeBodyPart);
+        multipartMixed.addBodyPart(mimeBodyPart);
 
-        email.setContent(multipart);
+        email.setContent(multipartMixed);
 
         return email;
     }

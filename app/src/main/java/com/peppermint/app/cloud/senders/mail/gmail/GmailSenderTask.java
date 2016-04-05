@@ -18,17 +18,11 @@ import com.peppermint.app.cloud.senders.mail.MailUtils;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.utils.DateContainer;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Created by Nuno Luz on 08-09-2015.
@@ -43,29 +37,6 @@ public class GmailSenderTask extends SenderUploadTask {
 
     public GmailSenderTask(Sender sender, Message message, SenderUploadListener senderUploadListener) {
         super(sender, message, senderUploadListener);
-    }
-
-    private Draft getDraftFromResponse(String response) throws JSONException {
-        JSONObject jsonResponse = new JSONObject(response);
-        if(!jsonResponse.isNull("error")) {
-            throw new RuntimeException("Google API error - " + response);
-        }
-
-        JSONObject jsonMessage = jsonResponse.getJSONObject("message");
-        com.google.api.services.gmail.model.Message responseMessage = new com.google.api.services.gmail.model.Message();
-        responseMessage.setId(jsonMessage.getString("id"));
-        responseMessage.setThreadId(jsonMessage.getString("threadId"));
-        JSONArray jsonLabels = jsonMessage.getJSONArray("labelIds");
-        List<String> labels = new ArrayList<>();
-        for(int i=0; i<jsonLabels.length(); i++) {
-            labels.add(jsonLabels.getString(i));
-        }
-        responseMessage.setLabelIds(labels);
-        Draft responseDraft = new Draft();
-        responseDraft.setId(jsonResponse.getString("id"));
-        responseDraft.setMessage(responseMessage);
-
-        return responseDraft;
     }
 
     @Override
