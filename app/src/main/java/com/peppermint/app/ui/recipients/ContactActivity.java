@@ -156,7 +156,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
-        navItems.add(new NavigationItem(getString(R.string.drawer_menu_recent_contacts), R.drawable.ic_drawer_contacts, RecentContactsListFragment.class, false, R.string.loading_contacts, new NavigationItemSimpleAction() {
+        navItems.add(new NavigationItem(getString(R.string.drawer_menu_recent_contacts), R.drawable.ic_drawer_recent, RecentContactsListFragment.class, false, R.string.loading_contacts, new NavigationItemSimpleAction() {
             @Override
             public void onPreFragmentInit(Fragment newFragment, boolean isNewInstance) {
                 if(mSearchListBarView != null) {
