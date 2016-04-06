@@ -339,6 +339,13 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     }
 
     @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        getContentResolver().unregisterContentObserver(mContactsObserver);
+        getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI, true, mContactsObserver);
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
 
@@ -444,6 +451,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
+        getContentResolver().unregisterContentObserver(mContactsObserver);
         mChatRecordOverlayController.saveInstanceState(outState);
         super.onSaveInstanceState(outState);
     }
