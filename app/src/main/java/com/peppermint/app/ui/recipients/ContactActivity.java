@@ -430,10 +430,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                 if(contact != null) {
                     mSearchListBarView.setSearchText(contact.getDisplayName());
                 }
-            } else {
-                mSearchListBarView.clearSearch();
             }
-
         } else if(requestCode == REQUEST_NEWCONTACT_AND_SEND) {
             mChatRecordOverlayController.handleNewContactResult(resultCode, data);
         }
