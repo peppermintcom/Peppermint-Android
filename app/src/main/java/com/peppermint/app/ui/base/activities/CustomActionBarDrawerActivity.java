@@ -39,7 +39,8 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
 
     private static final String TAG = CustomActionBarDrawerActivity.class.getSimpleName();
 
-    private static final String SAVED_MENU_POSITION_KEY = TAG + "_SAVED_MENU_POSITION_KEY";
+    private static final String SAVED_MENU_POSITION_KEY = TAG + "_SAVED_MENU_POSITION";
+    private static final String SAVED_TAPPED_ITEM_POSITION_KEY = TAG + "_SAVED_TAPPED_POSITION";
 
     protected SenderPreferences mPreferences;
 
@@ -56,6 +57,7 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
     private TextView mTxtUsername;
 
     private int mCheckedItemPosition = -1;
+    protected int mTappedItemPosition = 0;
 
     // authentication data
     private AuthenticationData mAuthenticationData;
@@ -103,6 +105,8 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
         mLstDrawer.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                mTappedItemPosition = position;
+                mLytDrawer.closeDrawers();
                 selectItemFromDrawer(position);
             }
         });
@@ -142,6 +146,7 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
         mLstDrawer.setSelection(0);
 
         if (savedInstanceState != null) {
+            mTappedItemPosition = savedInstanceState.getInt(SAVED_TAPPED_ITEM_POSITION_KEY, mTappedItemPosition);
             int pos = savedInstanceState.getInt(SAVED_MENU_POSITION_KEY, -1);
             if(pos >= 0) {
                 mCheckedItemPosition = pos;
@@ -260,7 +265,6 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
 
         if(navItem.getFragmentClass() != null && mCheckedItemPosition == position) {
             // already selected
-            mLytDrawer.closeDrawers();
             return false;
         }
 
@@ -303,12 +307,12 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
             navItem.getAction().onPostFragmentInit(fragment, isNewInstance);
         }
 
-        mLytDrawer.closeDrawers();
         return true;
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
+        outState.putInt(SAVED_TAPPED_ITEM_POSITION_KEY, mTappedItemPosition);
         if (mLstDrawer != null) {
             outState.putInt(SAVED_MENU_POSITION_KEY, mLstDrawer.getCheckedItemPosition());
         }

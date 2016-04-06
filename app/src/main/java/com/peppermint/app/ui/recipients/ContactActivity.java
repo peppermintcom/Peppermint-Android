@@ -83,7 +83,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
             super.onChange(selfChange);
             ContactListFragment fragment = (ContactListFragment) getCurrentFragment();
             if(fragment != null) {
-                onSearch(mSearchListBarView.getSearchText());
+                onSearch(mSearchListBarView.getSearchText(), false);
             }
         }
     }
@@ -115,10 +115,10 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     };
 
     @Override
-    public void onSearch(String searchText) {
+    public void onSearch(String searchText, boolean wasClear) {
         boolean switchedFragment;
 
-        if(searchText == null && ChatManager.getChatCount(DatabaseHelper.getInstance(this).getReadableDatabase()) > 0) {
+        if(wasClear || (mTappedItemPosition != 1 && searchText == null && ChatManager.getChatCount(DatabaseHelper.getInstance(this).getReadableDatabase()) > 0)) {
             // recent contacts / chats
             switchedFragment = selectItemFromDrawer(0);
         } else {
@@ -138,6 +138,10 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                 // do not do it if the add contact button was pressed
                 // since this might be causing the tap event to not work
                 // the onClick event already has instructions to do this
+                if(v == null) {
+                    v = Utils.getClickableViewAtLocation(event.getRawX(), event.getRawY(), getContainerView());
+                }
+
                 if (!(v instanceof Button)) {
                     mSearchListBarView.removeSearchTextFocus(event);
                     getContainerView().requestFocus();
@@ -227,7 +231,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                 super.onEventMainThread(event);
                 if(event.getType() == SyncEvent.EVENT_FINISHED) {
                     if(mSearchListBarView.getSearchText() == null) {
-                        onSearch(null);
+                        onSearch(null, false);
                     }
                 }
             }
@@ -237,7 +241,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                 super.onEventMainThread(event);
                 if(event.getType() == ReceiverEvent.EVENT_RECEIVED) {
                     if(mSearchListBarView.getSearchText() == null) {
-                        onSearch(null);
+                        onSearch(null, false);
                     }
                 }
             }
@@ -247,7 +251,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                 super.onEventMainThread(event);
                 if(event.getType() == SenderEvent.EVENT_FINISHED) {
                     if(mSearchListBarView.getSearchText() == null) {
-                        onSearch(null);
+                        onSearch(null, false);
                     }
                 }
             }
@@ -259,7 +263,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                 // if the user has gone through the sending process without
                 // discarding the recording, then clear the search filter
                 if(!mSearchListBarView.clearSearch()) {
-                    onSearch(mSearchListBarView.getSearchText());
+                    onSearch(mSearchListBarView.getSearchText(), true);
                 }
 
                 launchChatActivity(message.getChatId());
@@ -346,7 +350,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
         addTouchEventInterceptor(mTouchInterceptor);
 
         if(mIsFirstStart) {
-            onSearch(mSearchListBarView.getSearchText());
+            onSearch(mSearchListBarView.getSearchText(), false);
             mIsFirstStart = false;
         }
     }
@@ -431,7 +435,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if(mPermissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults)) {
-            onSearch(mSearchListBarView.getSearchText());
+            onSearch(mSearchListBarView.getSearchText(), false);
         } else {
             Toast.makeText(this, R.string.msg_must_supply_mandatory_permissions, Toast.LENGTH_LONG).show();
             finish();

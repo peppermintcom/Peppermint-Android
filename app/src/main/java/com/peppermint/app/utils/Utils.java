@@ -33,6 +33,7 @@ import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
@@ -334,7 +335,7 @@ public class Utils {
                     }
                 }
             }
-        } catch (Exception ex) { } // for now eat exceptions
+        } catch (Exception ex) { /* for now eat exceptions */ }
         return "";
     }
 
@@ -447,7 +448,7 @@ public class Utils {
      * @return the scale/multiplier
      */
     private static float getBitmapRequiredScale(BitmapFactory.Options o, int width, int height) {
-        float scale = 1;
+        float scale;
         // if image height is greater than width
         if (o.outHeight > o.outWidth) {
             scale = (float) o.outWidth / (float) width;
@@ -912,7 +913,7 @@ public class Utils {
                 }
             }
         }
-        return dir.delete();
+        return dir != null ? dir.delete() : false;
     }
 
     /**
@@ -977,5 +978,45 @@ public class Utils {
         return (context.getResources().getConfiguration().screenLayout
                 & Configuration.SCREENLAYOUT_SIZE_MASK)
                 >= Configuration.SCREENLAYOUT_SIZE_LARGE;
+    }
+
+
+    /**
+     * Returns the first clickable view found at the specified XY coordinates on screen.
+     * @param x the X coordinate
+     * @param y the Y coordinate
+     * @param root the root view to search
+     * @return the found View or null if no clickable view is found
+     */
+    public static View getClickableViewAtLocation(float x, float y, View root) {
+        if(root instanceof ViewGroup) {
+            ViewGroup v = (ViewGroup) root;
+            int count = v.getChildCount();
+            for(int i=0; i<count; i++) {
+                View childFocusable = getClickableViewAtLocation(x, y, v.getChildAt(i));
+                if(childFocusable != null) {
+                    return childFocusable;
+                }
+            }
+        }
+        return root.isClickable() && isPointInsideView(x, y, root) ? root : null;
+    }
+
+    /**
+     * Determines if given points are inside view
+     * @param x - x coordinate of point
+     * @param y - y coordinate of point
+     * @param view - view object to compare
+     * @return true if the points are within view bounds, false otherwise
+     */
+    private static boolean isPointInsideView(float x, float y, View view) {
+        int location[] = new int[2];
+        view.getLocationOnScreen(location);
+        int viewX = location[0];
+        int viewY = location[1];
+
+        // point is inside view bounds
+        return ((x > viewX && x < (viewX + view.getWidth())) &&
+                (y > viewY && y < (viewY + view.getHeight())));
     }
 }

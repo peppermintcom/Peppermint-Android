@@ -38,7 +38,7 @@ public class SearchListBarView extends FrameLayout {
     private static final int MIN_SEARCH_CHARACTERS = 1;
 
     public interface OnSearchListener {
-        void onSearch(String searchText);
+        void onSearch(String searchText, boolean wasClear);
     }
 
     private InputMethodManager mInputMethodManager;
@@ -52,9 +52,11 @@ public class SearchListBarView extends FrameLayout {
     private TextWatcher mTextWatcher = new TextWatcher() {
         private int _startVia = -1;
         private int _endVia = -1;
+        private String _previousText;
 
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            _previousText = getSearchText();
             _endVia = -1;
             if (count == 1 && after == 0 && s.charAt(start) == '<' && (s.length() > (start+1) && s.charAt(start+1) == '>')) {
                 _endVia = start;
@@ -73,7 +75,7 @@ public class SearchListBarView extends FrameLayout {
         public void afterTextChanged(Editable s) {
             if(_startVia < 0 && _endVia < 0) {
                 // just trigger the search process
-                innerTriggerSearch();
+                innerTriggerSearch(getSearchText() == null && _previousText != null);
             } else {
                 if(_startVia >= 0) {
                     int keepVia = _startVia;
@@ -178,7 +180,7 @@ public class SearchListBarView extends FrameLayout {
         }
     }
 
-    private void innerTriggerSearch() {
+    private void innerTriggerSearch(boolean wasClear) {
         String searchText = getSearchText();
         if(searchText == null) {
             mBtnClear.setVisibility(GONE);
@@ -186,7 +188,7 @@ public class SearchListBarView extends FrameLayout {
             mBtnClear.setVisibility(VISIBLE);
         }
         if(mListener != null) {
-            mListener.onSearch(searchText);
+            mListener.onSearch(searchText, wasClear);
         }
     }
 
@@ -247,7 +249,7 @@ public class SearchListBarView extends FrameLayout {
             mListener = null;
             mTxtSearch.setText(searchText);
             mListener = tmpListener;
-            innerTriggerSearch();
+            innerTriggerSearch(false);
         }
     }
 }
