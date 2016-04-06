@@ -13,7 +13,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.PopupWindow;
-import android.widget.RelativeLayout;
 
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
@@ -56,7 +55,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
     // UI
     private RecipientDataGUI mRecipientDataGUI;
-    private RelativeLayout mRecordLayout;
+    private ViewGroup mRecordLayout;
     private ListView mListView;
 
     // DATA
@@ -158,7 +157,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
         mListView = (ListView) rootView.findViewById(android.R.id.list);
 
-        mRecordLayout = (RelativeLayout) rootView.findViewById(R.id.lytRecord);
+        mRecordLayout = (ViewGroup) rootView.findViewById(R.id.lytRecord);
         mRecordLayout.setOnClickListener(this);
         mRecordLayout.setOnLongClickListener(this);
 

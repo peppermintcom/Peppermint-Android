@@ -4,34 +4,36 @@
     android:layout_height="match_parent"
     android:layout_width="match_parent">
 
-    <RelativeLayout
+    <LinearLayout
         android:id="@+id/lytRecord"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:paddingTop="22dp"
         android:paddingBottom="22dp"
-        android:paddingLeft="30dp"
-        android:paddingRight="30dp"
+        android:paddingLeft="45dp"
+        android:paddingRight="45dp"
+        android:orientation="horizontal"
         android:layout_alignParentBottom="true"
         android:background="@drawable/background_border_top">
 
         <com.peppermint.app.ui.views.simple.CustomFontTextView
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
+            android:layout_marginRight="25dp"
+            android:layout_gravity="center"
             custom:textFont="@string/font_semibold"
             android:textColor="@color/dark_grey_text"
             android:textSize="18dp"
             android:text="@string/record_a_message" />
 
         <ImageView
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
+            android:layout_gravity="center"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_mic_gray_26dp"/>
 
-    </RelativeLayout>
+    </LinearLayout>
 
     <FrameLayout
         android:layout_above="@id/lytRecord"
