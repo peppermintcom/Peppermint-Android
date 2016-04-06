@@ -17,7 +17,7 @@
         android:orientation="vertical"
         android:background="@drawable/background_shadow_top_and_bottom">
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView
+        <com.peppermint.app.ui.base.views.CustomFontTextView
             android:id="@+id/txtRecordingFor"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -34,7 +34,7 @@
         <!-- it's important that this text view is not set to wrap content
          otherwise it triggers onMeasure from other animated views, which is
          quite computationally expensive -->
-        <com.peppermint.app.ui.views.simple.CustomFontTextView
+        <com.peppermint.app.ui.base.views.CustomFontTextView
             android:id="@+id/txtDuration"
             android:layout_width="match_parent"
             android:layout_height="33dp"
@@ -83,7 +83,7 @@
             android:layout_marginBottom="10dp"
             android:src="@drawable/ic_hand" />
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView
+        <com.peppermint.app.ui.base.views.CustomFontTextView
             android:id="@+id/txtSwipe"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

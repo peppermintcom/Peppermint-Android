@@ -17,7 +17,7 @@ import com.peppermint.app.events.RecorderEvent;
 import com.peppermint.app.ui.Overlay;
 import com.peppermint.app.ui.OverlayManager;
 import com.peppermint.app.ui.TouchInterceptable;
-import com.peppermint.app.ui.views.simple.CustomToast;
+import com.peppermint.app.ui.base.views.CustomToast;
 import com.peppermint.app.utils.NoMicDataIOException;
 import com.peppermint.app.utils.Utils;
 

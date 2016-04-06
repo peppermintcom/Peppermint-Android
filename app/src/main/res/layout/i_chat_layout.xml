@@ -3,7 +3,7 @@
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="70dp">
+    android:layout_height="match_parent">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -34,7 +34,7 @@
             android:gravity="right|top"
             android:orientation="vertical">
 
-            <com.peppermint.app.ui.views.simple.CustomFontTextView
+            <com.peppermint.app.ui.base.views.CustomFontTextView
                 android:id="@+id/txtLastMessageDate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -46,7 +46,7 @@
                 android:textColor="@color/color_grey_to_white_pressed"
                 />
 
-            <com.peppermint.app.ui.views.simple.CustomFontTextView
+            <com.peppermint.app.ui.base.views.CustomFontTextView
                 android:id="@+id/txtUnreadMessages"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -73,7 +73,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <com.peppermint.app.ui.views.simple.CustomFontTextView
+            <com.peppermint.app.ui.base.views.CustomFontTextView
                 android:id="@+id/txtName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -88,7 +88,7 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
 
-                <com.peppermint.app.ui.views.simple.CustomFontTextView
+                <com.peppermint.app.ui.base.views.CustomFontTextView
                     android:id="@+id/txtVia"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -97,7 +97,7 @@
                     android:textColor="@color/color_grey_to_white_pressed"
                     android:layout_marginRight="5dp" />
 
-                <com.peppermint.app.ui.views.simple.CustomFontTextView
+                <com.peppermint.app.ui.base.views.CustomFontTextView
                     android:id="@+id/txtContact"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

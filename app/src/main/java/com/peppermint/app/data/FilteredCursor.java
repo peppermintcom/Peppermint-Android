@@ -271,8 +271,10 @@ public class FilteredCursor implements Cursor {
     @Override
     public void close() {
         mCursor.close();
-        mFilterList.clear();
-        mFilterList = null;
+        if(mFilterList != null) {
+            mFilterList.clear();
+            mFilterList = null;
+        }
         mFilter = null;
     }
 

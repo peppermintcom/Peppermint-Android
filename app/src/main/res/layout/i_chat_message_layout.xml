@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:padding="10dp">
 
-    <com.peppermint.app.ui.views.simple.CustomFontTextView
+    <com.peppermint.app.ui.base.views.CustomFontTextView
         android:id="@+id/txtDay"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -93,7 +93,7 @@
                     android:progress="50"
                     />
 
-                <com.peppermint.app.ui.views.simple.CustomFontTextView
+                <com.peppermint.app.ui.base.views.CustomFontTextView
                     android:id="@+id/txtDuration"
                     android:layout_toRightOf="@id/lytBtnContainer"
                     android:layout_below="@id/seekBar"
@@ -106,7 +106,7 @@
                     android:textSize="14dp"
                     android:text="01:12"/>
 
-                <com.peppermint.app.ui.views.simple.CustomFontTextView
+                <com.peppermint.app.ui.base.views.CustomFontTextView
                     android:id="@+id/txtTime"
                     android:layout_alignParentRight="true"
                     android:layout_below="@id/seekBar"
@@ -136,7 +136,7 @@
             android:background="@drawable/background_ripple"
             android:visibility="gone" />
 
-        <com.peppermint.app.ui.views.simple.CustomFontButton
+        <com.peppermint.app.ui.base.views.CustomFontButton
             android:id="@+id/btnCancel"
             android:layout_toLeftOf="@+id/lytBalloon"
             android:layout_centerVertical="true"

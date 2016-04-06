@@ -39,13 +39,15 @@ import com.peppermint.app.cloud.apis.exceptions.GoogleApiDeniedAuthorizationExce
 import com.peppermint.app.cloud.apis.exceptions.GoogleApiNoAuthorizationException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
+import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.cloud.senders.SenderSupportListener;
 import com.peppermint.app.cloud.senders.SenderSupportTask;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.ui.CustomAuthenticatorActivity;
-import com.peppermint.app.ui.views.simple.CustomNoScrollListView;
+import com.peppermint.app.ui.base.CustomActionBarView;
+import com.peppermint.app.ui.base.activities.CustomAuthenticatorActivity;
+import com.peppermint.app.ui.base.views.CustomNoScrollListView;
 
 import javax.net.ssl.SSLException;
 
@@ -71,11 +73,15 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     private static final String KEY_ACCOUNT_SERVER_ID = TAG + "_AccountServerId";
 
     // the ID of the screen for the Tracker API
-    private static final String SCREEN_ID = "Authentication";
+    @Override
+    protected final String getTrackerLabel() {
+        return "Authentication";
+    }
 
     // general use
     private TrackerManager mTrackerManager;
     private AuthenticatorUtils mAuthenticatorUtils;
+    private SenderPreferences mPreferences;
 
     // account list
     private CustomNoScrollListView mListView;
@@ -269,7 +275,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         AuthenticationData authenticationData = null;
 
         try {
-            mAuthenticatorUtils.getAccountData();
+            authenticationData = mAuthenticatorUtils.getAccountData();
         } catch (PeppermintApiNoAccountException e) {
             mTrackerManager.logException(e);
         }
@@ -283,8 +289,10 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mPreferences = new SenderPreferences(this);
+
         // do not enforce an authentication policy for the authenticator activity
-        getAuthenticationPolicyEnforcer().setRequiresAuthentication(false);
+        mAuthenticationPolicyEnforcer.setRequiresAuthentication(false);
 
         FrameLayout lytContainer = (FrameLayout) findViewById(R.id.container);
         View v = getLayoutInflater().inflate(R.layout.f_authentication, null, false);
@@ -294,11 +302,12 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         mTrackerManager = TrackerManager.getInstance(getApplicationContext());
 
         // inflate custom action bar
-        v = getLayoutInflater().inflate(R.layout.v_authentication_actionbar, null, false);
-        getCustomActionBar().setContents(v, true);
-
-        // disable back/menu button
-        getCustomActionBar().getMenuButton().setVisibility(View.GONE);
+        final CustomActionBarView actionBarView = getCustomActionBar();
+        if(actionBarView != null) {
+            actionBarView.setTitle(getString(R.string.peppermint_sign_in));
+            // disable back/menu button
+            actionBarView.getMenuButton().setVisibility(View.GONE);
+        }
 
         // init layout components
         mBtnSignIn = (Button) findViewById(R.id.btnSignIn);
@@ -444,7 +453,6 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     public void onResume() {
         super.onResume();
         refreshAccountList();
-        mTrackerManager.trackScreenView(SCREEN_ID);
     }
 
     @Override
@@ -459,7 +467,6 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
             Intent intent = new Intent(Settings.ACTION_ADD_ACCOUNT);
             intent.putExtra(Settings.EXTRA_ACCOUNT_TYPES, new String[] {"com.google"});
             startActivityForResult(intent, NEW_ACCOUNT_CODE);
-            return;
         }
     }
 

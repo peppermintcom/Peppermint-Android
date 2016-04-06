@@ -5,24 +5,24 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.peppermint.app.ui.views.CustomActionBarView
+    <com.peppermint.app.ui.base.CustomActionBarView
         android:id="@+id/actionBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true" />
 
-    <com.peppermint.app.ui.views.FullDrawerLayout
+    <com.peppermint.app.ui.base.FullDrawerLayout
         android:id="@+id/drawer"
         android:layout_below="@id/actionBar"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.peppermint.app.ui.views.simple.FitsSystemWindowsFrameLayout
+        <com.peppermint.app.ui.base.views.FitsSystemWindowsFrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_below="@id/actionBar">
 
-            <com.peppermint.app.ui.views.simple.FitsSystemWindowsFrameLayout
+            <com.peppermint.app.ui.base.views.FitsSystemWindowsFrameLayout
                 android:id="@+id/container"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
@@ -57,7 +57,7 @@
 
             </RelativeLayout>
 
-        </com.peppermint.app.ui.views.simple.FitsSystemWindowsFrameLayout>
+        </com.peppermint.app.ui.base.views.FitsSystemWindowsFrameLayout>
 
         <!-- The navigation drawer -->
         <LinearLayout
@@ -78,7 +78,7 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <com.peppermint.app.ui.views.RoundImageView
+                <com.peppermint.app.ui.base.views.RoundImageView
                     android:id="@+id/imgUserAvatar"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
@@ -88,7 +88,7 @@
                     custom:roundBorderColor="@color/white"
                 />
 
-                <com.peppermint.app.ui.views.simple.CustomFontTextView
+                <com.peppermint.app.ui.base.views.CustomFontTextView
                     android:id="@+id/txtUserName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -110,7 +110,7 @@
 
         </LinearLayout>
 
-    </com.peppermint.app.ui.views.FullDrawerLayout>
+    </com.peppermint.app.ui.base.FullDrawerLayout>
 
     <FrameLayout
         android:id="@+id/touchInterceptor"

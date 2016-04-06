@@ -13,11 +13,9 @@
         android:layout_height="match_parent"
         android:listSelector="@null"
         android:drawSelectorOnTop="false"
-        android:divider="@color/divider_grey"
-        android:dividerHeight="1dp"
-        android:background="@null"
-        android:layout_marginBottom="1dp"
-        android:footerDividersEnabled="true"/>
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        android:background="@null" />
 
     <LinearLayout
         android:id="@id/android:empty"
@@ -30,7 +28,7 @@
         android:orientation="vertical"
         android:fitsSystemWindows="true">
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView
+        <com.peppermint.app.ui.base.views.CustomFontTextView
             android:id="@+id/txtEmpty1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -43,7 +41,7 @@
             android:textColor="@color/grey_text"
             android:text="@string/msg_no_contacts" />
 
-        <com.peppermint.app.ui.views.simple.CustomMinHeightImageView
+        <com.peppermint.app.ui.base.views.CustomMinHeightImageView
             android:id="@+id/imgNoContacts"
             android:layout_width="wrap_content"
             android:layout_height="0dp"

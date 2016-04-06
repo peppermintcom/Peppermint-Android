@@ -16,10 +16,9 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.ui.views.simple.CustomFontEditText;
+import com.peppermint.app.ui.base.views.CustomFontEditText;
 import com.peppermint.app.utils.Utils;
 
 /**

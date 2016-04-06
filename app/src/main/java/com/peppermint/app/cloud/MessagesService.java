@@ -22,7 +22,6 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.peppermint.app.MainActivity;
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticatorUtils;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
@@ -49,7 +48,7 @@ import com.peppermint.app.events.SyncEvent;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.PermissionsPolicyEnforcer;
 import com.peppermint.app.ui.chat.ChatActivity;
-import com.peppermint.app.ui.chat.ChatFragment;
+import com.peppermint.app.ui.recipients.ContactActivity;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
@@ -587,8 +586,8 @@ public class MessagesService extends Service {
 
     private Notification getNotification(Message message) {
         Intent notificationIntent = new Intent(MessagesService.this, ChatActivity.class);
-        notificationIntent.putExtra(ChatFragment.PARAM_AUTO_PLAY_MESSAGE_ID, message.getId());
-        notificationIntent.putExtra(ChatFragment.PARAM_CHAT_ID, message.getChatId());
+        notificationIntent.putExtra(ChatActivity.PARAM_AUTO_PLAY_MESSAGE_ID, message.getId());
+        notificationIntent.putExtra(ChatActivity.PARAM_CHAT_ID, message.getChatId());
         PendingIntent pendingIntent = PendingIntent.getActivity(MessagesService.this, (int) message.getId(), notificationIntent, 0);
 
         String title = message.getChatParameter().getTitle();
@@ -638,7 +637,7 @@ public class MessagesService extends Service {
             NotificationManager notificationManager =
                     (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-            Intent notificationIntent = new Intent(MessagesService.this, MainActivity.class);
+            Intent notificationIntent = new Intent(MessagesService.this, ContactActivity.class);
             PendingIntent pendingIntent = PendingIntent.getActivity(MessagesService.this, 0, notificationIntent, 0);
 
             NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)

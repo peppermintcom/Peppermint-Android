@@ -8,7 +8,7 @@
     android:gravity="center_horizontal"
     android:background="@drawable/img_popup_tip_top_left">
 
-    <com.peppermint.app.ui.views.simple.CustomFontTextView
+    <com.peppermint.app.ui.base.views.CustomFontTextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
@@ -18,7 +18,7 @@
         android:textSize="16dp"
         android:text="@string/search_here_for_your_friend" />
 
-    <com.peppermint.app.ui.views.simple.CustomFontTextView
+    <com.peppermint.app.ui.base.views.CustomFontTextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"

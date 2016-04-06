@@ -16,7 +16,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -24,48 +23,40 @@ import android.widget.TextView;
 
 import com.peppermint.app.R;
 
-import java.util.List;
-
 /**
  * Created by Nuno Luz on 17-09-2015.
  *
  * Search bar (edittext) view by item type (spinner).
  */
-public class SearchListBarView extends FrameLayout implements AdapterView.OnItemClickListener {
+public class SearchListBarView extends FrameLayout {
 
     private static final String TAG = SearchListBarView.class.getSimpleName();
 
-    private static final String SELECTED_POSITION_BEFORE_SEARCH_KEY = TAG + "_SelectedPositionBeforeSearch";
-    private static final String SELECTED_POSITION_KEY = TAG + "_SelectedPosition";
     private static final String SEARCH_TEXT_KEY = TAG + "_SearchText";
     private static final String SUPER_STATE_KEY = TAG + "_SuperState";
 
     private static final int MIN_SEARCH_CHARACTERS = 1;
 
     public interface OnSearchListener {
-        void onSearch(String searchText);
-    }
-
-    public interface ListCategory {
-        boolean isSearchable();
-        String getText();
+        void onSearch(String searchText, boolean wasClear);
     }
 
     private InputMethodManager mInputMethodManager;
+    private OnSearchListener mListener;
+    private int mMinSearchCharacters = MIN_SEARCH_CHARACTERS;
 
+    // UI
     private ImageButton mBtnClear;
     private EditText mTxtSearch;
-
-    private List<? extends ListCategory> mCategories;
-    private int mMinSearchCharacters = MIN_SEARCH_CHARACTERS;
-    private int mSelectedItemPosition = 0, mSelectedItemPositionBeforeSearch = 0;
 
     private TextWatcher mTextWatcher = new TextWatcher() {
         private int _startVia = -1;
         private int _endVia = -1;
+        private String _previousText;
 
         @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            _previousText = getSearchText();
             _endVia = -1;
             if (count == 1 && after == 0 && s.charAt(start) == '<' && (s.length() > (start+1) && s.charAt(start+1) == '>')) {
                 _endVia = start;
@@ -83,7 +74,8 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         @Override
         public void afterTextChanged(Editable s) {
             if(_startVia < 0 && _endVia < 0) {
-                mSearchRunnable.run();
+                // just trigger the search process
+                innerTriggerSearch(getSearchText() == null && _previousText != null);
             } else {
                 if(_startVia >= 0) {
                     int keepVia = _startVia;
@@ -96,38 +88,6 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
             }
         }
     };
-
-    private Runnable mSearchRunnable = new Runnable() {
-        @Override
-        public void run() {
-            String searchText = getSearchText();
-
-            // go back to recent/fav contacts if the search field was emptied
-            if(searchText == null) {
-                innerSetSelectedItemPosition(mSelectedItemPositionBeforeSearch);
-            } else {
-                // otherwise, if the current pos doesn't allow searching - move to next
-                // position until one that allows searching is found
-                if(!getSelectedItem().isSearchable()) {
-                    int searchableItemPos = -1;
-                    int count = mCategories.size();
-                    for(int i=0; i<count && searchableItemPos < 0; i++) {
-                        if(mCategories.get(i).isSearchable()) {
-                            searchableItemPos = i;
-                        }
-                    }
-                    if(searchableItemPos >= 0) {
-                        innerSetSelectedItemPosition(searchableItemPos);
-                    }
-                }
-            }
-
-            // just trigger the search process
-            innerTriggerSearch();
-        }
-    };
-
-    private OnSearchListener mListener;
 
     public SearchListBarView(Context context) {
         super(context);
@@ -159,7 +119,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         mBtnClear.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                clearSearch(-1);
+                clearSearch();
             }
         });
 
@@ -220,7 +180,7 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         }
     }
 
-    private void innerTriggerSearch() {
+    private void innerTriggerSearch(boolean wasClear) {
         String searchText = getSearchText();
         if(searchText == null) {
             mBtnClear.setVisibility(GONE);
@@ -228,62 +188,13 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
             mBtnClear.setVisibility(VISIBLE);
         }
         if(mListener != null) {
-            mListener.onSearch(searchText);
+            mListener.onSearch(searchText, wasClear);
         }
     }
 
-    private void innerSetSelectedItemPosition(int position) {
-        mSelectedItemPosition = position;
-
-        // set imagebutton drawable with selected contact list icon
-        ListCategory item = mCategories.get(position);
-
-        // reset text if not searchable
-        if(!item.isSearchable() && getSearchText() != null) {
-            mTxtSearch.removeTextChangedListener(mTextWatcher);
-            mTxtSearch.setText("");
-            mTxtSearch.addTextChangedListener(mTextWatcher);
-        }
-    }
-
-    public void setSelectedItemPosition(int position) {
-        /*mSelectedItemPositionBeforeSearch = position;*/
-        innerSetSelectedItemPosition(position);
-        innerTriggerSearch();
-    }
-
-    /*public void setSelectedItemPositionBeforeSearch(int position) {
-        mSelectedItemPositionBeforeSearch = position;
-    }
-
-    public int getSelectedItemPositionBeforeSearch() {
-        return mSelectedItemPositionBeforeSearch;
-    }*/
-
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        setSelectedItemPosition(position);
-    }
-
-    public void setListCategories(List<? extends ListCategory> categories) {
-        mCategories = categories;
-    }
-
-    public int getSelectedItemPosition() {
-        return mSelectedItemPosition;
-    }
-
-    public ListCategory getSelectedItem() {
-        return mCategories.get(getSelectedItemPosition());
-    }
-
-    public boolean clearSearch(int resetToPosition) {
+    public boolean clearSearch() {
         // reset only if there's a search going on
         if(getSearchText() != null) {
-            if(resetToPosition >= 0) {
-                // reset to a particular position
-                innerSetSelectedItemPosition(resetToPosition);
-            }
             mTxtSearch.setText("");
             // also remove the input focus
             removeSearchTextFocus(null);
@@ -313,9 +224,6 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
         mTxtSearch.setText(text);
     }
 
-    public void deinit() {
-    }
-
     public EditText getSearchEditText() {
         return mTxtSearch;
     }
@@ -324,8 +232,6 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
     public Parcelable onSaveInstanceState() {
         Bundle bundle = new Bundle();
         bundle.putCharSequence(SEARCH_TEXT_KEY, mTxtSearch.getText());
-        bundle.putInt(SELECTED_POSITION_KEY, mSelectedItemPosition);
-        bundle.putInt(SELECTED_POSITION_BEFORE_SEARCH_KEY, mSelectedItemPositionBeforeSearch);
         bundle.putParcelable(SUPER_STATE_KEY, super.onSaveInstanceState());
         return bundle;
     }
@@ -334,9 +240,16 @@ public class SearchListBarView extends FrameLayout implements AdapterView.OnItem
     public void onRestoreInstanceState(Parcelable state) {
         Bundle bundle = (Bundle) state;
         super.onRestoreInstanceState(bundle.getParcelable(SUPER_STATE_KEY));
-        mTxtSearch.setText(bundle.getCharSequence(SEARCH_TEXT_KEY));
-        mSelectedItemPositionBeforeSearch = bundle.getInt(SELECTED_POSITION_BEFORE_SEARCH_KEY, 0);
-        innerSetSelectedItemPosition(bundle.getInt(SELECTED_POSITION_KEY, 0));
-        innerTriggerSearch();
+        CharSequence searchCharSequence = bundle.getCharSequence(SEARCH_TEXT_KEY);
+        String searchText = searchCharSequence.length() <= 0 ? null : searchCharSequence.toString();
+        if(!(searchText == null && getSearchText() == null) &&
+                !(searchText != null && getSearchText() != null && searchText.compareTo(getSearchText()) == 0)) {
+            // do not trigger the listener while restoring instance state
+            OnSearchListener tmpListener = mListener;
+            mListener = null;
+            mTxtSearch.setText(searchText);
+            mListener = tmpListener;
+            innerTriggerSearch(false);
+        }
     }
 }

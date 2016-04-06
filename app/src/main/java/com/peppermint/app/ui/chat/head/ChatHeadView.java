@@ -17,7 +17,7 @@ import android.util.AttributeSet;
 import com.peppermint.app.R;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatRecipient;
-import com.peppermint.app.ui.views.RoundImageView;
+import com.peppermint.app.ui.base.views.RoundImageView;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;

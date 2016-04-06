@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.peppermint.app.ui.views.simple.TouchInterceptorView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.peppermint.app.ui.base.views.TouchInterceptorView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -16,7 +16,7 @@
         android:orientation="vertical"
         android:background="@drawable/background_overlay_box">
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView
+        <com.peppermint.app.ui.base.views.CustomFontTextView
             android:id="@+id/txtName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -32,48 +32,12 @@
             android:background="@drawable/background_border_bottom"
             />
 
-        <com.peppermint.app.ui.views.simple.FitsSystemWindowsFrameLayout
+        <com.peppermint.app.ui.base.views.FitsSystemWindowsFrameLayout
+            android:id="@+id/container"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-
-            <com.peppermint.app.ui.views.simple.FitsSystemWindowsFrameLayout
-                android:id="@+id/container"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <include layout="@layout/f_chat" />
-            </com.peppermint.app.ui.views.simple.FitsSystemWindowsFrameLayout>
-
-            <RelativeLayout
-                android:id="@+id/fragmentProgressContainer"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@color/dark_green_60percent"
-                android:visibility="gone"
-                android:gravity="center">
-
-                <ImageView
-                    android:layout_width="170dp"
-                    android:layout_height="170dp"
-                    android:layout_marginBottom="40dp"
-                    android:layout_marginTop="40dp"
-                    android:layout_marginRight="40dp"
-                    android:layout_marginLeft="40dp"
-                    android:src="@drawable/img_static_loading_170dp" />
-
-                <com.peppermint.app.ui.canvas.loading.LoadingView
-                    android:id="@+id/loading"
-                    android:layout_width="170dp"
-                    android:layout_height="170dp"
-                    android:layout_marginBottom="40dp"
-                    android:layout_marginTop="40dp"
-                    android:layout_marginRight="40dp"
-                    android:layout_marginLeft="40dp"
-                    custom:text="@string/loading_contacts" />
-
-            </RelativeLayout>
-
-        </com.peppermint.app.ui.views.simple.FitsSystemWindowsFrameLayout>
+            <include layout="@layout/f_chat" />
+        </com.peppermint.app.ui.base.views.FitsSystemWindowsFrameLayout>
 
     </LinearLayout>
 
@@ -94,4 +58,4 @@
         android:layout_height="match_parent">
     </FrameLayout>
 
-</com.peppermint.app.ui.views.simple.TouchInterceptorView>
+</com.peppermint.app.ui.base.views.TouchInterceptorView>

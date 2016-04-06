@@ -18,7 +18,7 @@ import com.peppermint.app.data.Recording;
 import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.events.RecorderEvent;
 import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.ui.views.simple.CustomToast;
+import com.peppermint.app.ui.base.views.CustomToast;
 import com.peppermint.app.utils.ExtendedAudioRecorder;
 import com.peppermint.app.utils.NoAccessToExternalStorageException;
 

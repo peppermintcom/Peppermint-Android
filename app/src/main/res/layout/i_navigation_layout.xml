@@ -13,7 +13,7 @@
         android:layout_height="24dp"
         android:layout_marginRight="10dp"/>
 
-    <com.peppermint.app.ui.views.simple.CustomFontTextView
+    <com.peppermint.app.ui.base.views.CustomFontTextView
         android:id="@+id/txtName"
         android:layout_toRightOf="@id/imgIcon"
         android:layout_centerVertical="true"

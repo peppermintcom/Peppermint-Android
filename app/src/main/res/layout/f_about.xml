@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:layout_width="match_parent">
 
-    <com.peppermint.app.ui.views.simple.CustomFontTextView
+    <com.peppermint.app.ui.base.views.CustomFontTextView
         android:id="@+id/txtPrivacy"
         android:layout_alignParentBottom="true"
         android:layout_width="match_parent"
@@ -32,7 +32,7 @@
             android:src="@drawable/logo_about_144dp"
             />
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView
+        <com.peppermint.app.ui.base.views.CustomFontTextView
             android:id="@+id/txtPeppermint"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -43,7 +43,7 @@
             android:textSize="30dp"
             android:text="@string/peppermint_com" />
 
-        <com.peppermint.app.ui.views.simple.CustomFontTextView
+        <com.peppermint.app.ui.base.views.CustomFontTextView
             android:id="@+id/txtVersion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

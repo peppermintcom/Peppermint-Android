@@ -25,7 +25,7 @@ import com.peppermint.app.cloud.senders.SenderSupportListener;
 import com.peppermint.app.cloud.senders.SenderSupportTask;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.ui.CustomActionBarActivity;
+import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
 import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
 import com.peppermint.app.utils.Utils;
 
