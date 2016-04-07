@@ -3,7 +3,7 @@ package com.peppermint.app.cloud.senders;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.cloud.apis.PeppermintApi;
 import com.peppermint.app.cloud.apis.data.MessagesResponse;
-import com.peppermint.app.cloud.apis.data.RecordResponse;
+import com.peppermint.app.cloud.apis.data.UploadsResponse;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiRecipientNoAppException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiResponseCodeException;
@@ -61,28 +61,21 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
 
         PeppermintApi api = getPeppermintApi();
         String contentType = getMessage().getRecordingParameter().getContentType();
-        long now = android.os.SystemClock.uptimeMillis();
+        
         String fullName = getSenderPreferences().getFullName();
         if(fullName == null) {
             fullName = data.getEmail();
         }
 
         // get AWS signed URL
-        String signedUrl = api.getSignedUrl(fullName, data.getEmail(), contentType).getSignedUrl();
-        getTrackerManager().log("Peppermint # Obtained AWS Signed URL at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
+        UploadsResponse uploadsResponse = api.getSignedUrl(fullName, data.getEmail(), contentType);
+        String signedUrl = uploadsResponse.getSignedUrl();
+        getMessage().setServerCanonicalUrl(uploadsResponse.getCanonicalUrl());
+        getMessage().setServerShortUrl(uploadsResponse.getShortUrl());
 
         // upload to AWS
         if(!isCancelled()) {
             api.uploadMessage(signedUrl, recordedFile, contentType);
-            getTrackerManager().log("Peppermint # Uploaded to AWS at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
-        }
-
-        // confirm that the upload to AWS was successfully performed
-        if(!isCancelled()) {
-            RecordResponse response = api.confirmUploadMessage(signedUrl);
-            getMessage().setServerCanonicalUrl(String.valueOf(response.getCanonicalUrl()));
-            getMessage().setServerShortUrl(String.valueOf(response.getShortUrl()));
-            getTrackerManager().log("Peppermint # Confirmed Upload at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
         }
     }
 
