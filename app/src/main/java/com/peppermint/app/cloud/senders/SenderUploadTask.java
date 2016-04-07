@@ -61,7 +61,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
 
         PeppermintApi api = getPeppermintApi();
         String contentType = getMessage().getRecordingParameter().getContentType();
-        
+
         String fullName = getSenderPreferences().getFullName();
         if(fullName == null) {
             fullName = data.getEmail();
@@ -79,9 +79,11 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         }
     }
 
-    protected void sendPeppermintMessage() throws PeppermintApiTooManyRequestsException, PeppermintApiInvalidAccessTokenException, PeppermintApiResponseCodeException, ContactManager.InvalidEmailException, NoInternetConnectionException {
-        if(isCancelled() || (getMessage().getParameter(Message.PARAM_SENT_INAPP) != null && (boolean) getMessage().getParameter(Message.PARAM_SENT_INAPP))) {
-            return;
+    protected boolean sendPeppermintMessage() throws PeppermintApiTooManyRequestsException, PeppermintApiInvalidAccessTokenException, PeppermintApiResponseCodeException, ContactManager.InvalidEmailException, NoInternetConnectionException {
+        boolean sentInApp = getMessage().getParameter(Message.PARAM_SENT_INAPP) != null && (boolean) getMessage().getParameter(Message.PARAM_SENT_INAPP);
+
+        if(isCancelled() || sentInApp) {
+            return sentInApp;
         }
 
         AuthenticationData data = getAuthenticationData();
@@ -96,8 +98,10 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
             message.setServerId(response.getMessageId());
             message.setParameter(Message.PARAM_SENT_INAPP, true);
             ContactManager.insertPeppermint(getContext(), recipientEmail, recipientRawId, 0, null);
+            sentInApp = true;
         } catch(PeppermintApiRecipientNoAppException e) {
             getTrackerManager().log("Unable to send through Peppermint", e);
+            sentInApp = false;
             ContactManager.deletePeppermint(getContext(), recipientRawId, null);
         }
 
@@ -113,6 +117,8 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
             getTrackerManager().logException(e);
         }
         databaseHelper.unlock();
+
+        return sentInApp;
     }
 
     @Override

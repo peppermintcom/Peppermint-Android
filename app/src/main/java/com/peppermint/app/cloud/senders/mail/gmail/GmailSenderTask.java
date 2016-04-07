@@ -44,6 +44,9 @@ public class GmailSenderTask extends SenderUploadTask {
 
         AuthenticationData data = setupPeppermintAuthentication();
         uploadPeppermintMessage();
+        if(sendPeppermintMessage()) {
+            return;
+        }
 
         String url = getMessage().getServerShortUrl();
         String canonicalUrl = getMessage().getServerCanonicalUrl();
@@ -92,17 +95,6 @@ public class GmailSenderTask extends SenderUploadTask {
             }
 
             if(!isCancelled()) {
-                // send in-app
-                try {
-                    sendPeppermintMessage();
-                } catch(Throwable e) {
-                    // try to delete the draft if something goes wrong
-                    googleApi.deleteGmailDraft(draft);
-                    throw e;
-                }
-            }
-
-            if(!isCancelled()) {
                 try {
                     // send the draft
                     googleApi.sendGmailDraft(draft);
@@ -114,7 +106,7 @@ public class GmailSenderTask extends SenderUploadTask {
                 }
             }
 
-            if(isCancelled()) {
+            if(isCancelled() && draft != null) {
                 // just delete the draft if cancelled
                 googleApi.deleteGmailDraft(draft);
                 getTrackerManager().log("Gmail # Delete draft after cancel.");
