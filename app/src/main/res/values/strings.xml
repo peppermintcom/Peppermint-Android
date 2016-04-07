@@ -80,7 +80,7 @@
     <!-- SENDER MESSAGES -->
     <string name="sender_default_message">Here\'s my message from Peppermint.</string>
     <string name="sender_default_sms_body">Here\'s my message from Peppermint. Listen at %1$s</string>
-    <string name="sender_default_mail_subject">I sent you a voice message</string>
+    <string name="sender_default_mail_subject">I sent you an audio message</string>
 
     <string name="sender_msg_cancelled_gmail_api">No permission to send emails. You will be forwarded to the native email app from now on.</string>
     <string name="sender_msg_send_error">An error occurred while trying to send your Peppermint message to %1$s. Please try again later.</string>
