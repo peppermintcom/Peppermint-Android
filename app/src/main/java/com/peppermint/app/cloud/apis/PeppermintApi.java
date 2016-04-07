@@ -7,14 +7,12 @@ import com.peppermint.app.cloud.apis.data.AccountsResponse;
 import com.peppermint.app.cloud.apis.data.JWTsResponse;
 import com.peppermint.app.cloud.apis.data.MessageListResponse;
 import com.peppermint.app.cloud.apis.data.MessagesResponse;
-import com.peppermint.app.cloud.apis.data.RecordResponse;
 import com.peppermint.app.cloud.apis.data.RecorderResponse;
 import com.peppermint.app.cloud.apis.data.UploadsResponse;
 import com.peppermint.app.cloud.apis.data.parsers.AccountsResponseParser;
 import com.peppermint.app.cloud.apis.data.parsers.JWTsResponseParser;
 import com.peppermint.app.cloud.apis.data.parsers.MessageListResponseParser;
 import com.peppermint.app.cloud.apis.data.parsers.MessagesResponseParser;
-import com.peppermint.app.cloud.apis.data.parsers.RecordResponseParser;
 import com.peppermint.app.cloud.apis.data.parsers.RecorderResponseParser;
 import com.peppermint.app.cloud.apis.data.parsers.UploadsResponseParser;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiAlreadyRegisteredException;
@@ -58,17 +56,14 @@ public class PeppermintApi implements Serializable {
 
     // endpoints
     protected static final String ACCOUNTS_ENDPOINT = BASE_ENDPOINT_URL + "accounts";
-    protected static final String ACCOUNTS_TOKENS_ENDPOINT = BASE_ENDPOINT_URL + "accounts/tokens";
     protected static final String ACCOUNTS_REL_ENDPOINT = BASE_ENDPOINT_URL + "accounts/{account_id}/relationships/receivers";
 
     protected static final String JWTS_ENDPOINT = BASE_ENDPOINT_URL + "jwts";
     protected static final String MESSAGES_ENDPOINT = BASE_ENDPOINT_URL + "messages";
     protected static final String PLAYS_ENDPOINT = BASE_ENDPOINT_URL + "reads";
 
-    protected static final String RECORD_ENDPOINT = BASE_ENDPOINT_URL + "record";
     protected static final String RECORDER_ENDPOINT = BASE_ENDPOINT_URL + "recorder";
     protected static final String RECORDERS_ENDPOINT = BASE_ENDPOINT_URL + "recorders/{recorder_id}";
-    protected static final String RECORDER_TOKEN_ENDPOINT = BASE_ENDPOINT_URL + "recorder-token";
     protected static final String UPLOADS_ENDPOINT = BASE_ENDPOINT_URL + "uploads";
 
     private String mAccessToken;
@@ -77,7 +72,6 @@ public class PeppermintApi implements Serializable {
     private final AccountsResponseParser mAccountsResponseParser = new AccountsResponseParser();
     private final RecorderResponseParser mRecorderResponseParser = new RecorderResponseParser();
     private final UploadsResponseParser mUploadsResponseParser = new UploadsResponseParser();
-    private final RecordResponseParser mRecordResponseParser = new RecordResponseParser();
     private final JWTsResponseParser mJWTsResponseParser = new JWTsResponseParser();
     private final MessagesResponseParser mMessagesResponseParser = new MessagesResponseParser();
     private final MessageListResponseParser mMessageListResponseParser = new MessageListResponseParser();
@@ -186,7 +180,7 @@ public class PeppermintApi implements Serializable {
      * @throws PeppermintApiInvalidAccessTokenException
      */
     public JWTsResponse authOrRegister(String accountEmail, String accountPassword, int accountType, String recorderId, String recorderKey, String fullName, TrackerManager trackerManager) throws PeppermintApiTooManyRequestsException, PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException {
-        JWTsResponse jwtsResponse = null;
+        JWTsResponse jwtsResponse;
 
         try {
             jwtsResponse = authBoth(accountEmail, accountPassword, recorderId, recorderKey, accountType);
@@ -268,38 +262,6 @@ public class PeppermintApi implements Serializable {
     }
 
     // ACCOUNT
-
-    /**
-     * Authenticates the account.
-     *
-     * @param email the account email
-     * @param password the account password
-     * @return the account response
-     * @throws PeppermintApiResponseCodeException a status code different from 2XX was returned
-     * @throws PeppermintApiInvalidAccessTokenException
-     */
-    public AccountsResponse authAccount(String email, String password) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException {
-        HttpRequest request = new HttpRequest(ACCOUNTS_TOKENS_ENDPOINT, HttpRequest.METHOD_POST);
-        request.setHeaderParam("Authorization", "Basic " + Utils.getBasicAuthenticationToken(email, password));
-        request.setBody("{ \"api_key\": \"" + API_KEY + "\" }");
-        HttpJSONResponse<AccountsResponse> response = new HttpJSONResponse<>(mAccountsResponseParser);
-        request.execute(response);
-
-        if(response.getException() != null) {
-            throw new HttpResponseException(response.getException());
-        }
-        if(response.getCode() == 401) {
-            throw new PeppermintApiInvalidAccessTokenException(request.toString());
-        }
-        if((response.getCode() / 100) != 2) {
-            throw new PeppermintApiResponseCodeException(response.getCode(), request.toString());
-        }
-
-        AccountsResponse responseData = response.getJsonBody();
-        setAccessToken(responseData.getAccessToken());
-        return responseData;
-    }
-
     /**
      * Creates a new account.
      *
@@ -399,37 +361,6 @@ public class PeppermintApi implements Serializable {
     }
 
     // RECORDER
-
-    /**
-     * Authenticates the recorder/device.
-     *
-     * @param recorderId the recorder/device id
-     * @param recorderKey the recorder/device key/password
-     * @return the recorder response
-     * @throws PeppermintApiResponseCodeException a status code different from 2XX was returned
-     * @throws PeppermintApiInvalidAccessTokenException
-     */
-    public RecorderResponse authRecorder(String recorderId, String recorderKey) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException {
-        HttpRequest request = new HttpRequest(RECORDER_TOKEN_ENDPOINT, HttpRequest.METHOD_POST);
-        request.setHeaderParam("Authorization", "Basic " + Utils.getBasicAuthenticationToken(recorderId, recorderKey));
-        HttpJSONResponse<RecorderResponse> response = new HttpJSONResponse<>(mRecorderResponseParser);
-        request.execute(response);
-
-        if(response.getException() != null) {
-            throw new HttpResponseException(response.getException());
-        }
-        if(response.getCode() == 401) {
-            throw new PeppermintApiInvalidAccessTokenException(request.toString());
-        }
-        if((response.getCode() / 100) != 2) {
-            throw new PeppermintApiResponseCodeException(response.getCode(), request.toString());
-        }
-
-        RecorderResponse responseData = response.getJsonBody();
-        setAccessToken(responseData.getAccessToken());
-        return responseData;
-    }
-
     /**
      * Creates a new recorder/device.
      *
@@ -546,21 +477,6 @@ public class PeppermintApi implements Serializable {
         HttpResponse response = new HttpResponse();
         request.execute(response);
         return response;
-    }
-
-    /**
-     * Confirms that an audio message has been uploaded to the specified signed Amazon URL.
-     *
-     * @param signedUrl the signed URL
-     * @return the record endpoint response
-     */
-    public RecordResponse confirmUploadMessage(String signedUrl) {
-        HttpRequest request = new HttpRequest(RECORD_ENDPOINT, HttpRequest.METHOD_POST);
-        request.setHeaderParam("Authorization", "Bearer " + getAccessToken());
-        request.setBody("{ \"signed_url\": \"" + signedUrl + "\" }");
-        HttpJSONResponse<RecordResponse> response = new HttpJSONResponse<>(mRecordResponseParser);
-        request.execute(response);
-        return response.getJsonBody();
     }
 
     public String getAccessToken() {
