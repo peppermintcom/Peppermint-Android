@@ -69,7 +69,6 @@ public class MessagesSyncTask extends SenderSupportTask {
         String nextUrl = null;
 
         do {
-            long ms = System.currentTimeMillis();
             MessageListResponse receivedResponse = getPeppermintApi().getMessages(serverAccountId, syncTimestamp, true);
 
             int receivedAmount = receivedResponse.getMessages().size();

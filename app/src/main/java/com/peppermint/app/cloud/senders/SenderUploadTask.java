@@ -2,6 +2,7 @@ package com.peppermint.app.cloud.senders;
 
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.cloud.apis.PeppermintApi;
+import com.peppermint.app.cloud.apis.data.MessagesResponse;
 import com.peppermint.app.cloud.apis.data.RecordResponse;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiRecipientNoAppException;
@@ -98,7 +99,8 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         long recipientRawId = message.getChatParameter().getRecipientList().get(0).getRawContactId();
 
         try {
-            getPeppermintApi().sendMessage(null, canonicalUrl, data.getEmail(), recipientEmail, (int) (message.getRecordingParameter().getDurationMillis() / 1000));
+            MessagesResponse response = getPeppermintApi().sendMessage(null, canonicalUrl, data.getEmail(), recipientEmail, (int) (message.getRecordingParameter().getDurationMillis() / 1000));
+            message.setServerId(response.getMessageId());
             message.setParameter(Message.PARAM_SENT_INAPP, true);
             ContactManager.insertPeppermint(getContext(), recipientEmail, recipientRawId, 0, null);
         } catch(PeppermintApiRecipientNoAppException e) {
