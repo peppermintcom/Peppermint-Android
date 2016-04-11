@@ -99,7 +99,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     // search tip popup
     private Handler mHandler = new Handler();
     private PopupDialog mSearchTipPopup;
-    private PointF mSearchTipPoint;
+    private PointF mSearchTipPoint = new PointF();
     private final Runnable mSearchTipRunnable = new Runnable() {
         @Override
         public void run() {
@@ -166,7 +166,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                 }
 
                 if(isNewInstance) {
-                    ((ContactListFragment) newFragment).refresh(ContactActivity.this, mSearchListBarView.getSearchText());
+                    ((ContactListFragment) newFragment).refresh(ContactActivity.this, mSearchListBarView == null ? null : mSearchListBarView.getSearchText());
                 }
             }
         }));
@@ -279,7 +279,6 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
         mSearchTipPopup = new PopupDialog(this) {
             @Override
             public boolean onTouchEvent(MotionEvent event) {
-                mSearchTipPoint = new PointF();
                 mSearchTipPoint.set(event.getRawX(), event.getRawY());
                 return super.onTouchEvent(event);
             }
