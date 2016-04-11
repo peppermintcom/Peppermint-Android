@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.ContentObserver;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.net.Uri;
@@ -12,7 +11,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
-import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -59,6 +57,9 @@ import java.util.regex.Pattern;
 public class ContactActivity extends CustomActionBarDrawerActivity implements SearchListBarView.OnSearchListener,
         ChatRecordOverlayController.Callbacks, OverlayManager.OverlayVisibilityChangeListener, View.OnClickListener {
 
+    protected static final int SEARCH_LISTENER_PRIORITY_FRAGMENT = 1;
+    private static final int SEARCH_LISTENER_PRIORITY_ACTIVITY = 2;
+
     protected static final int REQUEST_NEWCONTACT = 224;
     protected static final int REQUEST_NEWCONTACT_AND_SEND = 223;
 
@@ -72,28 +73,11 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     public static final String FAST_REPLY_NAME_PARAM = "name";
     public static final String FAST_REPLY_MAIL_PARAM = "mail";
 
-    private ContactsContentObserver mContactsObserver;
-    private class ContactsContentObserver extends ContentObserver {
-        public ContactsContentObserver(Handler handler) {
-            super(handler);
-        }
-
-        @Override
-        public void onChange(boolean selfChange) {
-            super.onChange(selfChange);
-            ContactListFragment fragment = (ContactListFragment) getCurrentFragment();
-            if(fragment != null) {
-                onSearch(mSearchListBarView.getSearchText(), false);
-            }
-        }
-    }
-
     private ChatRecordOverlayController mChatRecordOverlayController;
     private SearchListBarView mSearchListBarView;
 
     private boolean mShouldSync = true;
     private boolean mHasSavedInstanceState = false;
-    private boolean mIsFirstStart = true;
     private boolean mIsDestroyed = false;
 
     // search tip popup
@@ -115,7 +99,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     };
 
     @Override
-    public void onSearch(String searchText, boolean wasClear) {
+    public boolean onSearch(String searchText, boolean wasClear) {
         boolean switchedFragment;
 
         if(wasClear || (mTappedItemPosition != 1 && searchText == null && ChatManager.getChatCount(DatabaseHelper.getInstance(this).getReadableDatabase()) > 0)) {
@@ -126,9 +110,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
             switchedFragment = selectItemFromDrawer(1);
         }
 
-        if(!switchedFragment) {
-            ((ContactListFragment) getCurrentFragment()).refresh(this, searchText);
-        }
+        return switchedFragment;
     }
 
     private View.OnTouchListener mTouchInterceptor = new View.OnTouchListener() {
@@ -156,28 +138,8 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
-        navItems.add(new NavigationItem(getString(R.string.drawer_menu_recent_contacts), R.drawable.ic_drawer_recent, RecentContactsListFragment.class, false, R.string.loading_contacts, new NavigationItemSimpleAction() {
-            @Override
-            public void onPreFragmentInit(Fragment newFragment, boolean isNewInstance) {
-                if(mSearchListBarView != null) {
-                    mSearchListBarView.setOnSearchListener(null);
-                    mSearchListBarView.setSearchText(null);
-                    mSearchListBarView.setOnSearchListener(ContactActivity.this);
-                }
-
-                if(isNewInstance) {
-                    ((ContactListFragment) newFragment).refresh(ContactActivity.this, mSearchListBarView == null ? null : mSearchListBarView.getSearchText());
-                }
-            }
-        }));
-        navItems.add(new NavigationItem(getString(R.string.drawer_menu_all_contacts), R.drawable.ic_drawer_contacts, AllContactsListFragment.class, false, R.string.loading_contacts, new NavigationItemSimpleAction() {
-            @Override
-            public void onPreFragmentInit(Fragment newFragment, boolean isNewInstance) {
-                if(isNewInstance) {
-                    ((ContactListFragment) newFragment).refresh(ContactActivity.this, mSearchListBarView.getSearchText());
-                }
-            }
-        }));
+        navItems.add(new NavigationItem(getString(R.string.drawer_menu_recent_contacts), R.drawable.ic_drawer_recent, RecentContactsListFragment.class, false, R.string.loading_contacts, null));
+        navItems.add(new NavigationItem(getString(R.string.drawer_menu_all_contacts), R.drawable.ic_drawer_contacts, AllContactsListFragment.class, false, R.string.loading_contacts, null));
         navItems.add(new NavigationItem(getString(R.string.drawer_menu_settings), R.drawable.ic_drawer_settings, new NavigationItemSimpleAction() {
             @Override
             public void onPreFragmentInit(Fragment newFragment, boolean isNewInstance) {
@@ -212,8 +174,6 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
         mHasSavedInstanceState = savedInstanceState != null;
         mShouldSync = savedInstanceState == null;
 
-        mContactsObserver = new ContactsContentObserver(new Handler(getMainLooper()));
-
         // inflate and init custom action bar view
         final CustomActionBarView customActionBarView = getCustomActionBar();
 
@@ -232,7 +192,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                 super.onEventMainThread(event);
                 if(event.getType() == SyncEvent.EVENT_FINISHED) {
                     if(mSearchListBarView.getSearchText() == null) {
-                        onSearch(null, false);
+                        refreshContactList();
                     }
                 }
             }
@@ -242,7 +202,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                 super.onEventMainThread(event);
                 if(event.getType() == ReceiverEvent.EVENT_RECEIVED) {
                     if(mSearchListBarView.getSearchText() == null) {
-                        onSearch(null, false);
+                        refreshContactList();
                     }
                 }
             }
@@ -252,7 +212,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                 super.onEventMainThread(event);
                 if(event.getType() == SenderEvent.EVENT_FINISHED) {
                     if(mSearchListBarView.getSearchText() == null) {
-                        onSearch(null, false);
+                        refreshContactList();
                     }
                 }
             }
@@ -263,9 +223,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
 
                 // if the user has gone through the sending process without
                 // discarding the recording, then clear the search filter
-                if(!mSearchListBarView.clearSearch()) {
-                    onSearch(mSearchListBarView.getSearchText(), true);
-                }
+                mSearchListBarView.clearSearch(true);
 
                 launchChatActivity(message.getChatId());
 
@@ -334,15 +292,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-        getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI, true, mContactsObserver);
-        mSearchListBarView.setOnSearchListener(this);
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        getContentResolver().unregisterContentObserver(mContactsObserver);
-        getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI, true, mContactsObserver);
+        mSearchListBarView.addOnSearchListener(this, SEARCH_LISTENER_PRIORITY_ACTIVITY);
     }
 
     @Override
@@ -355,11 +305,6 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
 
         // global touch interceptor to hide keyboard
         addTouchEventInterceptor(mTouchInterceptor);
-
-        if(mIsFirstStart) {
-            onSearch(mSearchListBarView.getSearchText(), false);
-            mIsFirstStart = false;
-        }
     }
 
     @Override
@@ -402,9 +347,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     protected void onDestroy() {
         mAuthenticationPolicyEnforcer.removeAuthenticationDoneCallback(mAuthenticationDoneAlwaysCallback);
 
-        mSearchListBarView.setOnSearchListener(null);
-
-        getContentResolver().unregisterContentObserver(mContactsObserver);
+        mSearchListBarView.removeOnSearchListener(this);
 
         mSearchTipPopup.setOnDismissListener(null);
         mSearchTipPopup.dismiss();
@@ -441,7 +384,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if(mPermissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults)) {
-            onSearch(mSearchListBarView.getSearchText(), false);
+            refreshContactList();
         } else {
             Toast.makeText(this, R.string.msg_must_supply_mandatory_permissions, Toast.LENGTH_LONG).show();
             finish();
@@ -450,7 +393,6 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        getContentResolver().unregisterContentObserver(mContactsObserver);
         mChatRecordOverlayController.saveInstanceState(outState);
         super.onSaveInstanceState(outState);
     }
@@ -462,7 +404,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
             return;
         }
 
-        int stepsLeft = (mSearchListBarView.clearSearch() ? 1 : 0);
+        int stepsLeft = (mSearchListBarView.clearSearch(false) ? 1 : 0);
         if (stepsLeft <= 0) {
             super.onBackPressed();
             return;
@@ -586,8 +528,25 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
             }
 
             if(didSignIn) {
-                onSearch(mSearchListBarView.getSearchText(), false);
+                refreshContactList();
             }
         }
     };
+
+    private void refreshContactList() {
+        ContactListFragment fragment = (ContactListFragment) getCurrentFragment();
+        boolean refresh = fragment != null;
+
+        if(fragment == null) {
+            refresh = !onSearch(mSearchListBarView.getSearchText(), false);
+        }
+
+        if(refresh) {
+            fragment.refresh();
+        }
+    }
+
+    public SearchListBarView getSearchListBarView() {
+        return mSearchListBarView;
+    }
 }

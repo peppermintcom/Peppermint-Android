@@ -23,6 +23,9 @@ import android.widget.TextView;
 
 import com.peppermint.app.R;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Nuno Luz on 17-09-2015.
  *
@@ -32,17 +35,18 @@ public class SearchListBarView extends FrameLayout {
 
     private static final String TAG = SearchListBarView.class.getSimpleName();
 
-    private static final String SEARCH_TEXT_KEY = TAG + "_SearchText";
-    private static final String SUPER_STATE_KEY = TAG + "_SuperState";
+    private static final String STATE_PARAM_SEARCH_TEXT = TAG + "_stateParamSearchText";
+    private static final String STATE_PARAM_SUPER = TAG + "_stateParamSuper";
 
     private static final int MIN_SEARCH_CHARACTERS = 1;
 
     public interface OnSearchListener {
-        void onSearch(String searchText, boolean wasClear);
+        boolean onSearch(String searchText, boolean wasClear);
     }
 
     private InputMethodManager mInputMethodManager;
-    private OnSearchListener mListener;
+    private List<OnSearchListener> mOnSearchListeners = new ArrayList<>();
+    private List<Integer> mOnSearchListenerPriorities = new ArrayList<>();
     private int mMinSearchCharacters = MIN_SEARCH_CHARACTERS;
 
     // UI
@@ -119,7 +123,7 @@ public class SearchListBarView extends FrameLayout {
         mBtnClear.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                clearSearch();
+                clearSearch(false);
             }
         });
 
@@ -187,12 +191,15 @@ public class SearchListBarView extends FrameLayout {
         } else {
             mBtnClear.setVisibility(VISIBLE);
         }
-        if(mListener != null) {
-            mListener.onSearch(searchText, wasClear);
+
+        int onSearchListenerAmount = mOnSearchListeners.size();
+        boolean stopPropagation = false;
+        for(int i=0; i<onSearchListenerAmount && !stopPropagation; i++) {
+            stopPropagation = mOnSearchListeners.get(i).onSearch(searchText, wasClear);
         }
     }
 
-    public boolean clearSearch() {
+    public boolean clearSearch(boolean forceTriggerListeners) {
         // reset only if there's a search going on
         if(getSearchText() != null) {
             mTxtSearch.setText("");
@@ -202,11 +209,45 @@ public class SearchListBarView extends FrameLayout {
         }
 
         mTxtSearch.setText("");
+        if(forceTriggerListeners) {
+            innerTriggerSearch(true);
+        }
         return false;
     }
 
-    public void setOnSearchListener(OnSearchListener mListener) {
-        this.mListener = mListener;
+    /**
+     * Higher priority listeners have the chance to stop the event propagation to other
+     * listeners.
+     * @param mOnSearchListener the OnSearchListener
+     * @param priority the priority value
+     */
+    public void addOnSearchListener(OnSearchListener mOnSearchListener, int priority) {
+        int onSearchListenerAmount = mOnSearchListeners.size();
+        int newIndex = -1;
+        for(int i=0; i<onSearchListenerAmount && newIndex < 0; i++) {
+            if(mOnSearchListenerPriorities.get(i) < priority) {
+                newIndex = i;
+            }
+        }
+
+        if(newIndex < 0) {
+            newIndex = onSearchListenerAmount;
+        }
+
+        this.mOnSearchListenerPriorities.add(newIndex, priority);
+        this.mOnSearchListeners.add(newIndex, mOnSearchListener);
+    }
+
+    public boolean removeOnSearchListener(OnSearchListener mOnSearchListener) {
+        int index = this.mOnSearchListeners.indexOf(mOnSearchListener);
+        if(index < 0) {
+            return false;
+        }
+
+        this.mOnSearchListenerPriorities.remove(index);
+        this.mOnSearchListeners.remove(index);
+
+        return true;
     }
 
     public String getSearchText() {
@@ -231,24 +272,24 @@ public class SearchListBarView extends FrameLayout {
     @Override
     public Parcelable onSaveInstanceState() {
         Bundle bundle = new Bundle();
-        bundle.putCharSequence(SEARCH_TEXT_KEY, mTxtSearch.getText());
-        bundle.putParcelable(SUPER_STATE_KEY, super.onSaveInstanceState());
+        bundle.putCharSequence(STATE_PARAM_SEARCH_TEXT, mTxtSearch.getText());
+        bundle.putParcelable(STATE_PARAM_SUPER, super.onSaveInstanceState());
         return bundle;
     }
 
     @Override
     public void onRestoreInstanceState(Parcelable state) {
         Bundle bundle = (Bundle) state;
-        super.onRestoreInstanceState(bundle.getParcelable(SUPER_STATE_KEY));
-        CharSequence searchCharSequence = bundle.getCharSequence(SEARCH_TEXT_KEY);
-        String searchText = searchCharSequence.length() <= 0 ? null : searchCharSequence.toString();
+        super.onRestoreInstanceState(bundle.getParcelable(STATE_PARAM_SUPER));
+        CharSequence searchCharSequence = bundle.getCharSequence(STATE_PARAM_SEARCH_TEXT);
+        String searchText = searchCharSequence == null || searchCharSequence.length() <= 0 ? null : searchCharSequence.toString();
         if(!(searchText == null && getSearchText() == null) &&
                 !(searchText != null && getSearchText() != null && searchText.compareTo(getSearchText()) == 0)) {
             // do not trigger the listener while restoring instance state
-            OnSearchListener tmpListener = mListener;
-            mListener = null;
+            List<OnSearchListener> tmpList = mOnSearchListeners;
+            mOnSearchListeners = new ArrayList<>();
             mTxtSearch.setText(searchText);
-            mListener = tmpListener;
+            mOnSearchListeners = tmpList;
             innerTriggerSearch(false);
         }
     }

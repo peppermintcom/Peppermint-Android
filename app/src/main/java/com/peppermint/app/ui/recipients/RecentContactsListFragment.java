@@ -4,7 +4,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 
 import com.peppermint.app.data.ChatManager;
@@ -24,22 +26,35 @@ public class RecentContactsListFragment extends ContactListFragment {
     private Set<Long> mPeppermintIdSet;
 
     @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        mActivity.getSearchListBarView().setSearchText(null);
+        return super.onCreateView(inflater, container, savedInstanceState);
+    }
+
+    @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         mAdapter = new ChatCursorAdapter(mActivity, null, null, mActivity.getTrackerManager());
         getListView().setAdapter(mAdapter);
-        mAdapter.notifyDataSetChanged();
-
-        if(!mRefreshing) {
-            setCursor();
-        }
     }
 
     private synchronized void setCursor() {
         if(mCursor != null && mAdapter != null && mCursor != mAdapter.getCursor()) {
             mAdapter.setPeppermintSet(mPeppermintIdSet);
             mAdapter.changeCursor(mCursor);
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if(!mRefreshing) {
+            if(mCursor == null) {
+                refresh();
+            } else {
+                setCursor();
+            }
         }
     }
 

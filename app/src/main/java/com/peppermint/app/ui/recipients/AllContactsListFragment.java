@@ -3,8 +3,10 @@ package com.peppermint.app.ui.recipients;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.ContactsContract;
 import android.support.v4.content.ContextCompat;
 import android.view.View;
@@ -28,6 +30,19 @@ public class AllContactsListFragment extends ContactListFragment {
         MIMETYPES.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
         MIMETYPES.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
     }
+
+    private class ContactsContentObserver extends ContentObserver {
+        public ContactsContentObserver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            super.onChange(selfChange);
+            refresh();
+        }
+    }
+    private ContactsContentObserver mContactsObserver;
 
     // the recipient list
     private ContactCursorAdapter mAdapter;
@@ -70,18 +85,28 @@ public class AllContactsListFragment extends ContactListFragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        mContactsObserver = new ContactsContentObserver(new Handler(mActivity.getMainLooper()));
+        mActivity.getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI, true, mContactsObserver);
+
         mAdapter = new ContactCursorAdapter(mActivity, null);
         getListView().setAdapter(mAdapter);
-        mAdapter.notifyDataSetChanged();
-
-        if(!mRefreshing) {
-            setCursor();
-        }
     }
 
     private synchronized void setCursor() {
         if(mCursor != null && mAdapter != null && mCursor != mAdapter.getCursor()) {
             mAdapter.changeCursor(mCursor);
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if(!mRefreshing) {
+            if(mCursor == null) {
+                refresh();
+            } else {
+                setCursor();
+            }
         }
     }
 
@@ -95,6 +120,10 @@ public class AllContactsListFragment extends ContactListFragment {
 
     @Override
     public void onDestroy() {
+        if(mActivity != null) {
+            mActivity.getContentResolver().unregisterContentObserver(mContactsObserver);
+        }
+
         // close adapter cursors
         mCursor = null;
         mAdapter.changeCursor(null);

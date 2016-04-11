@@ -31,7 +31,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public abstract class ContactListFragment extends ListFragment implements
-        AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
+        AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener,
+        SearchListBarView.OnSearchListener {
 
     // avatar animation frequency
     private static final int FIXED_AVATAR_ANIMATION_INTERVAL_MS = 7500;
@@ -175,13 +176,15 @@ public abstract class ContactListFragment extends ListFragment implements
         mActivity = (ContactActivity) activity;
         mAddContactClickListener = mActivity;
 
-        if(mRefreshing) {
-            mActivity.getLoadingController().setLoading(true);
-        }
+        refresh();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
+        if(mRefreshing) {
+            mActivity.getLoadingController().setLoading(true);
+        }
 
         // hold popup
         mHoldPopup = new PopupWindow(mActivity);
@@ -229,6 +232,8 @@ public abstract class ContactListFragment extends ListFragment implements
         getListView().setOnItemLongClickListener(this);
 
         getListView().addFooterView(mListFooterView);
+
+        mActivity.getSearchListBarView().addOnSearchListener(this, ContactActivity.SEARCH_LISTENER_PRIORITY_FRAGMENT);
     }
 
     @Override
@@ -269,6 +274,7 @@ public abstract class ContactListFragment extends ListFragment implements
     @Override
     public void onDetach() {
         if(mActivity != null) {
+            mActivity.getSearchListBarView().removeOnSearchListener(this);
             mActivity.getLoadingController().setLoading(false);
             mActivity = null;
             mAddContactClickListener = null;
@@ -277,7 +283,12 @@ public abstract class ContactListFragment extends ListFragment implements
         super.onDetach();
     }
 
-    public void refresh(Context context, String filter) {
+    @Override
+    public boolean onSearch(String searchText, boolean wasClear) {
+        if(mActivity == null) {
+            return false;
+        }
+
         if(mRefreshTask != null && !mRefreshTask.isCancelled() && mRefreshTask.getStatus() != AsyncTask.Status.FINISHED) {
             mRefreshTask._doNotChangeState = true;
             mRefreshTask.cancel(true);
@@ -286,8 +297,16 @@ public abstract class ContactListFragment extends ListFragment implements
 
         mRefreshing = true;
 
-        mRefreshTask = new RefreshTask(context, filter);
+        mRefreshTask = new RefreshTask(mActivity, searchText);
         mRefreshTask.executeOnExecutor(mThreadPoolExecutor);
+
+        return false;
+    }
+
+    protected void refresh() {
+        if(mActivity != null && mActivity.getSearchListBarView() != null) {
+            onSearch(mActivity.getSearchListBarView().getSearchText(), false);
+        }
     }
 
     protected void dismissHoldPopup() {
