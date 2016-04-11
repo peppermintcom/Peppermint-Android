@@ -37,10 +37,10 @@ public class AllContactsListFragment extends ContactListFragment {
     protected Object onAsyncRefresh(Context context, String searchName, String searchVia) {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
             // get normal full, email or phone contact list
-            FilteredCursor cursor = (FilteredCursor) ContactManager.get(context, null, searchName, false, MIMETYPES, searchVia);
+            FilteredCursor cursor = (FilteredCursor) ContactManager.get(context, null, searchName, null, MIMETYPES, searchVia);
             if (cursor.getOriginalCursor().getCount() <= 0 && searchName != null && searchVia != null) {
                 cursor.close();
-                cursor = (FilteredCursor) ContactManager.get(context, null, null, false, MIMETYPES, searchVia);
+                cursor = (FilteredCursor) ContactManager.get(context, null, null, null, MIMETYPES, searchVia);
             }
             cursor.filter();
             return cursor;
