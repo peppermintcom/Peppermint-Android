@@ -54,7 +54,7 @@ public class BitmapLayer extends LayerBase implements Layer {
         mPrevBounds = getBounds();
 
         if(mDrawable != null) {
-            if(mShaderBitmap != null) {
+            if(mShaderBitmap != null && mShaderBitmap != mDrawable.getBitmap()) {
                 mShaderBitmap.recycle();
             }
             mShaderBitmap = Bitmap.createScaledBitmap(mDrawable.getBitmap(), getBounds().width(), getBounds().height(), false);
