@@ -72,6 +72,7 @@ public class AllContactsListFragment extends ContactListFragment {
 
         mAdapter = new ContactCursorAdapter(mActivity, null);
         getListView().setAdapter(mAdapter);
+        mAdapter.notifyDataSetChanged();
 
         if(!mRefreshing) {
             setCursor();

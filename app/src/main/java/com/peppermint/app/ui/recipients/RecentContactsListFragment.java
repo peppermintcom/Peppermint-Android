@@ -29,6 +29,7 @@ public class RecentContactsListFragment extends ContactListFragment {
 
         mAdapter = new ChatCursorAdapter(mActivity, null, null, mActivity.getTrackerManager());
         getListView().setAdapter(mAdapter);
+        mAdapter.notifyDataSetChanged();
 
         if(!mRefreshing) {
             setCursor();
