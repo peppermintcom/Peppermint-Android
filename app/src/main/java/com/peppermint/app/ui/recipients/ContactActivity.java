@@ -222,6 +222,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
         customActionBarView.setContents(mSearchListBarView, false);
 
         // authentication
+        mAuthenticationPolicyEnforcer.addAuthenticationDoneCallback(mAuthenticationDoneAlwaysCallback);
         mAuthenticationPolicyEnforcer.addAuthenticationDoneCallback(mAuthenticationDoneCallback);
 
         // chat record overlay controller
@@ -399,6 +400,8 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
 
     @Override
     protected void onDestroy() {
+        mAuthenticationPolicyEnforcer.removeAuthenticationDoneCallback(mAuthenticationDoneAlwaysCallback);
+
         mSearchListBarView.setOnSearchListener(null);
 
         getContentResolver().unregisterContentObserver(mContactsObserver);
@@ -529,12 +532,12 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
 
     private AuthenticationPolicyEnforcer.AuthenticationDoneCallback mAuthenticationDoneCallback = new AuthenticationPolicyEnforcer.AuthenticationDoneCallback() {
         @Override
-        public void done(AuthenticationData data) {
+        public void done(AuthenticationData data, boolean didSignIn) {
+            mAuthenticationPolicyEnforcer.removeAuthenticationDoneCallback(this);
+
             if(mIsDestroyed) {
                 return;
             }
-
-            mAuthenticationPolicyEnforcer.removeAuthenticationDoneCallback(this);
 
             // synchronize messages (only when the activity is created for the first time)
             if(mShouldSync) {
@@ -571,6 +574,19 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                     // otherwise, just search by email
                     mSearchListBarView.setSearchText(foundRecipient != null || name.length() <= 0 ? mail : name + " <" + mail + ">");
                 }
+            }
+        }
+    };
+
+    private AuthenticationPolicyEnforcer.AuthenticationDoneCallback mAuthenticationDoneAlwaysCallback = new AuthenticationPolicyEnforcer.AuthenticationDoneCallback() {
+        @Override
+        public void done(AuthenticationData data, boolean didSignIn) {
+            if(mIsDestroyed) {
+                return;
+            }
+
+            if(didSignIn) {
+                onSearch(mSearchListBarView.getSearchText(), false);
             }
         }
     };

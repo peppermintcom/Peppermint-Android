@@ -85,7 +85,7 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
 
         mAuthenticationPolicyEnforcer.addAuthenticationDoneCallback(new AuthenticationPolicyEnforcer.AuthenticationDoneCallback() {
             @Override
-            public void done(AuthenticationData data) {
+            public void done(AuthenticationData data, boolean didSignIn) {
                 mAuthenticationData = data;
                 refreshProfileData();
             }

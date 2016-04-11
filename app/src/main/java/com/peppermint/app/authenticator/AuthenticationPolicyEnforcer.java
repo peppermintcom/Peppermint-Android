@@ -28,7 +28,7 @@ import java.util.List;
 public class AuthenticationPolicyEnforcer {
 
     public interface AuthenticationDoneCallback {
-        void done(AuthenticationData data);
+        void done(AuthenticationData data, boolean didSignIn);
     }
 
     private static final String TAG = AuthenticationPolicyEnforcer.class.getSimpleName();
@@ -120,7 +120,7 @@ public class AuthenticationPolicyEnforcer {
                 try {
                     AuthenticationData authenticationData = mAuthenticatorUtils.getAccountData();
                     for(AuthenticationDoneCallback cb : mAuthenticationDoneCallbacks) {
-                        cb.done(authenticationData);
+                        cb.done(authenticationData, true);
                     }
                 } catch(PeppermintApiNoAccountException e) {
                     mTrackerManager.log("No account after authentication successful! This should never happen!");
@@ -156,7 +156,7 @@ public class AuthenticationPolicyEnforcer {
         try {
             AuthenticationData data = mAuthenticatorUtils.getAccountData();
             for(AuthenticationDoneCallback cb : mAuthenticationDoneCallbacks) {
-                cb.done(data);
+                cb.done(data, false);
             }
             return data;
         } catch(PeppermintApiNoAccountException e) {
