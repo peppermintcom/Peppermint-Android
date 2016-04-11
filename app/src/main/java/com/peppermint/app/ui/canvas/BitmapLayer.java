@@ -23,6 +23,7 @@ public class BitmapLayer extends LayerBase implements Layer {
 
     private int mBitmapRes;
     private BitmapDrawable mDrawable;
+    private Bitmap mShaderBitmap;
     private Paint mPaint, mBorderPaint;
 
     private int mBorderWidth, mCornerRadius;
@@ -53,10 +54,22 @@ public class BitmapLayer extends LayerBase implements Layer {
         mPrevBounds = getBounds();
 
         if(mDrawable != null) {
-            BitmapShader shader = new BitmapShader(Bitmap.createScaledBitmap(mDrawable.getBitmap(), getBounds().width(), getBounds().height(), false), Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
-            mPaint.setShader(shader);
+            if(mShaderBitmap != null) {
+                mShaderBitmap.recycle();
+            }
+            mShaderBitmap = Bitmap.createScaledBitmap(mDrawable.getBitmap(), getBounds().width(), getBounds().height(), false);
+            mPaint.setShader(new BitmapShader(mShaderBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
         } else {
             mPaint.setShader(null);
+        }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        if(mShaderBitmap != null) {
+            mShaderBitmap.recycle();
+            mShaderBitmap = null;
         }
     }
 

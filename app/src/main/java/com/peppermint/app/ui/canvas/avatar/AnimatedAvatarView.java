@@ -48,6 +48,8 @@ public class AnimatedAvatarView extends AnimatedView {
     private BitmapLayer mStaticAvatar;
     private Rect mFullBounds = new Rect();
 
+    private int mHeight = -1, mWidth = -1;
+
     public AnimatedAvatarView(Context context) {
         super(context);
         init(null);
@@ -180,6 +182,13 @@ public class AnimatedAvatarView extends AnimatedView {
     @Override
     protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+        if(getMeasuredHeight() == 0 || getMeasuredWidth() == 0 || (getMeasuredHeight() == mHeight && getMeasuredWidth() == mWidth)) {
+            return;
+        }
+
+        mHeight = getMeasuredHeight();
+        mWidth = getMeasuredWidth();
 
         // box bounds (get values obtained in parent onMeasure)
         mFullBounds.set(0, 0, (int) getLocalWidth(), (int) getLocalHeight());
