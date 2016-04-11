@@ -67,7 +67,7 @@ public class BitmapLayer extends LayerBase implements Layer {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        if(mShaderBitmap != null) {
+        if(mShaderBitmap != null && (mDrawable == null || mShaderBitmap != mDrawable.getBitmap())) {
             mShaderBitmap.recycle();
             mShaderBitmap = null;
         }
