@@ -66,7 +66,7 @@ public class ChatHeadService extends Service {
      * The service binder used by external components to interact with the service.
      */
     public class ChatHeadServiceBinder extends Binder {
-        void enable() { refreshChatHeadController(); }
+        void enable() { /* nothing to do */ }
         void disable() { stopSelf(); }
         void show() { refreshChatHeadController(); }
         boolean hide() { if(mChatHeadController != null) { return mChatHeadController.hide(); } return false; }
@@ -96,7 +96,7 @@ public class ChatHeadService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent != null && intent.getAction() != null) {
             if(intent.getAction().compareTo(ACTION_ENABLE) == 0) {
-                refreshChatHeadController();
+                /* nothing to do */
             } else if(intent.getAction().compareTo(ACTION_DISABLE) == 0) {
                 stopSelf();
             } else if(intent.getAction().compareTo(ACTION_SHOW) == 0) {
