@@ -15,6 +15,7 @@ import android.util.AttributeSet;
 import android.widget.ImageView;
 
 import com.peppermint.app.R;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.Utils;
 
 // Inspired on https://github.com/lopspower/CircularImageView/blob/master/CircularImageView/src/com/mikhaellopez/circularimageview/CircularImageView.java
@@ -153,8 +154,15 @@ public class RoundImageView extends ImageView {
         }
 
         // scale the image and obtain a bitmap with the exact size required
-        mBitmap = Bitmap.createScaledBitmap(tmpBitmap, bitmapWidth, bitmapHeight, true);
-        mPaint.setShader(new BitmapShader(mBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
+        try {
+            mBitmap = Bitmap.createScaledBitmap(tmpBitmap, bitmapWidth, bitmapHeight, true);
+            mPaint.setShader(new BitmapShader(mBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
+        } catch(RuntimeException e) {
+            // some times java.lang.RuntimeException: Canvas: trying to use a recycled bitmap
+            // android.graphics.Bitmap is thrown
+            // FIXME why is this happening? seems to happen only on rotation (fix this instead of eating up the exception)
+            TrackerManager.getInstance(getContext().getApplicationContext()).log("Trying to use recycled bitmap!", e);
+        }
 
         if(recycleBitmap) {
             tmpBitmap.recycle();
