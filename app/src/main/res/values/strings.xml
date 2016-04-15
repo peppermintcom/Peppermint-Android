@@ -25,7 +25,7 @@
     <string name="loading_contacts">Loading\nContacts…</string>
     <string name="add_contact">Add Contact</string>
     <string name="msg_no_contacts">No contacts have been found</string>
-    <string name="msg_record_at_least">Please record at least 2 seconds before sending</string>
+    <string name="msg_record_at_least">Please record at least 1 second before sending</string>
     <string name="msg_record_error">An error has occurred while recording. Please try again later. If the error persists, please contact our support team.</string>
     <string name="msg_must_supply_mandatory_permissions">One or more of the required permissions are disabled. Please grant all required permissions and try again.</string>
     <string name="msg_nomicdata_error">Unable to get any audio from the microphone. Please ensure that no other apps are using it.</string>

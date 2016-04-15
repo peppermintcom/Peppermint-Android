@@ -34,7 +34,7 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.R
 
     private static final int RECORDING_OVERLAY_HIDE_DELAY = 1000;
 
-    private static final long MIN_DURATION_MILLIS = 2000;
+    private static final long MIN_DURATION_MILLIS = 1000;
     private static final long MAX_DURATION_MILLIS = 300000; // 5min
 
     private static final int MIN_SWIPE_DISTANCE_DP = 90;        // min swipe distance
