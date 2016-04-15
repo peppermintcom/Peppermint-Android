@@ -32,6 +32,8 @@ import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recording;
+import com.peppermint.app.events.MessageEvent;
+import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.events.ReceiverEvent;
 import com.peppermint.app.events.SenderEvent;
 import com.peppermint.app.events.SyncEvent;
@@ -132,6 +134,14 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                 mSearchTipPopup.dismiss();
             }
             return false;
+        }
+    };
+
+    private Object mMessageEventListener = new Object() {
+        public void onEventMainThread(MessageEvent event) {
+            if(event.getType() == MessageEvent.EVENT_MARK_PLAYED) {
+                refreshContactList();
+            }
         }
     };
 
@@ -286,13 +296,13 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                 }
             }
         });
-
     }
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         mSearchListBarView.addOnSearchListener(this, SEARCH_LISTENER_PRIORITY_ACTIVITY);
+        PeppermintEventBus.registerMessages(mMessageEventListener);
     }
 
     @Override
@@ -345,6 +355,8 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
 
     @Override
     protected void onDestroy() {
+        PeppermintEventBus.unregisterMessages(mMessageEventListener);
+
         mAuthenticationPolicyEnforcer.removeAuthenticationDoneCallback(mAuthenticationDoneAlwaysCallback);
 
         mSearchListBarView.removeOnSearchListener(this);
