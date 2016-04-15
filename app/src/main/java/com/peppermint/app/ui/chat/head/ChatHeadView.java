@@ -16,7 +16,6 @@ import android.util.AttributeSet;
 
 import com.peppermint.app.R;
 import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.ChatRecipient;
 import com.peppermint.app.ui.base.views.RoundImageView;
 import com.peppermint.app.utils.Utils;
 
@@ -142,9 +141,7 @@ public class ChatHeadView extends RoundImageView {
         mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setTextAlign(Paint.Align.CENTER);
         mTextPaint.setTextSize(Utils.dpToPx(context, 10));
-        if(tfPath != null) {
-            mTextPaint.setTypeface(getTypeface(context, tfPath));
-        }
+        mTextPaint.setTypeface(getTypeface(context, tfPath));
         mTextPaint.setColor(Utils.getColor(context, R.color.white));
         final int dp1 = Utils.dpToPx(context, 1);
         mTextPaint.setShadowLayer(dp1, dp1, dp1, Utils.getColor(context, R.color.black));
@@ -168,9 +165,7 @@ public class ChatHeadView extends RoundImageView {
         mBadgeTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mBadgeTextPaint.setTextAlign(Paint.Align.CENTER);
         mBadgeTextPaint.setTextSize(Utils.dpToPx(context, 10));
-        if(tfPath != null) {
-            mBadgeTextPaint.setTypeface(getTypeface(context, tfPath));
-        }
+        mBadgeTextPaint.setTypeface(getTypeface(context, tfPath));
         mBadgeTextPaint.setColor(Color.WHITE);
 
         mBadgeTextPaint.getTextBounds("9", 0, 1, mTextBounds);
@@ -362,7 +357,7 @@ public class ChatHeadView extends RoundImageView {
     public void setChat(Chat mChat) {
         if(mChat != null && mChat.getRecipientList().size() > 0) {
             String oldRecipientPhotoUri = this.mChat == null ? null : this.mChat.getRecipientList().get(0).getPhotoUri();
-            String newRecipientPhotoUri = mChat == null ? null : mChat.getRecipientList().get(0).getPhotoUri();
+            String newRecipientPhotoUri = mChat.getRecipientList().get(0).getPhotoUri();
             boolean samePhotoUri = (oldRecipientPhotoUri == newRecipientPhotoUri) ||
                     (oldRecipientPhotoUri != null && newRecipientPhotoUri != null && oldRecipientPhotoUri.compareTo(newRecipientPhotoUri) == 0);
 
@@ -392,16 +387,14 @@ public class ChatHeadView extends RoundImageView {
     private synchronized void refreshDisplayName() {
         mTextList.clear();
 
-        if(mChat == null || mChat.getRecipientList().size() <= 0) {
+        if(mChat == null) {
             return;
         }
-
-        ChatRecipient recipient = mChat.getRecipientList().get(0);
 
         // the following code splits the display name into several strings
         // each corresponding to one line
         // this allows the name to fit into the width of the view
-        String displayName = recipient.getDisplayName();
+        String displayName = mChat.getTitle();
         mTextPaint.getTextBounds(displayName, 0, displayName.length(), mTextBounds);
 
         if(mTextBounds.width() > getLocalWidth()) {

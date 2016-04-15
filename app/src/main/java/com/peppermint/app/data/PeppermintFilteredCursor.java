@@ -1,76 +1,108 @@
 package com.peppermint.app.data;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.provider.ContactsContract;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Created by Nuno Luz on 22-02-2016.
+ *
+ * Filters {@link ContactRaw} cursors to merge Peppermint contacts and avoid duplicate contacts.
  */
 public class PeppermintFilteredCursor extends FilteredCursor {
 
     private Set<String> mViaSet = new HashSet<>();
-    private Map<Long, Contact> mPeppermintContacts;
-    private Map<Long, Set<Long>> mPeppermintMergedContacts = new HashMap<>();
+    private Map<Long, ContactData> mPeppermintContacts;
+    private Map<Long, List<ContactData>> mFilteredContacts = new HashMap<>();
 
-    public PeppermintFilteredCursor(Cursor cursor, Map<Long, Contact> peppermintContacts) {
+    private void addFilteredContact(Cursor cursor) {
+        ContactData contact = ContactManager.getContactFromCursor(cursor);
+        addFilteredContact(contact);
+    }
+
+    private void addFilteredContact(ContactData contact) {
+        List<ContactData> list = mFilteredContacts.get(contact.getRawId());
+        if(list == null) {
+            list = new ArrayList<>();
+            mFilteredContacts.put(contact.getRawId(), list);
+        }
+        list.add(contact);
+    }
+
+    public PeppermintFilteredCursor(final Context mContext, Cursor cursor) {
         super(cursor);
-        this.mPeppermintContacts = peppermintContacts;
+        this.mPeppermintContacts = ContactManager.getPeppermintContacts(mContext);
 
         setFilter(new Filter() {
             @Override
             public boolean isValid(Cursor cursor) {
                 // removes duplicate contacts
-                long rawId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data.RAW_CONTACT_ID));
+                long contactId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data.CONTACT_ID));
+
+                // check if there's already a peppermint contact there
+                if(mPeppermintContacts.containsKey(contactId)) {
+                    String peppermintVia = contactId + "_Peppermint";
+                    if (mViaSet.contains(peppermintVia)) {
+                        addFilteredContact(cursor);
+                        return false;
+                    }
+                    ContactData peppermintContact = mPeppermintContacts.get(contactId);
+                    addFilteredContact(peppermintContact);
+                    mViaSet.add(peppermintVia);
+                }
+
+                // check for duplicates
                 String via = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1)).trim().toLowerCase() +
                         cursor.getString(cursor.getColumnIndex(ContactManager.FIELD_DISPLAY_NAME)).replaceAll("\\s+", "").toLowerCase();
 
                 if (!mViaSet.contains(via)) {
                     mViaSet.add(via);
-
-                    String peppermintVia = mPeppermintContacts.containsKey(rawId) ? rawId + "_Peppermint" : null;
-                    if(peppermintVia != null) {
-                        Set<Long> mergedSet = mPeppermintMergedContacts.get(rawId);
-                        if(mergedSet == null) {
-                            mergedSet = new HashSet<>();
-                            mPeppermintMergedContacts.put(rawId, mergedSet);
-                        }
-                        mergedSet.add(cursor.getLong(cursor.getColumnIndex(ContactsContract.Data._ID)));
-
-                        if (!mViaSet.contains(peppermintVia)) {
-                            mViaSet.add(peppermintVia);
-                        } else {
-                            return false;
-                        }
-                    }
-
                     return true;
                 }
 
+                addFilteredContact(cursor);
                 return false;
             }
         });
     }
 
-    public Set<Long> getPeppermintMergedContactIds(long rawId) {
-        return mPeppermintMergedContacts.get(rawId);
-    }
-
-    public Contact getPeppermintContact(long rawId) {
-        return mPeppermintContacts.get(rawId);
+    public ContactRaw getContactRaw() {
+        ContactRaw contactRaw = ContactManager.getRawContactFromCursor(null, mCursor);
+        if(mFilteredContacts != null && mFilteredContacts.containsKey(contactRaw.getRawId())) {
+            List<ContactData> contactList = mFilteredContacts.get(contactRaw.getRawId());
+            if(contactList != null) {
+                for(ContactData contact : contactList) {
+                    contactRaw.setContactData(contact);
+                }
+            }
+        }
+        return contactRaw;
     }
 
     @Override
     public void close() {
         super.close();
 
-        mViaSet.clear();
-        mPeppermintMergedContacts.clear();
-        mViaSet = null;
-        mPeppermintMergedContacts = null;
+        if(mViaSet != null) {
+            mViaSet.clear();
+            mViaSet = null;
+        }
+
+        if(mFilteredContacts != null) {
+            mFilteredContacts.clear();
+            mFilteredContacts = null;
+        }
+
+        if(mPeppermintContacts != null) {
+            mPeppermintContacts.clear();
+            mPeppermintContacts = null;
+        }
     }
 }

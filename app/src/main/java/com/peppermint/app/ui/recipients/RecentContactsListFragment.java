@@ -8,12 +8,13 @@ import android.view.View;
 import android.widget.AdapterView;
 
 import com.peppermint.app.data.ChatManager;
+import com.peppermint.app.data.ContactData;
 import com.peppermint.app.data.ContactManager;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.ui.chat.ChatActivity;
 import com.peppermint.app.ui.chat.ChatCursorAdapter;
 
-import java.util.Set;
+import java.util.Map;
 
 public class RecentContactsListFragment extends ContactListFragment {
 
@@ -21,13 +22,13 @@ public class RecentContactsListFragment extends ContactListFragment {
 
     private ChatCursorAdapter mAdapter;
     private Cursor mCursor;
-    private Set<Long> mPeppermintIdSet;
+    private Map<Long, ContactData> mPeppermintContacts;
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        mAdapter = new ChatCursorAdapter(mActivity, null, null, mActivity.getTrackerManager());
+        mAdapter = new ChatCursorAdapter(mActivity, null, mActivity.getTrackerManager());
         getListView().setAdapter(mAdapter);
 
         if(!mRefreshing) {
@@ -37,7 +38,7 @@ public class RecentContactsListFragment extends ContactListFragment {
 
     private synchronized void setCursor() {
         if(mCursor != null && mAdapter != null && mCursor != mAdapter.getCursor()) {
-            mAdapter.setPeppermintSet(mPeppermintIdSet);
+            mAdapter.setPeppermintContacts(mPeppermintContacts);
             mAdapter.changeCursor(mCursor);
         }
     }
@@ -53,18 +54,22 @@ public class RecentContactsListFragment extends ContactListFragment {
     @Override
     public void onDestroy() {
         // close adapter cursors
-        mPeppermintIdSet = null;
         mCursor = null;
         mAdapter.changeCursor(null);
         mAdapter = null;
+
+        if(mPeppermintContacts != null) {
+            mPeppermintContacts.clear();
+            mPeppermintContacts = null;
+        }
+
         super.onDestroy();
     }
 
     @Override
     protected Object onAsyncRefresh(Context context, String searchName, String searchVia) {
-        mPeppermintIdSet = ContactManager.getPeppermintContacts(context, null).keySet();
-        // show chat list / recent contacts
-        return ChatManager.getAll(DatabaseHelper.getInstance(context).getReadableDatabase());
+        mPeppermintContacts = ContactManager.getPeppermintContacts(context);
+        return ChatManager.getAll(DatabaseHelper.getInstance(context).getReadableDatabase(), true);
     }
 
     @Override
@@ -90,7 +95,8 @@ public class RecentContactsListFragment extends ContactListFragment {
 
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        return mActivity.getChatRecordOverlayController().triggerRecording(view, mAdapter.getChat(position));
+        mActivity.getChatRecordOverlayController().triggerRecording(view, mAdapter.getChat(position));
+        return true;
     }
 
 }

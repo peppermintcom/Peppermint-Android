@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -16,10 +17,10 @@ import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.ChatRecipient;
 import com.peppermint.app.data.ContactManager;
 import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.data.Message;
+import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
 import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.events.PlayerEvent;
@@ -42,6 +43,8 @@ import com.peppermint.app.utils.Utils;
 public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordingFinishedCallback,
         MessagesServiceManager.ServiceListener,
         PlayerServiceManager.PlayServiceListener {
+
+    private static final String TAG = ChatRecordOverlayController.class.getSimpleName();
 
     public interface Callbacks {
         void onNewContact(Intent intentToLaunchActivity);
@@ -114,7 +117,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
             public void onClick(View v) {
                 ContactRaw emailRecipient = mSmsConfirmationDialog.getEmailRecipient();
                 if (emailRecipient != null) {
-                    mFinalEvent.getChat().getRecipientList().get(0).setFromRawContact(emailRecipient);
+                    mFinalEvent.getChat().getRecipientList().get(0).setFromDroidContactRaw(emailRecipient);
                     sendMessage(mFinalEvent.getChat(), mFinalEvent.getRecording());
                     mFinalEvent = null;
                     mSmsConfirmationDialog.dismiss();
@@ -217,12 +220,12 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         mPlayerServiceManager.removeServiceListener(this);
     }
 
-    private void launchNewRecipientActivity(ChatRecipient editRecipient) {
+    private void launchNewRecipientActivity(Recipient editRecipient) {
         Intent intent = new Intent(mContext.getApplicationContext(), NewContactActivity.class);
         if (editRecipient != null) {
             intent.putExtra(NewContactActivity.KEY_VIA, editRecipient.getVia());
             intent.putExtra(NewContactActivity.KEY_NAME, editRecipient.getDisplayName());
-            intent.putExtra(NewContactActivity.KEY_RAW_ID, editRecipient.getRawContactId());
+            intent.putExtra(NewContactActivity.KEY_RAW_ID, editRecipient.getDroidContactRawId());
             intent.putExtra(NewContactActivity.KEY_PHOTO_URL, editRecipient.getPhotoUri() == null ? null : Uri.parse(editRecipient.getPhotoUri()));
         }
         mCallbacks.onNewContact(intent);
@@ -230,12 +233,12 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
 
     public void handleNewContactResult(int resultCode, Intent data) {
         if(resultCode == Activity.RESULT_OK && mFinalEvent != null) {
-            ContactRaw emailRecipient = ContactManager.getRawContactWithEmailByRawId(mContext, mFinalEvent.getChat().getRecipientList().get(0).getRawContactId());
+            ContactRaw emailRecipient = ContactManager.getRawContactWithEmailByRawId(mContext, mFinalEvent.getChat().getRecipientList().get(0).getDroidContactRawId());
             if(emailRecipient == null) {
                 CustomToast.makeText(mContext, R.string.msg_no_email_address, Toast.LENGTH_LONG).show();
             } else {
                 mSmsConfirmationDialog.dismiss();
-                mFinalEvent.getChat().getRecipientList().get(0).setFromRawContact(emailRecipient);
+                mFinalEvent.getChat().getRecipientList().get(0).setFromDroidContactRaw(emailRecipient);
                 sendMessage(mFinalEvent.getChat(), mFinalEvent.getRecording());
                 mFinalEvent = null;
             }
@@ -255,11 +258,11 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
 
         this.mChat = chat;
 
-        if (mChat.getRecipientList().get(0).isPhone() && !Utils.isSimAvailable(mContext)) {
+        if (mChat.getRecipientList().get(0).hasPhoneMimetype() && !Utils.isSimAvailable(mContext)) {
             if(!mSmsAddContactDialog.isShowing()) {
                 mSmsAddContactDialog.show();
             }
-            return true;
+            return false;
         }
 
         // start recording
@@ -274,8 +277,8 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     @Override
     public void onRecordingFinished(RecorderEvent event) {
         mFinalEvent = event;
-        if(!mPreferences.isShownSmsConfirmation() && event.getChat().getRecipientList().get(0).isPhone()) {
-            ContactRaw emailRecipient = ContactManager.getRawContactWithEmailByRawId(mContext, mFinalEvent.getChat().getRecipientList().get(0).getRawContactId());
+        if(!mPreferences.isShownSmsConfirmation() && event.getChat().getRecipientList().get(0).hasPhoneMimetype()) {
+            ContactRaw emailRecipient = ContactManager.getRawContactWithEmailByRawId(mContext, mFinalEvent.getChat().getRecipientList().get(0).getDroidContactRawId());
             mSmsConfirmationDialog.setEmailRecipient(emailRecipient);
             mSmsConfirmationDialog.show();
         } else {

@@ -118,7 +118,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     public void onSearch(String searchText, boolean wasClear) {
         boolean switchedFragment;
 
-        if(wasClear || (mTappedItemPosition != 1 && searchText == null && ChatManager.getChatCount(DatabaseHelper.getInstance(this).getReadableDatabase()) > 0)) {
+        if(wasClear || (mTappedItemPosition != 1 && searchText == null && ChatManager.getChatCount(DatabaseHelper.getInstance(this).getReadableDatabase(), true) > 0)) {
             // recent contacts / chats
             switchedFragment = selectItemFromDrawer(0);
         } else {
@@ -266,7 +266,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                     onSearch(mSearchListBarView.getSearchText(), true);
                 }
 
-                launchChatActivity(message.getChatId());
+                launchChatActivity(message.getChatParameter().getPeppermintChatId() > 0 ? message.getChatParameter().getPeppermintChatId() : message.getChatParameter().getId());
 
                 return message;
             }
@@ -557,12 +557,12 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                     mSearchListBarView.setSearchText(name);
                 } else {
                     // if mail is supplied, check if the contact exists
-                    ContactRaw foundRecipient = ContactManager.getRawContactByViaOrContactId(ContactActivity.this, mail, 0);
+                    ContactRaw foundRecipient = ContactManager.getRawContactByVia(ContactActivity.this, mail);
 
                     // if not, add the contact
                     if(foundRecipient == null) {
                         try {
-                            foundRecipient = ContactManager.insert(ContactActivity.this, 0, name, null, null, mail, null, data.getEmail(), false);
+                            foundRecipient = ContactManager.insert(ContactActivity.this, 0, 0, name, null, null, mail, null, data.getEmail(), false);
                         } catch (Exception e) {
                             /* nothing to do here */
                         }

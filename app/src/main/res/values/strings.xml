@@ -36,6 +36,7 @@
     <string name="msg_press_back_again_exit">Press \"back\" again to exit.</string>
     <string name="hold_record_release_send_p1">Hold </string>
     <string name="hold_record_release_send_p2">to record, release to send</string>
+    <string name="msg_database_error">An error occurred while trying to update your data. Please contact the support team if this persists.</string>
 
     <!-- RECIPIENTS LAYOUT: ITEM -->
     <string name="via">via</string>

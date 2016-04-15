@@ -32,15 +32,12 @@ import com.peppermint.app.cloud.senders.SenderSupportListener;
 import com.peppermint.app.cloud.senders.SenderSupportTask;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.ChatManager;
-import com.peppermint.app.data.ChatRecipient;
 import com.peppermint.app.data.ContactManager;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.GlobalManager;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.MessageManager;
 import com.peppermint.app.data.Recording;
-import com.peppermint.app.data.RecordingManager;
 import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.events.ReceiverEvent;
 import com.peppermint.app.events.SenderEvent;
@@ -49,7 +46,6 @@ import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.PermissionsPolicyEnforcer;
 import com.peppermint.app.ui.chat.ChatActivity;
 import com.peppermint.app.ui.recipients.ContactActivity;
-import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
 import java.io.IOException;
@@ -304,6 +300,7 @@ public class MessagesService extends Service {
     }
 
     private Object mNotificationEventReceiver = new Object() {
+        @SuppressWarnings("unused") // used through reflection
         public void onEventMainThread(ReceiverEvent event) {
             if(!event.doNotShowNotification()) {
                 showNotification(event.getMessage());
@@ -331,7 +328,7 @@ public class MessagesService extends Service {
         mSenderManager = new SenderManager(this, new HashMap<String, Object>());
         mSenderManager.init();
 
-        mHandler.postDelayed(mNotificationRunnable, 180000); // after 3mins.
+        mHandler.postDelayed(mNotificationRunnable, 180000); // after 3 mins.
 
         registerReceiver(mConnectivityChangeReceiver, mConnectivityChangeFilter);
         rescheduleMaintenance();
@@ -411,9 +408,10 @@ public class MessagesService extends Service {
     }
 
     public void onEventMainThread(SenderEvent event) {
-        Message message = event.getSenderTask().getMessage();
-        DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this);
-        SQLiteDatabase db = databaseHelper.getWritableDatabase();
+        final Message message = event.getSenderTask().getMessage();
+        final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this);
+        final SQLiteDatabase db = databaseHelper.getWritableDatabase();
+
         switch (event.getType()) {
             case SenderEvent.EVENT_ERROR:
                 Toast.makeText(this, String.format(getString(R.string.sender_msg_send_error), event.getSenderTask().getMessage().getChatParameter().getTitle()), Toast.LENGTH_SHORT).show();
@@ -422,21 +420,15 @@ public class MessagesService extends Service {
                     Toast.makeText(this, event.getError().getMessage(), Toast.LENGTH_LONG).show();
                 }
                 break;
+
             case SenderEvent.EVENT_CANCELLED:
-                databaseHelper.lock();
-                db.beginTransaction();
                 try {
-                    // TODO actually delete the local file
-                    // discard recording as well
-                    RecordingManager.delete(db, message.getRecordingId());
-                    MessageManager.delete(db, message.getId());
-                    db.setTransactionSuccessful();
+                    GlobalManager.deleteMessageAndRecording(this, message);
                 } catch (SQLException e) {
                     mTrackerManager.logException(e);
                 }
-                db.endTransaction();
-                databaseHelper.unlock();
                 break;
+
             case SenderEvent.EVENT_FINISHED:
                 // message sending has finished, so update the saved data and mark as sent
                 message.setSent(true);
@@ -447,14 +439,11 @@ public class MessagesService extends Service {
                 break;
         }
 
-        if(event.getType() != SenderEvent.EVENT_CANCELLED && event.getType() != SenderEvent.EVENT_PROGRESS) {
+        if(event.getType() != SenderEvent.EVENT_CANCELLED &&
+                event.getType() != SenderEvent.EVENT_PROGRESS) {
             databaseHelper.lock();
             try {
-                MessageManager.update(db, message.getId(), message.getChatId(), message.getAuthorId(), message.getRecordingId(),
-                        message.getServerId(), message.getServerShortUrl(), message.getServerCanonicalUrl(), message.getTranscription(),
-                        message.getEmailSubject(), message.getEmailBody(),
-                        message.getRegistrationTimestamp(), message.isSent(), message.isReceived(), message.isPlayed(),
-                        message.getParameter(Message.PARAM_SENT_INAPP) != null && (boolean) message.getParameter(Message.PARAM_SENT_INAPP));
+                MessageManager.update(db, message);
             } catch (SQLException e) {
                 mTrackerManager.logException(e);
             }
@@ -463,28 +452,13 @@ public class MessagesService extends Service {
     }
 
     private void markAsPlayed(Message message) {
-
         if(!message.isPlayed()) {
-            DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this);
-            SQLiteDatabase db = databaseHelper.getWritableDatabase();
-            databaseHelper.lock();
             try {
-                MessageManager.update(db, message.getId(), message.getChatId(), message.getAuthorId(), message.getRecordingId(),
-                        message.getServerId(), message.getServerShortUrl(), message.getServerCanonicalUrl(), message.getTranscription(),
-                        message.getEmailSubject(), message.getEmailBody(),
-                        message.getRegistrationTimestamp(), message.isSent(), message.isReceived(), true,
-                        message.getParameter(Message.PARAM_SENT_INAPP) != null && (boolean) message.getParameter(Message.PARAM_SENT_INAPP));
-
-                MessagesMarkPlayedTask task = new MessagesMarkPlayedTask(this, new Message(message), null);
-                task.execute((Void) null);
-
-                message.setPlayed(true);
+                GlobalManager.markAsPlayed(this, message);
             } catch (SQLException e) {
                 mTrackerManager.logException(e);
             }
-            databaseHelper.unlock();
         }
-
         removeNotification(message);
     }
 
@@ -505,77 +479,37 @@ public class MessagesService extends Service {
         return true;
     }
 
-    private Message send(Chat chat, Recording recording) {
-        if(chat.getRecipientList().size() <= 0) {
-            mTrackerManager.log(chat.toString());
-            mTrackerManager.logException(new IllegalArgumentException("No chat recipient list!"));
-            return null;
-        }
-
-        // each sender is currently responsible for building its own message body
-        String body = getString(R.string.sender_default_message);
+    private Message send(final Chat chat, final Recording recording) {
         Message message = null;
 
-        DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this);
-        SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        databaseHelper.lock();
-        db.beginTransaction();
         try {
-            // insert chat
-            chat = ChatManager.insertOrUpdate(this, db, chat.getId(), chat.getTitle(),
-                    recording.getRecordedTimestamp(), chat.getRecipientList().toArray(new ChatRecipient[chat.getRecipientList().size()]));
-
-            // insert recording
-            Recording newRecording = RecordingManager.insertOrUpdate(db, recording.getId(), recording.getFilePath(),
-                    recording.getDurationMillis(), recording.getSizeKb(), recording.hasVideo(),
-                    recording.getRecordedTimestamp(), recording.getContentType());
-            recording.setId(newRecording.getId());
-
-            // insert message
-            message = MessageManager.insert(db, chat.getId(), 0, recording.getId(), null, null, null, null,
-                    getString(R.string.sender_default_mail_subject), body, DateContainer.getCurrentUTCTimestamp(), false, false, false);
-            message.setChatParameter(chat);
-            message.setRecordingParameter(recording);
-
-            db.setTransactionSuccessful();
+            message = GlobalManager.insertNotSentMessage(this, chat, recording);
         } catch (SQLException e) {
             mTrackerManager.logException(e);
         }
-        db.endTransaction();
-        databaseHelper.unlock();
 
         if(message != null) {
-            /*mPreferences.addRecentContactUri(recipient.getEmailOrPhoneContactId());*/
             mSenderManager.send(message);
         }
 
         return message;
     }
 
-    private boolean cancel(Message message) {
+    private boolean cancel(final Message message) {
         if(message != null) {
             if(!isSending(message)) {
-                DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this);
-                SQLiteDatabase db = databaseHelper.getWritableDatabase();
-                databaseHelper.lock();
-                db.beginTransaction();
                 try {
-                    // discard recording as well
-                    RecordingManager.delete(db, message.getRecordingId());
-                    MessageManager.delete(db, message.getId());
-                    db.setTransactionSuccessful();
+                    GlobalManager.deleteMessageAndRecording(this, message);
                 } catch (SQLException e) {
                     mTrackerManager.logException(e);
                 }
-                db.endTransaction();
-                databaseHelper.unlock();
             }
             return mSenderManager.cancel(message);
         }
         return mSenderManager.cancel();
     }
 
-    private boolean isSending(Message message) {
+    private boolean isSending(final Message message) {
         if(message != null) {
             return mSenderManager.isSending(message);
         }
@@ -584,19 +518,13 @@ public class MessagesService extends Service {
 
     // UPDATE NOTIFICATION
 
-    private Notification getNotification(Message message) {
+    private Notification getNotification(final Message message) {
         Intent notificationIntent = new Intent(MessagesService.this, ChatActivity.class);
         notificationIntent.putExtra(ChatActivity.PARAM_AUTO_PLAY_MESSAGE_ID, message.getId());
         notificationIntent.putExtra(ChatActivity.PARAM_CHAT_ID, message.getChatId());
         PendingIntent pendingIntent = PendingIntent.getActivity(MessagesService.this, (int) message.getId(), notificationIntent, 0);
 
-        String title = message.getChatParameter().getTitle();
-        if(title == null && message.getChatParameter().getRecipientList().size() > 0) {
-            title = message.getChatParameter().getRecipientList().get(0).getDisplayName();
-            if(title == null) {
-                title = message.getChatParameter().getRecipientList().get(0).getVia();
-            }
-        }
+        String title = message.getChatParameter().getRecipientListDisplayNames();
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(MessagesService.this)
                 .setSmallIcon(R.drawable.ic_mail_36dp)
@@ -618,13 +546,13 @@ public class MessagesService extends Service {
         return builder.build();
     }
 
-    private void removeNotification(Message message) {
+    private void removeNotification(final Message message) {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancel(String.valueOf(message.getChatId()), (int) message.getChatId());
     }
 
-    private void showNotification(Message message) {
+    private void showNotification(final Message message) {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(String.valueOf(message.getChatId()), (int) message.getChatId(), getNotification(message));

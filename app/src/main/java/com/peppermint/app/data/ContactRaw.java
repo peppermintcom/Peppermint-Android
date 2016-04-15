@@ -17,14 +17,16 @@ public class ContactRaw implements Serializable {
     private String mAccountType, mAccountName;
     private String mDisplayName;
     private String mPhotoUri;
+    private long mContactId;
 
-    private Map<String, Contact> mContacts = new HashMap<>();
+    private Map<String, ContactData> mContactData = new HashMap<>();
 
     public ContactRaw() {
     }
 
-    public ContactRaw(long mRawId, boolean mDeleted, String mAccountType, String mAccountName, String mDisplayName, String mPhotoUri) {
+    public ContactRaw(long mRawId, long mContactId, boolean mDeleted, String mAccountType, String mAccountName, String mDisplayName, String mPhotoUri) {
         this.mRawId = mRawId;
+        this.mContactId = mContactId;
         this.mDeleted = mDeleted;
         this.mAccountType = mAccountType;
         this.mAccountName = mAccountName;
@@ -32,21 +34,23 @@ public class ContactRaw implements Serializable {
         this.mPhotoUri = mPhotoUri;
     }
 
-    public ContactRaw(long mRawId, boolean mDeleted, String mAccountType, String mAccountName, String mDisplayName, String mPhotoUri, Contact mEmail, Contact mPhone, Contact mPeppermint) {
+    public ContactRaw(long mRawId, long mContactId, boolean mDeleted, String mAccountType, String mAccountName, String mDisplayName, String mPhotoUri, ContactData mEmail, ContactData mPhone, ContactData mPeppermint) {
         this.mRawId = mRawId;
+        this.mContactId = mContactId;
         this.mDeleted = mDeleted;
         this.mAccountType = mAccountType;
         this.mAccountName = mAccountName;
         this.mDisplayName = mDisplayName;
         this.mPhotoUri = mPhotoUri;
 
-        mContacts.put(Contact.EMAIL_MIMETYPE, mEmail);
-        mContacts.put(Contact.PHONE_MIMETYPE, mPhone);
-        mContacts.put(Contact.PEPPERMINT_MIMETYPE, mPeppermint);
+        mContactData.put(ContactData.EMAIL_MIMETYPE, mEmail);
+        mContactData.put(ContactData.PHONE_MIMETYPE, mPhone);
+        mContactData.put(ContactData.PEPPERMINT_MIMETYPE, mPeppermint);
     }
 
-    public ContactRaw(long mRawId, boolean mDeleted, String mAccountType, String mAccountName, String mDisplayName, String mPhotoUri, String mEmailVia, String mPhoneVia, String mPeppermintVia) {
+    public ContactRaw(long mRawId, long mContactId, boolean mDeleted, String mAccountType, String mAccountName, String mDisplayName, String mPhotoUri, String mEmailVia, String mPhoneVia, String mPeppermintVia) {
         this.mRawId = mRawId;
+        this.mContactId = mContactId;
         this.mDeleted = mDeleted;
         this.mAccountType = mAccountType;
         this.mAccountName = mAccountName;
@@ -54,33 +58,38 @@ public class ContactRaw implements Serializable {
         this.mPhotoUri = mPhotoUri;
 
         if(mPeppermintVia != null) {
-            mContacts.put(Contact.PEPPERMINT_MIMETYPE, new Contact(0, mRawId, false, Contact.PEPPERMINT_MIMETYPE, mPeppermintVia));
+            mContactData.put(ContactData.PEPPERMINT_MIMETYPE, new ContactData(0, mRawId, mContactId, false, ContactData.PEPPERMINT_MIMETYPE, mPeppermintVia));
         } else if(mEmailVia != null) {
-            mContacts.put(Contact.EMAIL_MIMETYPE, new Contact(0, mRawId, false, Contact.EMAIL_MIMETYPE, mEmailVia));
+            mContactData.put(ContactData.EMAIL_MIMETYPE, new ContactData(0, mRawId, mContactId, false, ContactData.EMAIL_MIMETYPE, mEmailVia));
         } else if(mPhoneVia != null) {
-            mContacts.put(Contact.PHONE_MIMETYPE, new Contact(0, mRawId, false, Contact.PHONE_MIMETYPE, mPhoneVia));
+            mContactData.put(ContactData.PHONE_MIMETYPE, new ContactData(0, mRawId, mContactId, false, ContactData.PHONE_MIMETYPE, mPhoneVia));
         }
     }
 
-    public long getEmailOrPhoneContactId() {
-        // FIXME we are assuming only one is present at a time; we should probably remove this and use getRawId (aggregated contact)
-        return getEmail() != null ? getEmail().getId() : (getPhone() != null ? getPhone().getId() : 0);
-    }
-
-    public String getContactVia() {
-        return getPeppermint() != null ? getPeppermint().getVia() : (
-                getEmail() != null ? getEmail().getVia() : (
-                        getPhone() != null ? getPhone().getVia() : null
-                        )
-                );
-    }
-
-    public String getContactMimetype() {
-        return getPeppermint() != null ? getPeppermint().getMimeType() : (
-                getEmail() != null ? getEmail().getMimeType() : (
-                        getPhone() != null ? getPhone().getMimeType() : null
-                )
+    public long getMainDataId() {
+        return getEmail() != null ? getEmail().getId() : (
+                getPhone() != null ? getPhone().getId() : 0
         );
+    }
+
+    public String getMainDataVia() {
+        return getEmail() != null ? getEmail().getVia() : (
+                getPhone() != null ? getPhone().getVia() : null
+        );
+    }
+
+    public String getMainDataMimetype() {
+        return getEmail() != null ? getEmail().getMimeType() : (
+                getPhone() != null ? getPhone().getMimeType() : null
+        );
+    }
+
+    public long getContactId() {
+        return mContactId;
+    }
+
+    public void setContactId(long mContactId) {
+        this.mContactId = mContactId;
     }
 
     public long getRawId() {
@@ -115,32 +124,34 @@ public class ContactRaw implements Serializable {
         this.mAccountName = mAccountName;
     }
 
-    public Contact getEmail() {
-        return mContacts.get(Contact.EMAIL_MIMETYPE);
+    public ContactData getEmail() {
+        return mContactData.get(ContactData.EMAIL_MIMETYPE);
     }
 
-    public void setEmail(Contact mEmail) {
-        mContacts.put(Contact.EMAIL_MIMETYPE, mEmail);
+    public void setEmail(ContactData mEmail) {
+        mContactData.put(ContactData.EMAIL_MIMETYPE, mEmail);
     }
 
-    public Contact getPhone() {
-        return mContacts.get(Contact.PHONE_MIMETYPE);
+    public ContactData getPhone() {
+        return mContactData.get(ContactData.PHONE_MIMETYPE);
     }
 
-    public void setPhone(Contact mPhone) {
-        mContacts.put(Contact.PHONE_MIMETYPE, mPhone);
+    public void setPhone(ContactData mPhone) {
+        mContactData.put(ContactData.PHONE_MIMETYPE, mPhone);
     }
 
-    public Contact getPeppermint() {
-        return mContacts.get(Contact.PEPPERMINT_MIMETYPE);
+    public ContactData getPeppermint() {
+        return mContactData.get(ContactData.PEPPERMINT_MIMETYPE);
     }
 
-    public void setPeppermint(Contact mPeppermint) {
-        mContacts.put(Contact.PEPPERMINT_MIMETYPE, mPeppermint);
+    public void setPeppermint(ContactData mPeppermint) {
+        mContactData.put(ContactData.PEPPERMINT_MIMETYPE, mPeppermint);
     }
 
-    public void setContact(Contact mContact) {
-        mContacts.put(mContact.getMimeType(), mContact);
+    public void setContactData(ContactData contactData) {
+        if(contactData != null) {
+            mContactData.put(contactData.getMimeType(), contactData);
+        }
     }
 
     public String getDisplayName() {
@@ -162,7 +173,7 @@ public class ContactRaw implements Serializable {
     @Override
     public String toString() {
         return "ContactRaw{" +
-                "mContacts=" + mContacts +
+                "mContacts=" + mContactData +
                 ", mPhotoUri='" + mPhotoUri + '\'' +
                 ", mDisplayName='" + mDisplayName + '\'' +
                 ", mAccountName='" + mAccountName + '\'' +

@@ -11,8 +11,10 @@ import com.peppermint.app.cloud.apis.exceptions.PeppermintApiTooManyRequestsExce
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.data.ContactManager;
 import com.peppermint.app.data.DatabaseHelper;
+import com.peppermint.app.data.GlobalManager;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.MessageManager;
+import com.peppermint.app.data.Recipient;
 
 import java.io.File;
 import java.sql.SQLException;
@@ -80,39 +82,39 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
     }
 
     protected boolean sendPeppermintMessage() throws PeppermintApiTooManyRequestsException, PeppermintApiInvalidAccessTokenException, PeppermintApiResponseCodeException, ContactManager.InvalidEmailException, NoInternetConnectionException {
-        boolean sentInApp = getMessage().getParameter(Message.PARAM_SENT_INAPP) != null && (boolean) getMessage().getParameter(Message.PARAM_SENT_INAPP);
-
-        if(isCancelled() || sentInApp) {
-            return sentInApp;
-        }
+        boolean sentInApp;
 
         AuthenticationData data = getAuthenticationData();
         Message message = getMessage();
         String canonicalUrl = message.getServerCanonicalUrl();
 
-        String recipientEmail = message.getChatParameter().getRecipientList().get(0).getVia();
-        long recipientRawId = message.getChatParameter().getRecipientList().get(0).getRawContactId();
+        Recipient recipient = message.getChatParameter().getRecipientList().get(0);
+        String recipientVia = recipient.getVia();
 
         try {
-            MessagesResponse response = getPeppermintApi().sendMessage(null, canonicalUrl, data.getEmail(), recipientEmail, (int) (message.getRecordingParameter().getDurationMillis() / 1000));
+            MessagesResponse response = getPeppermintApi().sendMessage(null, canonicalUrl,
+                    data.getEmail(), recipientVia, (int) (message.getRecordingParameter().getDurationMillis() / 1000));
             message.setServerId(response.getMessageId());
-            message.setParameter(Message.PARAM_SENT_INAPP, true);
-            ContactManager.insertPeppermint(getContext(), recipientEmail, recipientRawId, 0, null);
+            try {
+                GlobalManager.markAsPeppermint(getContext(), recipient);
+            } catch (SQLException e) {
+                getTrackerManager().logException(e);
+            }
             sentInApp = true;
         } catch(PeppermintApiRecipientNoAppException e) {
             getTrackerManager().log("Unable to send through Peppermint", e);
             sentInApp = false;
-            ContactManager.deletePeppermint(getContext(), recipientRawId, null);
+            try {
+                GlobalManager.unmarkAsPeppermint(getContext(), recipient);
+            } catch (SQLException e1) {
+                getTrackerManager().logException(e1);
+            }
         }
 
         DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getContext());
         databaseHelper.lock();
         try {
-            MessageManager.update(databaseHelper.getWritableDatabase(), message.getId(), message.getChatId(), message.getAuthorId(), message.getRecordingId(),
-                    message.getServerId(), message.getServerShortUrl(), message.getServerCanonicalUrl(), message.getTranscription(),
-                    message.getEmailSubject(), message.getEmailBody(),
-                    message.getRegistrationTimestamp(), message.isSent(), message.isReceived(), message.isPlayed(),
-                    message.getParameter(Message.PARAM_SENT_INAPP) != null && (boolean) message.getParameter(Message.PARAM_SENT_INAPP));
+            MessageManager.update(databaseHelper.getWritableDatabase(), message);
         } catch (SQLException e) {
             getTrackerManager().logException(e);
         }
@@ -155,10 +157,6 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
                 mSenderUploadListener.onSendingUploadError(this, getError());
             }
         }
-    }
-
-    public boolean isRecovering() {
-        return mRecovering;
     }
 
     public void setRecovering(boolean mRecovering) {

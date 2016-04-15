@@ -4,6 +4,7 @@ import com.peppermint.app.utils.DateContainer;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -17,7 +18,9 @@ public class Chat implements Serializable {
     private String mTitle;
     private String mLastMessageTimestamp = DateContainer.getCurrentUTCTimestamp();
 
-    private List<ChatRecipient> mRecipientList = new ArrayList<>();
+    private List<Recipient> mRecipientList = new ArrayList<>();
+    private long mPeppermintChatId = 0;
+
     private int mAmountUnopened;
     private long mLastReceivedUnplayedId;
 
@@ -25,9 +28,60 @@ public class Chat implements Serializable {
         this.mRecipientList = new ArrayList<>();
     }
 
-    public Chat(List<ChatRecipient> mRecipientList, String mLastMessageTimestamp) {
+    public Chat(long mId, String mTitle, String mLastMessageTimestamp, Recipient... recipients) {
+        this();
+        this.mId = mId;
+        this.mTitle = mTitle;
+        this.mLastMessageTimestamp = mLastMessageTimestamp;
+        Collections.addAll(this.mRecipientList, recipients);
+    }
+
+    public Chat(long mId, String mTitle, String mLastMessageTimestamp, List<Recipient> mRecipientList) {
+        this.mId = mId;
+        this.mTitle = mTitle;
+        this.mLastMessageTimestamp = mLastMessageTimestamp;
+        this.mRecipientList = mRecipientList;
+    }
+
+    public Chat(List<Recipient> mRecipientList, String mLastMessageTimestamp) {
         this.mRecipientList = mRecipientList;
         this.mLastMessageTimestamp = mLastMessageTimestamp;
+        this.mTitle = getRecipientListDisplayNames();
+    }
+
+    /**
+     * Get the Ids of all the {@link Recipient} through {@link Recipient#getId()}
+     * @return a list of ids
+     */
+    public List<Long> getRecipientListIds() {
+        List<Long> recipientIds = new ArrayList<>();
+        for(Recipient chatRecipient : mRecipientList) {
+            recipientIds.add(chatRecipient.getId());
+        }
+        return recipientIds;
+    }
+
+    /**
+     * Get a single string with the display names of all the {@link Recipient},
+     * separated by commas, through {@link Recipient#getDisplayName()}
+     * @return the display name string
+     */
+    public String getRecipientListDisplayNames() {
+        if(mRecipientList.size() <= 0) {
+            return null;
+        }
+
+        StringBuilder builder = new StringBuilder();
+        int i=0;
+        for(Recipient chatRecipient : mRecipientList) {
+            if(i > 0) {
+                builder.append(", ");
+            }
+            builder.append(chatRecipient.getDisplayName() == null ? chatRecipient.getVia() : chatRecipient.getDisplayName());
+            i++;
+        }
+
+        return builder.toString();
     }
 
     public long getId() {
@@ -54,19 +108,19 @@ public class Chat implements Serializable {
         this.mAmountUnopened = mAmountUnopened;
     }
 
-    public void addRecipient(ChatRecipient recipient) {
+    public void addRecipient(Recipient recipient) {
         mRecipientList.add(recipient);
     }
 
-    public boolean removeRecipient(ChatRecipient recipient) {
+    public boolean removeRecipient(Recipient recipient) {
         return mRecipientList.remove(recipient);
     }
 
-    public List<ChatRecipient> getRecipientList() {
+    public List<Recipient> getRecipientList() {
         return mRecipientList;
     }
 
-    public void setRecipientList(List<ChatRecipient> mRecipientList) {
+    public void setRecipientList(List<Recipient> mRecipientList) {
         this.mRecipientList = mRecipientList;
     }
 
@@ -86,6 +140,14 @@ public class Chat implements Serializable {
         this.mLastReceivedUnplayedId = mLastReceivedUnplayedId;
     }
 
+    public long getPeppermintChatId() {
+        return mPeppermintChatId;
+    }
+
+    public void setPeppermintChatId(long mPeppermintChatId) {
+        this.mPeppermintChatId = mPeppermintChatId;
+    }
+
     @Override
     public boolean equals(Object o) {
         // to allow comparison operations performed by native Java lists
@@ -101,11 +163,12 @@ public class Chat implements Serializable {
     public String toString() {
         return "Chat{" +
                 "mId=" + mId +
+                ", mPeppermintChatId=" + mPeppermintChatId +
                 ", mTitle='" + mTitle + '\'' +
-                ", mLastMessageTimestamp='" + mLastMessageTimestamp + '\'' +
-                ", mRecipientList=" + mRecipientList +
                 ", mAmountUnopened=" + mAmountUnopened +
                 ", mLastReceivedUnplayedId=" + mLastReceivedUnplayedId +
+                ", mLastMessageTimestamp='" + mLastMessageTimestamp + '\'' +
+                ", mRecipientList=" + mRecipientList +
                 '}';
     }
 }

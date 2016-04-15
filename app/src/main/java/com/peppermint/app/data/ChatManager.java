@@ -5,13 +5,14 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
-import android.net.Uri;
+import android.util.Log;
 
+import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -21,11 +22,12 @@ import java.util.List;
  */
 public class ChatManager {
 
+    private static final String TAG = ChatManager.class.getSimpleName();
+
     /**
-     * Gets the chat data inside the Cursor's current position and puts it in an instance
-     * of the Chat structure.<br />
-     * <strong>If db is supplied, it will also load all recipient data.
-     * Accessible through {@link Chat#getRecipientList()}</strong>
+     * Gets the {@link Chat} data inside the cursor's current position.<br />
+     * <strong>If db is supplied, it will also load all {@link Recipient} data, which will be
+     * accessible through {@link Chat#getRecipientList()}</strong>
      *
      * @param db the db connection (optional)
      * @param cursor the cursor
@@ -36,34 +38,18 @@ public class ChatManager {
         chat.setId(cursor.getLong(cursor.getColumnIndex("chat_id")));
         chat.setTitle(cursor.getString(cursor.getColumnIndex("title")));
         chat.setLastMessageTimestamp(cursor.getString(cursor.getColumnIndex("last_message_ts")));
-
-        if(db != null) {
-            chat.setRecipientList(getChatRecipientsByChat(db, chat.getId()));
-        }
-
+        chat.setPeppermintChatId(cursor.getLong(cursor.getColumnIndex("peppermint_chat_id")));
+        chat.setRecipientList(RecipientManager.getByChatId(db, chat.getId()));
         return chat;
     }
 
-
-    public static ChatRecipient getChatRecipientFromCursor(Cursor cursor) {
-        ChatRecipient chatRecipient = new ChatRecipient();
-
-        chatRecipient.setId(cursor.getLong(cursor.getColumnIndex("chat_recipient_id")));
-        chatRecipient.setChatId(cursor.getLong(cursor.getColumnIndex("chat_id")));
-        chatRecipient.setRawContactId(cursor.getLong(cursor.getColumnIndex("raw_contact_id")));
-        chatRecipient.setContactId(cursor.getLong(cursor.getColumnIndex("contact_id")));
-        chatRecipient.setDisplayName(cursor.getString(cursor.getColumnIndex("display_name")));
-        chatRecipient.setVia(cursor.getString(cursor.getColumnIndex("via")));
-        chatRecipient.setMimeType(cursor.getString(cursor.getColumnIndex("mimetype")));
-        chatRecipient.setPhotoUri(cursor.getString(cursor.getColumnIndex("photo_uri")));
-        chatRecipient.setAddedTimestamp(cursor.getString(cursor.getColumnIndex("added_ts")));
-
-        return chatRecipient;
+    private static Cursor getById(SQLiteDatabase db, long chatId) {
+        return db.rawQuery("SELECT * FROM v_chat WHERE v_chat.chat_id = " + chatId + ";", null);
     }
 
-    public static int getChatCount(SQLiteDatabase db) {
+    public static int getChatCount(SQLiteDatabase db, boolean avoidThoseWithRelatedPeppermintChat) {
         int count = 0;
-        Cursor cursor = db.rawQuery("select count(*) from tbl_chat;", null);
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM v_chat" + (avoidThoseWithRelatedPeppermintChat ? " WHERE peppermint_chat_id = 0" : "") + ";", null);
         if(cursor.moveToFirst()) {
             count = cursor.getInt(0);
         }
@@ -71,27 +57,9 @@ public class ChatManager {
         return count;
     }
 
-    public static List<ChatRecipient> getChatRecipientsByChat(SQLiteDatabase db, long chatId) {
-        List<ChatRecipient> chatRecipients = new ArrayList<>();
-
-        Cursor cursor = db.rawQuery("SELECT * FROM tbl_chat_recipient WHERE chat_id = " + chatId + ";", null);
-        while(cursor.moveToNext()) {
-            chatRecipients.add(getChatRecipientFromCursor(cursor));
-        }
-        cursor.close();
-
-        return chatRecipients;
-    }
-
-    /**
-     * Obtains the chat cursor with the supplied id from the database.
-     *
-     * @param db the local database connection
-     * @param chatId the chat id
-     * @return the cursor instance with all data
-     */
-    public static Cursor getById(SQLiteDatabase db, long chatId) {
-        return db.rawQuery("SELECT * FROM tbl_chat WHERE chat_id = " + chatId + ";", null);
+    public static Cursor getAll(SQLiteDatabase db, boolean avoidThoseWithRelatedPeppermintChat) {
+        return db.rawQuery("SELECT v_chat.*, v_chat.chat_id as _id FROM v_chat" + (avoidThoseWithRelatedPeppermintChat ? " WHERE peppermint_chat_id = 0" : "") +
+                " ORDER BY last_message_ts DESC", null);
     }
 
     public static String getOldestChatTimestamp(SQLiteDatabase db) {
@@ -104,13 +72,6 @@ public class ChatManager {
         return ts;
     }
 
-    /**
-     * Obtains the chat with the supplied id from the database.
-     *
-     * @param db the local database connection
-     * @param chatId the chat id
-     * @return the chat instance with all data
-     */
     public static Chat getChatById(SQLiteDatabase db, long chatId) {
         Chat chat = null;
         Cursor cursor = getById(db, chatId);
@@ -121,209 +82,215 @@ public class ChatManager {
         return chat;
     }
 
-    /**
-     * Obtains the chat with the supplied main recipient id from the database.
-     *
-     * @param db the local database connection
-     * @param recipients the recipients of the chat
-     * @return the chat instance with all data
-     */
-    public static Chat getChatByRecipients(SQLiteDatabase db, ChatRecipient... recipients) {
-        String[] conditions = new String[recipients.length];
-        for(int i=0; i<recipients.length; i++) {
-            conditions[i] = Utils.joinString(" AND ", recipients[i].getContactId() > 0 ? "contact_id = " + recipients[i].getContactId() : null,
-                    recipients[i].getVia() != null ? "via = " + DatabaseUtils.sqlEscapeString(recipients[i].getVia()) : null);
-        }
-
-        String where = Utils.joinString(" OR ", conditions);
-        Cursor cursor = db.rawQuery("SELECT tbl_chat.* FROM tbl_chat, tbl_chat_recipient WHERE tbl_chat.chat_id = tbl_chat_recipient.chat_id AND " + where + ";", null);
+    public static Chat getMainChatByDroidContactId(SQLiteDatabase db, long droidContactId) {
+        Cursor cursor = db.rawQuery("SELECT v_chat.* FROM v_chat, tbl_chat_recipient, tbl_recipient WHERE " +
+                "v_chat.chat_id = tbl_chat_recipient.chat_id AND tbl_chat_recipient.recipient_id = tbl_recipient.recipient_id AND tbl_recipient.droid_contact_id = " + droidContactId +
+                " ORDER BY v_chat.peppermint_chat_id ASC LIMIT 1;", null);
         Chat chat = null;
-        if(cursor.getCount() == recipients.length && cursor.moveToFirst()) {
+        if(cursor.moveToNext()) {
             chat = getChatFromCursor(db, cursor);
         }
         cursor.close();
         return chat;
     }
 
-    /**
-     * Obtains the cursor with all chats stored in the local database.
-     *
-     * @param db the local database connection
-     * @return the cursor with all chats
-     */
-    public static Cursor getAll(SQLiteDatabase db) {
-        return db.rawQuery("SELECT tbl_chat.*, tbl_chat.chat_id as _id FROM tbl_chat ORDER BY last_message_ts DESC", null);
+    public static Chat getChatByRecipients(SQLiteDatabase db, Recipient... recipients) {
+        List<Recipient> recipientList = new ArrayList<>();
+        Collections.addAll(recipientList, recipients);
+        return getChatByRecipients(db, recipientList);
     }
 
-    public static ChatRecipient insertChatRecipient(Context context, SQLiteDatabase db, long chatId, long rawContactId, long contactId, String displayName, String via, String mimetype, String photoUri, String addedTimestamp) throws SQLException {
-        if(photoUri != null && !photoUri.endsWith(".peppermintAv")) {
-            Uri uri = Utils.copyImageToLocalDir(context, Uri.parse(photoUri), chatId + ".peppermintAv");
-            photoUri = uri == null ? null : uri.toString();
+    public static Chat getChatByRecipients(SQLiteDatabase db, List<Recipient> recipientList) {
+        int recipientAmount = recipientList.size();
+        String[] conditions = new String[recipientAmount];
+        for(int i=0; i<recipientAmount; i++) {
+            conditions[i] = Utils.joinString(" AND ", recipientList.get(i).getMimeType() != null ? "mimetype = " + DatabaseUtils.sqlEscapeString(recipientList.get(i).getMimeType()) : null,
+                    recipientList.get(i).getVia() != null ? "via = " + DatabaseUtils.sqlEscapeString(recipientList.get(i).getVia()) : null);
         }
 
-        ContentValues cv = new ContentValues();
-        cv.put("chat_id", chatId);
-        cv.put("raw_contact_id", rawContactId);
-        cv.put("contact_id", contactId);
-        cv.put("display_name", displayName);
-        cv.put("via", via);
-        cv.put("mimetype", mimetype);
-        cv.put("photo_uri", photoUri);
-        cv.put("added_ts", addedTimestamp);
-
-        long id = db.insert("tbl_chat_recipient", null, cv);
-        if(id < 0) {
-            throw new SQLException("Unable to insert chat recipient!");
+        String where = Utils.joinString(" OR ", conditions);
+        Cursor cursor = db.rawQuery("SELECT v_chat.* FROM v_chat, tbl_chat_recipient, tbl_recipient WHERE " +
+                "v_chat.chat_id = tbl_chat_recipient.chat_id AND tbl_chat_recipient.recipient_id = tbl_recipient.recipient_id AND " + where + ";", null);
+        Chat chat = null;
+        if(cursor.getCount() == recipientAmount && cursor.moveToFirst()) {
+            chat = getChatFromCursor(db, cursor);
         }
-
-        return new ChatRecipient(id, rawContactId, contactId, chatId, displayName, mimetype, via, photoUri, addedTimestamp);
-    }
-
-    /**
-     * Inserts the supplied chat into the local database.
-     *
-     * @param db the local database connection
-     * @param lastMessageTimestamp the chat last message timestamp
-     * @param recipients list of recipients for this chat
-     * @throws SQLException
-     */
-    public static Chat insert(Context context, SQLiteDatabase db, String title, String lastMessageTimestamp, ChatRecipient... recipients) throws SQLException {
-        /*db.beginTransaction();*/
-
-        ContentValues cv = new ContentValues();
-        cv.put("title", title);
-        cv.put("last_message_ts", lastMessageTimestamp);
-
-        long id = db.insert("tbl_chat", null, cv);
-        if(id < 0) {
-            /*db.endTransaction();*/
-            throw new SQLException("Unable to insert chat!");
-        }
-
-        List<ChatRecipient> chatRecipientList = new ArrayList<>();
-        for(ChatRecipient chatRecipient : recipients) {
-            chatRecipient.setChatId(id);
-            ChatRecipient newChatRecipient = insertChatRecipient(context, db, chatRecipient.getChatId(),
-                    chatRecipient.getRawContactId(), chatRecipient.getContactId(),
-                    chatRecipient.getDisplayName(), chatRecipient.getVia(), chatRecipient.getMimeType(),
-                    chatRecipient.getPhotoUri(), chatRecipient.getAddedTimestamp());
-            chatRecipientList.add(newChatRecipient);
-            chatRecipient.setId(newChatRecipient.getId());
-        }
-
-        /*db.setTransactionSuccessful();
-        db.endTransaction();*/
-
-        Chat chat = new Chat(chatRecipientList, lastMessageTimestamp);
-        chat.setRecipientList(chatRecipientList);
-        chat.setId(id);
+        cursor.close();
         return chat;
     }
 
-    public static void updateChatRecipient(SQLiteDatabase db, long chatRecipientId, long chatId, long rawContactId, long contactId, String displayName, String via, String mimetype, String photoUri, String addedTimestamp) throws SQLException {
-        ContentValues cv = new ContentValues();
-        cv.put("chat_id", chatId);
-        cv.put("raw_contact_id", rawContactId);
-        cv.put("contact_id", contactId);
-        cv.put("display_name", displayName);
-        cv.put("via", via);
-        cv.put("mimetype", mimetype);
-        cv.put("photo_uri", photoUri);
-        cv.put("added_ts", addedTimestamp);
+    // OPERATIONS
+    private static void refreshTimestamps(SQLiteDatabase db, long peppermintChatId) throws SQLException {
+        db.execSQL("UPDATE tbl_chat SET last_message_ts = (SELECT MAX(last_message_ts) FROM v_chat WHERE chat_id = " + peppermintChatId + " OR peppermint_chat_id = " + peppermintChatId + ") WHERE chat_id = " + peppermintChatId);
+    }
 
-        long id = db.update("tbl_chat_recipient", cv, "chat_recipient_id = " + chatRecipientId, null);
-        if(id < 0) {
-            throw new SQLException("Unable to update chat recipient!");
+    private static void deassociateRecipients(SQLiteDatabase db, long chatId) throws SQLException {
+        db.delete("tbl_chat_recipient", "chat_id = " + chatId, null);
+    }
+
+    private static void associateRecipients(SQLiteDatabase db, long chatId, List<Recipient> recipientList) throws SQLException {
+        db.beginTransaction();
+
+        try {
+            for (Recipient recipient : recipientList) {
+                if(recipient.getId() <= 0) {
+                    throw new IllegalArgumentException("Must register the recipient first!");
+                }
+
+                ContentValues cv = new ContentValues();
+                cv.put("chat_id", chatId);
+                cv.put("recipient_id", recipient.getId());
+                cv.put("registration_ts", DateContainer.getCurrentUTCTimestamp());
+
+                long id = db.insert("tbl_chat_recipient", null, cv);
+                if (id < 0) {
+                    throw new SQLException("Unable to associate chat with recipient!");
+                }
+            }
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
         }
     }
 
-    /**
-     * Updates the supplied chat data (id must be supplied).
-     * An SQLException is thrown if the chat id does not exist in the database.
-     *
-     * @param db the local database connection
-     * @param chatId the chat id
-     * @param lastMessageTimestamp the chat last message timestamp
-     * @throws SQLException
-     */
-    public static void update(SQLiteDatabase db, long chatId, String title, String lastMessageTimestamp) throws SQLException {
-        ContentValues cv = new ContentValues();
-        if(title != null) {
-            cv.put("title", title);
-        }
-        cv.put("last_message_ts", lastMessageTimestamp);
+    public static Chat insert(SQLiteDatabase db, Chat chat) throws SQLException {
+        db.beginTransaction();
 
-        long id = db.update("tbl_chat", cv, "chat_id = " + chatId, null);
-        if(id < 0) {
-            throw new SQLException("Unable to update chat!");
+        long id = 0;
+
+        try {
+            ContentValues cv = new ContentValues();
+            cv.put("title", chat.getTitle());
+            cv.put("last_message_ts", chat.getLastMessageTimestamp());
+
+            id = db.insert("tbl_chat", null, cv);
+            if (id < 0) {
+                throw new SQLException("Unable to insert chat!");
+            }
+
+            associateRecipients(db, id, chat.getRecipientList());
+            chat.setId(id);
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
         }
+
+        // get additional data only visible through the v_chat view
+        Cursor autoCursor = db.rawQuery("SELECT peppermint_chat_id FROM v_chat WHERE chat_id = " + id, null);
+        try {
+            if (autoCursor.moveToNext()) {
+                chat.setPeppermintChatId(autoCursor.getLong(autoCursor.getColumnIndex("peppermint_chat_id")));
+            }
+        } finally {
+            autoCursor.close();
+        }
+
+        if(chat.getPeppermintChatId() > 0) {
+            refreshTimestamps(db, chat.getPeppermintChatId());
+        }
+
+        Log.d(TAG, "INSERTED " + chat);
+
+        return chat;
     }
 
-    /**
-     * If a main recipient with an id is supplied, it performs an update, otherwise, it inserts the chat.
-     *
-     * @param db the local database connection
-     * @param chatId the chat id
-     * @param lastMessageTimestamp the chat last message timestamp
-     * @param recipients the recipients of the chat
-     * @throws SQLException
-     */
-    public static Chat insertOrUpdate(Context context, SQLiteDatabase db, long chatId, String title, String lastMessageTimestamp, ChatRecipient... recipients) throws  SQLException {
-        if(chatId <= 0) {
+    public static void update(SQLiteDatabase db, Chat chat) throws SQLException {
+        db.beginTransaction();
+        try {
+            deassociateRecipients(db, chat.getId());
+            associateRecipients(db, chat.getId(), chat.getRecipientList());
+
+            ContentValues cv = new ContentValues();
+            if(chat.getTitle() != null) {
+                cv.put("title", chat.getTitle());
+            }
+            cv.put("last_message_ts", chat.getLastMessageTimestamp());
+
+            long id = db.update("tbl_chat", cv, "chat_id = " + chat.getId(), null);
+            if(id < 0) {
+                throw new SQLException("Unable to update chat!");
+            }
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+
+        // get additional data only visible through the v_chat view
+        Cursor autoCursor = db.rawQuery("SELECT peppermint_chat_id FROM v_chat WHERE chat_id = " + chat.getId(), null);
+        try {
+            if (autoCursor.moveToNext()) {
+                chat.setPeppermintChatId(autoCursor.getLong(autoCursor.getColumnIndex("peppermint_chat_id")));
+            }
+        } finally {
+            autoCursor.close();
+        }
+
+        if(chat.getPeppermintChatId() > 0) {
+            refreshTimestamps(db, chat.getPeppermintChatId());
+        }
+
+        Log.d(TAG, "UPDATED " + chat);
+    }
+
+    public static Chat insertOrUpdate(SQLiteDatabase db, Chat chat) throws  SQLException {
+        if(chat.getId() <= 0) {
             Chat searchedChat = null;
 
-            if(recipients != null && recipients.length > 0) {
-                searchedChat = getChatByRecipients(db, recipients);
+            if(chat.getRecipientList() != null && chat.getRecipientList().size() > 0) {
+                searchedChat = getChatByRecipients(db, chat.getRecipientList());
             }
 
             if (searchedChat == null) {
-                return insert(context, db, title, lastMessageTimestamp, recipients);
+                return insert(db, chat);
             }
 
-            chatId = searchedChat.getId();
+            chat.setId(searchedChat.getId());
         }
 
-        for(ChatRecipient chatRecipient : recipients) {
-            updateChatRecipient(db, chatRecipient.getId(), chatRecipient.getChatId(), chatRecipient.getRawContactId(), chatRecipient.getContactId(),
-                    chatRecipient.getDisplayName(), chatRecipient.getVia(), chatRecipient.getMimeType(), chatRecipient.getPhotoUri(), chatRecipient.getAddedTimestamp());
-        }
-        update(db, chatId, title, lastMessageTimestamp);
+        update(db, chat);
 
-        Chat chat = new Chat(Arrays.asList(recipients), lastMessageTimestamp);
-        chat.setId(chatId);
         return chat;
     }
 
-    public static void deleteChatRecipientsByChat(SQLiteDatabase db, long chatId) throws SQLException {
-        long resId = db.delete("tbl_chat_recipient", "chat_id = " + chatId, null);
-        if(resId < 0) {
-            throw new SQLException("Unable to delete chat recipients!");
-        }
-    }
-
-    /**
-     * Deletes the supplied chat data (id must be supplied).<br />
-     * <strong>It also deletes all messages associated with the chat!</strong><br />
-     * An SQLException is thrown if the chat id does not exist in the database.
-     *
-     * @param db the local database connection
-     * @param chatId the chat id
-     * @throws SQLException
-     */
     public static void delete(SQLiteDatabase db, long chatId) throws SQLException {
         db.beginTransaction();
 
-        MessageManager.deleteByChat(db, chatId);
-        deleteChatRecipientsByChat(db, chatId);
+        try {
+            MessageManager.deleteByChat(db, chatId);
+            deassociateRecipients(db, chatId);
 
-        long resId = db.delete("tbl_chat", "chat_id = " + chatId, null);
-        if(resId < 0) {
+            long resId = db.delete("tbl_chat", "chat_id = " + chatId, null);
+            if (resId < 0) {
+                throw new SQLException("Unable to delete chat!");
+            }
+
+            db.setTransactionSuccessful();
+        } finally {
             db.endTransaction();
-            throw new SQLException("Unable to delete chat!");
         }
 
-        db.setTransactionSuccessful();
-        db.endTransaction();
+        Log.d(TAG, "DELETED ChatId " + chatId);
     }
 
+    public static void printAllData(Context context) {
+        SQLiteDatabase db = DatabaseHelper.getInstance(context).getReadableDatabase();
+
+        Cursor cursor = getAll(db, false);
+        while(cursor.moveToNext()) {
+            StringBuilder fieldsBuilder = new StringBuilder();
+            for(int i=0; i<cursor.getColumnCount(); i++) {
+                if(i > 0) {
+                    fieldsBuilder.append(", ");
+                }
+                fieldsBuilder.append(cursor.getColumnName(i));
+                fieldsBuilder.append("=");
+                fieldsBuilder.append(cursor.getString(i));
+            }
+            Log.d("ChatManager", "CHAT # " + fieldsBuilder.toString());
+        }
+        cursor.close();
+    }
 }

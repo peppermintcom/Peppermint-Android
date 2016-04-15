@@ -3,7 +3,9 @@ package com.peppermint.app.data;
 import com.peppermint.app.utils.DateContainer;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -14,7 +16,6 @@ import java.util.UUID;
  */
 public class Message implements Serializable {
 
-    public static final String PARAM_SENT_INAPP = "paramSentInApp";
     public static final String PARAM_INSERTED = "paramInserted";
 
     private static final String PARAM_CHAT = "paramChat";
@@ -34,6 +35,9 @@ public class Message implements Serializable {
 
     private String mServerId;
     private String mServerCanonicalUrl, mServerShortUrl, mTranscription;
+
+    private List<Long> mConfirmedSentRecipientIds = new ArrayList<>();
+    private List<Long> mRecipientIds = new ArrayList<>();
 
     // extra parameters about the message that can be stored by/feed to senders
     private Map<String, Object> mParameters = new HashMap<>();
@@ -57,6 +61,7 @@ public class Message implements Serializable {
         mServerShortUrl = message.mServerShortUrl;
         mTranscription = message.mTranscription;
         mParameters.putAll(message.mParameters);
+        mConfirmedSentRecipientIds.addAll(message.mConfirmedSentRecipientIds);
     }
 
     public Message(long mRecordingId, long mChatId) {
@@ -185,6 +190,59 @@ public class Message implements Serializable {
         this.mServerId = mServerId;
     }
 
+    public String getServerShortUrl() {
+        return mServerShortUrl;
+    }
+
+    public void setServerShortUrl(String mServerShortUrl) {
+        this.mServerShortUrl = mServerShortUrl;
+    }
+
+    public String getServerCanonicalUrl() {
+        return mServerCanonicalUrl;
+    }
+
+    public void setServerCanonicalUrl(String mServerCanonicalUrl) {
+        this.mServerCanonicalUrl = mServerCanonicalUrl;
+    }
+
+    public void addConfirmedSentRecipientId(long chatRecipientId) {
+        mConfirmedSentRecipientIds.add(chatRecipientId);
+    }
+
+    public boolean removeConfirmedSentRecipientId(long chatRecipientId) {
+        return mConfirmedSentRecipientIds.remove(chatRecipientId);
+    }
+
+    public List<Long> getConfirmedSentRecipientIds() {
+        return mConfirmedSentRecipientIds;
+    }
+
+    public void addRecipientId(long chatRecipientId) {
+        mRecipientIds.add(chatRecipientId);
+    }
+
+    public boolean removeRecipientId(long chatRecipientId) {
+        return mRecipientIds.remove(chatRecipientId);
+    }
+
+    public List<Long> getRecipientIds() {
+        return mRecipientIds;
+    }
+
+    public void setConfirmedSentRecipientIds(List<Long> mConfirmedSentRecipientIds) {
+        this.mConfirmedSentRecipientIds = mConfirmedSentRecipientIds;
+    }
+
+    public void setRecipientIds(List<Long> mRecipientIds) {
+        this.mRecipientIds = mRecipientIds;
+    }
+
+    public UUID getUUID() {
+        return mUUID;
+    }
+
+    // PARAMETERS
     public Map<String, Object> getParameters() {
         return mParameters;
     }
@@ -206,6 +264,10 @@ public class Message implements Serializable {
         return this;
     }
 
+    public Object removeParameter(String key) {
+        return mParameters.remove(key);
+    }
+
     public Chat getChatParameter() {
         return (Chat) mParameters.get(PARAM_CHAT);
     }
@@ -220,26 +282,6 @@ public class Message implements Serializable {
 
     public void setRecordingParameter(Recording recording) {
         mParameters.put(PARAM_RECORDING, recording);
-    }
-
-    public String getServerShortUrl() {
-        return mServerShortUrl;
-    }
-
-    public void setServerShortUrl(String mServerShortUrl) {
-        this.mServerShortUrl = mServerShortUrl;
-    }
-
-    public String getServerCanonicalUrl() {
-        return mServerCanonicalUrl;
-    }
-
-    public void setServerCanonicalUrl(String mServerCanonicalUrl) {
-        this.mServerCanonicalUrl = mServerCanonicalUrl;
-    }
-
-    public UUID getUUID() {
-        return mUUID;
     }
 
     @Override

@@ -103,8 +103,10 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
 
     @Override
     public void onDestroy() {
-        mChatController.deinit();
-        mChatController.setContext(null);
+        if(mChatController != null) {
+            mChatController.deinit();
+            mChatController.setContext(null);
+        }
         super.onDestroy();
     }
 

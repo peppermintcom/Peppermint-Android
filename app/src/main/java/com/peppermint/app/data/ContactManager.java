@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * Created by Nuno Luz on 17-02-2016.
  *
- * Database operations for {@link ContactRaw} and {@link Contact}.
+ * Database operations for {@link ContactRaw} and {@link ContactData}.
  * Data is obtained and stored through the {@link ContactsContract}.
  */
 public class ContactManager {
@@ -39,133 +39,129 @@ public class ContactManager {
             ContactsContract.Contacts.DISPLAY_NAME_PRIMARY :
             ContactsContract.Contacts.DISPLAY_NAME;
 
-    protected static final String[] PROJECTION = {
+    private static final String[] PROJECTION = {
             ContactsContract.Data._ID,
             ContactsContract.Data.RAW_CONTACT_ID,
+            ContactsContract.Data.CONTACT_ID,
             ContactsContract.Data.STARRED,
             ContactsContract.Data.MIMETYPE,
             ContactsContract.Data.DATA1,
             ContactsContract.CommonDataKinds.Photo.PHOTO_URI,
             FIELD_DISPLAY_NAME,
             ContactsContract.RawContacts.ACCOUNT_NAME,
-            ContactsContract.RawContacts.ACCOUNT_TYPE
+            ContactsContract.RawContacts.ACCOUNT_TYPE,
+            ContactsContract.Data.IS_PRIMARY,
+            ContactsContract.Data.IS_SUPER_PRIMARY,
+            ContactsContract.Data.IN_VISIBLE_GROUP
     };
 
-    private static final String PEPPERMINT_GROUP_TITLE = "Peppermint";
+    // prioritize visible and primary entries
+    private static final String GENERAL_ORDER = ContactsContract.Data.IN_VISIBLE_GROUP + " DESC, " + ContactsContract.Data.IS_SUPER_PRIMARY + " DESC, " + ContactsContract.Data.IS_PRIMARY + " DESC";
+    // prioritize peppermint contacts
+    private static final String PEPPERMINT_ORDER = "(CASE WHEN " + ContactsContract.Data.RAW_CONTACT_ID + " IN (SELECT " + ContactsContract.Data.RAW_CONTACT_ID + " FROM view_data WHERE " + ContactsContract.Data.MIMETYPE + " = " + DatabaseUtils.sqlEscapeString(ContactData.PEPPERMINT_MIMETYPE) + ") THEN 1 ELSE 0 END) DESC, ";
 
-    /*private static Map<Long, WeakReference<ContactRaw>> mRecipientCache = new WeakHashMap<>();*/
+    private static final String PEPPERMINT_GROUP_TITLE = "Peppermint";
 
     /**
      * Gets the data inside the Cursor's current position and puts it in an instance of the
      * ContactRaw structure.
+     * <strong>If context is not null, also retrieves the Peppermint contact data.</strong>
      *
      * @param cursor the cursor
      * @return the ContactRaw instance
      */
-    public static ContactRaw getRawContactFromCursor(Cursor cursor) {
+    public static ContactRaw getRawContactFromCursor(Context context, Cursor cursor) {
         String name = cursor.getString(cursor.getColumnIndex(FIELD_DISPLAY_NAME));
         String photoUri = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Photo.PHOTO_URI));
 
         String accountName = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_NAME));
         String accountType = cursor.getString(cursor.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_TYPE));
 
-        Contact contact = getContactFromCursor(cursor);
-        ContactRaw recipient = new ContactRaw(contact.getRawId(), false, accountType, accountName, name, photoUri);
+        ContactData contactData = getContactFromCursor(cursor);
+        ContactRaw contactRaw = new ContactRaw(contactData.getRawId(), contactData.getContactId(), false, accountType, accountName, name, photoUri);
+        contactRaw.setContactData(contactData);
 
-        if(contact.isEmail()) {
-            recipient.setEmail(contact);
-            return recipient;
-        }
-        if(contact.isPhone()) {
-            recipient.setPhone(contact);
-            return recipient;
-        }
-        if(contact.isPeppermint()) {
-            recipient.setPeppermint(contact);
-            return recipient;
+        if(context != null) {
+            contactRaw.setContactData(getPeppermintContactByContactIdAndVia(context, contactRaw.getContactId(), null));
         }
 
-        return recipient;
+        return contactRaw;
     }
 
-    public static Contact getContactFromCursor(Cursor cursor) {
+    public static ContactData getContactFromCursor(Cursor cursor) {
         long id = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data._ID));
         long rawId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data.RAW_CONTACT_ID));
+        long contactId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data.CONTACT_ID));
         boolean starred = cursor.getInt(cursor.getColumnIndex(ContactsContract.Data.STARRED)) != 0;
         String mime = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.MIMETYPE));
         String via = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1));
-        return new Contact(id, rawId, starred, mime, via);
+        return new ContactData(id, rawId, contactId, starred, mime, via);
     }
 
-    /**
-     * Get the recipient with the supplied "via" value from the local database.
-     * @param context the app context
-     * @param via the via value
-     * @return the recipient instance with all data
-     */
-    public static ContactRaw getRawContactByViaOrContactId(Context context, String via, long contactId) {
-        /*if(contactId > 0 && mRecipientCache.containsKey(contactId)) {
-            WeakReference<ContactRaw> ref = mRecipientCache.get(contactId);
-            ContactRaw recipient = ref.get();
-            if(recipient == null) {
-                mRecipientCache.remove(contactId);
-            } else {
-                return recipient;
-            }
-        }*/
+    public static HashMap<Long, ContactData> getPeppermintContacts(Context context) {
+        HashMap<Long, ContactData> map = new HashMap<>();
 
-        ContactRaw result = null;
+        List<String> mimeTypes = new ArrayList<>();
+        mimeTypes.add(ContactData.PEPPERMINT_MIMETYPE);
 
-        Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, null,
-                Utils.joinString(" OR ", via != null ?
-                        ContactsContract.Data.DATA1 + " = " + DatabaseUtils.sqlEscapeString(via) : null, contactId > 0 ?
-                        ContactsContract.Data._ID + " = " + contactId : null),
-                null, null);
-
-        if(cursor.moveToNext()) {
-            result = getRawContactFromCursor(cursor);
+        Cursor cursor = get(context, null, null, mimeTypes, null);
+        while(cursor.moveToNext()) {
+            ContactData contact = getContactFromCursor(cursor);
+            map.put(contact.getContactId(), contact);
         }
         cursor.close();
 
-        /*if(result != null) {
-            mRecipientCache.put(result.getContactId(), new WeakReference<>(result));
-        }*/
+        return map;
+    }
+
+    public static ContactData getPeppermintContactByContactIdAndVia(Context context, long contactId, String via) {
+        List<Long> contactIds = new ArrayList<>();
+        contactIds.add(contactId);
+        List<String> mimeTypes = new ArrayList<>();
+        mimeTypes.add(ContactData.PEPPERMINT_MIMETYPE);
+
+        ContactData data = null;
+        Cursor cursor = get(context, contactIds, null, mimeTypes, via);
+        if(cursor != null) {
+            if (cursor.moveToNext()) {
+                data = getContactFromCursor(cursor);
+            }
+            cursor.close();
+        }
+
+        return data;
+    }
+
+    public static ContactRaw getRawContactByVia(Context context, String via) {
+        ContactRaw result = null;
+
+        Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, null,
+                ContactsContract.Data.DATA1 + " = " + DatabaseUtils.sqlEscapeString(via),
+                null,  GENERAL_ORDER);
+
+        if(cursor != null) {
+            if (cursor.moveToNext()) {
+                result = getRawContactFromCursor(context, cursor);
+            }
+            cursor.close();
+        }
 
         return result;
     }
 
-    /**
-     * Obtains the recipient with the supplied ID from the database.
-     *
-     * @param context the app context
-     * @param contactId the recipient ID
-     * @return the recipient instance with all data
-     */
-    public static ContactRaw getRawContactByContactId(Context context, long contactId) {
-        /*if(mRecipientCache.containsKey(contactId)) {
-            WeakReference<ContactRaw> ref = mRecipientCache.get(contactId);
-            ContactRaw recipient = ref.get();
-            if(recipient == null) {
-                mRecipientCache.remove(contactId);
-            } else {
-                return recipient;
-            }
-        }*/
-
+    public static ContactRaw getRawContactByDataId(Context context, long contactDataId) {
         ContactRaw result = null;
 
         Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, null,
-                ContactsContract.Data._ID + " = " + contactId,
+                ContactsContract.Data._ID + " = " + contactDataId,
                 null, null);
 
-        if(cursor.moveToNext()) {
-            result = getRawContactFromCursor(cursor);
+        if(cursor != null) {
+            if (cursor.moveToNext()) {
+                result = getRawContactFromCursor(context, cursor);
+            }
+            cursor.close();
         }
-        cursor.close();
-
-        /*if(result != null) {
-            mRecipientCache.put(result.getContactId(), new WeakReference<>(result));
-        }*/
 
         return result;
     }
@@ -176,34 +172,16 @@ public class ContactManager {
         Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, null,
                 ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE) +
                         " AND " + ContactsContract.Data.RAW_CONTACT_ID + "=" + rawId,
-                null, ContactsContract.Data.IS_PRIMARY + " DESC");
+                null, GENERAL_ORDER);
 
-        if(cursor.moveToNext()) {
-            result = getRawContactFromCursor(cursor);
+        if(cursor != null) {
+            if (cursor.moveToNext()) {
+                result = getRawContactFromCursor(context, cursor);
+            }
+            cursor.close();
         }
-        cursor.close();
-
-        /*if(result != null) {
-            mRecipientCache.put(result.getContactId(), new WeakReference<>(result));
-        }*/
 
         return result;
-    }
-
-    public static HashMap<Long, Contact> getPeppermintContacts(Context context, List<Long> rawIds) {
-        HashMap<Long, Contact> map = new HashMap<>();
-
-        List<String> mimeTypes = new ArrayList<>();
-        mimeTypes.add(Contact.PEPPERMINT_MIMETYPE);
-
-        Cursor cursor = get(context, rawIds, mimeTypes, null);
-        while(cursor.moveToNext()) {
-            Contact contact = getContactFromCursor(cursor);
-            map.put(contact.getRawId(), contact);
-        }
-        cursor.close();
-
-        return map;
     }
 
     public static Cursor getPhone(Context context, long rawId, String phone) {
@@ -211,7 +189,7 @@ public class ContactManager {
         rawIds.add(rawId);
         List<String> mimeTypes = new ArrayList<>();
         mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-        return get(context, rawIds, mimeTypes, phone);
+        return get(context, null, rawIds, mimeTypes, phone);
     }
 
     public static Cursor getEmail(Context context, long rawId, String email) {
@@ -219,15 +197,15 @@ public class ContactManager {
         rawIds.add(rawId);
         List<String> mimeTypes = new ArrayList<>();
         mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
-        return get(context, rawIds, mimeTypes, email);
+        return get(context, null, rawIds, mimeTypes, email);
     }
 
-    public static Cursor getPeppermint(Context context, long rawId) {
+    public static Cursor getPeppermintByRawId(Context context, long rawId) {
         List<Long> rawIds = new ArrayList<>();
         rawIds.add(rawId);
         List<String> mimeTypes = new ArrayList<>();
-        mimeTypes.add(Contact.PEPPERMINT_MIMETYPE);
-        return get(context, rawIds, mimeTypes, null);
+        mimeTypes.add(ContactData.PEPPERMINT_MIMETYPE);
+        return get(context, null, rawIds, mimeTypes, null);
     }
 
     public static Cursor getByEmailOrPhone(Context context, String email, String phone, String googleAccountName) {
@@ -242,24 +220,27 @@ public class ContactManager {
                                 ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)),
                         ContactsContract.RawContacts.ACCOUNT_TYPE + "=" + DatabaseUtils.sqlEscapeString(GOOGLE_ACCOUNT_TYPE),
                         ContactsContract.RawContacts.ACCOUNT_NAME + "=" + DatabaseUtils.sqlEscapeString(googleAccountName)),
-                null, null);
+                null, GENERAL_ORDER);
     }
 
-    public static Cursor get(Context context, List<Long> allowedRawIds, List<String> allowedMimeTypes, String viaSearch) {
+    private static Cursor get(Context context, List<Long> allowedContactIds, List<Long> allowedRawIds, List<String> allowedMimeTypes, String viaSearch) {
         List<String> args = new ArrayList<>();
         String condViaSearch = (viaSearch == null ? "" : " AND (LOWER(REPLACE(" + ContactsContract.Data.DATA1 + ", ' ', '')) LIKE " +
                 DatabaseUtils.sqlEscapeString(viaSearch + "%") + ")");
         String condMimeTypes = Utils.getSQLConditions(ContactsContract.Data.MIMETYPE, allowedMimeTypes, args, false);
-        String condIds = Utils.getSQLConditions(ContactsContract.Data.RAW_CONTACT_ID, allowedRawIds, null, false);
+        String condIds = Utils.getSQLConditions(ContactsContract.Data.CONTACT_ID, allowedContactIds, null, false);
+        String condRawIds = Utils.getSQLConditions(ContactsContract.Data.RAW_CONTACT_ID, allowedRawIds, null, false);
 
         return context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, PROJECTION,
-                "1" + condViaSearch + " AND (" + condMimeTypes + ")" + " AND (" + condIds + ")",
-                args.toArray(new String[args.size()]), FIELD_DISPLAY_NAME + " COLLATE NOCASE");
+                "1" + condViaSearch + " AND (" + condMimeTypes + ")" + " AND (" + condRawIds + ") AND (" + condIds + ")",
+                args.toArray(new String[args.size()]), FIELD_DISPLAY_NAME + " COLLATE NOCASE, " + GENERAL_ORDER);
     }
 
     /**
-     * Obtains a list of all recipients found in the Android contacts database according to
+     * Obtains a list of all contact data found in the Android contacts database according to
      * the given restrictions.
+     * <strong>If allowedIds is null, will returns a {@link PeppermintFilteredCursor}, which will merge duplicate
+     * contacts and Peppermint contacts.</strong>
      *
      * @param context the context
      * @param allowedIds the allowed ids filter
@@ -270,25 +251,27 @@ public class ContactManager {
      */
     public static Cursor get(final Context context, final List<Long> allowedIds, String freeTextSearch, Boolean areStarred, List<String> allowedMimeTypes, String enforcedViaSearch) {
         List<String> args = new ArrayList<>();
-        String condStarred = (areStarred == null ? "" : " AND " + ContactsContract.Contacts.STARRED + "=" + (areStarred ? "1" : "0"));
-        String condFreeSearch = (freeTextSearch == null ? "" : " AND (LOWER(" + FIELD_DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString(freeTextSearch + "%") + " OR LOWER(" + FIELD_DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString("% " + freeTextSearch + "%") + " OR LOWER(REPLACE(" + ContactsContract.Data.DATA1 + ", ' ', '')) LIKE " + DatabaseUtils.sqlEscapeString(freeTextSearch + "%") + ")");
-        String condViaSearch = (enforcedViaSearch == null ? "" : " AND (LOWER(REPLACE(" + ContactsContract.Data.DATA1 + ", ' ', '')) LIKE " + DatabaseUtils.sqlEscapeString(enforcedViaSearch + "%") + ")");
+        String condStarred = (areStarred == null ? "" : ContactsContract.Contacts.STARRED + "=" + (areStarred ? "1" : "0") + " AND");
+        String condFreeSearch = (freeTextSearch == null ? "1=1" : "(LOWER(" + FIELD_DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString(freeTextSearch + "%") + " OR LOWER(" + FIELD_DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString("% " + freeTextSearch + "%") + " OR LOWER(REPLACE(" + ContactsContract.Data.DATA1 + ", ' ', '')) LIKE " + DatabaseUtils.sqlEscapeString(freeTextSearch + "%") + ")");
+        String condViaSearch = (enforcedViaSearch == null ? " AND 1=1" : " AND (LOWER(REPLACE(" + ContactsContract.Data.DATA1 + ", ' ', '')) LIKE " + DatabaseUtils.sqlEscapeString(enforcedViaSearch + "%") + ")");
         String condMimeTypes = Utils.getSQLConditions(ContactsContract.Data.MIMETYPE, allowedMimeTypes, args, false);
         String condIds = Utils.getSQLConditions(ContactsContract.Data._ID, allowedIds, null, false);
 
         Cursor rootCursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, PROJECTION,
-                "1" + condStarred + condFreeSearch + condViaSearch + " AND (" + condMimeTypes + ")" +
+                "1 AND " + condStarred + " (" + condFreeSearch + condViaSearch + ")" + " AND (" + condMimeTypes + ")" +
                         " AND (" + condIds + ")",
-                args.toArray(new String[args.size()]), FIELD_DISPLAY_NAME + " COLLATE NOCASE");
+                args.toArray(new String[args.size()]), PEPPERMINT_ORDER + FIELD_DISPLAY_NAME + " COLLATE NOCASE, " + GENERAL_ORDER);
 
         if(allowedIds != null) {
             return rootCursor;
         }
 
-        return new PeppermintFilteredCursor(rootCursor, getPeppermintContacts(context, allowedIds));
+        return new PeppermintFilteredCursor(context, rootCursor);
     }
 
-    public static long insertOrUpdatePhoto(Context context, Uri photoUri, long rawId, int rawIdBackRef, ArrayList<ContentProviderOperation> operationsList) {
+    // OPERATIONS
+
+    private static long insertOrUpdatePhoto(Context context, Uri photoUri, long rawId, int rawIdBackRef, ArrayList<ContentProviderOperation> operationsList) {
         int dp200 = Utils.dpToPx(context, 200);
         int dp100 = Utils.dpToPx(context, 100);
 
@@ -308,7 +291,7 @@ public class ContactManager {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             rotatedImage.compress(Bitmap.CompressFormat.PNG, 100, baos);
 
-            ContentProviderOperation.Builder op = null;
+            ContentProviderOperation.Builder op;
             if (rawId <= 0) {
                 op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
                         .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, rawIdBackRef);
@@ -328,7 +311,7 @@ public class ContactManager {
             if(operationsList == null) {
                 // no caller operations list, so execute the operations right away
                 ContentProviderResult[] res = executeOperations(context, ops);
-                return ContentUris.parseId(res[res.length-1].uri);
+                return res != null && res.length > 0 ? ContentUris.parseId(res[res.length-1].uri) : 0;
             }
 
             return 0;
@@ -337,7 +320,7 @@ public class ContactManager {
         return -1;
     }
 
-    public static long insertPhone(Context context, String phone, long rawId, int rawIdBackRef, ArrayList<ContentProviderOperation> operationsList) throws InvalidPhoneException {
+    private static long insertPhone(Context context, String phone, long rawId, int rawIdBackRef, ArrayList<ContentProviderOperation> operationsList) throws InvalidPhoneException {
         if(!Utils.isValidPhoneNumber(phone)) {
             throw new InvalidPhoneException();
         }
@@ -346,14 +329,16 @@ public class ContactManager {
 
         if(rawId > 0) {
             Cursor checkCursor = getPhone(context, rawId, phone);
-            alreadyHasPhone = checkCursor != null && checkCursor.getCount() > 0;
-            checkCursor.close();
+            if(checkCursor != null) {
+                alreadyHasPhone = checkCursor.getCount() > 0;
+                checkCursor.close();
+            }
         }
 
         if(!alreadyHasPhone) {
             ArrayList<ContentProviderOperation> ops = operationsList == null ? new ArrayList<ContentProviderOperation>() : operationsList;
 
-            ContentProviderOperation.Builder op = null;
+            ContentProviderOperation.Builder op;
             if (rawId <= 0) {
                 op = ContentProviderOperation
                         .newInsert(ContactsContract.Data.CONTENT_URI)
@@ -371,7 +356,7 @@ public class ContactManager {
             if(operationsList == null) {
                 // no caller operations list, so execute the operations right away
                 ContentProviderResult[] res = executeOperations(context, ops);
-                return ContentUris.parseId(res[0].uri);
+                return res != null && res.length > 0 ? ContentUris.parseId(res[0].uri) : 0;
             }
 
             return 0;
@@ -380,7 +365,7 @@ public class ContactManager {
         return -1;
     }
 
-    public static long insertEmail(Context context, String email, long rawId, int rawIdBackRef, ArrayList<ContentProviderOperation> operationsList) throws InvalidEmailException {
+    private static long insertEmail(Context context, String email, long rawId, int rawIdBackRef, ArrayList<ContentProviderOperation> operationsList) throws InvalidEmailException {
         if(!Utils.isValidEmail(email)) {
             throw new InvalidEmailException();
         }
@@ -389,14 +374,16 @@ public class ContactManager {
 
         if(rawId > 0) {
             Cursor checkCursor = getEmail(context, rawId, email);
-            alreadyHasEmail = checkCursor != null && checkCursor.getCount() > 0;
-            checkCursor.close();
+            if(checkCursor != null) {
+                alreadyHasEmail = checkCursor.getCount() > 0;
+                checkCursor.close();
+            }
         }
 
         if(!alreadyHasEmail) {
             ArrayList<ContentProviderOperation> ops = operationsList == null ? new ArrayList<ContentProviderOperation>() : operationsList;
 
-            ContentProviderOperation.Builder op = null;
+            ContentProviderOperation.Builder op;
             if (rawId <= 0) {
                 op = ContentProviderOperation
                         .newInsert(ContactsContract.Data.CONTENT_URI)
@@ -412,7 +399,7 @@ public class ContactManager {
             if(operationsList == null) {
                 // no caller operations list, so execute the operations right away
                 ContentProviderResult[] res = executeOperations(context, ops);
-                return ContentUris.parseId(res[0].uri);
+                return res != null && res.length > 0 ? ContentUris.parseId(res[0].uri) : 0;
             }
 
             return 0;
@@ -421,7 +408,7 @@ public class ContactManager {
         return -1;
     }
 
-    public static long insertOrUpdateName(Context context, String firstName, String lastName, long rawId, int rawIdBackRef, ArrayList<ContentProviderOperation> operationsList) throws InvalidNameException {
+    private static long insertOrUpdateName(Context context, String firstName, String lastName, long rawId, int rawIdBackRef, ArrayList<ContentProviderOperation> operationsList) throws InvalidNameException {
         // validate display name
         String fullName = (firstName + " " + lastName).trim();
         if(!Utils.isValidName(fullName)) {
@@ -430,7 +417,7 @@ public class ContactManager {
 
         ArrayList<ContentProviderOperation> ops = operationsList == null ? new ArrayList<ContentProviderOperation>() : operationsList;
 
-        ContentProviderOperation.Builder op = null;
+        ContentProviderOperation.Builder op;
         if(rawId <= 0) {
             op = ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
                     .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, rawIdBackRef);
@@ -450,43 +437,47 @@ public class ContactManager {
         if(operationsList == null) {
             // no caller operations list, so execute the operations right away
             ContentProviderResult[] res = executeOperations(context, ops);
-            return ContentUris.parseId(res[res.length-1].uri);
+            return res != null && res.length > 0 ? ContentUris.parseId(res[res.length-1].uri) : 0;
         }
 
         return 0;
     }
 
     public static void deletePeppermint(Context context, long rawId, ArrayList<ContentProviderOperation> operationsList) {
-        Cursor checkCursor = getPeppermint(context, rawId);
-        if(checkCursor != null && checkCursor.getCount() > 0) {
-            ArrayList<ContentProviderOperation> ops = operationsList == null ? new ArrayList<ContentProviderOperation>() : operationsList;
+        Cursor checkCursor = getPeppermintByRawId(context, rawId);
+        if(checkCursor != null) {
+            if(checkCursor.getCount() > 0) {
+                ArrayList<ContentProviderOperation> ops = operationsList == null ? new ArrayList<ContentProviderOperation>() : operationsList;
 
-            ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
-                    .withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=? AND " + ContactsContract.Data.MIMETYPE + "=?",
-                            new String[]{String.valueOf(rawId), Contact.PEPPERMINT_MIMETYPE})
-                    .build());
+                ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
+                        .withSelection(ContactsContract.Data.RAW_CONTACT_ID + "=? AND " + ContactsContract.Data.MIMETYPE + "=?",
+                                new String[]{String.valueOf(rawId), ContactData.PEPPERMINT_MIMETYPE})
+                        .build());
 
-            if(operationsList == null) {
-                // no caller operations list, so execute the operations right away
-                executeOperations(context, ops);
+                if (operationsList == null) {
+                    // no caller operations list, so execute the operations right away
+                    executeOperations(context, ops);
+                }
             }
+            checkCursor.close();
         }
-        checkCursor.close();
     }
 
     public static long insertPeppermint(Context context, String email, long rawId, int rawIdBackRef, ArrayList<ContentProviderOperation> operationsList) throws InvalidEmailException {
         boolean alreadyHasPeppermint = false;
 
         if(rawId > 0) {
-            Cursor checkCursor = getPeppermint(context, rawId);
-            alreadyHasPeppermint = checkCursor != null && checkCursor.getCount() > 0;
-            checkCursor.close();
+            Cursor checkCursor = getPeppermintByRawId(context, rawId);
+            if(checkCursor != null) {
+                alreadyHasPeppermint = checkCursor.getCount() > 0;
+                checkCursor.close();
+            }
         }
 
         if(!alreadyHasPeppermint) {
             ArrayList<ContentProviderOperation> ops = operationsList == null ? new ArrayList<ContentProviderOperation>() : operationsList;
 
-            ContentProviderOperation.Builder op = null;
+            ContentProviderOperation.Builder op;
             if (rawId <= 0) {
                 op = ContentProviderOperation
                         .newInsert(ContactsContract.Data.CONTENT_URI)
@@ -496,12 +487,12 @@ public class ContactManager {
                         .withValue(ContactsContract.Data.RAW_CONTACT_ID, rawId);
             }
 
-            ops.add(op.withValue(ContactsContract.Data.MIMETYPE, Contact.PEPPERMINT_MIMETYPE).withValue(ContactsContract.Data.DATA1, email).build());
+            ops.add(op.withValue(ContactsContract.Data.MIMETYPE, ContactData.PEPPERMINT_MIMETYPE).withValue(ContactsContract.Data.DATA1, email).build());
 
             if(operationsList == null) {
                 // no caller operations list, so execute the operations right away
                 ContentProviderResult[] res = executeOperations(context, ops);
-                return ContentUris.parseId(res[0].uri);
+                return res != null && res.length > 0 ? ContentUris.parseId(res[0].uri) : 0;
             }
 
             return 0;
@@ -510,12 +501,18 @@ public class ContactManager {
         return -1;
     }
 
-    public static long insertRaw(Context context, String googleAccountName, ArrayList<ContentProviderOperation> operationsList) {
+    private static long insertRaw(Context context, long contactId, String googleAccountName, ArrayList<ContentProviderOperation> operationsList) {
         ArrayList<ContentProviderOperation> ops = operationsList == null ? new ArrayList<ContentProviderOperation>() : operationsList;
 
-        ops.add(ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
+        ContentProviderOperation.Builder insertOp = ContentProviderOperation.newInsert(ContactsContract.RawContacts.CONTENT_URI)
                 .withValue(ContactsContract.RawContacts.ACCOUNT_TYPE, GOOGLE_ACCOUNT_TYPE)
-                .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, googleAccountName).build());
+                .withValue(ContactsContract.RawContacts.ACCOUNT_NAME, googleAccountName);
+
+        if(contactId > 0) {
+            insertOp.withValue(ContactsContract.RawContacts.CONTACT_ID, contactId);
+        }
+
+        ops.add(insertOp.build());
 
         // check if Peppermint group exists; create it if not
         // we could add to the default group "My Contacts" but it might not exist
@@ -526,21 +523,24 @@ public class ContactManager {
                 ContactsContract.Groups.CONTENT_URI,
                 new String[]{ContactsContract.Groups._ID},
                 ContactsContract.Groups.GROUP_VISIBLE + "=1 AND " + ContactsContract.Groups.ACCOUNT_NAME + "=" + DatabaseUtils.sqlEscapeString(googleAccountName) +
-                        " AND " + ContactsContract.Groups.TITLE + "=" + DatabaseUtils.sqlEscapeString(PEPPERMINT_GROUP_TITLE), null,
-                null
-        );
-        if(groupCursor.moveToNext()) {
-            groupId = groupCursor.getLong(groupCursor.getColumnIndex(ContactsContract.Groups._ID));
-        } else {
-            ContentValues groupValues = new ContentValues();
-            groupValues.put(ContactsContract.Groups.TITLE, PEPPERMINT_GROUP_TITLE);
-            groupValues.put(ContactsContract.Groups.GROUP_VISIBLE, 1);
-            groupValues.put(ContactsContract.Groups.ACCOUNT_NAME, googleAccountName);
-            groupValues.put(ContactsContract.Groups.ACCOUNT_TYPE, GOOGLE_ACCOUNT_TYPE);
-            Uri groupUri = context.getContentResolver().insert(ContactsContract.Groups.CONTENT_URI, groupValues);
-            groupId = ContentUris.parseId(groupUri);
+                        " AND " + ContactsContract.Groups.TITLE + "=" + DatabaseUtils.sqlEscapeString(PEPPERMINT_GROUP_TITLE), null, null);
+        try {
+            if (groupCursor != null && groupCursor.moveToNext()) {
+                groupId = groupCursor.getLong(groupCursor.getColumnIndex(ContactsContract.Groups._ID));
+            } else {
+                ContentValues groupValues = new ContentValues();
+                groupValues.put(ContactsContract.Groups.TITLE, PEPPERMINT_GROUP_TITLE);
+                groupValues.put(ContactsContract.Groups.GROUP_VISIBLE, 1);
+                groupValues.put(ContactsContract.Groups.ACCOUNT_NAME, googleAccountName);
+                groupValues.put(ContactsContract.Groups.ACCOUNT_TYPE, GOOGLE_ACCOUNT_TYPE);
+                Uri groupUri = context.getContentResolver().insert(ContactsContract.Groups.CONTENT_URI, groupValues);
+                groupId = ContentUris.parseId(groupUri);
+            }
+        } finally {
+            if (groupCursor != null) {
+                groupCursor.close();
+            }
         }
-        groupCursor.close();
 
         ops.add(ContentProviderOperation.newInsert(ContactsContract.Data.CONTENT_URI)
                 .withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0)
@@ -550,7 +550,7 @@ public class ContactManager {
         if(operationsList == null) {
             // no caller operations list, so execute the operations right away
             ContentProviderResult[] res = executeOperations(context, ops);
-            return ContentUris.parseId(res[0].uri);
+            return res != null && res.length > 0 ? ContentUris.parseId(res[0].uri) : 0;
         }
 
         return 0;
@@ -571,7 +571,7 @@ public class ContactManager {
      * @param googleAccountName the google account name to insert the contact
      * @return a {@link Bundle} with results (can be passed on to an {@link Intent}
      */
-    public static ContactRaw insert(Context context, long rawId, String firstName, String lastName, String phone, String email, Uri photoUri, String googleAccountName, boolean hasPeppermint) throws InvalidNameException, InvalidEmailException, InvalidPhoneException {
+    public static ContactRaw insert(Context context, long contactId, long rawId, String firstName, String lastName, String phone, String email, Uri photoUri, String googleAccountName, boolean hasPeppermint) throws InvalidNameException, InvalidEmailException, InvalidPhoneException {
         firstName = firstName == null ? "" : Utils.capitalizeFully(firstName.trim());
         lastName = lastName == null ? "" : Utils.capitalizeFully(lastName.trim());
         phone = phone == null ? "" : phone.trim();
@@ -581,18 +581,18 @@ public class ContactManager {
 
         // create raw contact
         if(rawId <= 0) {
-            insertRaw(context, googleAccountName, ops);
+            insertRaw(context, contactId, googleAccountName, ops);
         }
 
         if(!TextUtils.isEmpty(firstName) || !TextUtils.isEmpty(lastName)) {
             insertOrUpdateName(context, firstName, lastName, rawId, 0, ops);
         }
 
-        if(email != null && email.length() > 0) {
+        if(email.length() > 0) {
             insertEmail(context, email, rawId, 0, ops);
         }
 
-        if(phone != null && phone.length() > 0) {
+        if(phone.length() > 0) {
             insertPhone(context, phone, rawId, 0, ops);
         }
 
@@ -609,42 +609,28 @@ public class ContactManager {
         ContactRaw recipient = null;
         Cursor cursor = getByEmailOrPhone(context, email, phone, googleAccountName);
         while(cursor.moveToNext() && (recipient == null || recipient.getRawId() != rawId)) {
-            recipient = getRawContactFromCursor(cursor);
+            recipient = getRawContactFromCursor(context, cursor);
         }
         cursor.close();
 
         return recipient;
     }
 
-    /**
-     * Inserts a new contact using the global contacts content provider.<br />
-     * If rawId is supplied, will update the contact with the supplied information.<br />
-     * One of email or phone is mandatory.
-     *
-     * @param context the context
-     * @param rawId the already existent rawId (0 for a new contact)
-     * @param firstName the contact given name (mandatory one of firstName or lastName)
-     * @param lastName the contact family name
-     * @param phone the phone number
-     * @param email the email address
-     * @param photoUri the contact photo URI
-     * @param googleAccountName the google account name to insert the contact
-     * @return a {@link Bundle} with results (can be passed on to an {@link Intent}
-     */
-    public static ContactRaw insertOrUpdate(Context context, long rawId, String firstName, String lastName, String phone, String email, Uri photoUri, String googleAccountName, boolean hasPeppermint) throws InvalidPhoneException, InvalidNameException, InvalidEmailException {
+    public static ContactRaw insertOrUpdate(Context context, long contactId, long rawId, String firstName, String lastName, String phone, String email, Uri photoUri, String googleAccountName, boolean hasPeppermint) throws InvalidPhoneException, InvalidNameException, InvalidEmailException {
         // try to find the rawId by email or phone
-        if(rawId <= 0) {
+        if(rawId <= 0 || contactId <= 0) {
             Cursor cursor = getByEmailOrPhone(context, email, phone, googleAccountName);
             if(cursor.moveToNext()) {
+                contactId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data.CONTACT_ID));
                 rawId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data.RAW_CONTACT_ID));
             }
             cursor.close();
         }
 
-        return insert(context, rawId, firstName, lastName, phone, email, photoUri, googleAccountName, hasPeppermint);
+        return insert(context, contactId, rawId, firstName, lastName, phone, email, photoUri, googleAccountName, hasPeppermint);
     }
 
-    public static ContentProviderResult[] executeOperations(Context context, ArrayList<ContentProviderOperation> operations) {
+    private static ContentProviderResult[] executeOperations(Context context, ArrayList<ContentProviderOperation> operations) {
         try {
             ContentProviderResult[] res = context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, operations);
             if(res.length < operations.size()) {
@@ -658,15 +644,18 @@ public class ContactManager {
     }
 
     public static class InvalidNameException extends Exception {
+        /* nothing to add here */
     }
 
     public static class InvalidViaException extends Exception {
+        /* nothing to add here */
     }
 
     public static class InvalidEmailException extends InvalidViaException {
+        /* nothing to add here */
     }
 
     public static class InvalidPhoneException extends InvalidViaException {
+        /* nothing to add here */
     }
-
 }

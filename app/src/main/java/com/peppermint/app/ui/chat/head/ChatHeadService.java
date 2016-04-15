@@ -69,7 +69,7 @@ public class ChatHeadService extends Service {
         void enable() { refreshChatHeadController(); }
         void disable() { stopSelf(); }
         void show() { refreshChatHeadController(); }
-        boolean hide() { if(mChatHeadController != null) { return mChatHeadController.hide(); } return false; }
+        boolean hide() { return mChatHeadController != null && mChatHeadController.hide(); }
 
         void addVisibleActivity(String activityFullClassName) {
             mVisibleActivities.add(activityFullClassName);
@@ -152,7 +152,7 @@ public class ChatHeadService extends Service {
 
         mChats.clear();
         SQLiteDatabase db = DatabaseHelper.getInstance(this).getReadableDatabase();
-        Cursor chatCursor = ChatManager.getAll(db);
+        Cursor chatCursor = ChatManager.getAll(db, true);
         int i = 0;
         while(chatCursor.moveToNext() && i < ChatHeadChainView.MAX_CHAT_HEADS) {
             Chat chat = ChatManager.getChatFromCursor(db, chatCursor);

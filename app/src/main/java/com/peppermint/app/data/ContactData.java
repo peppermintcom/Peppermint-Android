@@ -9,7 +9,7 @@ import java.io.Serializable;
  *
  * Represents a {@link ContactsContract} single contact data entry.
  */
-public class Contact implements Serializable {
+public class ContactData implements Serializable {
 
     public static final String EMAIL_MIMETYPE = ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE;
     public static final String PHONE_MIMETYPE = ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE;
@@ -17,17 +17,18 @@ public class Contact implements Serializable {
     public static final String NAME_MIMETYPE = ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE;
     public static final String PEPPERMINT_MIMETYPE = "com.peppermint.app.cursor.item/contact_v1";
 
-    private long mId, mRawId;
+    private long mId, mRawId, mContactId;
     private boolean mStarred;
     private String mMimeType;
     private String mVia;
 
-    public Contact() {
+    public ContactData() {
     }
 
-    public Contact(long mId, long mRawId, boolean mStarred, String mMimeType, String mVia) {
+    public ContactData(long mId, long mRawId, long mContactId, boolean mStarred, String mMimeType, String mVia) {
         this.mId = mId;
         this.mRawId = mRawId;
+        this.mContactId = mContactId;
         this.mStarred = mStarred;
         this.mMimeType = mMimeType;
         this.mVia = mVia;
@@ -39,6 +40,14 @@ public class Contact implements Serializable {
 
     public void setId(long mId) {
         this.mId = mId;
+    }
+
+    public long getContactId() {
+        return mContactId;
+    }
+
+    public void setContactId(long mContactId) {
+        this.mContactId = mContactId;
     }
 
     public boolean isStarred() {
@@ -95,9 +104,10 @@ public class Contact implements Serializable {
 
     @Override
     public String toString() {
-        return "Contact{" +
+        return "ContactData{" +
                 "mId=" + mId +
                 ", mRawId=" + mRawId +
+                ", mContactId=" + mContactId +
                 ", mStarred=" + mStarred +
                 ", mMimeType='" + mMimeType + '\'' +
                 ", mVia='" + mVia + '\'' +

@@ -11,7 +11,6 @@ import java.io.Serializable;
 public class Recording implements Serializable {
 
     public static final String CONTENT_TYPE_AUDIO = "audio/mp4";
-    public static final String CONTENT_TYPE_VIDEO = "video/mp4";
 
     private long mId;
     private String mFilePath;

@@ -18,20 +18,20 @@ import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
-import com.peppermint.app.data.ChatRecipient;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.MessageManager;
+import com.peppermint.app.data.Recipient;
 import com.peppermint.app.events.ReceiverEvent;
 import com.peppermint.app.events.SenderEvent;
 import com.peppermint.app.events.SyncEvent;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.OverlayManager;
 import com.peppermint.app.ui.TouchInterceptable;
-import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
 import com.peppermint.app.ui.base.NavigationItem;
 import com.peppermint.app.ui.base.NavigationListAdapter;
 import com.peppermint.app.ui.base.dialogs.CustomListDialog;
+import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
@@ -39,6 +39,8 @@ import java.util.List;
 
 /**
  * Created by Nuno Luz on 04-03-2016.
+ *
+ * Controls a conversation screen.
  */
 public class ChatController extends ChatRecordOverlayController implements View.OnClickListener, View.OnLongClickListener {
 
@@ -231,7 +233,9 @@ public class ChatController extends ChatRecordOverlayController implements View.
         }
 
         mAdapter.stopAllPlayers();
-        return triggerRecording(v, mChat);
+        triggerRecording(v, mChat);
+
+        return true;
     }
 
     @Override
@@ -361,7 +365,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
         if(mChat == null) {
             return;
         }
-        ChatRecipient recipient = mChat.getRecipientList().get(0);
+        Recipient recipient = mChat.getRecipientList().get(0);
         if(recipient != null && mRecipientDataGUI != null) {
             mRecipientDataGUI.setRecipientData(recipient.getDisplayName(),
                     recipient.getVia(),
