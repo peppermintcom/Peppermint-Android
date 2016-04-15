@@ -19,6 +19,8 @@ import static junit.framework.Assert.assertNotNull;
 
 /**
  * Created by Nuno Luz on 24-02-2016.
+ *
+ * Tests for {@link RecordingManager}
  */
 @RunWith(RobolectricGradleTestRunner.class)
 @Config(constants = BuildConfig.class)
@@ -47,8 +49,9 @@ public class RecordingManagerTest {
     }
 
     public void testInsert() throws SQLException {
-        Recording recording = RecordingManager.insert(mDatabase, "file://this_is_a_file.ext", 2000, 123f, false, "2016-02-24 12:12:12", Recording.CONTENT_TYPE_AUDIO);
-        assertNotNull(recording);
+        Recording recording = new Recording("file://this_is_a_file.ext", 2000, 123f, false, Recording.CONTENT_TYPE_AUDIO);
+        recording.setRecordedTimestamp("2016-02-24 12:12:12");
+        RecordingManager.insert(mDatabase, recording);
 
         assertEquals(recording.getId(), 1);
         assertEquals(recording.getFilePath(), "file://this_is_a_file.ext");
@@ -58,8 +61,9 @@ public class RecordingManagerTest {
         assertEquals(recording.getRecordedTimestamp(), "2016-02-24 12:12:12");
         assertEquals(recording.getContentType(), Recording.CONTENT_TYPE_AUDIO);
 
-        recording = RecordingManager.insert(mDatabase, "file://this_is_a_file2.ext", 2000, 123f, false, "2016-02-24 12:12:12", Recording.CONTENT_TYPE_AUDIO);
-        assertNotNull(recording);
+        recording = new Recording("file://this_is_a_file2.ext", 2000, 123f, false, Recording.CONTENT_TYPE_AUDIO);
+        recording.setRecordedTimestamp("2016-02-24 12:12:12");
+        RecordingManager.insert(mDatabase, recording);
 
         assertEquals(recording.getId(), 2);
         assertEquals(recording.getFilePath(), "file://this_is_a_file2.ext");
@@ -85,8 +89,10 @@ public class RecordingManagerTest {
     }
 
     public void testUpdate() throws SQLException {
-        Recording recording = RecordingManager.update(mDatabase, 1, "file://this_is_a_file_update.ext", 1900, 120f, false, "2016-02-25 12:12:12", Recording.CONTENT_TYPE_AUDIO);
-        assertNotNull(recording);
+        Recording recording = new Recording("file://this_is_a_file_update.ext", 1900, 120f, false, Recording.CONTENT_TYPE_AUDIO);
+        recording.setRecordedTimestamp("2016-02-25 12:12:12");
+        recording.setId(1);
+        RecordingManager.update(mDatabase, recording);
 
         assertEquals(recording.getId(), 1);
         assertEquals(recording.getFilePath(), "file://this_is_a_file_update.ext");
@@ -111,8 +117,9 @@ public class RecordingManagerTest {
     }
 
     public void testInsertOrUpdate() throws SQLException {
-        Recording recording = RecordingManager.insertOrUpdate(mDatabase, 0, "file://this_is_a_file.ext", 1234, 12f, false, "2016-02-24 14:12:12", Recording.CONTENT_TYPE_AUDIO);
-        assertNotNull(recording);
+        Recording recording = new Recording("file://this_is_a_file.ext", 1234, 12f, false, Recording.CONTENT_TYPE_AUDIO);
+        recording.setRecordedTimestamp("2016-02-24 14:12:12");
+        RecordingManager.insertOrUpdate(mDatabase, recording);
 
         assertEquals(recording.getId(), 3);
         assertEquals(recording.getFilePath(), "file://this_is_a_file.ext");
@@ -122,8 +129,9 @@ public class RecordingManagerTest {
         assertEquals(recording.getRecordedTimestamp(), "2016-02-24 14:12:12");
         assertEquals(recording.getContentType(), Recording.CONTENT_TYPE_AUDIO);
 
-        recording = RecordingManager.insertOrUpdate(mDatabase, 1, "file://this_is_a_file1b.ext", 2000, 123f, false, "2016-02-24 12:12:12", Recording.CONTENT_TYPE_AUDIO);
-        assertNotNull(recording);
+        recording = new Recording("file://this_is_a_file1b.ext", 2000, 123f, false, Recording.CONTENT_TYPE_AUDIO);
+        recording.setRecordedTimestamp("2016-02-24 12:12:12");
+        RecordingManager.insertOrUpdate(mDatabase, recording);
 
         assertEquals(recording.getId(), 1);
         assertEquals(recording.getFilePath(), "file://this_is_a_file1b.ext");

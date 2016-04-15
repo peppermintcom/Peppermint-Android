@@ -11,16 +11,17 @@ import android.widget.CursorAdapter;
 import com.peppermint.app.R;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
-import com.peppermint.app.data.ChatRecipient;
+import com.peppermint.app.data.ContactData;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.MessageManager;
+import com.peppermint.app.data.Recipient;
 import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.base.views.CustomFontTextView;
+import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.utils.DateContainer;
 
 import java.text.ParseException;
-import java.util.Set;
+import java.util.Map;
 import java.util.TimeZone;
 
 /**
@@ -33,12 +34,11 @@ public class ChatCursorAdapter extends CursorAdapter {
     private Context mContext;
     private DatabaseHelper mDatabaseHelper;
     private TrackerManager mTrackerManager;
-    private Set<Long> mPeppermintSet;
+    private Map<Long, ContactData> mPeppermintContacts;
 
-    public ChatCursorAdapter(Context context, Cursor cursor, Set<Long> peppermintSet, TrackerManager mTrackerManager) {
+    public ChatCursorAdapter(Context context, Cursor cursor, TrackerManager mTrackerManager) {
         super(context, cursor, 0);
         this.mContext = context;
-        this.mPeppermintSet = peppermintSet;
         this.mTrackerManager = mTrackerManager;
         this.mDatabaseHelper = DatabaseHelper.getInstance(context);
     }
@@ -57,7 +57,7 @@ public class ChatCursorAdapter extends CursorAdapter {
             return;
         }
 
-        ChatRecipient recipient = chat.getRecipientList().get(0);
+        Recipient recipient = chat.getRecipientList().get(0);
 
         AnimatedAvatarView imgPhoto = (AnimatedAvatarView) view.findViewById(R.id.imgPhoto);
         CustomFontTextView txtName = (CustomFontTextView) view.findViewById(R.id.txtName);
@@ -72,7 +72,8 @@ public class ChatCursorAdapter extends CursorAdapter {
 
         if(recipient != null) {
             txtName.setText(recipient.getDisplayName());
-            if(mPeppermintSet != null && mPeppermintSet.contains(recipient.getRawContactId())) {
+            boolean isPeppermint = mPeppermintContacts != null && mPeppermintContacts.containsKey(recipient.getDroidContactId());
+            if(isPeppermint) {
                 txtContact.setText(R.string.app_name);
             } else {
                 txtContact.setText(recipient.getVia());
@@ -113,11 +114,7 @@ public class ChatCursorAdapter extends CursorAdapter {
         return getChat(cursor);
     }
 
-    public Set<Long> getPeppermintSet() {
-        return mPeppermintSet;
-    }
-
-    public synchronized void setPeppermintSet(Set<Long> mPeppermintSet) {
-        this.mPeppermintSet = mPeppermintSet;
+    public synchronized void setPeppermintContacts(Map<Long, ContactData> mPeppermintContacts) {
+        this.mPeppermintContacts = mPeppermintContacts;
     }
 }

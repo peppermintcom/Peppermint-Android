@@ -323,10 +323,10 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
         String phone = mTxtPhone.getText().toString().trim();
         String email = mTxtMail.getText().toString().trim();
 
-        ContactRaw recipient = null;
+        ContactRaw recipient;
 
         try {
-            if((recipient = ContactManager.insert(this, rawId, firstName, lastName, phone, email, mAvatarUrl, authData.getEmail(), false)) == null) {
+            if((recipient = ContactManager.insert(this, 0, rawId, firstName, lastName, phone, email, mAvatarUrl, authData.getEmail(), false)) == null) {
                 Toast.makeText(this, R.string.msg_unable_addcontact, Toast.LENGTH_LONG).show();
                 return;
             }
@@ -345,7 +345,7 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
         try {
             GlobalManager.insertOrUpdateTimestampChatAndRecipient(this,
                     DatabaseHelper.getInstance(this).getWritableDatabase(),
-                    recipient, DateContainer.getCurrentUTCTimestamp());
+                    DateContainer.getCurrentUTCTimestamp(), recipient);
         } catch (SQLException e) {
             mTrackerManager.log("Unable to set new contact as recent contact!", e);
         }

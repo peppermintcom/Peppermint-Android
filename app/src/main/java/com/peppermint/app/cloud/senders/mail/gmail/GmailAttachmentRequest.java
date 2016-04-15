@@ -37,7 +37,8 @@ public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
     private static final String ENDPOINT = "https://www.googleapis.com/gmail/v1/users/me/drafts";
 
     protected File mFile;
-    protected String mSenderMail, mSenderName, mRecipientMail, mSubject, mBodyPlain, mBodyHtml, mContentType;
+    protected String mSenderMail, mSenderName, mSubject, mBodyPlain, mBodyHtml, mContentType;
+    protected String[] mRecipientMail;
     protected Date mTimestamp;
 
     /**
@@ -57,8 +58,9 @@ public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
         this.mTimestamp = req.mTimestamp;
     }
 
-    public GmailAttachmentRequest(File file, String senderMail, String senderName, String recipientMail,
-                                  String subject, String bodyPlain, String bodyHtml, String contentType, Date timestamp) {
+    public GmailAttachmentRequest(File file, String senderMail, String senderName,
+                                  String subject, String bodyPlain, String bodyHtml,
+                                  String contentType, Date timestamp, String... recipientMail) {
 
         super(ENDPOINT, HttpRequest.METHOD_POST, false);
 
@@ -89,23 +91,27 @@ public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
      * @return the MimeMessage to be used to send email.
      * @throws MessagingException
      */
-    private static MimeMessage createEmailWithAttachment(String to, String from, String fromName, String subject,
-                                                         String bodyPlainText, String bodyHtmlText, String fileDir, String filename, String contentType, Date dateSent) throws IOException, MessagingException {
-        Properties props = new Properties();
-        Session session = Session.getDefaultInstance(props, null);
+    private static MimeMessage createEmailWithAttachment(String from, String fromName, String subject,
+                                                         String bodyPlainText, String bodyHtmlText, String fileDir, String filename, String contentType, Date dateSent, String... to) throws IOException, MessagingException {
+        final Properties props = new Properties();
+        final Session session = Session.getDefaultInstance(props, null);
 
-        MimeMessage email = new MimeMessage(session);
-        InternetAddress tAddress = new InternetAddress(to);
-        InternetAddress fAddress = new InternetAddress(from, fromName);
+        final MimeMessage email = new MimeMessage(session);
 
+        final InternetAddress fAddress = new InternetAddress(from, fromName);
         email.setFrom(fAddress);
-        email.addRecipient(javax.mail.Message.RecipientType.TO, tAddress);
+
+        for(String toString : to) {
+            final InternetAddress tAddress = new InternetAddress(toString);
+            email.addRecipient(javax.mail.Message.RecipientType.TO, tAddress);
+        }
+
         email.setSubject(subject);
         email.setSentDate(dateSent);
 
-        Multipart multipartMixed = new MimeMultipart("mixed");
+        final Multipart multipartMixed = new MimeMultipart("mixed");
 
-            MimeBodyPart mixedPart = new MimeBodyPart();
+            final MimeBodyPart mixedPart = new MimeBodyPart();
             Multipart multipart = new MimeMultipart("alternative");
             mixedPart.setContent(multipart);
 
@@ -150,14 +156,13 @@ public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
 
     public void writeBody(OutputStream outStream) throws IOException {
 
-        MimeMessage email = null;
+        MimeMessage email;
         try {
-            email = createEmailWithAttachment(mRecipientMail,
-                    mSenderMail, mSenderName,
+            email = createEmailWithAttachment(mSenderMail, mSenderName,
                     mSubject, mBodyPlain, mBodyHtml,
                     mFile.getParent(), mFile.getName(),
                     mContentType,
-                    mTimestamp);
+                    mTimestamp, mRecipientMail);
         } catch (MessagingException e) {
             throw new IOException(e);
         }
@@ -189,7 +194,8 @@ public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
         out.writeString(mFile.getAbsolutePath());
         out.writeString(mSenderMail);
         out.writeString(mSenderName);
-        out.writeString(mRecipientMail);
+        out.writeInt(mRecipientMail == null ? -1 : mRecipientMail.length);
+        out.writeArray(mRecipientMail);
         out.writeString(mSubject);
         out.writeString(mBodyPlain);
         out.writeString(mBodyHtml);
@@ -209,7 +215,11 @@ public class GmailAttachmentRequest extends HttpRequest implements Parcelable {
         mFile = new File(in.readString());
         mSenderMail = in.readString();
         mSenderName = in.readString();
-        mRecipientMail = in.readString();
+        int size = in.readInt();
+        if(size >= 0) {
+            mRecipientMail = new String[size];
+            in.readStringArray(mRecipientMail);
+        }
         mSubject = in.readString();
         mBodyPlain = in.readString();
         mBodyHtml = in.readString();

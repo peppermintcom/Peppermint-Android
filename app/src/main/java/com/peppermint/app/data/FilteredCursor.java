@@ -7,7 +7,6 @@ import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -24,50 +23,18 @@ import java.util.List;
  */
 public class FilteredCursor implements Cursor {
 
-    public interface FilterCallback {
-        void done(FilteredCursor cursor);
-    }
-
-    private class FilterTask extends AsyncTask<Void, Void, Void> {
-        private Filter mFilter;
-        private FilterCallback mDoneCallback;
-
-        public FilterTask(Filter filter, FilterCallback doneCallback) {
-            this.mFilter = filter;
-            this.mDoneCallback = doneCallback;
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            filter(mFilter);
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            if(mDoneCallback != null) {
-                mDoneCallback.done(FilteredCursor.this);
-            }
-        }
-    }
-
     public interface Filter {
         boolean isValid(Cursor cursor);
     }
 
-    private Cursor mCursor;
-    private List<Integer> mFilterList;
+    protected Cursor mCursor;
+    protected List<Integer> mFilterList;
     private int mPos = -1;
     private Filter mFilter;
 
     public FilteredCursor(Cursor cursor) {
         this.mFilterList = new ArrayList<>();
         this.mCursor = cursor;
-    }
-
-    public FilteredCursor(Cursor cursor, Filter filter) {
-        this(cursor);
-        this.mFilter = filter;
     }
 
     public void filter() {
@@ -86,14 +53,6 @@ public class FilteredCursor implements Cursor {
             }
         }
         mCursor.moveToPosition(-1);
-    }
-
-    public void filterAsync(FilterCallback doneCallback) {
-        filterAsync(mFilter, doneCallback);
-    }
-
-    public void filterAsync(Filter filter, FilterCallback doneCallback) {
-        new FilterTask(filter, doneCallback).execute();
     }
 
     @Override
@@ -337,14 +296,6 @@ public class FilteredCursor implements Cursor {
 
     public Cursor getOriginalCursor() {
         return mCursor;
-    }
-
-    public List<Integer> getFilterList() {
-        return mFilterList;
-    }
-
-    public void setFilterList(List<Integer> mFilterList) {
-        this.mFilterList = mFilterList;
     }
 
     public Filter getFilter() {

@@ -3,6 +3,7 @@ package com.peppermint.app.data;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import com.peppermint.app.utils.Utils;
 
@@ -16,6 +17,8 @@ import java.util.List;
  * Database operations for {@link Message}
  */
 public class MessageManager {
+
+    private static final String TAG = MessageManager.class.getSimpleName();
 
     /**
      * Gets the message data inside the Cursor's current position and puts it in an instance
@@ -48,70 +51,33 @@ public class MessageManager {
         message.setReceived(cursor.getInt(cursor.getColumnIndex("received")) > 0);
         message.setPlayed(cursor.getInt(cursor.getColumnIndex("played")) > 0);
 
-        message.setParameter(Message.PARAM_SENT_INAPP, cursor.getInt(cursor.getColumnIndex("sent_inapp")) > 0);
-
         if(db != null) {
             message.setRecordingParameter(RecordingManager.getRecordingById(db, message.getRecordingId()));
             message.setChatParameter(ChatManager.getChatById(db, message.getChatId()));
+
+            Cursor recipientIdCursor = db.rawQuery("SELECT * FROM tbl_message_recipient WHERE message_id = " + message.getId() + ";", null);
+            while(recipientIdCursor.moveToNext()) {
+                long recipientId = recipientIdCursor.getLong(recipientIdCursor.getColumnIndex("recipient_id"));
+                boolean sent = recipientIdCursor.getInt(recipientIdCursor.getColumnIndex("sent")) > 0;
+                message.addRecipientId(recipientId);
+                if(sent) {
+                    message.addConfirmedSentRecipientId(recipientId);
+                }
+            }
+            recipientIdCursor.close();
         }
 
-        return message;
-    }
-
-    /**
-     * Obtains the message cursor with the supplied id or server id from the database.
-     *
-     * @param db the local database connection
-     * @param messageId the message id
-     * @param serverId the message server id
-     * @return the cursor instance with all data
-     */
-    public static Cursor getByIdOrServerId(SQLiteDatabase db, long messageId, String serverId) {
-        String where = Utils.joinString(" OR ", messageId > 0 ? "message_id = " + messageId : null, serverId != null ? "server_message_id = ?" : null);
-        return db.rawQuery("SELECT * FROM tbl_message WHERE " + where + ";", serverId != null ? new String[]{serverId} : null);
-    }
-
-    /**
-     * Obtains the message with the supplied id or server id from the database.
-     *
-     * @param db the local database connection
-     * @param messageId the message id
-     * @param serverId the message server id
-     * @return the message instance with all data
-     */
-    public static Message getMessageByIdOrServerId(SQLiteDatabase db, long messageId, String serverId) {
-        Message message = null;
-        Cursor cursor = getByIdOrServerId(db, messageId, serverId);
-        if(cursor.moveToFirst()) {
-            message = getFromCursor(db, cursor);
-        }
-        cursor.close();
         return message;
     }
 
     public static Cursor getByChatId(SQLiteDatabase db, long chatId) {
-        return db.rawQuery("SELECT tbl_message.*,tbl_message.message_id AS _id FROM tbl_message WHERE chat_id = " + chatId + " ORDER BY registration_ts ASC", null);
+        return db.rawQuery("SELECT v_message.*, v_message.message_id AS _id FROM v_message WHERE v_message.merged_chat_id = " + chatId +
+                " ORDER BY registration_ts ASC", null);
     }
 
-    /**
-     * Obtains the cursor with all queued messages stored in the local database.
-     *
-     * @param db the local database connection
-     * @return the cursor with all queued messages
-     */
-    public static Cursor getQueued(SQLiteDatabase db) {
-        return db.rawQuery("SELECT * FROM tbl_message WHERE sent <= 0 AND received <= 0 ORDER BY registration_ts ASC", null);
-    }
-
-    /**
-     * Obtains a list with all queued messages stored in the local database.
-     *
-     * @param db the database connection
-     * @return the list of all queued messages
-     */
     public static List<Message> getMessagesQueued(SQLiteDatabase db) {
         List<Message> list = new ArrayList<>();
-        Cursor cursor = getQueued(db);
+        Cursor cursor = db.rawQuery("SELECT * FROM tbl_message WHERE sent <= 0 AND received <= 0 ORDER BY registration_ts ASC", null);
         if(cursor.moveToFirst()) {
             do {
                 Message message = getFromCursor(db, cursor);
@@ -122,9 +88,24 @@ public class MessageManager {
         return list;
     }
 
+    public static Message getMessageByIdOrServerId(SQLiteDatabase db, long messageId, String serverId) {
+        Message message = null;
+
+        String where = Utils.joinString(" OR ", messageId > 0 ? "message_id = " + messageId : null, serverId != null ? "server_message_id = ?" : null);
+        Cursor cursor = db.rawQuery("SELECT * FROM tbl_message WHERE " + where + ";", serverId != null ? new String[]{serverId} : null);
+        if(cursor.moveToFirst()) {
+            message = getFromCursor(db, cursor);
+        }
+        cursor.close();
+
+        return message;
+    }
+
     public static int getUnopenedCountByChat(SQLiteDatabase db, long chatId) {
         int count = 0;
-        Cursor cursor = db.rawQuery("select count(*) from tbl_message where played <= 0 AND received >= 1 AND chat_id = " + chatId, null);
+
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM v_message WHERE v_message.chat_id = " + chatId +
+            " AND played <= 0 AND received >= 1", null);
         if(cursor.moveToFirst()) {
             count = cursor.getInt(0);
         }
@@ -134,7 +115,8 @@ public class MessageManager {
 
     public static long getLastAutoPlayMessageIdByChat(SQLiteDatabase db, long chatId) {
         long id = 0;
-        Cursor cursor = db.rawQuery("select * from tbl_message where chat_id = " + chatId + " ORDER BY registration_ts DESC", null);
+        Cursor cursor = db.rawQuery("SELECT * FROM v_message WHERE v_message.chat_id = " + chatId +
+                " ORDER BY registration_ts DESC", null);
         if(cursor.moveToNext()) {
             boolean received = cursor.getInt(cursor.getColumnIndex("received")) > 0;
             boolean played = cursor.getInt(cursor.getColumnIndex("played")) > 0;
@@ -146,199 +128,178 @@ public class MessageManager {
         return id;
     }
 
-    /**
-     * Inserts the supplied message into the supplied local database.
-     *
-     * @param db the local database connection
-     * @param chatId the message's chat id
-     * @param authorId the message's author id
-     * @param recordingId the message's recording id
-     * @param serverId the message's server id
-     * @param shortUrl the message's short URL
-     * @param canonicalUrl the message's canonical URL
-     * @param transcription the message's transcription URL
-     * @param emailSubject the message's email subject
-     * @param emailBody the message's email body
-     * @param registrationTimestamp the message's registration timestamp
-     * @param sent if the message has been sent
-     * @param received if the message has been received
-     * @param played if the message has been played
-     * @throws SQLException
-     */
-    public static Message insert(SQLiteDatabase db, long chatId, long authorId, long recordingId,
-                                 String serverId, String shortUrl, String canonicalUrl, String transcription,
-                                 String emailSubject, String emailBody,
-                                 String registrationTimestamp,
-                                 boolean sent, boolean received, boolean played) throws SQLException {
+    // OPERATIONS
+    private static void deassociateRecipients(SQLiteDatabase db, long messageId) {
+        db.delete("tbl_message_recipient", "message_id = " + messageId, null);
+    }
 
+    private static void associateRecipients(SQLiteDatabase db, long messageId, List<Long> recipientIds, List<Long> confirmedSentRecipientIds) throws SQLException {
+        if(recipientIds == null) {
+            return;
+        }
+
+        db.beginTransaction();
+        try {
+            for (long recipientId : recipientIds) {
+                if(recipientId <= 0) {
+                    throw new IllegalArgumentException("Recipient Id " + recipientId + " is not valid!");
+                }
+
+                ContentValues cv = new ContentValues();
+                cv.put("message_id", messageId);
+                cv.put("recipient_id", recipientId);
+                cv.put("sent", confirmedSentRecipientIds != null && confirmedSentRecipientIds.contains(recipientId) ? 1 : 0);
+
+                long id = db.insert("tbl_message_recipient", null, cv);
+                if (id < 0) {
+                    throw new SQLException("Unable to associate message with recipient!");
+                }
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    public static Message insert(SQLiteDatabase db, Message message) throws SQLException {
+
+        // setup content values
         ContentValues cv = new ContentValues();
 
-        cv.put("email_subject", emailSubject);
-        cv.put("email_body", emailBody);
+        cv.put("email_subject", message.getEmailSubject());
+        cv.put("email_body", message.getEmailBody());
 
-        if(chatId > 0) {
-            cv.put("chat_id", chatId);
+        if(message.getChatId() > 0) {
+            cv.put("chat_id", message.getChatId());
         }
-        if(authorId > 0) {
-            cv.put("author_id", authorId);
+        if(message.getAuthorId() > 0) {
+            cv.put("author_id", message.getAuthorId());
         }
-        if(recordingId > 0) {
-            cv.put("recording_id", recordingId);
-        }
-
-        cv.put("server_message_id", serverId);
-        cv.put("server_short_url", shortUrl);
-        cv.put("server_canonical_url", canonicalUrl);
-        cv.put("transcription", transcription);
-        cv.put("registration_ts", registrationTimestamp);
-
-        cv.put("sent", sent ? 1 : 0);
-        cv.put("received", received ? 1 : 0);
-        cv.put("played", played ? 1 : 0);
-
-        long id = db.insert("tbl_message", null, cv);
-        if(id < 0) {
-            throw new SQLException("Unable to insert message!");
+        if(message.getRecordingId() > 0) {
+            cv.put("recording_id", message.getRecordingId());
         }
 
-        Message message = new Message(id, chatId, recordingId, authorId, emailSubject, emailBody,
-                registrationTimestamp, received, sent, played, serverId, canonicalUrl,
-                shortUrl, transcription);
+        cv.put("server_message_id", message.getServerId());
+        cv.put("server_short_url", message.getServerShortUrl());
+        cv.put("server_canonical_url", message.getServerCanonicalUrl());
+        cv.put("transcription", message.getTranscription());
+        cv.put("registration_ts", message.getRegistrationTimestamp());
+
+        cv.put("sent", message.isSent() ? 1 : 0);
+        cv.put("received", message.isReceived() ? 1 : 0);
+        cv.put("played", message.isPlayed() ? 1 : 0);
+
+        db.beginTransaction();
+
+        long id = -1;
+        try {
+            id = db.insert("tbl_message", null, cv);
+            if (id < 0) {
+                throw new SQLException("Unable to insert message!");
+            }
+
+            associateRecipients(db, id, message.getRecipientIds(), message.getConfirmedSentRecipientIds());
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+
+        message.setId(id);
         message.setParameter(Message.PARAM_INSERTED, true);
+
+        Log.d(TAG, "INSERTED " + message);
+
         return message;
     }
 
-    /**
-     * Updates the supplied message data (UUID must be supplied).
-     * An SQLException is thrown if the message UUID does not exist in the database.
-     *
-     * @param db the local database connection
-     * @param messageId the message id
-     * @param chatId the message's chat id
-     * @param authorId the message's author id
-     * @param recordingId the message's recording id
-     * @param serverId the message's server id
-     * @param shortUrl the message's short URL
-     * @param canonicalUrl the message's canonical URL
-     * @param transcription the message's transcription URL
-     * @param emailSubject the message's email subject
-     * @param emailBody the message's email body
-     * @param registrationTimestamp the message's registration timestamp
-     * @param sent if the message has been sent
-     * @param received if the message has been received
-     * @param played if the message has been played
-     * @throws SQLException
-     */
-    public static Message update(SQLiteDatabase db, long messageId, long chatId, long authorId, long recordingId,
-                              String serverId, String shortUrl, String canonicalUrl, String transcription,
-                              String emailSubject, String emailBody,
-                              String registrationTimestamp,
-                              boolean sent, boolean received, boolean played, boolean sentInApp) throws SQLException {
+    public static Message update(SQLiteDatabase db, Message message) throws SQLException {
+        if(message.getId() <= 0) {
+            throw new IllegalArgumentException("Message Id must be supplied!");
+        }
+
         ContentValues cv = new ContentValues();
 
-        cv.put("email_subject", emailSubject);
-        cv.put("email_body", emailBody);
+        cv.put("email_subject", message.getEmailSubject());
+        cv.put("email_body", message.getEmailBody());
 
-        if(chatId > 0) {
-            cv.put("chat_id", chatId);
+        if(message.getChatId() > 0) {
+            cv.put("chat_id", message.getChatId());
+        }
+        if(message.getAuthorId() > 0) {
+            cv.put("author_id", message.getAuthorId());
+        }
+        if(message.getRecordingId() > 0) {
+            cv.put("recording_id", message.getRecordingId());
         }
 
-        if(authorId > 0) {
-            cv.put("author_id", authorId);
+        cv.put("server_message_id", message.getServerId());
+        cv.put("server_short_url", message.getServerShortUrl());
+        cv.put("server_canonical_url", message.getServerCanonicalUrl());
+        cv.put("transcription", message.getTranscription());
+        cv.put("registration_ts", message.getRegistrationTimestamp());
+
+        cv.put("sent", message.isSent() ? 1 : 0);
+        cv.put("received", message.isReceived() ? 1 : 0);
+        cv.put("played", message.isPlayed() ? 1 : 0);
+
+        db.beginTransaction();
+
+        try {
+            long id = db.update("tbl_message", cv, "message_id = " + message.getId(), null);
+            if(id < 0) {
+                throw new SQLException("Unable to update message!");
+            }
+
+            deassociateRecipients(db, id);
+            associateRecipients(db, id, message.getRecipientIds(), message.getConfirmedSentRecipientIds());
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
         }
 
-        if(recordingId > 0) {
-            cv.put("recording_id", recordingId);
-        }
+        Log.d(TAG, "UPDATED " + message);
 
-        cv.put("server_message_id", serverId);
-        cv.put("server_short_url", shortUrl);
-        cv.put("server_canonical_url", canonicalUrl);
-        cv.put("transcription", transcription);
-        cv.put("registration_ts", registrationTimestamp);
-
-        cv.put("sent", sent ? 1 : 0);
-        cv.put("received", received ? 1 : 0);
-        cv.put("played", played ? 1 : 0);
-        cv.put("sent_inapp", sentInApp ? 1 : 0);
-
-        long id = db.update("tbl_message", cv, "message_id = " + messageId, null);
-        if(id < 0) {
-            throw new SQLException("Unable to update message!");
-        }
-
-        return new Message(messageId, chatId, recordingId, authorId, emailSubject, emailBody,
-                registrationTimestamp, received, sent, played, serverId, canonicalUrl,
-                shortUrl, transcription);
+        return message;
     }
 
-    /**
-     * If a message id is supplied it performs an update, otherwise, it inserts the message.
-     *
-     * @param db the local database connection
-     * @param messageId the message id
-     * @param chatId the message's chat id
-     * @param authorId the message's author id
-     * @param recordingId the message's recording id
-     * @param serverId the message's server id
-     * @param shortUrl the message's short URL
-     * @param canonicalUrl the message's canonical URL
-     * @param transcription the message's transcription
-     * @param emailSubject the message's email subject
-     * @param emailBody the message's email body
-     * @param registrationTimestamp the message's registration timestamp
-     * @param sent if the message has been sent
-     * @param received if the message has been received
-     * @param played if the message has been played
-     * @throws SQLException
-     */
-    public static Message insertOrUpdate(SQLiteDatabase db, long messageId, long chatId, long authorId, long recordingId,
-                                      String serverId, String shortUrl, String canonicalUrl, String transcription,
-                                      String emailSubject, String emailBody,
-                                      String registrationTimestamp,
-                                      boolean sent, boolean received, boolean played, boolean sentInApp) throws  SQLException {
-
-        Message foundMessage = null;
-        if(messageId > 0 || serverId != null) {
-            foundMessage = getMessageByIdOrServerId(db, messageId, serverId);
-        }
-
-        if(foundMessage == null) {
-            return insert(db, chatId, authorId, recordingId, serverId, shortUrl, canonicalUrl,
-                    transcription, emailSubject, emailBody, registrationTimestamp, sent, received, played);
-        }
-
-        return update(db, foundMessage.getId(), chatId, authorId, recordingId, serverId, shortUrl, canonicalUrl,
-                transcription, emailSubject, emailBody, registrationTimestamp, sent, received, played, sentInApp);
-    }
-
-    /**
-     * Deletes the supplied message data (id must be supplied).
-     * An SQLException is thrown if the message id does not exist in the database.
-     *
-     * @param db the local database connection
-     * @param messageId the message id
-     * @throws SQLException
-     */
     public static long delete(SQLiteDatabase db, long messageId) throws SQLException {
-        long retId = db.delete("tbl_message", "message_id = " + messageId, null);
-        if(retId < 0) {
-            throw new SQLException("Unable to delete message!");
+        db.beginTransaction();
+
+        long retId = -1;
+        try {
+            retId = db.delete("tbl_message", "message_id = " + messageId, null);
+            if(retId < 0) {
+                throw new SQLException("Unable to delete message!");
+            }
+
+            deassociateRecipients(db, messageId);
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
         }
+
+        Log.d(TAG, "DELETED MessageId " + messageId);
+
         return retId;
     }
 
-    /**
-     * Deletes all messages belonging to the chat with the supplied chat id.
-     *
-     * @param db the local database connection
-     * @param chatId the chat id
-     * @throws SQLException
-     */
     public static void deleteByChat(SQLiteDatabase db, long chatId) throws SQLException {
-        long id = db.delete("tbl_message", "chat_id = " + chatId, null);
-        if(id < 0) {
-            throw new SQLException("Unable to delete messages!");
+        db.beginTransaction();
+
+        try {
+            db.execSQL("DELETE FROM tbl_message_recipient WHERE message_id IN (SELECT message_id FROM tbl_message WHERE chat_id = " + chatId + ")");
+
+            long id = db.delete("tbl_message", "chat_id = " + chatId, null);
+            if(id < 0) {
+                throw new SQLException("Unable to delete messages!");
+            }
+
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
         }
     }
 

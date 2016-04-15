@@ -12,22 +12,19 @@ import android.widget.TextView;
 import com.peppermint.app.R;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
-import com.peppermint.app.data.ChatRecipient;
 import com.peppermint.app.data.ContactManager;
 import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.MessageManager;
 import com.peppermint.app.data.PeppermintFilteredCursor;
 import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.base.views.CustomFontTextView;
+import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.utils.DateContainer;
 
 import java.text.ParseException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.TimeZone;
 
 /**
@@ -45,8 +42,8 @@ public class ContactCursorAdapter extends CursorAdapter {
     public ContactCursorAdapter(Context context, Cursor cursor) {
         super(context, cursor, 0);
         this.mTrackerManager = TrackerManager.getInstance(context.getApplicationContext());
-        this.mContext = context;
         this.mDatabaseHelper = DatabaseHelper.getInstance(context);
+        this.mContext = context;
     }
 
     @Override
@@ -56,7 +53,9 @@ public class ContactCursorAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View v, Context context, Cursor cursor) {
-        ContactRaw rawContact = ContactManager.getRawContactFromCursor(cursor);
+        ContactRaw rawContact = cursor instanceof PeppermintFilteredCursor ?
+                ((PeppermintFilteredCursor) cursor).getContactRaw() :
+                 ContactManager.getRawContactFromCursor(context, cursor);
 
         AnimatedAvatarView imgPhoto = (AnimatedAvatarView) v.findViewById(R.id.imgPhoto);
         TextView txtName = (TextView) v.findViewById(R.id.txtName);
@@ -70,17 +69,18 @@ public class ContactCursorAdapter extends CursorAdapter {
         }
 
         if(rawContact != null) {
-            txtName.setText(rawContact.getDisplayName());
-            if(isPeppermintContact(cursor, rawContact.getRawId())) {
-                txtContact.setText(R.string.app_name);
-            } else {
-                txtContact.setText(rawContact.getEmail() != null ? rawContact.getEmail().getVia() : rawContact.getPhone().getVia());
-            }
 
-            Chat chat = getRecipientChat(cursor, rawContact);
+            txtName.setText(rawContact.getDisplayName());
+            if(rawContact.getPeppermint() != null) {
+                txtContact.setText(mContext.getString(R.string.app_name));
+            } else {
+                txtContact.setText(rawContact.getMainDataVia());
+            }
 
             CustomFontTextView txtUnreadMessages = (CustomFontTextView) v.findViewById(R.id.txtUnreadMessages);
             CustomFontTextView txtLastMessageDate = (CustomFontTextView) v.findViewById(R.id.txtLastMessageDate);
+
+            Chat chat = getContactRawChat(rawContact);
 
             if(chat != null && chat.getLastMessageTimestamp() != null) {
                 try {
@@ -108,48 +108,23 @@ public class ContactCursorAdapter extends CursorAdapter {
         }
     }
 
-    public ContactRaw getRecipient(int position) {
+    public ContactRaw getContactRaw(int position) {
         Cursor cursor = (Cursor) getItem(position);
-        return ContactManager.getRawContactFromCursor(cursor);
+        return (cursor instanceof PeppermintFilteredCursor ? ((PeppermintFilteredCursor) cursor).getContactRaw() : ContactManager.getRawContactFromCursor(mContext, cursor));
     }
 
-    protected Chat getRecipientChat(Cursor cursor, ContactRaw rawContact) {
-        Set<Long> contactIdSet = getMergedContactIds(cursor, rawContact);
-        for(Long id : contactIdSet) {
-            Chat chat = null;
-            if(!mChats.containsKey(id)) {
-                ChatRecipient recipient = new ChatRecipient();
-                recipient.setContactId(id);
-                chat = ChatManager.getChatByRecipients(mDatabaseHelper.getReadableDatabase(), recipient);
-                mChats.put(id, chat);
-            } else {
-                chat = mChats.get(id);
-            }
-
+    protected Chat getContactRawChat(ContactRaw rawContact) {
+        long id = rawContact.getMainDataId();
+        Chat chat;
+        if(!mChats.containsKey(id)) {
+            chat = ChatManager.getMainChatByDroidContactId(mDatabaseHelper.getReadableDatabase(), rawContact.getContactId());
             if(chat != null) {
-                return chat;
+                mChats.put(id, chat);
             }
-        }
-        return null;
-    }
-
-    protected Set<Long> getMergedContactIds(Cursor cursor, ContactRaw recipient) {
-        Set<Long> set = new HashSet<>();
-
-        if(isPeppermintContact(cursor, recipient.getRawId())) {
-            Set<Long> tmpSet = ((PeppermintFilteredCursor) cursor).getPeppermintMergedContactIds(recipient.getRawId());
-            if(tmpSet != null) {
-                set.addAll(tmpSet);
-            }
-        } else {
-            set.add(recipient.getEmailOrPhoneContactId());
+            return chat;
         }
 
-        return set;
-    }
-
-    public boolean isPeppermintContact(Cursor cursor, long rawId) {
-        return cursor instanceof PeppermintFilteredCursor && ((PeppermintFilteredCursor) cursor).getPeppermintContact(rawId) != null;
+        return mChats.get(id);
     }
 
     @Override

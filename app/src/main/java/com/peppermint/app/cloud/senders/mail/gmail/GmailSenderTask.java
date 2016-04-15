@@ -15,6 +15,7 @@ import com.peppermint.app.cloud.senders.SenderUploadTask;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.cloud.senders.exceptions.TryAgainException;
 import com.peppermint.app.cloud.senders.mail.MailUtils;
+import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.utils.DateContainer;
 
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by Nuno Luz on 08-09-2015.
@@ -81,10 +83,17 @@ public class GmailSenderTask extends SenderUploadTask {
                 getTrackerManager().logException(e);
             }
 
-            String recipientEmail = getMessage().getChatParameter().getRecipientList().get(0).getVia();
+            final List<Recipient> chatRecipientList = getMessage().getChatParameter().getRecipientList();
+            final int chatRecipientListSize = chatRecipientList.size();
+            String[] recipientEmails = new String[chatRecipientListSize];
+            for(int i=0; i<chatRecipientListSize; i++) {
+                recipientEmails[i] = chatRecipientList.get(i).getVia();
+            }
+
             try {
-                GoogleApi.DraftResponse response = googleApi.createGmailDraft(getMessage().getEmailSubject(), bodyPlain, bodyHtml, recipientEmail,
-                        getMessage().getRecordingParameter().getContentType(), emailDate, file);
+                GoogleApi.DraftResponse response = googleApi.createGmailDraft(getMessage().getEmailSubject(),
+                        bodyPlain, bodyHtml, recipientEmails, getMessage().getRecordingParameter().getContentType(),
+                        emailDate, file);
                 draft = (Draft) response.getBody();
 
                 getTrackerManager().log("Gmail # Created Draft at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");

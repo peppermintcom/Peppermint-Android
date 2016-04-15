@@ -1,8 +1,10 @@
 package com.peppermint.app.data;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import com.peppermint.app.R;
 import com.peppermint.app.cloud.senders.SenderPreferences;
@@ -39,9 +41,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static DatabaseHelper INSTANCE;
 
 	private static final String TAG = DatabaseHelper.class.getSimpleName();
-	
 	private static final String DATABASE_NAME = "peppermint.db";        // database filename
-	private static final int DATABASE_VERSION = 16;                     // database version
+	private static final int DATABASE_VERSION = 17;                     // database version
 
 	private Context mContext;
     private ReentrantLock mLock = new ReentrantLock();
@@ -56,11 +57,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     public void unlock() {
-        mLock.unlock();
-    }
-
-    public boolean tryLock() {
-        return mLock.tryLock();
+		mLock.unlock();
     }
 
     /**
@@ -123,6 +120,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	@Override
     public void onUpgrade(SQLiteDatabase _db, int _oldVersion, int _newVersion) {
 		if(_oldVersion < 15) {
+            Log.d(TAG, "Updating Database: v15 Reset...");
+
             dropAll(_db);
             onCreate(_db);
 
@@ -147,27 +146,60 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 			calendar.add(Calendar.MINUTE, -1);
 
 			for (Long contactId : contactIds) {
-                ChatRecipient recipient = new ChatRecipient();
-                recipient.setContactId(contactId);
-				Chat chat = ChatManager.getChatByRecipients(_db, recipient);
-				if(chat == null) {
-					ContactRaw rawContact = ContactManager.getRawContactByContactId(mContext, contactId);
-                    recipient.setFromRawContact(rawContact);
-					try {
-						ChatManager.insert(mContext, _db, recipient.getDisplayName(), dateContainer.getAsString(DateContainer.UTC), recipient);
-					} catch (SQLException e) {
-						TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
-					}
-					calendar.add(Calendar.MINUTE, -1);
-				}
+                ContactRaw rawContact = ContactManager.getRawContactByDataId(mContext, contactId);
+                String utcTimestamp = dateContainer.getAsString(DateContainer.UTC);
+
+                _db.beginTransaction();
+
+                try {
+                    Recipient recipient = new Recipient(rawContact, utcTimestamp);
+                    RecipientManager.insertOrUpdate(mContext, _db, recipient);
+
+					Chat newChat = new Chat(0, recipient.getDisplayName(), utcTimestamp, recipient);
+                    ChatManager.insert(_db, newChat);
+
+                    _db.setTransactionSuccessful();
+                } catch (SQLException e) {
+                    TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
+                } finally {
+                    _db.endTransaction();
+                }
+
+                calendar.add(Calendar.MINUTE, -1);
 			}
+
+            return;
 		}
 
-		if(_oldVersion < 16) {
+		if(_oldVersion < 17) {
+            Log.d(TAG, "Updating Database: v17 Refactoring...");
+
 			try {
-				execSQLScript(R.raw.db_16_add_fields, _db);
+				execSQLScript(R.raw.db_17_refactor, _db);
 			} catch (Exception e) {
 				TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
+			}
+
+			// set is_peppermint for all recipients
+			Cursor recipientCursor = RecipientManager.getAll(_db);
+			try {
+				while (recipientCursor.moveToNext()) {
+                    Recipient recipient = RecipientManager.getRecipientFromCursor(recipientCursor);
+
+                    ContactRaw contactRaw = ContactManager.getRawContactByDataId(mContext, recipient.getDroidContactDataId());
+                    recipient.setDroidContactId(contactRaw.getContactId());
+
+                    ContactData peppermintData = ContactManager.getPeppermintContactByContactIdAndVia(mContext, recipient.getDroidContactId(), recipient.getVia());
+                    if(peppermintData != null) {
+                        recipient.setPeppermint(true);
+                    }
+
+                    RecipientManager.update(_db, recipient);
+				}
+			} catch (SQLException e) {
+                TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
+            } finally {
+                recipientCursor.close();
 			}
 		}
 	}

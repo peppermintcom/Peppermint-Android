@@ -4,9 +4,13 @@ import android.content.Context;
 
 import com.peppermint.app.cloud.senders.SenderSupportListener;
 import com.peppermint.app.cloud.senders.SenderSupportTask;
+import com.peppermint.app.data.ContactData;
+import com.peppermint.app.data.ContactManager;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.utils.Utils;
+
+import java.util.Map;
 
 /**
  * Created by Nuno Luz on 28-01-2016.
@@ -30,6 +34,11 @@ public class SignOutPeppermintTask extends SenderSupportTask {
         AuthenticationData data = setupPeppermintAuthentication(true);
 
         getPeppermintApi().removeReceiverRecorder(data.getAccountServerId(), data.getDeviceServerId());
+
+        Map<Long, ContactData> peppermintContacts = ContactManager.getPeppermintContacts(getContext());
+        for(ContactData contactData : peppermintContacts.values()) {
+            ContactManager.deletePeppermint(getContext(), contactData.getRawId(), null);
+        }
 
         PeppermintEventBus.postSignOutEvent();
 

@@ -29,9 +29,6 @@ public class IntentSMSSenderTask extends SenderUploadTask {
     protected void execute() throws Throwable {
         setupPeppermintAuthentication();
         uploadPeppermintMessage();
-        if(sendPeppermintMessage()) {
-            return;
-        }
 
         String url = getMessage().getServerShortUrl();
 

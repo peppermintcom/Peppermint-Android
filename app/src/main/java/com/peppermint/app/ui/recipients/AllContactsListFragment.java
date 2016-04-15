@@ -11,13 +11,20 @@ import android.provider.ContactsContract;
 import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Toast;
 
+import com.peppermint.app.R;
 import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.ChatRecipient;
+import com.peppermint.app.data.ChatManager;
+import com.peppermint.app.data.ContactData;
 import com.peppermint.app.data.ContactManager;
+import com.peppermint.app.data.ContactRaw;
+import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.FilteredCursor;
-import com.peppermint.app.utils.DateContainer;
+import com.peppermint.app.data.GlobalManager;
+import com.peppermint.app.tracking.TrackerManager;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,8 +34,8 @@ public class AllContactsListFragment extends ContactListFragment {
 
     private static final List<String> MIMETYPES = new ArrayList<>();
     static {
-        MIMETYPES.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
-        MIMETYPES.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
+        MIMETYPES.add(ContactData.EMAIL_MIMETYPE);
+        MIMETYPES.add(ContactData.PHONE_MIMETYPE);
     }
 
     private class ContactsContentObserver extends ContentObserver {
@@ -138,10 +145,28 @@ public class AllContactsListFragment extends ContactListFragment {
 
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        // create the chat instance if non-existent
-        Chat tappedChat = new Chat();
-        tappedChat.setTitle(mAdapter.getRecipient(position).getDisplayName());
-        tappedChat.addRecipient(new ChatRecipient(0, mAdapter.getRecipient(position), DateContainer.getCurrentUTCTimestamp()));
-        return mActivity.getChatRecordOverlayController().triggerRecording(view, tappedChat);
+        final ContactRaw contactRaw = mAdapter.getContactRaw(position);
+
+        Chat tappedChat;
+        try {
+            tappedChat = GlobalManager.insertOrUpdateChatAndRecipients(mActivity, contactRaw);
+        } catch (SQLException e) {
+            TrackerManager.getInstance(mActivity.getApplicationContext()).logException(e);
+            Toast.makeText(mActivity, R.string.msg_database_error, Toast.LENGTH_LONG).show();
+            return true;
+        }
+
+        if(!mActivity.getChatRecordOverlayController().triggerRecording(view, tappedChat)) {
+            final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(mActivity);
+            databaseHelper.lock();
+            try {
+                ChatManager.delete(databaseHelper.getWritableDatabase(), tappedChat.getId());
+            } catch (SQLException e) {
+                TrackerManager.getInstance(mActivity.getApplicationContext()).logException(e);
+            }
+            databaseHelper.unlock();
+        }
+
+        return true;
     }
 }
