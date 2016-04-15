@@ -1,6 +1,7 @@
 package com.peppermint.app.utils;
 
 import android.app.Activity;
+import android.app.KeyguardManager;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -21,6 +22,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
@@ -1018,5 +1020,24 @@ public class Utils {
         // point is inside view bounds
         return ((x > viewX && x < (viewX + view.getWidth())) &&
                 (y > viewY && y < (viewY + view.getHeight())));
+    }
+
+    /**
+     * Checks if the screen is on (not sleeping) and unlocked.
+     * @param context the app context
+     * @return true if on and unlocked; false otherwise
+     */
+    public static boolean isScreenOnAndUnlocked(final Context context) {
+        boolean screenOn;
+        final PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+            screenOn = powerManager.isInteractive();
+        } else {
+            //noinspection deprecation
+            screenOn = powerManager.isScreenOn();
+        }
+
+        final KeyguardManager keyguardManager = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
+        return screenOn && !keyguardManager.inKeyguardRestrictedInputMode();
     }
 }

@@ -252,7 +252,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
         super.onEventMainThread(event);
         if(mChat != null && event.getType() == ReceiverEvent.EVENT_RECEIVED) {
             refreshList();
-            if(event.getMessage().getChatId() == mChat.getId()) {
+            if(event.getMessage().getChatId() == mChat.getId() && Utils.isScreenOnAndUnlocked(getContext())) {
                 event.setDoNotShowNotification(true);
             }
         }
