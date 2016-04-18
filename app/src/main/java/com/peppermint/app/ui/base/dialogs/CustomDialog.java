@@ -1,11 +1,15 @@
 package com.peppermint.app.ui.base.dialogs;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
 
@@ -37,21 +41,33 @@ public class CustomDialog extends Dialog implements View.OnClickListener {
     public CustomDialog(Context context) {
         super(context, R.style.Peppermint_Dialog);
         setCancelable(false);
-        init();
+        init(context);
     }
 
     public CustomDialog(Context context, int themeResId) {
         super(context, themeResId);
         setCancelable(false);
-        init();
+        init(context);
     }
 
     public CustomDialog(Context context, boolean cancelable, OnCancelListener cancelListener) {
         super(context, cancelable, cancelListener);
-        init();
+        init(context);
     }
 
-    private void init() {
+    private void init(Context context) {
+        // set overlay window type if the context is not an activity
+        // (allows the dialog to be presented by the overlay)
+        if(!(context instanceof Activity)) {
+            boolean canDrawOverlays = true;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                canDrawOverlays = Settings.canDrawOverlays(context);
+            }
+            if(canDrawOverlays) {
+                getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+            }
+        }
+
         mPositiveButtonText = getContext().getString(R.string.yes);
         mNegativeButtonText = getContext().getString(R.string.no);
     }
