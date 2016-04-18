@@ -35,7 +35,7 @@ public class GoogleAuthorizationSupportTask extends SenderSupportTask implements
         String token = api.refreshAccessToken();
 
         // refresh name just in case
-        GoogleApi.UserInfoResponse response = api.getUserInfo();
+        GoogleApi.UserInfoResponse response = api.getUserInfo(getId().toString());
 
         String firstName = response.getFirstName();
         String lastName = response.getLastName();

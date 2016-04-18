@@ -40,6 +40,10 @@ public class IntentMailSenderTask extends SenderUploadTask {
             return;
         }
 
+        if(isCancelled()) {
+            return;
+        }
+
         String url = getMessage().getServerShortUrl();
         String displayName = getSenderPreferences().getFullName();
 

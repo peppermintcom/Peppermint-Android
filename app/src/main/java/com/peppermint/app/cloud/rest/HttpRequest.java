@@ -95,15 +95,19 @@ public class HttpRequest implements Parcelable {
 
 			if(mConnection != null) {
 				if(!isCancelled()) {
+					Log.d(TAG, getEndpoint() + " Sending Request Body...");
 					if(getBody() != null) {
 						OutputStream outStream = mConnection.getOutputStream();
 						writeBody(outStream);
 						outStream.flush();
 						outStream.close();
 					}
+				} else {
+					Log.d(TAG, getEndpoint() + " Cancelled before sending Request Body...");
 				}
 
 				if(!isCancelled()) {
+					Log.d(TAG, getEndpoint() + " Retrieving Response Body...");
 					try {
                         response.setCode(mConnection.getResponseCode());
 					} catch (IOException e) {
@@ -118,6 +122,8 @@ public class HttpRequest implements Parcelable {
 					InputStream inputStream = response.getCode() >= 400 ? mConnection.getErrorStream() : mConnection.getInputStream();
                     response.readBody(inputStream, this);
 					inputStream.close();
+				} else {
+					Log.d(TAG, getEndpoint() + " Cancelled before retrieving Response Body...");
 				}
 			} else {
 				throw new NullPointerException("HttpURLConnection is null. Skipping...");
@@ -129,6 +135,7 @@ public class HttpRequest implements Parcelable {
 
 		if(mConnection != null) {
 			try {
+				Log.d(TAG, getEndpoint() + " Disconnecting...");
 				mConnection.disconnect();
 			} catch(Throwable e) {
 				Log.e(TAG, "Error disconnecting...", e);

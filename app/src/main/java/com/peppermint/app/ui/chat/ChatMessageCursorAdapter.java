@@ -96,6 +96,10 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
             // cancel control
             if(v.getId() == R.id.btnCancel) {
                 mMessagesServiceManager.cancel(mMessage);
+                if(mRootView != null) {
+                    final CustomFontButton btnCancel = (CustomFontButton) mRootView.findViewById(R.id.btnCancel);
+                    btnCancel.setText(R.string.cancelling);
+                }
                 return;
             }
 
@@ -103,7 +107,6 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
                 if(mExclamationClickListener != null) {
                     mExclamationClickListener.onClick(v, mMessage.getId());
                 }
-                return;
             }
         }
 
@@ -263,6 +266,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
 
                 CustomFontButton btnCancel = (CustomFontButton) mRootView.findViewById(R.id.btnCancel);
                 ImageView btnExclamation = (ImageView) mRootView.findViewById(R.id.btnExclamation);
+                btnCancel.setText(R.string.cancel_sending);
                 btnCancel.setVisibility(View.VISIBLE);
                 btnExclamation.setVisibility(View.GONE);
             }
@@ -336,7 +340,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
         }
     }
 
-    private static final int MARGIN_BALLOON_DP = 80;
+    private static final int MARGIN_BALLOON_DP = 100;
     private static final int MARGIN_BALLOON_WITH_EXCLAMATION_DP = 20;
 
     private Context mContext;

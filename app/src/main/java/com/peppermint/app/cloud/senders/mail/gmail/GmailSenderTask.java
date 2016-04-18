@@ -50,6 +50,10 @@ public class GmailSenderTask extends SenderUploadTask {
             return;
         }
 
+        if(isCancelled()) {
+            return;
+        }
+
         String url = getMessage().getServerShortUrl();
         String canonicalUrl = getMessage().getServerCanonicalUrl();
 
@@ -91,7 +95,7 @@ public class GmailSenderTask extends SenderUploadTask {
             }
 
             try {
-                GoogleApi.DraftResponse response = googleApi.createGmailDraft(getMessage().getEmailSubject(),
+                GoogleApi.DraftResponse response = googleApi.createGmailDraft(getId().toString(), getMessage().getEmailSubject(),
                         bodyPlain, bodyHtml, recipientEmails, getMessage().getRecordingParameter().getContentType(),
                         emailDate, file);
                 draft = (Draft) response.getBody();

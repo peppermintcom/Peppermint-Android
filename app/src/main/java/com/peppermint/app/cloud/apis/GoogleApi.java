@@ -45,7 +45,7 @@ import java.util.List;
  *      Google API operations wrapper.
  * </p>
  */
-public class GoogleApi implements Serializable {
+public class GoogleApi extends BaseApi implements Serializable {
 
     protected static final String[] SCOPES = { GmailScopes.GMAIL_COMPOSE, GmailScopes.GMAIL_MODIFY,
             "https://www.googleapis.com/auth/userinfo.profile",
@@ -218,7 +218,7 @@ public class GoogleApi implements Serializable {
      * @throws GoogleAuthException
      * @throws IOException
      */
-    public synchronized UserInfoResponse getUserInfo() throws GoogleApiNoAuthorizationException, GoogleApiInvalidAccessTokenException, GoogleAuthException, IOException {
+    public synchronized UserInfoResponse getUserInfo(String requesterId) throws GoogleApiNoAuthorizationException, GoogleApiInvalidAccessTokenException, GoogleAuthException, IOException {
         if(mAccessToken == null) {
             try {
                 mAccessToken = mCredential.getToken();
@@ -230,8 +230,14 @@ public class GoogleApi implements Serializable {
         HttpRequest request = new HttpRequest("https://www.googleapis.com/plus/v1/people/me", HttpRequest.METHOD_GET, false);
         request.setUrlParam("access_token", mAccessToken);
 
-        UserInfoResponse response = new UserInfoResponse();
-        request.execute(response);
+        UserInfoResponse response;
+        addPendingRequest(requesterId, request);
+        try {
+            response = new UserInfoResponse();
+            request.execute(response);
+        } finally {
+            removePendingRequest(requesterId, request);
+        }
 
         if(response.getCode() == 401) {
             throw new GoogleApiInvalidAccessTokenException(request.toString());
@@ -259,7 +265,7 @@ public class GoogleApi implements Serializable {
      * @throws GoogleAuthException
      * @throws IOException
      */
-    public synchronized DraftResponse createGmailDraft(String subject, String bodyPlain, String bodyHtml, String[] destEmails, String contentType, Date emailDate, File attachment) throws GoogleApiNoAuthorizationException, GoogleApiInvalidAccessTokenException, GoogleAuthException, IOException {
+    public synchronized DraftResponse createGmailDraft(String requesterId, String subject, String bodyPlain, String bodyHtml, String[] destEmails, String contentType, Date emailDate, File attachment) throws GoogleApiNoAuthorizationException, GoogleApiInvalidAccessTokenException, GoogleAuthException, IOException {
         if(mAccessToken == null) {
             try {
                 mAccessToken = mCredential.getToken();
@@ -273,9 +279,16 @@ public class GoogleApi implements Serializable {
                 subject, bodyPlain, bodyHtml, contentType, emailDate, destEmails);
         request.setHeaderParam("Authorization", "Bearer " + mAccessToken);
         request.setHeaderParam("Content-Type", "application/json; charset=UTF-8");
+
         // perform request to the Gmail API endpoint
-        DraftResponse response = new DraftResponse();
-        request.execute(response);
+        DraftResponse response;
+        addPendingRequest(requesterId, request);
+        try {
+            response = new DraftResponse();
+            request.execute(response);
+        } finally {
+            removePendingRequest(requesterId, request);
+        }
 
         if(response.getCode() == 401) {
             throw new GoogleApiInvalidAccessTokenException(request.toString());

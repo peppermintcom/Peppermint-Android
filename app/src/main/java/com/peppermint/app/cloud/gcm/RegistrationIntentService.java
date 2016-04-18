@@ -49,7 +49,7 @@ public class RegistrationIntentService extends IntentService {
 
             Log.d(TAG, "New GCM Registration Token: " + token);
 
-            mPeppermintApi.updateRecorder(data.getDeviceServerId(), token);
+            mPeppermintApi.updateRecorder(null, data.getDeviceServerId(), token);
             authenticatorUtils.updateAccountGcmRegistration(token);
             // [END register_for_gcm]
         } catch (Throwable e) {

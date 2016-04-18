@@ -38,7 +38,7 @@ public class AuthenticationPeppermintTask extends SenderSupportTask {
 
         String fullName = getSenderPreferences().getFullName();
 
-        JWTsResponse response = getPeppermintApi().authOrRegister(mEmail, mPassword, mAccountType, mDeviceId, mDeviceKey, fullName, getTrackerManager());
+        JWTsResponse response = getPeppermintApi().authOrRegister(getId().toString(), mEmail, mPassword, mAccountType, mDeviceId, mDeviceKey, fullName, getTrackerManager());
 
         mAccessToken = response.getAccessToken();
         mAccountServerId = response.getAccount().getAccountId();

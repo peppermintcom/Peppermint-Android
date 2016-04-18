@@ -159,6 +159,7 @@
 
     <!-- CHAT -->
     <string name="cancel_sending">Cancel\nSending</string>
+    <string name="cancelling">Cancelling</string>
     <string name="hold_to_record">Hold to Record</string>
     <string name="retry">Retry</string>
     <string name="delete">Delete</string>

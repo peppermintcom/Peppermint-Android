@@ -33,7 +33,7 @@ public class SignOutPeppermintTask extends SenderSupportTask {
         setupPeppermintAuthentication();
         AuthenticationData data = setupPeppermintAuthentication(true);
 
-        getPeppermintApi().removeReceiverRecorder(data.getAccountServerId(), data.getDeviceServerId());
+        getPeppermintApi().removeReceiverRecorder(getId().toString(), data.getAccountServerId(), data.getDeviceServerId());
 
         Map<Long, ContactData> peppermintContacts = ContactManager.getPeppermintContacts(getContext());
         for(ContactData contactData : peppermintContacts.values()) {

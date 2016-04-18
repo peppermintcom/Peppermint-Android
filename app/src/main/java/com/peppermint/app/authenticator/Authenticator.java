@@ -98,7 +98,7 @@ class Authenticator extends AbstractAccountAuthenticator {
 
             AuthenticationData data = mAuthenticatorUtils.getAccountData();
             try {
-                JWTsResponse authResponse = mPeppermintApi.authBoth(data.getEmail(), data.getPassword(), data.getDeviceId(), data.getDeviceKey(), data.getAccountType());
+                JWTsResponse authResponse = mPeppermintApi.authBoth(null, data.getEmail(), data.getPassword(), data.getDeviceId(), data.getDeviceKey(), data.getAccountType());
 
                 // TODO temporary code for build 1.1.1
                 mAuthenticatorUtils.updateAccountServerId(authResponse.getAccount().getAccountId());

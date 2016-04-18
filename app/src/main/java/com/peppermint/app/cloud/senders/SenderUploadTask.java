@@ -70,14 +70,14 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         }
 
         // get AWS signed URL
-        UploadsResponse uploadsResponse = api.getSignedUrl(fullName, data.getEmail(), contentType);
+        UploadsResponse uploadsResponse = api.getSignedUrl(getId().toString(), fullName, data.getEmail(), contentType);
         String signedUrl = uploadsResponse.getSignedUrl();
         getMessage().setServerCanonicalUrl(uploadsResponse.getCanonicalUrl());
         getMessage().setServerShortUrl(uploadsResponse.getShortUrl());
 
         // upload to AWS
         if(!isCancelled()) {
-            api.uploadMessage(signedUrl, recordedFile, contentType);
+            api.uploadMessage(getId().toString(), signedUrl, recordedFile, contentType);
         }
     }
 
@@ -91,8 +91,12 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         Recipient recipient = message.getChatParameter().getRecipientList().get(0);
         String recipientVia = recipient.getVia();
 
+        if(isCancelled()) {
+            return false;
+        }
+
         try {
-            MessagesResponse response = getPeppermintApi().sendMessage(null, canonicalUrl,
+            MessagesResponse response = getPeppermintApi().sendMessage(getId().toString(), null, canonicalUrl,
                     data.getEmail(), recipientVia, (int) (message.getRecordingParameter().getDurationMillis() / 1000));
             message.setServerId(response.getMessageId());
             try {

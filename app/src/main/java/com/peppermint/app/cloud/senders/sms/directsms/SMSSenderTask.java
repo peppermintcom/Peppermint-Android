@@ -65,6 +65,10 @@ public class SMSSenderTask extends SenderUploadTask {
         setupPeppermintAuthentication();
         uploadPeppermintMessage();
 
+        if(isCancelled()) {
+            return;
+        }
+
         String url = getMessage().getServerShortUrl();
 
         mSent = false;

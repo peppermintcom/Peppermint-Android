@@ -263,4 +263,18 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
 
         return data;
     }
+
+    public boolean cancel() {
+        boolean cancelled = cancel(true);
+        // necessary to effectively stop HttpUrlConnections
+        PeppermintApi peppermintApi = (PeppermintApi) getParameter(Sender.PARAM_PEPPERMINT_API);
+        if(peppermintApi != null) {
+            peppermintApi.cancelPendingRequests(mIdentity.getId().toString());
+        }
+        GoogleApi googleApi = (GoogleApi) getParameter(Sender.PARAM_GOOGLE_API);
+        if(googleApi != null) {
+            googleApi.cancelPendingRequests(mIdentity.getId().toString());
+        }
+        return cancelled;
+    }
 }

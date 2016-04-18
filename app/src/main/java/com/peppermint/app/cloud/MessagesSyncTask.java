@@ -66,10 +66,10 @@ public class MessagesSyncTask extends SenderSupportTask {
         }
 
         String syncTimestamp = originalSyncTimestamp;
-        String nextUrl = null;
+        String nextUrl;
 
         do {
-            MessageListResponse receivedResponse = getPeppermintApi().getMessages(serverAccountId, syncTimestamp, true);
+            MessageListResponse receivedResponse = getPeppermintApi().getMessages(getId().toString(), serverAccountId, syncTimestamp, true);
 
             int receivedAmount = receivedResponse.getMessages().size();
             for (int i=0; i<receivedAmount && !isCancelled(); i++) {
@@ -115,7 +115,7 @@ public class MessagesSyncTask extends SenderSupportTask {
         syncTimestamp = originalSyncTimestamp;
 
         do {
-            MessageListResponse sentResponse = getPeppermintApi().getMessages(serverAccountId, syncTimestamp, false);
+            MessageListResponse sentResponse = getPeppermintApi().getMessages(getId().toString(), serverAccountId, syncTimestamp, false);
             int sentAmount = sentResponse.getMessages().size();
             for (int i=0; i<sentAmount && !isCancelled(); i++) {
                 MessagesResponse messagesResponse = sentResponse.getMessages().get(i);
@@ -183,11 +183,4 @@ public class MessagesSyncTask extends SenderSupportTask {
         return _sentMessages;
     }
 
-    public boolean hasNeverSyncedBefore() {
-        return mNeverSyncedBefore;
-    }
-
-    public String getLocalEmailAddress() {
-        return mLocalEmailAddress;
-    }
 }

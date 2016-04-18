@@ -39,7 +39,7 @@ public class MessagesMarkPlayedTask extends SenderSupportTask {
 
         Message message = getMessage();
         setupPeppermintAuthentication();
-        getPeppermintApi().markAsPlayedMessage(message.getServerId());
+        getPeppermintApi().markAsPlayedMessage(getId().toString(), message.getServerId());
         message.setPlayed(true);
     }
 

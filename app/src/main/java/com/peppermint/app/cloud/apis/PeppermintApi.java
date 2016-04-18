@@ -38,7 +38,7 @@ import java.util.UUID;
  *      Peppermint API operations wrapper.
  * </p>
  */
-public class PeppermintApi implements Serializable {
+public class PeppermintApi extends BaseApi implements Serializable {
 
     // payload content type
     private static final String CONTENT_TYPE_JSON = "application/vnd.api+json";
@@ -80,14 +80,21 @@ public class PeppermintApi implements Serializable {
     }
 
     // MESSAGES
-    public void markAsPlayedMessage(String serverMessageId) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException, PeppermintApiTooManyRequestsException, PeppermintApiRecipientNoAppException {
+    public void markAsPlayedMessage(String requesterId, String serverMessageId) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException, PeppermintApiTooManyRequestsException, PeppermintApiRecipientNoAppException {
         HttpRequest request = new HttpRequest(PLAYS_ENDPOINT, HttpRequest.METHOD_POST);
         request.setHeaderParam("Authorization", "Bearer " + getAccessToken());
         request.setHeaderParam("X-Api-Key", API_KEY);
         request.setHeaderParam("Content-Type", CONTENT_TYPE_JSON);
         request.setBody("{ \"data\": { \"type\":\"reads\", \"id\":\"" + serverMessageId + "\" } }");
-        HttpResponse response = new HttpResponse();
-        request.execute(response);
+
+        HttpResponse response;
+        addPendingRequest(requesterId, request);
+        try {
+            response = new HttpResponse();
+            request.execute(response);
+        } finally {
+            removePendingRequest(requesterId, request);
+        }
 
         if(response.getException() != null) {
             throw new HttpResponseException(response.getException());
@@ -100,14 +107,21 @@ public class PeppermintApi implements Serializable {
         }
     }
 
-    public MessageListResponse getMessages(String serverAccountId, String sinceTimestamp, boolean received) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException, PeppermintApiTooManyRequestsException, PeppermintApiRecipientNoAppException {
+    public MessageListResponse getMessages(String requesterId, String serverAccountId, String sinceTimestamp, boolean received) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException, PeppermintApiTooManyRequestsException, PeppermintApiRecipientNoAppException {
         HttpRequest request = new HttpRequest(MESSAGES_ENDPOINT, HttpRequest.METHOD_GET, false);
         request.setHeaderParam("Authorization", "Bearer " + getAccessToken());
         request.setHeaderParam("X-Api-Key", API_KEY);
         request.setUrlParam(received ? "recipient" : "sender", serverAccountId);
         request.setUrlParam("since", sinceTimestamp);
-        HttpJSONResponse<MessageListResponse> response = new HttpJSONResponse<>(mMessageListResponseParser);
-        request.execute(response);
+
+        HttpJSONResponse<MessageListResponse> response;
+        addPendingRequest(requesterId, request);
+        try {
+            response = new HttpJSONResponse<>(mMessageListResponseParser);
+            request.execute(response);
+        } finally {
+            removePendingRequest(requesterId, request);
+        }
 
         if(response.getException() != null) {
             throw new HttpResponseException(response.getException());
@@ -137,14 +151,21 @@ public class PeppermintApi implements Serializable {
      * @throws PeppermintApiTooManyRequestsException
      * @throws PeppermintApiRecipientNoAppException if the recipient doesn't have Peppermint installed
      */
-    public MessagesResponse sendMessage(String transcriptionUrl, String audioUrl, String senderEmail, String recipientEmail, int durationInSeconds) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException, PeppermintApiTooManyRequestsException, PeppermintApiRecipientNoAppException {
+    public MessagesResponse sendMessage(String requesterId, String transcriptionUrl, String audioUrl, String senderEmail, String recipientEmail, int durationInSeconds) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException, PeppermintApiTooManyRequestsException, PeppermintApiRecipientNoAppException {
         HttpRequest request = new HttpRequest(MESSAGES_ENDPOINT, HttpRequest.METHOD_POST);
         request.setHeaderParam("Authorization", "Bearer " + getAccessToken());
         request.setHeaderParam("X-Api-Key", API_KEY);
         request.setHeaderParam("Content-Type", CONTENT_TYPE_JSON);
         request.setBody("{ \"data\": { \"attributes\": { \"audio_url\": \"" + audioUrl + "\", \"sender_email\": \"" + senderEmail + "\", \"recipient_email\": \"" + recipientEmail + "\" }, \"type\":\"messages\" } }");
-        HttpJSONResponse<MessagesResponse> response = new HttpJSONResponse<>(mMessagesResponseParser);
-        request.execute(response);
+
+        HttpJSONResponse<MessagesResponse> response;
+        addPendingRequest(requesterId, request);
+        try {
+            response = new HttpJSONResponse<>(mMessagesResponseParser);
+            request.execute(response);
+        } finally {
+            removePendingRequest(requesterId, request);
+        }
 
         if(response.getException() != null) {
             throw new HttpResponseException(response.getException());
@@ -179,16 +200,16 @@ public class PeppermintApi implements Serializable {
      * @throws PeppermintApiResponseCodeException  a status code different from 2XX was returned
      * @throws PeppermintApiInvalidAccessTokenException
      */
-    public JWTsResponse authOrRegister(String accountEmail, String accountPassword, int accountType, String recorderId, String recorderKey, String fullName, TrackerManager trackerManager) throws PeppermintApiTooManyRequestsException, PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException {
+    public JWTsResponse authOrRegister(String requesterId, String accountEmail, String accountPassword, int accountType, String recorderId, String recorderKey, String fullName, TrackerManager trackerManager) throws PeppermintApiTooManyRequestsException, PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException {
         JWTsResponse jwtsResponse;
 
         try {
-            jwtsResponse = authBoth(accountEmail, accountPassword, recorderId, recorderKey, accountType);
-            addReceiverRecorder(jwtsResponse.getAccount().getAccountId(), jwtsResponse.getRecorder().getRecorderId());
+            jwtsResponse = authBoth(requesterId, accountEmail, accountPassword, recorderId, recorderKey, accountType);
+            addReceiverRecorder(requesterId, jwtsResponse.getAccount().getAccountId(), jwtsResponse.getRecorder().getRecorderId());
         } catch(PeppermintApiInvalidAccessTokenException e) {
             // register/auth recorder
             try {
-                registerRecorder(recorderId, recorderKey, Utils.getAndroidVersion() + " - " + Utils.getDeviceName());
+                registerRecorder(requesterId, recorderId, recorderKey, Utils.getAndroidVersion() + " - " + Utils.getDeviceName());
             } catch (PeppermintApiAlreadyRegisteredException ex) {
                 trackerManager.log("Recorder already registered! Moving on...");
             }
@@ -196,16 +217,16 @@ public class PeppermintApi implements Serializable {
             if(accountType == ACCOUNT_TYPE_REGULAR) {
                 // register/auth account
                 try {
-                    registerAccount(accountEmail, accountPassword, fullName, accountType);
+                    registerAccount(requesterId, accountEmail, accountPassword, fullName, accountType);
                 } catch (PeppermintApiAlreadyRegisteredException ex) {
                     trackerManager.log("Account already registered! Moving on...");
                 }
             }
 
             // try again to authenticate; it should work now
-            jwtsResponse = authBoth(accountEmail, accountPassword, recorderId, recorderKey, accountType);
+            jwtsResponse = authBoth(requesterId, accountEmail, accountPassword, recorderId, recorderKey, accountType);
             // add relationship between account and recorder
-            addReceiverRecorder(jwtsResponse.getAccount().getAccountId(), jwtsResponse.getRecorder().getRecorderId());
+            addReceiverRecorder(requesterId, jwtsResponse.getAccount().getAccountId(), jwtsResponse.getRecorder().getRecorderId());
         }
 
         return jwtsResponse;
@@ -224,7 +245,7 @@ public class PeppermintApi implements Serializable {
      * @throws PeppermintApiInvalidAccessTokenException
      * @throws PeppermintApiTooManyRequestsException
      */
-    public JWTsResponse authBoth(String accountEmail, String accountPassword, String recorderId, String recorderKey, int accountType) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException, PeppermintApiTooManyRequestsException {
+    public JWTsResponse authBoth(String requesterId, String accountEmail, String accountPassword, String recorderId, String recorderKey, int accountType) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException, PeppermintApiTooManyRequestsException {
         String accountTypeStr = "account";
         switch (accountType) {
             case ACCOUNT_TYPE_GOOGLE:
@@ -238,8 +259,15 @@ public class PeppermintApi implements Serializable {
         HttpRequest request = new HttpRequest(JWTS_ENDPOINT, HttpRequest.METHOD_POST);
         request.setHeaderParam("Authorization", "Peppermint " + accountTypeStr + "=" + Utils.getBasicAuthenticationToken(accountEmail, accountPassword) + ", recorder=" + Utils.getBasicAuthenticationToken(recorderId, recorderKey));
         request.setHeaderParam("X-Api-Key", API_KEY);
-        HttpJSONResponse<JWTsResponse> response = new HttpJSONResponse<>(mJWTsResponseParser);
-        request.execute(response);
+
+        HttpJSONResponse<JWTsResponse> response;
+        addPendingRequest(requesterId, request);
+        try {
+            response = new HttpJSONResponse<>(mJWTsResponseParser);
+            request.execute(response);
+        } finally {
+            removePendingRequest(requesterId, request);
+        }
 
         if(response.getException() != null) {
             throw new HttpResponseException(response.getException());
@@ -274,12 +302,19 @@ public class PeppermintApi implements Serializable {
      * @throws PeppermintApiResponseCodeException a status code different from 2XX was returned
      * @throws PeppermintApiAlreadyRegisteredException if the account is already registered
      */
-    public AccountsResponse registerAccount(String email, String password, String fullName, int accountType) throws PeppermintApiInvalidAccessTokenException, PeppermintApiResponseCodeException, PeppermintApiAlreadyRegisteredException {
+    public AccountsResponse registerAccount(String requesterId, String email, String password, String fullName, int accountType) throws PeppermintApiInvalidAccessTokenException, PeppermintApiResponseCodeException, PeppermintApiAlreadyRegisteredException {
         HttpRequest request = new HttpRequest(ACCOUNTS_ENDPOINT, HttpRequest.METHOD_POST);
         request.setBody("{ \"api_key\": \"" + API_KEY + "\", \"u\": { \"email\": \"" + email +
                 "\", \"password\": \"" + password + "\", \"full_name\": \"" + fullName + "\" } }");
-        HttpJSONResponse<AccountsResponse> response = new HttpJSONResponse<>(mAccountsResponseParser);
-        request.execute(response);
+
+        HttpJSONResponse<AccountsResponse> response;
+        addPendingRequest(requesterId, request);
+        try {
+            response = new HttpJSONResponse<>(mAccountsResponseParser);
+            request.execute(response);
+        } finally {
+            removePendingRequest(requesterId, request);
+        }
 
         if(response.getException() != null) {
             throw new HttpResponseException(response.getException());
@@ -309,14 +344,21 @@ public class PeppermintApi implements Serializable {
      * @throws PeppermintApiResponseCodeException a status code different from 2XX was returned
      * @throws PeppermintApiInvalidAccessTokenException
      */
-    public HttpResponse addReceiverRecorder(String accountId, String recorderId) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException {
+    public HttpResponse addReceiverRecorder(String requesterId, String accountId, String recorderId) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException {
         HttpRequest request = new HttpRequest(ACCOUNTS_REL_ENDPOINT.replace("{account_id}", accountId), HttpRequest.METHOD_POST);
         request.setHeaderParam("Authorization", "Bearer " + getAccessToken());
         request.setHeaderParam("X-Api-Key", API_KEY);
         request.setHeaderParam("Content-Type", CONTENT_TYPE_JSON);
         request.setBody("{ \"data\": [ { \"id\":\"" + recorderId + "\", \"type\":\"recorders\" } ] }");
-        HttpResponse response = new HttpResponse();
-        request.execute(response);
+
+        HttpResponse response;
+        addPendingRequest(requesterId, request);
+        try {
+            response = new HttpResponse(mAccountsResponseParser);
+            request.execute(response);
+        } finally {
+            removePendingRequest(requesterId, request);
+        }
 
         if(response.getException() != null) {
             throw new HttpResponseException(response.getException());
@@ -340,12 +382,19 @@ public class PeppermintApi implements Serializable {
      * @throws PeppermintApiResponseCodeException a status code different from 2XX was returned
      * @throws PeppermintApiInvalidAccessTokenException
      */
-    public HttpResponse removeReceiverRecorder(String accountId, String recorderId) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException {
+    public HttpResponse removeReceiverRecorder(String requesterId, String accountId, String recorderId) throws PeppermintApiResponseCodeException, PeppermintApiInvalidAccessTokenException {
         HttpRequest request = new HttpRequest(ACCOUNTS_REL_ENDPOINT.replace("{account_id}", accountId) + "/" + recorderId, HttpRequest.METHOD_DELETE);
         request.setHeaderParam("Authorization", "Bearer " + getAccessToken());
         request.setHeaderParam("X-Api-Key", API_KEY);
-        HttpResponse response = new HttpResponse();
-        request.execute(response);
+
+        HttpResponse response;
+        addPendingRequest(requesterId, request);
+        try {
+            response = new HttpResponse(mAccountsResponseParser);
+            request.execute(response);
+        } finally {
+            removePendingRequest(requesterId, request);
+        }
 
         if(response.getException() != null) {
             throw new HttpResponseException(response.getException());
@@ -372,12 +421,19 @@ public class PeppermintApi implements Serializable {
      * @throws PeppermintApiResponseCodeException a status code different from 2XX was returned
      * @throws PeppermintApiAlreadyRegisteredException if the recorder/device is already registered
      */
-    public RecorderResponse registerRecorder(String recorderId, String recorderKey, String description) throws PeppermintApiInvalidAccessTokenException, PeppermintApiResponseCodeException, PeppermintApiAlreadyRegisteredException {
+    public RecorderResponse registerRecorder(String requesterId, String recorderId, String recorderKey, String description) throws PeppermintApiInvalidAccessTokenException, PeppermintApiResponseCodeException, PeppermintApiAlreadyRegisteredException {
         HttpRequest request = new HttpRequest(RECORDER_ENDPOINT, HttpRequest.METHOD_POST);
         request.setBody("{ \"api_key\": \"" + API_KEY + "\", \"recorder\": { \"description\": \"" + description +
                 "\", \"recorder_client_id\": \"" + recorderId + "\", \"recorder_key\": \"" + recorderKey + "\" } }");
-        HttpJSONResponse<RecorderResponse> response = new HttpJSONResponse<>(mRecorderResponseParser);
-        request.execute(response);
+
+        HttpJSONResponse<RecorderResponse> response;
+        addPendingRequest(requesterId, request);
+        try {
+            response = new HttpJSONResponse<>(mRecorderResponseParser);
+            request.execute(response);
+        } finally {
+            removePendingRequest(requesterId, request);
+        }
 
         if(response.getException() != null) {
             throw new HttpResponseException(response.getException());
@@ -406,14 +462,21 @@ public class PeppermintApi implements Serializable {
      * @throws PeppermintApiInvalidAccessTokenException
      * @throws PeppermintApiResponseCodeException a status code different from 2XX was returned
      */
-    public HttpResponse updateRecorder(String recorderId, String gcmRegistrationToken) throws PeppermintApiInvalidAccessTokenException, PeppermintApiResponseCodeException {
+    public HttpResponse updateRecorder(String requesterId, String recorderId, String gcmRegistrationToken) throws PeppermintApiInvalidAccessTokenException, PeppermintApiResponseCodeException {
         HttpRequest request = new HttpRequest(RECORDERS_ENDPOINT.replace("{recorder_id}", recorderId), HttpRequest.METHOD_PUT);
         request.setHeaderParam("X-Api-Key", API_KEY);
         request.setHeaderParam("Content-Type", CONTENT_TYPE_JSON);
         request.setHeaderParam("Authorization", "Bearer " + getAccessToken());
         request.setBody("{\"data\": { \"type\": \"recorders\", \"id\": \"" + recorderId + "\", \"attributes\": { \"gcm_registration_token\": \"" + gcmRegistrationToken + "\" } } }");
-        HttpResponse response = new HttpResponse();
-        request.execute(response);
+
+        HttpResponse response;
+        addPendingRequest(requesterId, request);
+        try {
+            response = new HttpResponse();
+            request.execute(response);
+        } finally {
+            removePendingRequest(requesterId, request);
+        }
 
         if(response.getException() != null) {
             throw new HttpResponseException(response.getException());
@@ -440,12 +503,19 @@ public class PeppermintApi implements Serializable {
      * @throws PeppermintApiInvalidAccessTokenException
      * @throws PeppermintApiResponseCodeException a status code different from 2XX was returned
      */
-    public UploadsResponse getSignedUrl(String senderName, String senderEmail, String contentType) throws PeppermintApiInvalidAccessTokenException, PeppermintApiResponseCodeException {
+    public UploadsResponse getSignedUrl(String requesterId, String senderName, String senderEmail, String contentType) throws PeppermintApiInvalidAccessTokenException, PeppermintApiResponseCodeException {
         HttpRequest request = new HttpRequest(UPLOADS_ENDPOINT, HttpRequest.METHOD_POST);
         request.setHeaderParam("Authorization", "Bearer " + getAccessToken());
         request.setBody("{\"content_type\":\"" + contentType + "\", \"sender_name\":\"" + senderName + "\", \"sender_email\":\"" + senderEmail + "\"}");
-        HttpJSONResponse<UploadsResponse> response = new HttpJSONResponse<>(mUploadsResponseParser);
-        request.execute(response);
+
+        HttpJSONResponse<UploadsResponse> response;
+        addPendingRequest(requesterId, request);
+        try {
+            response = new HttpJSONResponse<>(mUploadsResponseParser);
+            request.execute(response);
+        } finally {
+            removePendingRequest(requesterId, request);
+        }
 
         if(response.getException() != null) {
             throw new HttpResponseException(response.getException());
@@ -468,14 +538,22 @@ public class PeppermintApi implements Serializable {
      * @param contentType the audio file content type
      * @return the HTTP response
      */
-    public HttpResponse uploadMessage(String signedUrl, File audioFile, String contentType) {
+    public HttpResponse uploadMessage(String requesterId, String signedUrl, File audioFile, String contentType) {
         HttpRequestFileData request = new HttpRequestFileData(signedUrl, HttpRequest.METHOD_PUT, false, audioFile);
         request.setHeaderParam("Content-Type", contentType);
         request.removeHeaderParam("Accept");
         request.removeUrlParam("_ts");
         request.setUploadResultReceiver(null);  // for now, no progress
-        HttpResponse response = new HttpResponse();
-        request.execute(response);
+
+        HttpResponse response;
+        addPendingRequest(requesterId, request);
+        try {
+            response = new HttpResponse();
+            request.execute(response);
+        } finally {
+            removePendingRequest(requesterId, request);
+        }
+
         return response;
     }
 

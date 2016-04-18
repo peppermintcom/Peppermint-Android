@@ -44,11 +44,26 @@ import java.util.concurrent.TimeUnit;
  */
 public class SenderManager extends SenderObject implements SenderUploadListener {
 
-    private ThreadPoolExecutor mExecutor;                       // a thread pool for sending tasks
+    private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
+
+    private ThreadPoolExecutor mExecutor, mCancelExecutor;      // a thread pool for sending tasks
 
     private Map<String, Sender> mSenderMap;                     // map of senders <mime type, sender>
 
     private Map<UUID, SenderTask> mTaskMap;                     // map of sending tasks under execution
+
+    private class CancelRunnable implements Runnable {
+        private SenderTask _taskToCancel;
+        public CancelRunnable(SenderTask taskToCancel) {
+            this._taskToCancel = taskToCancel;
+        }
+        @Override
+        public void run() {
+            if(this._taskToCancel != null) {
+                this._taskToCancel.cancel();
+            }
+        }
+    }
 
     public SenderManager(Context context, Map<String, Object> defaultSenderParameters) {
         super(context,
@@ -58,6 +73,10 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
 
         this.mTaskMap = new ConcurrentHashMap<>();
         this.mSenderMap = new HashMap<>();
+
+        this.mCancelExecutor = new ThreadPoolExecutor(CPU_COUNT + 1, CPU_COUNT * 2 + 2,
+                60, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>());
 
         // private thread pool to avoid hanging up other AsyncTasks
         // only one thread so that messages are sent one at a time (allows better control when cancelling)
@@ -183,12 +202,12 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
      * @param message the message
      * @return true if the message upload was cancelled; false otherwise
      */
-    public boolean cancel(Message message) {
+    public boolean cancel(final Message message) {
         boolean cancelled = false;
         for(SenderTask senderTask : mTaskMap.values()) {
             if(senderTask.getMessage().equals(message)) {
                 cancelled = true;
-                senderTask.cancel(true);
+                mCancelExecutor.execute(new CancelRunnable(senderTask));
             }
         }
         return cancelled;
@@ -200,9 +219,8 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
     public boolean cancel() {
         boolean canceledSome = false;
         for(SenderTask senderTask : mTaskMap.values()) {
-            if(senderTask.cancel(true)) {
-                canceledSome = true;
-            }
+            canceledSome = true;
+            mCancelExecutor.execute(new CancelRunnable(senderTask));
         }
         return canceledSome;
     }

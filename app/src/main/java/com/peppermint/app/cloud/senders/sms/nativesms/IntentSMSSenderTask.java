@@ -30,6 +30,10 @@ public class IntentSMSSenderTask extends SenderUploadTask {
         setupPeppermintAuthentication();
         uploadPeppermintMessage();
 
+        if(isCancelled()) {
+            return;
+        }
+
         String url = getMessage().getServerShortUrl();
 
         Intent sendIntent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("smsto", getMessage().getChatParameter().getRecipientList().get(0).getVia(), null));

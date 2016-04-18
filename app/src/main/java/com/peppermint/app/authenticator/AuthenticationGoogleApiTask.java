@@ -2,9 +2,9 @@ package com.peppermint.app.authenticator;
 
 import android.content.Context;
 
+import com.peppermint.app.cloud.apis.GoogleApi;
 import com.peppermint.app.cloud.senders.SenderSupportListener;
 import com.peppermint.app.cloud.senders.SenderSupportTask;
-import com.peppermint.app.cloud.apis.GoogleApi;
 import com.peppermint.app.cloud.senders.mail.gmail.GmailSender;
 import com.peppermint.app.utils.Utils;
 
@@ -35,7 +35,7 @@ public class AuthenticationGoogleApiTask extends SenderSupportTask {
         googleApi.refreshAccessToken();
 
         // get the user name from the Google API
-        GoogleApi.UserInfoResponse response = googleApi.getUserInfo();
+        GoogleApi.UserInfoResponse response = googleApi.getUserInfo(getId().toString());
 
         String firstName = response.getFirstName();
         String lastName = response.getLastName();
