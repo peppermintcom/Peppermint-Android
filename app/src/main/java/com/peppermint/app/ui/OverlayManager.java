@@ -26,6 +26,8 @@ import java.util.Set;
 
 /**
  * Created by Nuno Luz on 04-02-2016.
+ *
+ * Manages a set of overlays and their visibility inside a {@link FrameLayout} container.
  */
 public class OverlayManager {
 
@@ -82,7 +84,6 @@ public class OverlayManager {
     private Handler mDelayHandler = new Handler();
 
     private FrameLayout mLytOverlayContainer;
-    private int mCachedScreenOrientation;
 
     private Map<String, Overlay> mOverlayMap = new HashMap<>();
     private Set<String> mOverlayHidding = new HashSet<>();
@@ -102,14 +103,9 @@ public class OverlayManager {
 
     /**
      * Create the overlay layout (inflated from the layout resource id)
-     * @param layoutRes the layout resource id
-     * @param id the id of the overlay
+     * @param overlay the overlay data
      * @return the root view containing the inflated layout
      */
-    public Overlay createOverlay(int layoutRes, String id, boolean disableAllTouch, boolean disableAutoScreenRotation) {
-        return createOverlay(new Overlay(id, layoutRes, disableAllTouch, disableAutoScreenRotation));
-    }
-
     public Overlay createOverlay(Overlay overlay) {
         if(mOverlayMap.containsKey(overlay.getId())) {
             Log.d(overlay.getId(), "Overlay already exists! Ignoring createOverlay()...");
@@ -156,7 +152,7 @@ public class OverlayManager {
                 ((Activity) mContext).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
             } else {
                 //noinspection ResourceType
-                ((Activity) mContext).setRequestedOrientation(getActivityInfoOrientation() | ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
+                ((Activity) mContext).setRequestedOrientation(getActivityInfoOrientation()/* | ActivityInfo.SCREEN_ORIENTATION_NOSENSOR*/);
             }
         }
 
@@ -178,29 +174,9 @@ public class OverlayManager {
     }
 
     /**
-     * Shows all overlays. See {@link #showOverlay(String, boolean)} for more information.
-     * @return true if at least one overlay was shown; false otherwise
-     */
-    public boolean showAllOverlays(boolean animated) {
-        boolean changed = false;
-
-        for(String id : mOverlayMap.keySet()) {
-            if(showOverlay(id, animated)) {
-                changed = true;
-            }
-        }
-
-        return changed;
-    }
-
-    /**
      * Sets the overlay associated with the tag to invisible
      * @return true if the visibility of the overlay changed
      */
-    public boolean hideOverlay(String id, long delay, final boolean animated) {
-        return hideOverlay(id, delay, animated, false);
-    }
-
     protected boolean hideOverlay(String id, long delay, final boolean animated, boolean isCancel) {
         if(!mOverlayMap.containsKey(id)) {
             throw new RuntimeException("Overlay " + id + " does not exist!");
@@ -232,27 +208,6 @@ public class OverlayManager {
     }
 
     /**
-     * Hides all overlays. See {@link #hideOverlay(String, long, boolean)} for more information.
-     * @param delay a delay before starting the hidding animation
-     * @return true if at least one overlay was hidden; false otherwise
-     */
-    public boolean hideAllOverlays(long delay, boolean animated) {
-        return hideAllOverlays(delay, animated, false);
-    }
-
-    public boolean hideAllOverlays(long delay, boolean animated, boolean isCancel) {
-        boolean changed = false;
-
-        for(String id : mOverlayMap.keySet()) {
-            if(hideOverlay(id, delay, animated, isCancel)) {
-                changed = true;
-            }
-        }
-
-        return changed;
-    }
-
-    /**
      * Destroys the overlay associated with the tag
      * @param id the tag of the overlay
      */
@@ -274,29 +229,6 @@ public class OverlayManager {
         for(String id : mOverlayMap.keySet()) {
             destroyOverlay(id);
         }
-    }
-
-    protected void lockOrientation() {
-        if(!(mContext instanceof Activity)) {
-            return;
-        }
-
-        mCachedScreenOrientation = ((Activity) mContext).getRequestedOrientation();
-        
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            ((Activity) mContext).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
-        } else {
-            //noinspection ResourceType
-            ((Activity) mContext).setRequestedOrientation(getActivityInfoOrientation() | ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
-        }
-    }
-
-    protected void unlockOrientation() {
-        if(!(mContext instanceof Activity)) {
-            return;
-        }
-
-        ((Activity) mContext).setRequestedOrientation(mCachedScreenOrientation);
     }
 
     private int getActivityInfoOrientation() {
@@ -347,10 +279,6 @@ public class OverlayManager {
 
     public boolean removeOverlayVisibilityChangeListener(OverlayVisibilityChangeListener listener) {
         return mOverlayVisibilityChangeListenerList.remove(listener);
-    }
-
-    public String getRootScreenId() {
-        return mRootScreenId;
     }
 
     public void setRootScreenId(String mRootScreenId) {
