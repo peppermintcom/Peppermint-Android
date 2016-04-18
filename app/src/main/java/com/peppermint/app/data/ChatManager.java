@@ -13,7 +13,9 @@ import com.peppermint.app.utils.Utils;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Nuno Luz on 18-02-2016.
@@ -109,13 +111,29 @@ public class ChatManager {
         }
 
         String where = Utils.joinString(" OR ", conditions);
-        Cursor cursor = db.rawQuery("SELECT v_chat.* FROM v_chat, tbl_chat_recipient, tbl_recipient WHERE " +
+        Cursor cursor = db.rawQuery("SELECT v_chat.*, tbl_recipient.via AS via, tbl_recipient.mimetype AS mimetype FROM v_chat, tbl_chat_recipient, tbl_recipient WHERE " +
                 "v_chat.chat_id = tbl_chat_recipient.chat_id AND tbl_chat_recipient.recipient_id = tbl_recipient.recipient_id AND " + where + ";", null);
         Chat chat = null;
-        if(cursor.getCount() == recipientAmount && cursor.moveToFirst()) {
-            chat = getChatFromCursor(db, cursor);
+        Set<String> uniqueMimeVia = new HashSet<>();
+        while(cursor.moveToNext()) {
+            String mimetype = cursor.getString(cursor.getColumnIndex("mimetype"));
+            String via = cursor.getString(cursor.getColumnIndex("via"));
+            String key = mimetype + via;
+
+            if(!uniqueMimeVia.contains(key)) {
+                uniqueMimeVia.add(key);
+            }
+
+            if(chat == null) {
+                chat = getChatFromCursor(db, cursor);
+            }
         }
         cursor.close();
+
+        if(uniqueMimeVia.size() != recipientAmount) {
+            return null;
+        }
+
         return chat;
     }
 

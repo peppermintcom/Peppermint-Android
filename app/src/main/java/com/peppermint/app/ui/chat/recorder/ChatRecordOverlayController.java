@@ -6,7 +6,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -19,6 +18,7 @@ import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ContactManager;
 import com.peppermint.app.data.ContactRaw;
+import com.peppermint.app.data.GlobalManager;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Recording;
@@ -28,12 +28,15 @@ import com.peppermint.app.events.ReceiverEvent;
 import com.peppermint.app.events.RecorderEvent;
 import com.peppermint.app.events.SenderEvent;
 import com.peppermint.app.events.SyncEvent;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.OverlayManager;
 import com.peppermint.app.ui.TouchInterceptable;
 import com.peppermint.app.ui.base.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.ui.base.views.CustomToast;
 import com.peppermint.app.ui.recipients.add.NewContactActivity;
 import com.peppermint.app.utils.Utils;
+
+import java.sql.SQLException;
 
 /**
  * Created by Nuno Luz on 04-03-2016.
@@ -117,8 +120,14 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
             public void onClick(View v) {
                 ContactRaw emailRecipient = mSmsConfirmationDialog.getEmailRecipient();
                 if (emailRecipient != null) {
-                    mFinalEvent.getChat().getRecipientList().get(0).setFromDroidContactRaw(emailRecipient);
-                    sendMessage(mFinalEvent.getChat(), mFinalEvent.getRecording());
+                    //mFinalEvent.getChat().getRecipientList().get(0).setFromDroidContactRaw(emailRecipient);
+                    Chat tappedChat = null;
+                    try {
+                        tappedChat = GlobalManager.insertOrUpdateChatAndRecipients(mContext, emailRecipient);
+                    } catch (SQLException e) {
+                        TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
+                    }
+                    sendMessage(tappedChat, mFinalEvent.getRecording());
                     mFinalEvent = null;
                     mSmsConfirmationDialog.dismiss();
                 } else {
