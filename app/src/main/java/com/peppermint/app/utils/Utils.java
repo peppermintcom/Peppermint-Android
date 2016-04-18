@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.KeyguardManager;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
@@ -41,6 +42,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 
 import com.crashlytics.android.Crashlytics;
+import com.peppermint.app.BuildConfig;
+import com.peppermint.app.R;
 import com.peppermint.app.tracking.TrackerManager;
 
 import java.io.File;
@@ -68,6 +71,10 @@ import java.util.List;
 public class Utils {
 
     private static final String TAG = Utils.class.getSimpleName();
+
+    private static final String SUPPORT_EMAIL = "support@peppermint.com";
+    private static final String SUPPORT_SUBJECT = "Feedback or question about Peppermint Android app";
+    private static final String SUPPORT_BODY = "\n\n\n\nNote regarding this feedback. Was provided by %1$s running %2$s with Peppermint v" + BuildConfig.VERSION_NAME;
 
     /**
      * Get a presentation friendly string with the supplied duration in the format MM:SS
@@ -915,7 +922,7 @@ public class Utils {
                 }
             }
         }
-        return dir != null ? dir.delete() : false;
+        return dir != null && dir.delete();
     }
 
     /**
@@ -1039,5 +1046,13 @@ public class Utils {
 
         final KeyguardManager keyguardManager = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
         return screenOn && !keyguardManager.inKeyguardRestrictedInputMode();
+    }
+
+    public static void triggerSupportEmail(final Context context) {
+        Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + SUPPORT_EMAIL));
+        i.putExtra(Intent.EXTRA_SUBJECT, SUPPORT_SUBJECT);
+        i.putExtra(Intent.EXTRA_TEXT, String.format(SUPPORT_BODY, Utils.getDeviceName(), Utils.getAndroidVersion()));
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(Intent.createChooser(i, context.getString(R.string.send_email)));
     }
 }

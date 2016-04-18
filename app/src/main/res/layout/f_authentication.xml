@@ -92,15 +92,19 @@
                         android:background="@drawable/background_border_bottom"
                         android:paddingBottom="1dp" />
 
-                    <LinearLayout
+                    <RelativeLayout
                         android:id="@id/android:empty"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:layout_margin="20dp"
+                        android:layout_marginLeft="15dp"
+                        android:layout_marginRight="15dp"
+                        android:layout_marginTop="15dp"
                         android:orientation="vertical"
                         android:gravity="center">
 
                         <com.peppermint.app.ui.base.views.CustomFontTextView
+                            android:id="@+id/txtNoGoogleAccounts"
+                            android:layout_alignParentTop="true"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="10dp"
@@ -111,8 +115,12 @@
                             android:text="@string/no_google_accounts_found" />
 
                         <com.peppermint.app.ui.base.views.CustomFontTextView
+                            android:id="@+id/txtAddGoogleAccount"
+                            android:layout_below="@id/txtNoGoogleAccounts"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
+                            android:paddingTop="20dp"
+                            android:paddingBottom="20dp"
                             android:gravity="center"
                             custom:textFont="@string/font_semibold"
                             android:textColor="@color/green_text"
@@ -120,7 +128,37 @@
                             android:text="@string/add_account_to_start"
                             />
 
-                    </LinearLayout>
+                        <LinearLayout
+                            android:id="@+id/lytContactUs"
+                            android:layout_alignParentBottom="true"
+                            android:layout_marginTop="15dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:background="@drawable/background_ripple"
+                            android:paddingBottom="15dp"
+                            android:paddingTop="15dp">
+
+                            <com.peppermint.app.ui.base.views.CustomFontTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                custom:textFont="@string/font_semibold"
+                                android:textColor="@color/grey_text"
+                                android:textSize="14dp"
+                                android:text="@string/cant_sign_in"/>
+
+                            <com.peppermint.app.ui.base.views.CustomFontTextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginLeft="10dp"
+                                custom:textFont="@string/font_semibold"
+                                android:textColor="@color/green_text"
+                                android:textSize="14dp"
+                                android:text="@string/contact_us_for_questions"/>
+
+                        </LinearLayout>
+
+                    </RelativeLayout>
 
                 </FrameLayout>
 

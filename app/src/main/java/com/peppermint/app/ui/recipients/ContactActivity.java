@@ -6,7 +6,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.PointF;
 import android.graphics.Rect;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -21,7 +20,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.peppermint.app.BuildConfig;
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
@@ -64,10 +62,6 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
 
     protected static final int REQUEST_NEWCONTACT = 224;
     protected static final int REQUEST_NEWCONTACT_AND_SEND = 223;
-
-    private static final String SUPPORT_EMAIL = "support@peppermint.com";
-    private static final String SUPPORT_SUBJECT = "Feedback or question about Peppermint Android app";
-    private static final String SUPPORT_BODY = "\n\n\n\nNote regarding this feedback. Was provided by %1$s running %2$s with Peppermint v" + BuildConfig.VERSION_NAME;
 
     private static final Pattern VIA_PATTERN = Pattern.compile("<([^\\s]*)>");
 
@@ -160,11 +154,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
         navItems.add(new NavigationItem(getString(R.string.drawer_menu_help_feedback), R.drawable.ic_drawer_feedback, new NavigationItemSimpleAction() {
             @Override
             public void onPreFragmentInit(Fragment newFragment, boolean isNewInstance) {
-                Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + SUPPORT_EMAIL));
-                i.putExtra(Intent.EXTRA_SUBJECT, SUPPORT_SUBJECT);
-                i.putExtra(Intent.EXTRA_TEXT, String.format(SUPPORT_BODY, Utils.getDeviceName(), Utils.getAndroidVersion()));
-                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(Intent.createChooser(i, getString(R.string.send_email)));
+                Utils.triggerSupportEmail(ContactActivity.this);
             }
         }, true));
         navItems.add(new NavigationItem(getString(R.string.drawer_menu_about), R.drawable.ic_drawer_help, new NavigationItemSimpleAction() {

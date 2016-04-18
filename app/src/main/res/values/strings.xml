@@ -134,6 +134,8 @@
     <string name="dont_want_to_use_account">Don\'t want to use any of these accounts?</string>
     <string name="sign_up_new_google_account"><u>Sign in with a New Google Account</u></string>
     <string name="sign_in">Sign In</string>
+    <string name="cant_sign_in">Can\'t sign in?</string>
+    <string name="contact_us_for_questions"><u>Contact us for questions</u></string>
 
     <!-- AUTHENTICATION/NEW CONTACT -->
     <string name="first_name">First Name</string>

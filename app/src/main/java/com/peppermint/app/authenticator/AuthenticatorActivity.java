@@ -24,6 +24,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -31,6 +32,8 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.peppermint.app.R;
 import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.MessagesSyncTask;
@@ -47,7 +50,9 @@ import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.base.CustomActionBarView;
 import com.peppermint.app.ui.base.activities.CustomAuthenticatorActivity;
+import com.peppermint.app.ui.base.views.CustomFontTextView;
 import com.peppermint.app.ui.base.views.CustomNoScrollListView;
+import com.peppermint.app.utils.Utils;
 
 import javax.net.ssl.SSLException;
 
@@ -57,6 +62,7 @@ import javax.net.ssl.SSLException;
 public class AuthenticatorActivity extends CustomAuthenticatorActivity implements View.OnClickListener, AdapterView.OnItemClickListener {
 
     private static final String TAG = AuthenticatorActivity.class.getSimpleName();
+    private static final int PLAY_SERVICES_RESOLUTION_CODE = 9000;
 
     private static final int NEW_ACCOUNT_CODE = 1234;
     private static final int AUTHORIZATION_CODE = 1235;
@@ -86,7 +92,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     // account list
     private CustomNoScrollListView mListView;
     private AuthenticatorArrayAdapter mAdapter;
-    private ViewGroup mLytEmpty, mLytBottom;
+    private ViewGroup mLytEmpty, mLytBottom, lytContactUs;
 
     private Account[] mAccounts;
     private String mSelectedAccount;
@@ -316,8 +322,12 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         mListView = (CustomNoScrollListView) findViewById(android.R.id.list);
         mLytEmpty = (ViewGroup) findViewById(android.R.id.empty);
         mLytBottom = (ViewGroup) findViewById(R.id.lytBottom);
-        mLytEmpty.setOnClickListener(this);
+        lytContactUs = (ViewGroup) findViewById(R.id.lytContactUs);
         mLytBottom.setOnClickListener(this);
+        lytContactUs.setOnClickListener(this);
+
+        CustomFontTextView txtAddGoogleAccount = (CustomFontTextView) findViewById(R.id.txtAddGoogleAccount);
+        txtAddGoogleAccount.setOnClickListener(this);
 
         mListView.setOnItemClickListener(this);
 
@@ -354,6 +364,8 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         if(mDoingAuth) {
             startGoogleAuthentication();
         }
+
+        checkPlayServices();
     }
 
     @Override
@@ -457,16 +469,21 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
 
     @Override
     public void onClick(View v) {
-        if(v.getId() == mBtnSignIn.getId()) {
+        if(v.getId() == R.id.btnSignIn) {
             mSelectedAccount = mAccounts[0].name;
             startGoogleAuthentication();
             return;
         }
 
-        if(v.getId() == mLytBottom.getId() || v.getId() == mLytEmpty.getId()) {
+        if(v.getId() == R.id.lytBottom || v.getId() == R.id.txtAddGoogleAccount) {
             Intent intent = new Intent(Settings.ACTION_ADD_ACCOUNT);
             intent.putExtra(Settings.EXTRA_ACCOUNT_TYPES, new String[] {"com.google"});
             startActivityForResult(intent, NEW_ACCOUNT_CODE);
+            return;
+        }
+
+        if(v.getId() == R.id.lytContactUs) {
+            Utils.triggerSupportEmail(this);
         }
     }
 
@@ -487,5 +504,21 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         if (mProgressDialog != null) {
             mProgressDialog.dismiss();
         }
+    }
+
+    private boolean checkPlayServices() {
+        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+        int resultCode = apiAvailability.isGooglePlayServicesAvailable(this);
+        if (resultCode != ConnectionResult.SUCCESS) {
+            if (apiAvailability.isUserResolvableError(resultCode)) {
+                apiAvailability.getErrorDialog(this, resultCode, PLAY_SERVICES_RESOLUTION_CODE)
+                        .show();
+            } else {
+                Log.i(TAG, "This device is not supported.");
+                finish();
+            }
+            return false;
+        }
+        return true;
     }
 }
