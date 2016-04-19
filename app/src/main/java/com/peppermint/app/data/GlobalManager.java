@@ -3,9 +3,11 @@ package com.peppermint.app.data;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 
 import com.peppermint.app.R;
 import com.peppermint.app.cloud.MessagesMarkPlayedTask;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
@@ -263,9 +265,23 @@ public class GlobalManager {
         return newChat;
     }
 
-    public static void markAsPeppermint(Context context, Recipient recipient) throws ContactManager.InvalidEmailException, SQLException {
+    public static void markAsPeppermint(Context context, Recipient recipient, String account) throws ContactManager.InvalidEmailException, SQLException {
         ContactRaw contactRaw = ContactManager.getRawContactByDataId(context, recipient.getDroidContactDataId());
-        if(contactRaw != null) {
+        if(contactRaw == null) {
+            /* in case the contact has been deleted... */
+            String[] names = Utils.getFirstAndLastNames(recipient.getDisplayName());
+            String phone = recipient.getMimeType().compareTo(ContactData.PHONE_MIMETYPE) == 0 ? recipient.getVia() : null;
+            String email = phone == null ? recipient.getVia() : null;
+            Uri photoUri = recipient.getPhotoUri() != null ? Uri.parse(recipient.getPhotoUri()) : null;
+            try {
+                contactRaw = ContactManager.insertOrUpdate(context, 0, 0, names[0], names[1], phone, email, photoUri, account, true);
+                recipient.setDroidContactId(contactRaw.getContactId());
+                recipient.setDroidContactRawId(contactRaw.getRawId());
+                recipient.setDroidContactDataId(contactRaw.getMainDataId());
+            } catch (Exception e) {
+                TrackerManager.getInstance(context.getApplicationContext()).log("Unable to insert missing contact while marking as Peppermint!", e);
+            }
+        } else {
             ContactManager.insertPeppermint(context, recipient.getVia(), recipient.getDroidContactRawId(), 0, null);
         }
         recipient.setPeppermint(true);
@@ -333,7 +349,9 @@ public class GlobalManager {
             if(message.getRecordingParameter() != null) {
                 File file = message.getRecordingParameter().getValidatedFile();
                 if(file != null) {
-                    file.delete();
+                    if(!file.delete()) {
+                        TrackerManager.getInstance(context.getApplicationContext()).log("Unable to delete file " + file.getAbsolutePath());
+                    }
                 }
             }
             // discard recording as well
