@@ -264,7 +264,10 @@ public class GlobalManager {
     }
 
     public static void markAsPeppermint(Context context, Recipient recipient) throws ContactManager.InvalidEmailException, SQLException {
-        ContactManager.insertPeppermint(context, recipient.getVia(), recipient.getDroidContactRawId(), 0, null);
+        ContactRaw contactRaw = ContactManager.getRawContactByDataId(context, recipient.getDroidContactDataId());
+        if(contactRaw != null) {
+            ContactManager.insertPeppermint(context, recipient.getVia(), recipient.getDroidContactRawId(), 0, null);
+        }
         recipient.setPeppermint(true);
 
         DatabaseHelper databaseHelper = DatabaseHelper.getInstance(context);

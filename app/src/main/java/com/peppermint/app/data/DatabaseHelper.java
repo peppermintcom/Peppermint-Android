@@ -187,14 +187,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     Recipient recipient = RecipientManager.getRecipientFromCursor(recipientCursor);
 
                     ContactRaw contactRaw = ContactManager.getRawContactByDataId(mContext, recipient.getDroidContactDataId());
-                    recipient.setDroidContactId(contactRaw.getContactId());
+					if(contactRaw != null) {
+						recipient.setDroidContactId(contactRaw.getContactId());
 
-                    ContactData peppermintData = ContactManager.getPeppermintContactByContactIdAndVia(mContext, recipient.getDroidContactId(), recipient.getVia());
-                    if(peppermintData != null) {
-                        recipient.setPeppermint(true);
-                    }
+						ContactData peppermintData = ContactManager.getPeppermintContactByContactIdAndVia(mContext, recipient.getDroidContactId(), recipient.getVia());
+						if(peppermintData != null) {
+							recipient.setPeppermint(true);
+						}
 
-                    RecipientManager.update(_db, recipient);
+						RecipientManager.update(_db, recipient);
+					}
 				}
 			} catch (SQLException e) {
                 TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
