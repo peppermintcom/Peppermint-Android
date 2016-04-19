@@ -85,6 +85,7 @@ class Authenticator extends AbstractAccountAuthenticator {
 
             // extract the data from the Account Manager, and ask the server for an appropriate AuthToken.
             mAuthenticatorUtils.refreshAccount();
+/*
             String authToken = mAuthenticatorUtils.peekAccessToken();
 
             if (!TextUtils.isEmpty(authToken)) {
@@ -95,7 +96,7 @@ class Authenticator extends AbstractAccountAuthenticator {
                 result.putString(AccountManager.KEY_AUTHTOKEN, authToken);
                 return result;
             }
-
+*/
             AuthenticationData data = mAuthenticatorUtils.getAccountData();
             try {
                 JWTsResponse authResponse = mPeppermintApi.authBoth(null, data.getEmail(), data.getPassword(), data.getDeviceId(), data.getDeviceKey(), data.getAccountType());
@@ -105,6 +106,8 @@ class Authenticator extends AbstractAccountAuthenticator {
                 // EO temporary code
 
                 if (!TextUtils.isEmpty(authResponse.getAccessToken())) {
+                    TrackerManager.getInstance(mContext.getApplicationContext()).setUserEmail(account.name);
+
                     final Bundle result = new Bundle();
                     result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
                     result.putString(AccountManager.KEY_ACCOUNT_TYPE, AuthenticatorConstants.ACCOUNT_TYPE);
