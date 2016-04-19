@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.peppermint.app.ui.base.CustomActionBarView
+        android:id="@+id/actionBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true" />
+
+    <com.peppermint.app.ui.base.FullDrawerLayout
+        android:id="@+id/drawer"
+        android:layout_below="@id/actionBar"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.peppermint.app.ui.base.views.FitsSystemWindowsFrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/actionBar">
+
+            <com.peppermint.app.ui.base.views.FitsSystemWindowsFrameLayout
+                android:id="@+id/container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <RelativeLayout
+                android:id="@+id/fragmentProgressContainer"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/dark_green_60percent"
+                android:visibility="gone"
+                android:gravity="center">
+
+                <ImageView
+                    android:layout_width="170dp"
+                    android:layout_height="170dp"
+                    android:layout_marginBottom="40dp"
+                    android:layout_marginTop="40dp"
+                    android:layout_marginRight="40dp"
+                    android:layout_marginLeft="40dp"
+                    android:src="@drawable/img_static_loading_170dp" />
+
+                <com.peppermint.app.ui.canvas.loading.LoadingView
+                    android:id="@+id/loading"
+                    android:layout_width="170dp"
+                    android:layout_height="170dp"
+                    android:layout_marginBottom="40dp"
+                    android:layout_marginTop="40dp"
+                    android:layout_marginRight="40dp"
+                    android:layout_marginLeft="40dp"
+                    custom:text="@string/loading_contacts" />
+
+            </RelativeLayout>
+
+        </com.peppermint.app.ui.base.views.FitsSystemWindowsFrameLayout>
+
+        <!-- The navigation drawer -->
+        <LinearLayout
+            android:id="@+id/drawerPane"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginRight="56dp"
+            android:orientation="vertical"
+            android:layout_gravity="start"
+            android:clickable="true">
+
+            <!-- Profile Box -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/dark_green_text"
+                android:padding="16dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.peppermint.app.ui.base.views.RoundImageView
+                    android:id="@+id/imgUserAvatar"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginRight="16dp"
+                    custom:cornerRadius="10dp"
+                    custom:roundBorderWidth="2dp"
+                    custom:roundBorderColor="@color/white"
+                />
+
+                <com.peppermint.app.ui.base.views.CustomFontTextView
+                    android:id="@+id/txtUserName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/app_name"
+                    android:textColor="#fff"
+                    android:textSize="16dp"
+                    custom:textFont="@string/font_semibold"
+                    android:singleLine="true"/>
+            </LinearLayout>
+
+            <!-- List of Actions (pages) -->
+            <ListView
+                android:id="@+id/list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:choiceMode="singleChoice"
+                android:background="@color/background0"
+                android:listSelector="@drawable/background_transparent_to_solid_pressed_sel"/>
+
+        </LinearLayout>
+
+    </com.peppermint.app.ui.base.FullDrawerLayout>
+
+    <FrameLayout
+        android:id="@+id/touchInterceptor"
+        android:layout_alignParentTop="true"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/lytOverlay"
+        android:layout_alignParentTop="true"
+        android:visibility="gone"
+        android:focusable="true"
+        android:clickable="true"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </FrameLayout>
+
+</RelativeLayout>

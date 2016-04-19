@@ -62,6 +62,7 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
     // authentication data
     private AuthenticationData mAuthenticationData;
 
+    protected int getContentViewLayoutId() { return R.layout.a_custom_actionbar_drawer_layout; }
     protected List<NavigationItem> getNavigationItems() {
         return null;
     }
