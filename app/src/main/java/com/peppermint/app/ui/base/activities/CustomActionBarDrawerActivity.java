@@ -161,7 +161,14 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
         super.onPostCreate(savedInstanceState);
 
         // perform one action from the drawer (init the default fragment)
-        selectItemFromDrawer(mLstDrawer.getCheckedItemPosition() >= 0 ? mLstDrawer.getCheckedItemPosition() : 0);
+        int checkedItemPos = mLstDrawer.getCheckedItemPosition() >= 0 ? mLstDrawer.getCheckedItemPosition() : 0;
+        if(checkedItemPos > 0) {
+            NavigationItem navItem = mNavigationItemList.get(checkedItemPos);
+            if(navItem.getFragmentClass() == null) {
+                checkedItemPos = 0;
+            }
+        }
+        selectItemFromDrawer(checkedItemPos);
 
         if(mDrawerToggle != null) {
             try {
