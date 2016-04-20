@@ -20,10 +20,12 @@ import android.widget.Toast;
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.SignOutPeppermintTask;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
+import com.peppermint.app.cloud.senders.Sender;
 import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.cloud.senders.SenderSupportListener;
 import com.peppermint.app.cloud.senders.SenderSupportTask;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
+import com.peppermint.app.cloud.senders.mail.gmail.GmailSender;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
 import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
@@ -39,7 +41,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     private static final String PREF_DISPLAY_NAME_KEY = "displayName";
     private static final String PREF_CHAT_HEADS_ENABLED_KEY = "chatHeads";
 
-    private static final String PREF_GMAIL_ENABLED_KEY = "GmailSenderPreferences_isEnabled";
+    private static final String PREF_GMAIL_ENABLED_KEY = Sender.getEnabledPreferenceKey(GmailSender.class);
 
     private static final int OVERLAY_PERMISSION_REQUEST_CODE = 122;
 

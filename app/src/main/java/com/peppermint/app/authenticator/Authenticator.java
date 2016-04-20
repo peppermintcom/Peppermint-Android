@@ -14,13 +14,16 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
+import com.peppermint.app.cloud.apis.GoogleApi;
 import com.peppermint.app.cloud.apis.PeppermintApi;
 import com.peppermint.app.cloud.apis.data.JWTsResponse;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
-import com.peppermint.app.cloud.apis.exceptions.PeppermintApiResponseCodeException;
+import com.peppermint.app.cloud.apis.exceptions.PeppermintApiResponseException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiTooManyRequestsException;
+import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.utils.Utils;
 
 /**
  * Created by Nuno Luz on 26-01-2016.
@@ -35,15 +38,19 @@ class Authenticator extends AbstractAccountAuthenticator {
     private final Handler mHandler;
     private final Context mContext;
 
+    private final GoogleApi mGoogleApi;
     private final PeppermintApi mPeppermintApi;
     private final AuthenticatorUtils mAuthenticatorUtils;
+    private final SenderPreferences mSenderPreferences;
 
     public Authenticator(Context context) {
         super(context);
         mContext = context;
         mHandler = new Handler(context.getMainLooper());
-        mPeppermintApi = new PeppermintApi();
+        mGoogleApi = new GoogleApi(context);
+        mPeppermintApi = new PeppermintApi(context);
         mAuthenticatorUtils = new AuthenticatorUtils(context);
+        mSenderPreferences = new SenderPreferences(context);
     }
 
     @Override
@@ -99,11 +106,31 @@ class Authenticator extends AbstractAccountAuthenticator {
 */
             AuthenticationData data = mAuthenticatorUtils.getAccountData();
             try {
-                JWTsResponse authResponse = mPeppermintApi.authBoth(null, data.getEmail(), data.getPassword(), data.getDeviceId(), data.getDeviceKey(), data.getAccountType());
+                // google account setup
+                mGoogleApi.setAccountName(data.getEmail());
+                final String accountPassword = mGoogleApi.renewAuthenticationToken();
 
-                // TODO temporary code for build 1.1.1
+                // refresh name just in case
+                final GoogleApi.UserInfoResponse userInfoResponse = mGoogleApi.getUserInfo(null);
+
+                final String firstName = userInfoResponse.getFirstName();
+                final String lastName = userInfoResponse.getLastName();
+                final String fullName = userInfoResponse.getFullName();
+
+                if (firstName != null && lastName != null && Utils.isValidName(firstName) && Utils.isValidName(lastName)) {
+                    mSenderPreferences.setFirstName(firstName);
+                    mSenderPreferences.setLastName(lastName);
+                } else if (fullName != null && Utils.isValidName(fullName)) {
+                    String[] names = Utils.getFirstAndLastNames(fullName);
+                    mSenderPreferences.setFirstName(names[0]);
+                    mSenderPreferences.setLastName(names[1]);
+                }
+
+                // peppermint account setup
+                JWTsResponse authResponse = mPeppermintApi.authBoth(null, data.getEmail(), accountPassword, data.getDeviceId(), data.getDeviceKey(), data.getAccountType());
+
                 mAuthenticatorUtils.updateAccountServerId(authResponse.getAccount().getAccountId());
-                // EO temporary code
+                mAuthenticatorUtils.updateAccountPassword(accountPassword);
 
                 if (!TextUtils.isEmpty(authResponse.getAccessToken())) {
                     TrackerManager.getInstance(mContext.getApplicationContext()).setUserEmail(account.name);
@@ -116,7 +143,7 @@ class Authenticator extends AbstractAccountAuthenticator {
                 }
             } catch (PeppermintApiInvalidAccessTokenException e) {
                 Log.w(TAG, "Invalid credentials!", e);
-            } catch (PeppermintApiResponseCodeException | PeppermintApiTooManyRequestsException e) {
+            } catch (PeppermintApiResponseException | PeppermintApiTooManyRequestsException e) {
                 throw new NetworkErrorException(e);
             }
 
@@ -125,7 +152,10 @@ class Authenticator extends AbstractAccountAuthenticator {
             throw new RuntimeException(e);
         } catch (Throwable e) {
             TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
-            throw e;
+
+            final Bundle result = new Bundle();
+            result.putString(AccountManager.KEY_ERROR_MESSAGE, e.getMessage());
+            return result;
         }
 
         // if we get here, then we need to re-prompt the user for credentials.

@@ -15,8 +15,8 @@ import com.peppermint.app.cloud.senders.SenderUploadTask;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.cloud.senders.exceptions.TryAgainException;
 import com.peppermint.app.cloud.senders.mail.MailUtils;
-import com.peppermint.app.data.Recipient;
 import com.peppermint.app.data.Message;
+import com.peppermint.app.data.Recipient;
 import com.peppermint.app.utils.DateContainer;
 
 import java.io.File;
@@ -50,9 +50,7 @@ public class GmailSenderTask extends SenderUploadTask {
             return;
         }
 
-        if(isCancelled()) {
-            return;
-        }
+        if(isCancelled()) { return; }
 
         String url = getMessage().getServerShortUrl();
         String canonicalUrl = getMessage().getServerCanonicalUrl();

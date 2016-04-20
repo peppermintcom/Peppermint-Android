@@ -87,16 +87,8 @@ public abstract class SenderSupportTask extends SenderTask implements Cloneable 
         LocalBroadcastManager.getInstance(getContext()).sendBroadcast(mFinishedIntent);
     }
 
-    public SenderSupportListener getSenderSupportListener() {
-        return mSenderSupportListener;
-    }
-
     public void setSenderSupportListener(SenderSupportListener mListener) {
         this.mSenderSupportListener = mListener;
-    }
-
-    protected Intent getFinishedIntent() {
-        return mFinishedIntent;
     }
 
     public SenderUploadTask getRelatedUploadTask() {

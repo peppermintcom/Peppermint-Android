@@ -28,17 +28,15 @@ public class RegistrationIntentService extends IntentService {
 
     public RegistrationIntentService() {
         super(TAG);
-        mPeppermintApi = new PeppermintApi();
+        mPeppermintApi = new PeppermintApi(this);
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
         Throwable error = null;
         try {
-            AuthenticatorUtils authenticatorUtils = new AuthenticatorUtils(this);
-            String accessToken = authenticatorUtils.getAccessToken();
-            AuthenticationData data = authenticatorUtils.getAccountData();
-            mPeppermintApi.setAccessToken(accessToken);
+            final AuthenticatorUtils authenticatorUtils = new AuthenticatorUtils(this);
+            final AuthenticationData authenticationData = authenticatorUtils.getAccountData();
 
             // [START register_for_gcm]
             // Initially this call goes out to the network to retrieve the token, subsequent calls are local.
@@ -49,7 +47,7 @@ public class RegistrationIntentService extends IntentService {
 
             Log.d(TAG, "New GCM Registration Token: " + token);
 
-            mPeppermintApi.updateRecorder(null, data.getDeviceServerId(), token);
+            mPeppermintApi.updateRecorder(null, authenticationData.getDeviceServerId(), token);
             authenticatorUtils.updateAccountGcmRegistration(token);
             // [END register_for_gcm]
         } catch (Throwable e) {

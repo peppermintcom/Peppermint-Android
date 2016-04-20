@@ -12,7 +12,7 @@
     <com.peppermint.app.ui.settings.CustomPreferenceCategory
         android:title="@string/pref_title_emailcategory">
 
-        <com.peppermint.app.ui.settings.CustomCheckBoxPreference android:key="GmailSenderPreferences_isEnabled"
+        <com.peppermint.app.ui.settings.CustomCheckBoxPreference android:key="GmailSender_isEnabled"
             android:title="@string/pref_title_gmailenabled"
             android:summary="@string/pref_summary_gmailenabled"
             android:defaultValue="true" />

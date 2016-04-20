@@ -1,6 +1,8 @@
 package com.peppermint.app.cloud.senders;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 import com.peppermint.app.cloud.apis.GoogleApi;
 import com.peppermint.app.cloud.apis.PeppermintApi;
@@ -37,13 +39,13 @@ public abstract class Sender extends SenderObject {
     private SenderUploadListener mSenderUploadListener;
     private Sender mFailureChainSender;
 
-    public Sender(Context context, TrackerManager trackerManager, Map<String, Object> parameters, SenderUploadListener senderUploadListener) {
-        super(context, trackerManager, parameters, null);
+    public Sender(final Context context, final TrackerManager trackerManager, final Map<String, Object> parameters, final SenderUploadListener senderUploadListener) {
+        super(context, trackerManager, parameters, new SenderPreferences(context));
         this.mSenderUploadListener = senderUploadListener;
         this.mErrorHandler = new SenderErrorHandler(this, mSenderUploadListener);
     }
 
-    public Sender(SenderObject objToExtend, SenderUploadListener senderUploadListener) {
+    public Sender(final SenderObject objToExtend, final SenderUploadListener senderUploadListener) {
         super(objToExtend);
         this.mSenderUploadListener = senderUploadListener;
         this.mErrorHandler = new SenderErrorHandler(this, mSenderUploadListener);
@@ -91,7 +93,7 @@ public abstract class Sender extends SenderObject {
         return mErrorHandler;
     }
 
-    public void setSenderErrorHandler(SenderErrorHandler senderErrorHandler) {
+    public void setSenderErrorHandler(final SenderErrorHandler senderErrorHandler) {
         this.mErrorHandler = senderErrorHandler;
     }
 
@@ -99,7 +101,7 @@ public abstract class Sender extends SenderObject {
         return mSenderUploadListener;
     }
 
-    public Sender setSenderUploadListener(SenderUploadListener senderUploadListener) {
+    public Sender setSenderUploadListener(final SenderUploadListener senderUploadListener) {
         this.mSenderUploadListener = senderUploadListener;
         return this;
     }
@@ -108,11 +110,11 @@ public abstract class Sender extends SenderObject {
         return mFailureChainSender;
     }
 
-    public void setFailureChainSender(Sender mFailureChainSender) {
+    public void setFailureChainSender(final Sender mFailureChainSender) {
         this.mFailureChainSender = mFailureChainSender;
     }
 
-    protected GoogleApi getGoogleApi(String email) {
+    protected GoogleApi getGoogleApi(final String email) {
         GoogleApi api = (GoogleApi) getParameter(GmailSender.PARAM_GOOGLE_API);
         if(api == null) {
             api = new GoogleApi(getContext());
@@ -124,20 +126,36 @@ public abstract class Sender extends SenderObject {
         return api;
     }
 
-    protected void setGoogleApi(GoogleApi googleApi) {
-        setParameter(Sender.PARAM_GOOGLE_API, googleApi);
-    }
-
     protected PeppermintApi getPeppermintApi() {
         PeppermintApi api = (PeppermintApi) getParameter(Sender.PARAM_PEPPERMINT_API);
         if(api == null) {
-            api = new PeppermintApi();
-            setPeppermintApi(api);
+            api = new PeppermintApi(mContext);
+            setParameter(Sender.PARAM_PEPPERMINT_API, api);
         }
         return api;
     }
 
-    protected void setPeppermintApi(PeppermintApi peppermintApi) {
-        setParameter(Sender.PARAM_PEPPERMINT_API, peppermintApi);
+    public void setEnabled(boolean val) {
+        setEnabled(mContext, this.getClass(), val);
+    }
+
+    public boolean isEnabled() {
+        return isEnabled(mContext, this.getClass());
+    }
+
+    public static void setEnabled(final Context context, final Class<? extends Sender> clazz, final boolean val) {
+        final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        final SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean(getEnabledPreferenceKey(clazz), val);
+        editor.commit();
+    }
+
+    public static boolean isEnabled(final Context context, final Class<? extends Sender> clazz) {
+        final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        return sharedPreferences.getBoolean(getEnabledPreferenceKey(clazz), true);
+    }
+
+    public static String getEnabledPreferenceKey(final Class<? extends Sender> clazz) {
+        return clazz.getSimpleName() + "_isEnabled";
     }
 }

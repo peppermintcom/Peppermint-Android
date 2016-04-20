@@ -1,15 +1,11 @@
 package com.peppermint.app.cloud.senders.mail.gmail;
 
-import android.content.Context;
-
 import com.peppermint.app.cloud.senders.Sender;
 import com.peppermint.app.cloud.senders.SenderObject;
 import com.peppermint.app.cloud.senders.SenderUploadListener;
 import com.peppermint.app.cloud.senders.SenderUploadTask;
 import com.peppermint.app.data.Message;
-import com.peppermint.app.tracking.TrackerManager;
 
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -19,19 +15,8 @@ import java.util.UUID;
  */
 public class GmailSender extends Sender {
 
-    public GmailSender(Context context, TrackerManager trackerManager, Map<String, Object> parameters, SenderUploadListener senderUploadListener) {
-        super(context, trackerManager, parameters, senderUploadListener);
-        construct();
-    }
-
     public GmailSender(SenderObject objToExtend, SenderUploadListener senderUploadListener) {
         super(objToExtend, senderUploadListener);
-        construct();
-    }
-
-    private void construct() {
-        mPreferences = new GmailSenderPreferences(getContext());
-        mErrorHandler = new GmailSenderErrorHandler(this, getSenderUploadListener());
     }
 
     @Override

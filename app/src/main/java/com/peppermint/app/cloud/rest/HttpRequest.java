@@ -38,11 +38,11 @@ public class HttpRequest implements Parcelable {
 	private String mEndpoint;
 	private int mRequestMethod;
 
-	private Map<String, Object> urlParams = new HashMap<>();
-	private Map<String, String> headerParams = new HashMap<>();
+	private Map<String, Object> mUrlParams = new HashMap<>();
+	private Map<String, String> mHeaderParams = new HashMap<>();
 
-	private String body;
-	private boolean cancelled = false;
+	private String mBody;
+	private boolean mCancelled = false;
     private UUID mUuid = UUID.randomUUID();
 
     private transient HttpURLConnection mConnection;          // the running request connection
@@ -55,21 +55,22 @@ public class HttpRequest implements Parcelable {
 		this.mForceOnlyGetAndPost = req.mForceOnlyGetAndPost;
 		this.mEndpoint = req.mEndpoint;
 		this.mRequestMethod = req.mRequestMethod;
-		this.urlParams.putAll(req.urlParams);
-		this.headerParams.putAll(req.headerParams);
-		this.cancelled = req.cancelled;
+		this.mUrlParams.putAll(req.mUrlParams);
+		this.mHeaderParams.putAll(req.mHeaderParams);
+		this.mCancelled = req.mCancelled;
         this.mUuid = req.mUuid;
+		this.mBody = req.mBody;
 	}
 	
 	public HttpRequest(String endpoint) {
 		this.mEndpoint = endpoint;
 
 		// defaults
-		headerParams.put("Accept", "application/json");
-		headerParams.put("Content-Type", "application/json");
-		headerParams.put("Cache-Control", "no-cache");
+		mHeaderParams.put("Accept", "application/json");
+		mHeaderParams.put("Content-Type", "application/json");
+		mHeaderParams.put("Cache-Control", "no-cache");
 
-		urlParams.put("_ts", System.currentTimeMillis());
+		mUrlParams.put("_ts", System.currentTimeMillis());
 	}
 
 	/**
@@ -159,8 +160,8 @@ public class HttpRequest implements Parcelable {
         Uri.Builder uriBuilder = Uri.parse(mEndpoint).buildUpon();
 
 		// build url params
-		if (!urlParams.isEmpty()) {
-			for (Map.Entry<String, Object> p : urlParams.entrySet()) {
+		if (!mUrlParams.isEmpty()) {
+			for (Map.Entry<String, Object> p : mUrlParams.entrySet()) {
                 uriBuilder.appendQueryParameter(p.getKey(), p.getValue().toString());
 			}
 		}
@@ -178,20 +179,20 @@ public class HttpRequest implements Parcelable {
             conn.setChunkedStreamingMode(0);
         } else {
 			// should be supplied for binary content
-            headerParams.put("Content-Length", String.valueOf(contentLength));
+			mHeaderParams.put("Content-Length", String.valueOf(contentLength));
         }
 
 		// set request method
 		if(mForceOnlyGetAndPost && mRequestMethod >= 3) {
 			conn.setRequestMethod(METHOD_MAP[METHOD_POST]);
-			headerParams.put("X-HTTP-Method-Override", METHOD_MAP[mRequestMethod]);
+			mHeaderParams.put("X-HTTP-Method-Override", METHOD_MAP[mRequestMethod]);
 		} else {
 			conn.setRequestMethod(METHOD_MAP[mRequestMethod]);
 		}
 
 		// set header params
-		if(!headerParams.isEmpty()) {
-			for(Map.Entry<String, String> p : headerParams.entrySet()) {
+		if(!mHeaderParams.isEmpty()) {
+			for(Map.Entry<String, String> p : mHeaderParams.entrySet()) {
 				conn.setRequestProperty(p.getKey(), p.getValue());
 			}
 		}
@@ -238,7 +239,7 @@ public class HttpRequest implements Parcelable {
 	}
 
 	public String getBody() {
-		return body;
+		return mBody;
 	}
 
 	/**
@@ -246,12 +247,12 @@ public class HttpRequest implements Parcelable {
 	 * @param body the body object/instance
 	 */
 	public void setBody(String body) {
-		this.body = body;
+		this.mBody = body;
 	}
 
     public void writeBody(OutputStream outStream) throws IOException {
         OutputStreamWriter writer = new OutputStreamWriter(outStream);
-        writer.write(body);
+        writer.write(mBody);
         writer.flush();     // important! without the flush the body might be empty!
     }
 
@@ -260,7 +261,7 @@ public class HttpRequest implements Parcelable {
 	 * @return the URL parameter map
 	 */
 	public Map<String, Object> getUrlParams() {
-		return urlParams;
+		return mUrlParams;
 	}
 
 	/**
@@ -272,7 +273,7 @@ public class HttpRequest implements Parcelable {
 	 * @return the {@link HttpRequest} (this)
 	 */
 	public HttpRequest setUrlParam(String key, Object obj) {
-		urlParams.put(key, obj.toString());
+		mUrlParams.put(key, obj.toString());
 		return this;
 	}
 
@@ -282,8 +283,8 @@ public class HttpRequest implements Parcelable {
 	 * @return the removed URL parameter value, or null if no parameter was removed (not found)
 	 */
 	public Object removeUrlParam(String key) {
-		if (urlParams.containsKey(key)) {
-			return urlParams.remove(key);
+		if (mUrlParams.containsKey(key)) {
+			return mUrlParams.remove(key);
 		}
 		return null;
 	}
@@ -293,7 +294,7 @@ public class HttpRequest implements Parcelable {
 	 * @return the header parameter map
 	 */
 	public Map<String, String> getHeaderParams() {
-		return headerParams;
+		return mHeaderParams;
 	}
 
 	/**
@@ -304,7 +305,7 @@ public class HttpRequest implements Parcelable {
 	 * @return the {@link HttpRequest} (this)
 	 */
 	public HttpRequest setHeaderParam(String key, String value) {
-		headerParams.put(key, value);
+		mHeaderParams.put(key, value);
 		return this;
 	}
 
@@ -314,8 +315,8 @@ public class HttpRequest implements Parcelable {
 	 * @return the removed header parameter value, or null if no parameter was removed (not found)
 	 */
 	public String removeHeaderParam(String key) {
-		if (headerParams.containsKey(key)) {
-			return headerParams.remove(key);
+		if (mHeaderParams.containsKey(key)) {
+			return mHeaderParams.remove(key);
 		}
 		return null;
 	}
@@ -329,14 +330,14 @@ public class HttpRequest implements Parcelable {
 	 * @return true if cancelled; false otherwise
 	 */
 	public boolean isCancelled() {
-		return cancelled;
+		return mCancelled;
 	}
 
 	/**
 	 * Cancels the request.
 	 */
 	public void cancel() {
-		this.cancelled = true;
+		this.mCancelled = true;
         if(mConnection != null) {
             mConnection.disconnect();
         }
@@ -352,10 +353,10 @@ public class HttpRequest implements Parcelable {
         out.writeInt(mForceOnlyGetAndPost ? 1 : 0);
         out.writeString(mEndpoint);
         out.writeInt(mRequestMethod);
-        out.writeMap(urlParams);
-        out.writeMap(headerParams);
-        out.writeString(body);
-        out.writeInt(cancelled ? 1 : 0);
+        out.writeMap(mUrlParams);
+        out.writeMap(mHeaderParams);
+        out.writeString(mBody);
+        out.writeInt(mCancelled ? 1 : 0);
         out.writeSerializable(mUuid);
 	}
 
@@ -372,18 +373,18 @@ public class HttpRequest implements Parcelable {
         mForceOnlyGetAndPost = in.readInt() != 0;
         mEndpoint = in.readString();
         mRequestMethod = in.readInt();
-        urlParams = in.readHashMap(null);
-        headerParams = in.readHashMap(null);
-        body = in.readString();
-        cancelled = in.readInt() != 0;
+        mUrlParams = in.readHashMap(null);
+		mHeaderParams = in.readHashMap(null);
+        mBody = in.readString();
+		mCancelled = in.readInt() != 0;
         mUuid = (UUID) in.readSerializable();
     }
 
     @Override
     public String toString() {
         return mEndpoint +
-                " [" + mRequestMethod + "] { URLPARAMS=" + urlParams +
-                ", HEADERPARAMS=" + headerParams +
-                ", BODY=" + body + "}";
+                " [" + mRequestMethod + "] { URLPARAMS=" + mUrlParams +
+                ", HEADERPARAMS=" + mHeaderParams +
+                ", BODY=" + mBody + "}";
     }
 }

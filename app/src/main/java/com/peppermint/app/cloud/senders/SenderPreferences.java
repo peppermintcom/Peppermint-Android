@@ -3,13 +3,10 @@ package com.peppermint.app.cloud.senders;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.text.TextUtils;
-import android.util.Log;
 
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Nuno Luz on 02-10-2015.
@@ -34,88 +31,25 @@ public class SenderPreferences {
     public static final String FIRST_NAME_KEY = "firstName";
     public static final String LAST_NAME_KEY = "lastName";
 
-    public static final String CHAT_HEAD_POSITION_X_KEY = "chatHeadPositionX";
-    public static final String CHAT_HEAD_POSITION_Y_KEY = "chatHeadPositionY";
-
     public static final String ARE_CHATHEADS_ENABLED_KEY = "chatHeads";
 
     public static final String LAST_SYNC_TIMESTAMP_KEY = "lastSyncTimestmap";
 
-    protected static final int RECENT_CONTACTS_LIST_LIMIT = 50;
-
-    public static String getEnabledPreferenceKey(Class<? extends SenderPreferences> prefClass) {
-        return prefClass.getSimpleName() + "_isEnabled";
-    }
-
     private SharedPreferences mSharedPreferences;
     private Context mContext;
 
-    public SenderPreferences(Context context) {
+    public SenderPreferences(final Context context) {
         this.mContext = context;
         this.mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
     }
 
-    public SenderPreferences(Context context, SharedPreferences sharedPreferences) {
+    public SenderPreferences(final Context context, final SharedPreferences sharedPreferences) {
         this.mContext = context;
         this.mSharedPreferences = sharedPreferences;
     }
 
     public SharedPreferences getSharedPreferences() {
         return mSharedPreferences;
-    }
-
-    public void setEnabled(boolean val) {
-        SharedPreferences.Editor editor = getSharedPreferences().edit();
-        editor.putBoolean(getEnabledPreferenceKey(this.getClass()), val);
-        editor.commit();
-    }
-
-    public boolean isEnabled() {
-        return getSharedPreferences().getBoolean(getEnabledPreferenceKey(this.getClass()), true);
-    }
-
-    public void addRecentContactUri(long id) {
-        ArrayList<Long> idList = getRecentContactUris();
-
-        if(idList == null) {
-            idList = new ArrayList<>();
-            idList.add(id);
-        } else {
-            if(idList.contains(id)) {
-                idList.remove(id);
-            }
-            idList.add(0, id);
-        }
-
-        while(idList.size() > RECENT_CONTACTS_LIST_LIMIT) {
-            idList.remove(idList.size()-1);
-        }
-
-        setRecentContactUris(idList);
-    }
-
-    public void setRecentContactUris(List<Long> recentContactIds) {
-        String contactsStr = null;
-        int size;
-        if(recentContactIds != null && (size = recentContactIds.size()) > 0) {
-            StringBuilder builder = new StringBuilder();
-            for(int i=0; i<size; i++) {
-                if(i>0) {
-                    builder.append(",");
-                }
-                builder.append(recentContactIds.get(i));
-            }
-            contactsStr = builder.toString();
-        }
-
-        SharedPreferences.Editor editor = getSharedPreferences().edit();
-        editor.putString(RECENT_CONTACT_URIS_KEY, contactsStr);
-        editor.commit();
-    }
-
-    public boolean hasRecentContactUris() {
-        String contactsStr = getSharedPreferences().getString(RECENT_CONTACT_URIS_KEY, null);
-        return !TextUtils.isEmpty(contactsStr);
     }
 
     public ArrayList<Long> getRecentContactUris() {
@@ -133,12 +67,6 @@ public class SenderPreferences {
         return recentContactUris;
     }
 
-    public void clearRecentContactUris() {
-        SharedPreferences.Editor editor = getSharedPreferences().edit();
-        editor.remove(RECENT_CONTACT_URIS_KEY);
-        editor.commit();
-    }
-
     public void setShownSmsConfirmation(boolean shown) {
         SharedPreferences.Editor editor = getSharedPreferences().edit();
         editor.putBoolean(SHOWN_SMS_CONFIRMATION_KEY, shown);
@@ -147,25 +75,6 @@ public class SenderPreferences {
 
     public boolean isShownSmsConfirmation() {
         return getSharedPreferences().getBoolean(SHOWN_SMS_CONFIRMATION_KEY, false);
-    }
-
-    public void setChatHeadPosition(float x, float y) {
-        // do not allow 0 values since it will just reset the position
-        // 0 only in case there's no data
-        if(x < 0) { x = 1; }
-        if(y < 0) { y = 1; }
-        Log.d("TAG", "SET X="+x+" Y="+y);
-        SharedPreferences.Editor editor = getSharedPreferences().edit();
-        editor.putFloat(CHAT_HEAD_POSITION_X_KEY, x);
-        editor.putFloat(CHAT_HEAD_POSITION_Y_KEY, y);
-        editor.commit();
-    }
-
-    public float[] getChatHeadPosition() {
-        float x = getSharedPreferences().getFloat(CHAT_HEAD_POSITION_X_KEY, 0);
-        float y = getSharedPreferences().getFloat(CHAT_HEAD_POSITION_Y_KEY, 0);
-        Log.d("TAG", "GET X="+x+" Y="+y);
-        return new float[]{x, y};
     }
 
     public void setLastSyncTimestamp(String ts) {

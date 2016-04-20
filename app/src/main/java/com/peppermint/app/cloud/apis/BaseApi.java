@@ -1,6 +1,10 @@
 package com.peppermint.app.cloud.apis;
 
+import android.content.Context;
+
 import com.peppermint.app.cloud.rest.HttpRequest;
+import com.peppermint.app.cloud.rest.HttpResponse;
+import com.peppermint.app.cloud.rest.HttpResponseException;
 
 import java.io.Serializable;
 import java.util.HashSet;
@@ -10,44 +14,109 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Nuno Luz on 18-04-2016.
- *
+ * <p/>
  * Base API class for tracking all requests and proper cancelling.
  */
 public class BaseApi implements Serializable {
 
     protected Map<String, Set<HttpRequest>> mPendingHttpRequests = new ConcurrentHashMap<>();
 
-    public BaseApi() {
+    protected Context mContext;
+    protected String mApiKey = null;
+    protected String mAuthToken = null;
+
+    public BaseApi(final Context mContext) {
+        this.mContext = mContext;
     }
 
-    protected void addPendingRequest(String requesterId, HttpRequest request) {
-        if(requesterId == null) {
+    // PENDING REQUESTS
+
+    protected void addPendingRequest(final String requesterId, final HttpRequest request) {
+        if (requesterId == null) {
             return;
         }
 
-        Set<HttpRequest> set = mPendingHttpRequests.get(requesterId);
-        if(set == null) {
+        Set<HttpRequest> set = this.mPendingHttpRequests.get(requesterId);
+        if (set == null) {
             set = new HashSet<>();
-            mPendingHttpRequests.put(requesterId, set);
+            this.mPendingHttpRequests.put(requesterId, set);
         }
         set.add(request);
     }
 
-    protected boolean removePendingRequest(String requesterId, HttpRequest request) {
-        if(requesterId == null) {
+    protected boolean removePendingRequest(final String requesterId, final HttpRequest request) {
+        if (requesterId == null) {
             return false;
         }
 
-        Set<HttpRequest> set = mPendingHttpRequests.get(requesterId);
+        Set<HttpRequest> set = this.mPendingHttpRequests.get(requesterId);
         return set != null && set.remove(request);
     }
 
-    public void cancelPendingRequests(String requesterId) {
-        Set<HttpRequest> set = mPendingHttpRequests.get(requesterId);
-        if(set != null) {
-            for(HttpRequest request : set) {
+    public void cancelPendingRequests(final String requesterId) {
+        Set<HttpRequest> set = this.mPendingHttpRequests.get(requesterId);
+        if (set != null) {
+            for (HttpRequest request : set) {
                 request.cancel();
             }
         }
+    }
+
+    // REQUEST EXECUTION
+
+    protected <T extends HttpResponse> T executeRequest(final String requesterId, final HttpRequest request, final T response, final boolean requiresAuthenticationToken) throws Exception {
+        if(requiresAuthenticationToken) {
+            String authenticationToken = peekAuthenticationToken();
+            if(authenticationToken == null) {
+                authenticationToken = renewAuthenticationToken();
+            }
+            request.setHeaderParam("Authorization", "Bearer " + authenticationToken);
+        }
+
+        if(mApiKey != null) {
+            request.setHeaderParam("X-Api-Key", mApiKey);
+        }
+
+        addPendingRequest(requesterId, request);
+        try {
+            request.execute(response);
+        } finally {
+            removePendingRequest(requesterId, request);
+        }
+
+        // retry with new authentication token, if necessary
+        if(response.getException() == null && requiresAuthenticationToken && isAuthenticationTokenRenewalRequired(response)) {
+            request.setHeaderParam("Authorization", "Bearer " + renewAuthenticationToken());
+            addPendingRequest(requesterId, request);
+            try {
+                request.execute(response);
+            } finally {
+                removePendingRequest(requesterId, request);
+            }
+        }
+
+        if(response.getException() != null) {
+            throw new HttpResponseException(response.getException());
+        }
+
+        return response;
+    }
+
+    public String renewAuthenticationToken() throws Exception {
+        /* implement on sub-class */
+        return this.mAuthToken;
+    }
+
+    public String peekAuthenticationToken() throws Exception {
+        return this.mAuthToken;
+    }
+
+    protected boolean isAuthenticationTokenRenewalRequired(final HttpResponse response) {
+        /* implement on sub-class */
+        return false;
+    }
+
+    protected void processGenericExceptions(final HttpRequest request, final HttpResponse response) throws Exception {
+        /* implement on sub-class */
     }
 }

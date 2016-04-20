@@ -50,8 +50,6 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
     protected static final String PARAM_AUTHENTICATION_DATA = TAG + "_paramAuthenticationData";
 
     public static final float PROGRESS_INDETERMINATE = -1f;
-    public static final float PROGRESS_MAX = 100f;
-    public static final float PROGRESS_MIN = 0f;
 
     protected float mProgress = PROGRESS_INDETERMINATE;
 
@@ -128,14 +126,6 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
         this.mError = error;
     }
 
-    public float getProgressMax() {
-        return PROGRESS_MAX;
-    }
-
-    public float getProgressMin() {
-        return PROGRESS_MIN;
-    }
-
     public float getProgress() {
         return mProgress;
     }
@@ -188,14 +178,10 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
         return api;
     }
 
-    protected void setGoogleApi(GoogleApi googleApi) {
-        mIdentity.setParameter(Sender.PARAM_GOOGLE_API, googleApi);
-    }
-
     protected PeppermintApi getPeppermintApi() {
         PeppermintApi api = (PeppermintApi) mIdentity.getParameter(Sender.PARAM_PEPPERMINT_API);
         if(api == null) {
-            api = new PeppermintApi();
+            api = new PeppermintApi(getContext());
             setPeppermintApi(api);
         }
         return api;
@@ -213,7 +199,7 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
         return (AuthenticationData) mIdentity.getParameter(PARAM_AUTHENTICATION_DATA);
     }
 
-    protected AuthenticationData setupPeppermintAuthentication() throws NoInternetConnectionException, PeppermintApiNoAccountException, PeppermintApiInvalidAccessTokenException, IOException, GoogleApiNoAuthorizationException, GoogleAuthException {
+    protected AuthenticationData setupPeppermintAuthentication() throws Exception {
         return setupPeppermintAuthentication(false);
     }
 
@@ -231,47 +217,33 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
      * @throws GoogleApiNoAuthorizationException
      * @throws GoogleAuthException
      */
-    protected AuthenticationData setupPeppermintAuthentication(boolean invalidateToken) throws NoInternetConnectionException, PeppermintApiNoAccountException, PeppermintApiInvalidAccessTokenException, IOException, GoogleApiNoAuthorizationException, GoogleAuthException {
+    protected AuthenticationData setupPeppermintAuthentication(final boolean invalidateToken) throws Exception {
         checkInternetConnection();
 
-        AuthenticatorUtils authenticatorUtils = new AuthenticatorUtils(getContext());
-        if(authenticatorUtils.getAccount() == null) {
-            throw new PeppermintApiNoAccountException();
-        }
+        final PeppermintApi peppermintApi = getPeppermintApi();
+        String accessToken = peppermintApi.peekAuthenticationToken();
 
-        String accessToken = authenticatorUtils.peekAccessToken();
-
-        if(invalidateToken) {
-            AuthenticationData authenticationData = authenticatorUtils.getAccountData();
-            if(authenticationData.getAccountType() == PeppermintApi.ACCOUNT_TYPE_GOOGLE) {
-                String googleToken = getGoogleApi(authenticationData.getEmail()).refreshAccessToken();
-                authenticatorUtils.updateAccountPassword(googleToken);
+        if(invalidateToken || accessToken == null) {
+            accessToken = peppermintApi.renewAuthenticationToken();
+            if(accessToken == null) {
+                throw new PeppermintApiInvalidAccessTokenException("Token is null!");
             }
-
-            authenticatorUtils.invalidateAccessToken();
-            accessToken = authenticatorUtils.getAccessToken();
         }
 
-        if(accessToken == null) {
-            throw new PeppermintApiInvalidAccessTokenException("Token is null!");
-        }
-
-        getPeppermintApi().setAccessToken(accessToken);
-
-        AuthenticationData data = authenticatorUtils.getAccountData();
-        setAuthenticationData(data);
-
-        return data;
+        final AuthenticatorUtils authenticatorUtils = new AuthenticatorUtils(getContext());
+        final AuthenticationData authenticationData = authenticatorUtils.getAccountData();
+        setAuthenticationData(authenticationData);
+        return authenticationData;
     }
 
     public boolean cancel() {
         boolean cancelled = cancel(true);
         // necessary to effectively stop HttpUrlConnections
-        PeppermintApi peppermintApi = (PeppermintApi) getParameter(Sender.PARAM_PEPPERMINT_API);
+        final PeppermintApi peppermintApi = (PeppermintApi) getParameter(Sender.PARAM_PEPPERMINT_API);
         if(peppermintApi != null) {
             peppermintApi.cancelPendingRequests(mIdentity.getId().toString());
         }
-        GoogleApi googleApi = (GoogleApi) getParameter(Sender.PARAM_GOOGLE_API);
+        final GoogleApi googleApi = (GoogleApi) getParameter(Sender.PARAM_GOOGLE_API);
         if(googleApi != null) {
             googleApi.cancelPendingRequests(mIdentity.getId().toString());
         }

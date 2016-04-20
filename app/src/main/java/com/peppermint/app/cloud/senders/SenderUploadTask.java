@@ -4,12 +4,7 @@ import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.cloud.apis.PeppermintApi;
 import com.peppermint.app.cloud.apis.data.MessagesResponse;
 import com.peppermint.app.cloud.apis.data.UploadsResponse;
-import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiRecipientNoAppException;
-import com.peppermint.app.cloud.apis.exceptions.PeppermintApiResponseCodeException;
-import com.peppermint.app.cloud.apis.exceptions.PeppermintApiTooManyRequestsException;
-import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
-import com.peppermint.app.data.ContactManager;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.GlobalManager;
 import com.peppermint.app.data.Message;
@@ -34,13 +29,13 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
     private SenderUploadListener mSenderUploadListener;
     private boolean mRecovering = false;
 
-    public SenderUploadTask(SenderUploadTask uploadTask) {
+    public SenderUploadTask(final SenderUploadTask uploadTask) {
         super(uploadTask);
         this.mRecovering = uploadTask.mRecovering;
         this.mSenderUploadListener = uploadTask.mSenderUploadListener;
     }
 
-    public SenderUploadTask(Sender sender, Message message, SenderUploadListener senderUploadListener) {
+    public SenderUploadTask(final Sender sender, final Message message, final SenderUploadListener senderUploadListener) {
         super(sender, message);
         this.mSenderUploadListener = senderUploadListener;
     }
@@ -53,50 +48,50 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
      * @throws Throwable
      */
     protected void uploadPeppermintMessage() throws Throwable {
-        File recordedFile = getMessage().getRecordingParameter().getValidatedFile();
+        final File recordedFile = getMessage().getRecordingParameter().getValidatedFile();
 
         if(getMessage().getServerShortUrl() != null && getMessage().getServerCanonicalUrl() != null) {
             return;
         }
 
-        AuthenticationData data = getAuthenticationData();
-
-        PeppermintApi api = getPeppermintApi();
-        String contentType = getMessage().getRecordingParameter().getContentType();
-
+        final PeppermintApi peppermintApi = getPeppermintApi();
+        final AuthenticationData authenticationData = getAuthenticationData();
+        final String contentType = getMessage().getRecordingParameter().getContentType();
         String fullName = getSenderPreferences().getFullName();
         if(fullName == null) {
-            fullName = data.getEmail();
+            fullName = authenticationData.getEmail();
         }
 
         // get AWS signed URL
-        UploadsResponse uploadsResponse = api.getSignedUrl(getId().toString(), fullName, data.getEmail(), contentType);
-        String signedUrl = uploadsResponse.getSignedUrl();
+        final UploadsResponse uploadsResponse = peppermintApi.getSignedUrl(getId().toString(), fullName, authenticationData.getEmail(), contentType);
+        final String signedUrl = uploadsResponse.getSignedUrl();
         getMessage().setServerCanonicalUrl(uploadsResponse.getCanonicalUrl());
         getMessage().setServerShortUrl(uploadsResponse.getShortUrl());
 
         // upload to AWS
         if(!isCancelled()) {
-            api.uploadMessage(getId().toString(), signedUrl, recordedFile, contentType);
+            peppermintApi.uploadMessage(getId().toString(), signedUrl, recordedFile, contentType);
         }
     }
 
-    protected boolean sendPeppermintMessage() throws PeppermintApiTooManyRequestsException, PeppermintApiInvalidAccessTokenException, PeppermintApiResponseCodeException, ContactManager.InvalidEmailException, NoInternetConnectionException {
+    protected boolean sendPeppermintMessage() throws Exception {
         boolean sentInApp;
 
-        AuthenticationData data = getAuthenticationData();
-        Message message = getMessage();
-        String canonicalUrl = message.getServerCanonicalUrl();
+        final AuthenticationData data = getAuthenticationData();
+        final Message message = getMessage();
+        final String canonicalUrl = message.getServerCanonicalUrl();
 
-        Recipient recipient = message.getChatParameter().getRecipientList().get(0);
-        String recipientVia = recipient.getVia();
+        final Recipient recipient = message.getChatParameter().getRecipientList().get(0);
+        final String recipientVia = recipient.getVia();
 
         if(isCancelled()) {
             return false;
         }
 
+        final PeppermintApi peppermintApi = getPeppermintApi();
+
         try {
-            MessagesResponse response = getPeppermintApi().sendMessage(getId().toString(), null, canonicalUrl,
+            final MessagesResponse response = peppermintApi.sendMessage(getId().toString(), null, canonicalUrl,
                     data.getEmail(), recipientVia, (int) (message.getRecordingParameter().getDurationMillis() / 1000));
             message.setServerId(response.getMessageId());
             try {
@@ -104,9 +99,11 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
             } catch (SQLException e) {
                 getTrackerManager().logException(e);
             }
+            message.addConfirmedSentRecipientId(recipient.getId());
             sentInApp = true;
         } catch(PeppermintApiRecipientNoAppException e) {
             getTrackerManager().log("Unable to send through Peppermint", e);
+            message.removeConfirmedSentRecipientId(recipient.getId());
             sentInApp = false;
             try {
                 GlobalManager.unmarkAsPeppermint(getContext(), recipient);
@@ -115,7 +112,8 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
             }
         }
 
-        DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getContext());
+        // immediately update message with serverId and sent recipients
+        final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getContext());
         databaseHelper.lock();
         try {
             MessageManager.update(databaseHelper.getWritableDatabase(), message);
@@ -163,7 +161,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         }
     }
 
-    public void setRecovering(boolean mRecovering) {
+    public void setRecovering(final boolean mRecovering) {
         this.mRecovering = mRecovering;
     }
 
@@ -171,7 +169,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         return mSenderUploadListener;
     }
 
-    public void setSenderUploadListener(SenderUploadListener mListener) {
+    public void setSenderUploadListener(final SenderUploadListener mListener) {
         this.mSenderUploadListener = mListener;
     }
 }

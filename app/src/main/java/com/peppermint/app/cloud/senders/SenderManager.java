@@ -184,7 +184,7 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
      * @param previousFailedTask the previously failed upload task
      */
     private void send(Message message, Sender sender, SenderUploadTask previousFailedTask) {
-        while(sender != null && (sender.getPreferences() != null && !sender.getPreferences().isEnabled())) {
+        while(sender != null && !sender.isEnabled()) {
             sender = sender.getFailureChainSender();
         }
         if(sender == null) {

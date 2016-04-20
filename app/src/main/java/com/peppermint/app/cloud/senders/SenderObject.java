@@ -2,7 +2,6 @@ package com.peppermint.app.cloud.senders;
 
 import android.content.Context;
 
-import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.tracking.TrackerManager;
 
 import java.util.HashMap;
@@ -26,11 +25,11 @@ public class SenderObject implements Cloneable {
     protected Map<String, Object> mParameters;
     protected transient SenderPreferences mPreferences;
 
-    public SenderObject(SenderObject inst) {
+    public SenderObject(final SenderObject inst) {
         this(inst.mContext, inst.mTrackerManager, inst.mParameters, inst.mPreferences);
     }
 
-    public SenderObject(Context context, TrackerManager trackerManager, Map<String, Object> parameters, SenderPreferences senderPreferences) {
+    public SenderObject(final Context context, final TrackerManager trackerManager, final Map<String, Object> parameters, final SenderPreferences senderPreferences) {
         mContext = context;
         mTrackerManager = trackerManager;
         mPreferences = senderPreferences;
@@ -44,7 +43,7 @@ public class SenderObject implements Cloneable {
         return mContext;
     }
 
-    public void setContext(Context mContext) {
+    public void setContext(final Context mContext) {
         this.mContext = mContext;
     }
 
@@ -52,7 +51,7 @@ public class SenderObject implements Cloneable {
         return mTrackerManager;
     }
 
-    public void setTrackerManager(TrackerManager mTrackerManager) {
+    public void setTrackerManager(final TrackerManager mTrackerManager) {
         this.mTrackerManager = mTrackerManager;
     }
 
@@ -60,7 +59,7 @@ public class SenderObject implements Cloneable {
         return mParameters;
     }
 
-    public void setParameters(Map<String, Object> mParameters) {
+    public void setParameters(final Map<String, Object> mParameters) {
         this.mParameters = mParameters;
     }
 
@@ -71,7 +70,7 @@ public class SenderObject implements Cloneable {
         return mParameters.get(key);
     }
 
-    public void setParameter(String key, Object value) {
+    public void setParameter(final String key, final Object value) {
         mParameters.put(key, value);
     }
 
@@ -79,19 +78,15 @@ public class SenderObject implements Cloneable {
         return mPreferences;
     }
 
-    public void setPreferences(SenderPreferences mPreferences) {
+    public void setPreferences(final SenderPreferences mPreferences) {
         this.mPreferences = mPreferences;
-    }
-
-    public DatabaseHelper getDatabaseHelper() {
-        return DatabaseHelper.getInstance(mContext);
     }
 
     public UUID getId() {
         return mId;
     }
 
-    public void setId(UUID mId) {
+    public void setId(final UUID mId) {
         this.mId = mId;
     }
 }
