@@ -8,6 +8,7 @@ import com.peppermint.app.data.ContactData;
 import com.peppermint.app.data.ContactManager;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.events.PeppermintEventBus;
+import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.Utils;
 
 import java.util.Map;
@@ -30,10 +31,14 @@ public class SignOutPeppermintTask extends SenderSupportTask {
 
     @Override
     protected void execute() throws Throwable {
-        setupPeppermintAuthentication();
-        AuthenticationData data = setupPeppermintAuthentication(true);
+        AuthenticationData data = setupPeppermintAuthentication();
 
-        getPeppermintApi().removeReceiverRecorder(getId().toString(), data.getAccountServerId(), data.getDeviceServerId());
+        try {
+            // FIXME still sign out if something goes wrong with this call (find alternatives to this)
+            getPeppermintApi().removeReceiverRecorder(getId().toString(), data.getAccountServerId(), data.getDeviceServerId());
+        } catch(Exception e) {
+            TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
+        }
 
         Map<Long, ContactData> peppermintContacts = ContactManager.getPeppermintContacts(getContext());
         for(ContactData contactData : peppermintContacts.values()) {

@@ -2,7 +2,6 @@ package com.peppermint.app.ui.settings;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -119,14 +118,6 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         mProgressDialog.setMessage(getText(R.string.signing_out_));
         mProgressDialog.setIndeterminate(true);
         mProgressDialog.setCancelable(false);
-        mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            public void onCancel(DialogInterface dialog) {
-                if (mSignOutTask != null) {
-                    mSignOutTask.cancel(true);
-                    mSignOutTask = null;
-                }
-            }
-        });
     }
 
     @Override
