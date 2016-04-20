@@ -68,7 +68,8 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
 
         if(paramIntent != null) {
             chatId = paramIntent.getLongExtra(PARAM_CHAT_ID, 0);
-            autoPlayMessageId = paramIntent.getLongExtra(PARAM_AUTO_PLAY_MESSAGE_ID, 0);
+            // only auto-play the first time (not when there's an orientation change)
+            autoPlayMessageId = savedInstanceState == null ? paramIntent.getLongExtra(PARAM_AUTO_PLAY_MESSAGE_ID, 0) : 0;
         }
 
         if(chatId <= 0) {
