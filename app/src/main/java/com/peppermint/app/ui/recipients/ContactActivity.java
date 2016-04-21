@@ -98,7 +98,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     public boolean onSearch(String searchText, boolean wasClear) {
         boolean switchedFragment;
 
-        if(wasClear || (mTappedItemPosition != 1 && searchText == null && ChatManager.getChatCount(DatabaseHelper.getInstance(this).getReadableDatabase(), true) > 0)) {
+        if(wasClear || (mTappedItemPosition == 0 && searchText == null)) {
             // recent contacts / chats
             switchedFragment = selectItemFromDrawer(0);
         } else {
