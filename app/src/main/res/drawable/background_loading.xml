@@ -2,16 +2,11 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape>
-            <solid android:color="@color/background0" />
+            <solid android:color="@color/white" />
         </shape>
     </item>
-    <item>
-        <shape>
-            <solid android:color="@color/dark_green_60percent" />
-        </shape>
-    </item>
-    <item android:gravity="center" android:height="170dp" android:width="170dp">
-        <bitmap android:src="@drawable/img_static_loading_170dp"
+    <item android:gravity="center">
+        <bitmap android:src="@drawable/img_static_splash"
             android:gravity="center" />
     </item>
 </layer-list>
