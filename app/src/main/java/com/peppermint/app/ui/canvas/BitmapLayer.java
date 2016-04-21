@@ -86,7 +86,6 @@ public class BitmapLayer extends LayerBase implements Layer {
         super.finalize();
 
         if(mShaderBitmap != null && !mShaderBitmap.isRecycled()) {
-            mPaint.setShader(null);
             mShaderBitmap.recycle();
             mShaderBitmap = null;
         }

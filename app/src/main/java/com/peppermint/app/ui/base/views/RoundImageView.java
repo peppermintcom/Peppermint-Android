@@ -166,7 +166,6 @@ public class RoundImageView extends View {
         super.finalize();
 
         if(mBitmap != null && !mBitmap.isRecycled()) {
-            mPaint.setShader(null);
             mBitmap.recycle();
             mBitmap = null;
         }
