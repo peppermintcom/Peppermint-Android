@@ -4,15 +4,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.os.Handler;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.PopupWindow;
 
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
@@ -42,7 +37,7 @@ import java.util.List;
  *
  * Controls a conversation screen.
  */
-public class ChatController extends ChatRecordOverlayController implements View.OnClickListener, View.OnLongClickListener {
+public class ChatController extends ChatRecordOverlayController implements View.OnLongClickListener {
 
     private static final String TAG = ChatController.class.getSimpleName();
 
@@ -57,7 +52,6 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
     // UI
     private RecipientDataGUI mRecipientDataGUI;
-    private ViewGroup mRecordLayout;
     private ListView mListView;
 
     // DATA
@@ -69,31 +63,6 @@ public class ChatController extends ChatRecordOverlayController implements View.
     // error dialog
     private CustomListDialog mErrorDialog;
     private long mMessageIdWithError;
-
-    // hold to record, release to send popup
-    private Handler mHandler = new Handler();
-    private PopupWindow mHoldPopup;
-    private Runnable mShowPopupRunnable = new Runnable() {
-        @Override
-        public void run() {
-            showPopup();
-        }
-    };
-    private Runnable mDismissPopupRunnable = new Runnable() {
-        @Override
-        public void run() {
-            dismissPopup();
-        }
-    };
-    private View.OnTouchListener mTouchInterceptor = new View.OnTouchListener() {
-        @Override
-        public boolean onTouch(View v, MotionEvent event) {
-            if(event.getAction() == MotionEvent.ACTION_DOWN) {
-                dismissPopup();
-            }
-            return false;
-        }
-    };
 
     public ChatController(Context context, RecipientDataGUI recipientDataGUI, Callbacks callbacks) {
         super(context, callbacks);
@@ -143,25 +112,10 @@ public class ChatController extends ChatRecordOverlayController implements View.
         NavigationListAdapter errorAdapter = new NavigationListAdapter(getContext(), errorOptions);
         mErrorDialog.setListAdapter(errorAdapter);
 
-        LayoutInflater layoutInflater = LayoutInflater.from(getContext());
-
-        // hold popup
-        mHoldPopup = new PopupWindow(getContext());
-        mHoldPopup.setContentView(layoutInflater.inflate(R.layout.v_recipients_popup, null));
-        // although this is deprecated, it is required for versions  < 22/23, otherwise the popup doesn't show up
-        //noinspection deprecation
-        mHoldPopup.setWindowLayoutMode(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        mHoldPopup.setBackgroundDrawable(Utils.getDrawable(getContext(), R.drawable.img_coach));
-        mHoldPopup.setAnimationStyle(R.style.Peppermint_PopupAnimation);
-        // do not let the popup get in the way of user interaction
-        mHoldPopup.setFocusable(false);
-        mHoldPopup.setTouchable(false);
-
         mListView = (ListView) rootView.findViewById(android.R.id.list);
 
-        mRecordLayout = (ViewGroup) rootView.findViewById(R.id.lytRecord);
-        mRecordLayout.setOnClickListener(this);
-        mRecordLayout.setOnLongClickListener(this);
+        final ViewGroup recordLayout = (ViewGroup) rootView.findViewById(R.id.lytRecord);
+        recordLayout.setOnLongClickListener(this);
 
         if(savedInstanceState != null) {
             Bundle dialogState = savedInstanceState.getBundle(STATE_DIALOG);
@@ -186,23 +140,15 @@ public class ChatController extends ChatRecordOverlayController implements View.
     public void start() {
         super.start();
 
-        getTouchInterceptable().addTouchEventInterceptor(mTouchInterceptor);
         if (mAdapter != null) {
             mAdapter.setDatabase(getDatabase());
         }
 
         TrackerManager.getInstance(getContext().getApplicationContext()).trackScreenView(SCREEN_ID);
-
-        if(!getPreferences().isChatTipShown()) {
-            mHandler.postDelayed(mShowPopupRunnable, 100);
-            getPreferences().setChatTipShown(true);
-        }
     }
 
     @Override
     public void stop() {
-        getTouchInterceptable().removeTouchEventInterceptor(mTouchInterceptor);
-
         if(mAdapter != null) {
             mAdapter.changeCursor(null);
         }
@@ -215,16 +161,10 @@ public class ChatController extends ChatRecordOverlayController implements View.
         if(mAdapter != null) {
             mAdapter.destroy(!mSavedInstanceState);
         }
-        dismissPopup();
         dismissErrorDialog();
         mSavedInstanceState = false;
 
         super.deinit();
-    }
-
-    @Override
-    public void onClick(View v) {
-        showPopup();
     }
 
     @Override
@@ -338,25 +278,6 @@ public class ChatController extends ChatRecordOverlayController implements View.
         }
     }
 
-    private void dismissPopup() {
-        if(mHoldPopup.isShowing() && getContext() != null && mRecordLayout.getWindowToken() != null) {
-            mHoldPopup.dismiss();
-            mHandler.removeCallbacks(mDismissPopupRunnable);
-        }
-    }
-
-    // the method that displays the img_popup.
-    private void showPopup() {
-        if(!mHoldPopup.isShowing() && getContext() != null && mRecordLayout.getWindowToken() != null) {
-            mHandler.removeCallbacks(mShowPopupRunnable);
-            dismissPopup();
-            int[] location = new int[2];
-            mRecordLayout.getLocationOnScreen(location);
-            mHoldPopup.showAtLocation(mRecordLayout, Gravity.LEFT | Gravity.TOP, mRecordLayout.getWidth() - Utils.dpToPx(getContext(), 270), location[1] - Utils.dpToPx(getContext(), 30));
-            mHandler.postDelayed(mDismissPopupRunnable, 6000);
-        }
-    }
-
     public Chat getChat() {
         return mChat;
     }
@@ -373,10 +294,6 @@ public class ChatController extends ChatRecordOverlayController implements View.
                     recipient.getPhotoUri());
         }
         refreshList();
-    }
-
-    public long getAutoPlayMessageId() {
-        return mAutoPlayMessageId;
     }
 
     public void setAutoPlayMessageId(long mAutoPlayMessageId) {
