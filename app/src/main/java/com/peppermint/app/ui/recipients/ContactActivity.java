@@ -174,6 +174,13 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
         mHasSavedInstanceState = savedInstanceState != null;
         mShouldSync = savedInstanceState == null;
 
+        // show recent contacts if recents are empty
+        if(!mHasSavedInstanceState) {
+            if(ChatManager.getChatCount(DatabaseHelper.getInstance(this).getReadableDatabase(), true) <= 0) {
+                getDrawerListView().setItemChecked(1, true);
+            }
+        }
+
         // inflate and init custom action bar view
         final CustomActionBarView customActionBarView = getCustomActionBar();
 

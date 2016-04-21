@@ -162,14 +162,10 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
         super.onPostCreate(savedInstanceState);
 
         // perform one action from the drawer (init the default fragment)
-        int checkedItemPos = mLstDrawer.getCheckedItemPosition() >= 0 ? mLstDrawer.getCheckedItemPosition() : 0;
-        if(checkedItemPos > 0) {
-            NavigationItem navItem = mNavigationItemList.get(checkedItemPos);
-            if(navItem.getFragmentClass() == null) {
-                checkedItemPos = 0;
-            }
+        int checkedItemPos = getDefaultSelectedItemPosition();
+        if(checkedItemPos >= 0) {
+            selectItemFromDrawer(checkedItemPos);
         }
-        selectItemFromDrawer(checkedItemPos);
 
         if(mDrawerToggle != null) {
             try {
@@ -178,6 +174,17 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
                 // just ignore; Android 4 launches an exception because there's no actionbar
             }
         }
+    }
+
+    protected int getDefaultSelectedItemPosition() {
+        int checkedItemPos = mLstDrawer.getCheckedItemPosition() >= 0 ? mLstDrawer.getCheckedItemPosition() : 0;
+        if(checkedItemPos > 0) {
+            NavigationItem navItem = mNavigationItemList.get(checkedItemPos);
+            if(navItem.getFragmentClass() == null) {
+                checkedItemPos = 0;
+            }
+        }
+        return checkedItemPos;
     }
 
     @Override
@@ -341,5 +348,9 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
 
     public Fragment getCurrentFragment() {
         return getFragmentManager().findFragmentById(R.id.container);
+    }
+
+    protected ListView getDrawerListView() {
+        return mLstDrawer;
     }
 }
