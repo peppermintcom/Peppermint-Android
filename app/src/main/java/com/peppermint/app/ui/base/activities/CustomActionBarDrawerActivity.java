@@ -14,7 +14,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -25,6 +24,7 @@ import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.ui.base.CustomActionBarView;
 import com.peppermint.app.ui.base.NavigationItem;
 import com.peppermint.app.ui.base.NavigationListAdapter;
+import com.peppermint.app.ui.base.views.RoundImageView;
 import com.peppermint.app.utils.Utils;
 
 import java.util.List;
@@ -53,7 +53,7 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
     // drawer UI
     private DrawerLayout mLytDrawer;
     private ListView mLstDrawer;
-    private ImageView mImgUserAvatar;
+    private RoundImageView mImgUserAvatar;
     private TextView mTxtUsername;
 
     private int mCheckedItemPosition = -1;
@@ -92,7 +92,8 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
             }
         });
 
-        mImgUserAvatar = (ImageView) findViewById(R.id.imgUserAvatar);
+        mImgUserAvatar = (RoundImageView) findViewById(R.id.imgUserAvatar);
+        mImgUserAvatar.setFallbackImageDrawable(Utils.getDrawable(this, R.drawable.ic_anonymous_green_48dp));
         mTxtUsername = (TextView) findViewById(R.id.txtUserName);
 
         mLytDrawer = (DrawerLayout) findViewById(R.id.drawer);
@@ -246,9 +247,9 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
     protected boolean refreshProfileData() {
         String[] data = Utils.getUserData(this);
         if(data[1] != null) {
-            mImgUserAvatar.setImageURI(Uri.parse(data[1]));
+            mImgUserAvatar.setImageDrawable(Utils.getDrawableFromUri(this, Uri.parse(data[1])));
         } else {
-            mImgUserAvatar.setImageResource(R.drawable.ic_anonymous_green_48dp);
+            mImgUserAvatar.setImageDrawable(null);
         }
 
         data[0] = mPreferences.getFullName();

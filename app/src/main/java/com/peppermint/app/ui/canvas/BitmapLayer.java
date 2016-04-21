@@ -43,6 +43,16 @@ public class BitmapLayer extends LayerBase implements Layer {
     }
 
     private synchronized void initShader() {
+        if(mDrawable == null) {
+            // cleanup if drawable is set to null
+            if(mShaderBitmap != null && !mShaderBitmap.isRecycled()) {
+                mPaint.setShader(null);
+                mShaderBitmap.recycle();
+            }
+            return;
+        }
+
+        // do nothing if bounds are invalid or didn't change
         if(getBounds() == null || getBounds().width() <= 0 || getBounds().height() <= 0) {
             return;
         }
@@ -53,21 +63,30 @@ public class BitmapLayer extends LayerBase implements Layer {
 
         mPrevBounds = getBounds();
 
-        if(mDrawable != null) {
-            if(mShaderBitmap != null && mShaderBitmap != mDrawable.getBitmap()) {
+        if(mShaderBitmap == null || mShaderBitmap.isRecycled() ||
+                mShaderBitmap.getHeight() != getBounds().height() || mShaderBitmap.getWidth() != getBounds().width()) {
+            if(mShaderBitmap != null && !mShaderBitmap.isRecycled()) {
+                mPaint.setShader(null);
                 mShaderBitmap.recycle();
             }
-            mShaderBitmap = Bitmap.createScaledBitmap(mDrawable.getBitmap(), getBounds().width(), getBounds().height(), false);
+
+            mShaderBitmap = Bitmap.createBitmap(getBounds().width(), getBounds().height(), Bitmap.Config.ARGB_8888);
             mPaint.setShader(new BitmapShader(mShaderBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
-        } else {
-            mPaint.setShader(null);
         }
+
+        // draw to bitmap
+        final Canvas canvas = new Canvas(mShaderBitmap);
+        mDrawable.setBounds(0, 0, getBounds().width(), getBounds().height());
+        mDrawable.draw(canvas);
+        canvas.setBitmap(null);
     }
 
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        if(mShaderBitmap != null && (mDrawable == null || mShaderBitmap != mDrawable.getBitmap())) {
+
+        if(mShaderBitmap != null && !mShaderBitmap.isRecycled()) {
+            mPaint.setShader(null);
             mShaderBitmap.recycle();
             mShaderBitmap = null;
         }

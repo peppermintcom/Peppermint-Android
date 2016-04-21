@@ -9,13 +9,12 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Shader;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.view.View;
 import android.widget.ImageView;
 
 import com.peppermint.app.R;
-import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.Utils;
 
 // Inspired on https://github.com/lopspower/CircularImageView/blob/master/CircularImageView/src/com/mikhaellopez/circularimageview/CircularImageView.java
@@ -24,7 +23,7 @@ import com.peppermint.app.utils.Utils;
  * {@link ImageView} that supports round corners.
  *
  */
-public class RoundImageView extends ImageView {
+public class RoundImageView extends View {
 
     private static final String DEF_BORDER_COLOR = "#ffffff";
     private static final int DEF_BORDER_WIDTH_DP = 3;
@@ -35,6 +34,8 @@ public class RoundImageView extends ImageView {
     private int mWidth, mHeight;
 
     private Drawable mDrawable;
+    private Drawable mFallbackDrawable;
+
     private Bitmap mBitmap;
     private RectF mBitmapBounds = new RectF(), mBorderBounds = new RectF();
 
@@ -81,7 +82,7 @@ public class RoundImageView extends ImageView {
 
     @Override
     public void onDraw(Canvas canvas) {
-        if (mBitmap != null) {
+        if (mBitmap != null && !mBitmap.isRecycled()) {
             int xOffset = 0;
             int yOffset = 0;
 
@@ -102,39 +103,30 @@ public class RoundImageView extends ImageView {
         int tmpWidth = MeasureSpec.getSize(widthMeasureSpec);
         int tmpHeight = MeasureSpec.getSize(heightMeasureSpec);
 
-        if(mWidth != tmpWidth || mHeight != tmpHeight || (mDrawable != null && !mDrawable.equals(getDrawable()))) {
+        if(mWidth != tmpWidth || mHeight != tmpHeight) {
             mWidth = tmpWidth;
             mHeight = tmpHeight;
+
             // update the image bitmap
-            onSizeChanged();
+            initShader();
         }
 
         setMeasuredDimension(tmpWidth, tmpHeight);
     }
 
-    protected void onSizeChanged() {
-        Drawable drawable = getDrawable();
-
-        if (drawable == null) {
-            // no drawable, no bitmap
-            mBitmap = null;
+    protected void initShader() {
+        if(mWidth <= 0 || mHeight <= 0) {
             return;
         }
 
-        mDrawable = drawable;
+        Drawable drawable = mDrawable == null ? mFallbackDrawable : mDrawable;
 
-        // draw to bitmap, unless there's already a bitmap available
-        Bitmap tmpBitmap;
-        boolean recycleBitmap = false;
-        if(drawable instanceof BitmapDrawable) {
-            tmpBitmap = ((BitmapDrawable) drawable).getBitmap();
-        } else {
-            tmpBitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
-                    drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(tmpBitmap);
-            drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-            drawable.draw(canvas);
-            recycleBitmap = true;
+        if(drawable == null) {
+            if(mBitmap != null && !mBitmap.isRecycled()) {
+                mPaint.setShader(null);
+                mBitmap.recycle();
+            }
+            return;
         }
 
         // get the view size (image is always drawn in a square area)
@@ -147,26 +139,49 @@ public class RoundImageView extends ImageView {
         int bitmapHeight = mCanvasSize;
 
         if(isKeepAspectRatio()) {
-            float scale = tmpBitmap.getHeight() > tmpBitmap.getWidth()
-                    ? (float) mCanvasSize / (float) tmpBitmap.getHeight() : (float) mCanvasSize / (float) tmpBitmap.getWidth();
-            bitmapWidth = Math.round((float) tmpBitmap.getWidth() * scale);
-            bitmapHeight = Math.round((float) tmpBitmap.getHeight() * scale);
+            float scale = drawable.getIntrinsicHeight() > drawable.getIntrinsicWidth()
+                    ? (float) mCanvasSize / (float) drawable.getIntrinsicHeight() : (float) mCanvasSize / (float) drawable.getIntrinsicWidth();
+            bitmapWidth = Math.round((float) drawable.getIntrinsicWidth() * scale);
+            bitmapHeight = Math.round((float) drawable.getIntrinsicHeight() * scale);
         }
 
-        // scale the image and obtain a bitmap with the exact size required
-        try {
-            mBitmap = Bitmap.createScaledBitmap(tmpBitmap, bitmapWidth, bitmapHeight, true);
+        if(mBitmap == null || (mBitmap.getHeight() != bitmapHeight || mBitmap.getWidth() != bitmapWidth)) {
+            if(mBitmap != null && !mBitmap.isRecycled()) {
+                mPaint.setShader(null);
+                mBitmap.recycle();
+            }
+            mBitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
             mPaint.setShader(new BitmapShader(mBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
-        } catch(RuntimeException e) {
-            // some times java.lang.RuntimeException: Canvas: trying to use a recycled bitmap
-            // android.graphics.Bitmap is thrown
-            // FIXME why is this happening? seems to happen only on rotation (fix this instead of eating up the exception)
-            TrackerManager.getInstance(getContext().getApplicationContext()).log("Trying to use recycled bitmap!", e);
         }
 
-        if(recycleBitmap) {
-            tmpBitmap.recycle();
+        // draw to bitmap
+        final Canvas canvas = new Canvas(mBitmap);
+        drawable.setBounds(0, 0, bitmapWidth, bitmapHeight);
+        drawable.draw(canvas);
+        canvas.setBitmap(null);
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+
+        if(mBitmap != null && !mBitmap.isRecycled()) {
+            mPaint.setShader(null);
+            mBitmap.recycle();
+            mBitmap = null;
         }
+    }
+
+    public void setFallbackImageDrawable(Drawable fallbackDrawable) {
+        this.mFallbackDrawable = fallbackDrawable;
+        initShader();
+        invalidate();
+    }
+
+    public void setImageDrawable(Drawable imageDrawable) {
+        this.mDrawable = imageDrawable;
+        initShader();
+        invalidate();
     }
 
     /**
@@ -223,4 +238,5 @@ public class RoundImageView extends ImageView {
     protected Bitmap getBitmap() {
         return mBitmap;
     }
+
 }

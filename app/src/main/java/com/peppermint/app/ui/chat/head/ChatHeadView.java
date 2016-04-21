@@ -123,7 +123,7 @@ public class ChatHeadView extends RoundImageView {
 
         // global
         setKeepAspectRatio(false);
-        setImageResource(R.drawable.ic_anonymous_green_48dp);
+        setFallbackImageDrawable(Utils.getDrawable(context, R.drawable.ic_anonymous_green_48dp));
         setButtonImageResource(R.drawable.ic_play_15dp);
 
         String tfPath = context.getString(R.string.font_regular);
@@ -193,7 +193,8 @@ public class ChatHeadView extends RoundImageView {
         setLocalHeight(mAvatarSize + (mAvatarBorderWidth * 2));
         setLocalWidth(mAvatarSize + (mAvatarBorderWidth * 2));
         setBorderWidth(mAvatarBorderWidth);
-        onSizeChanged();
+
+        initShader();
     }
 
     /**
@@ -347,6 +348,7 @@ public class ChatHeadView extends RoundImageView {
             Canvas canvas = new Canvas(mButtonBitmap);
             drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
             drawable.draw(canvas);
+            canvas.setBitmap(null);
         }
     }
 
@@ -364,19 +366,16 @@ public class ChatHeadView extends RoundImageView {
             if (!samePhotoUri) {
                 // setup avatar
                 if (newRecipientPhotoUri != null) {
-                    setImageURI(Uri.parse(newRecipientPhotoUri));
-                    if (getDrawable() == null) {
-                        setImageResource(R.drawable.ic_anonymous_green_48dp);
-                    }
+                    setImageDrawable(Utils.getDrawableFromUri(getContext(), Uri.parse(newRecipientPhotoUri)));
                 } else {
-                    setImageResource(R.drawable.ic_anonymous_green_48dp);
+                    setImageDrawable(null);
                 }
-
-                onSizeChanged();
             }
         } else {
-            setImageBitmap(null);
+            setImageDrawable(null);
         }
+
+        /*initShader();*/
 
         this.mChat = mChat;
 

@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
@@ -53,11 +52,6 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
     }
 
     @Override
-    protected void onMeasure(Rect bounds) {
-        super.onMeasure(bounds);
-    }
-
-    @Override
     public synchronized void onDraw(View view, Canvas canvas, double interpolatedElapsedTime) {
         int currentFrame = (int) Math.round(interpolatedElapsedTime / getDuration() * (mBitmapSequenceRes.length - 1));
         initShader(currentFrame);
@@ -87,7 +81,8 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
             bitmap = mBitmapSequence[frame];
         } else if(mBitmapSequenceRes.length > frame) {
             bitmap = Utils.getScaledResizedBitmap(getContext(), mBitmapSequenceRes[frame], getBounds().width() - mBorderWidth, getBounds().height() - mBorderWidth, false);
-            if(mLastBitmap != null) {
+            if(mLastBitmap != null && !mLastBitmap.isRecycled()) {
+                mPaint.setShader(null);
                 mLastBitmap.recycle();
                 mLastBitmap = bitmap;
             }
@@ -111,7 +106,9 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
         if(!decodeAsYouGo) {
             if(mBitmapSequence != null) {
                 for(int i=0; i<mBitmapSequence.length; i++) {
-                    mBitmapSequence[i].recycle();
+                    if(!mBitmapSequence[i].isRecycled()) {
+                        mBitmapSequence[i].recycle();
+                    }
                 }
             }
 
@@ -139,6 +136,19 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
         }
 
         setBitmapSequenceResourceIds(decodeAsYouGo, bitmapSequenceRes);
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        if(mBitmapSequence != null) {
+            for(int i=0; i<mBitmapSequence.length; i++) {
+                if(!mBitmapSequence[i].isRecycled()) {
+                    mBitmapSequence[i].recycle();
+                }
+            }
+        }
+        mBitmapSequence = null;
     }
 
     public Paint getPaint() {

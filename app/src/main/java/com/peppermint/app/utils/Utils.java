@@ -586,7 +586,9 @@ public class Utils {
 
         if(bitmap != null && !keepAspectRatio) {
             Bitmap resized = Bitmap.createScaledBitmap(bitmap, width, height, true);
-            bitmap.recycle();
+            if(resized != bitmap) {
+                bitmap.recycle();
+            }
             bitmap = resized;
         }
 
@@ -609,7 +611,9 @@ public class Utils {
 
         if(bitmap != null && !keepAspectRatio) {
             Bitmap resized = Bitmap.createScaledBitmap(bitmap, width, height, true);
-            bitmap.recycle();
+            if(resized != bitmap) {
+                bitmap.recycle();
+            }
             bitmap = resized;
         }
 
@@ -1048,6 +1052,10 @@ public class Utils {
         return screenOn && !keyguardManager.inKeyguardRestrictedInputMode();
     }
 
+    /**
+     * Launches the native email app, pre-filled with Peppermint's support email template.
+     * @param context the app context
+     */
     public static void triggerSupportEmail(final Context context) {
         Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + SUPPORT_EMAIL));
         i.putExtra(Intent.EXTRA_SUBJECT, SUPPORT_SUBJECT);
@@ -1055,4 +1063,29 @@ public class Utils {
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(Intent.createChooser(i, context.getString(R.string.send_email)));
     }
+
+    /**
+     * Loads a {@link Drawable} from the specified location in the {@link Uri}
+     * @param context the app context
+     * @param uri the {@link Uri}
+     * @return the {@link Drawable} or null if unable to load
+     */
+    public static Drawable getDrawableFromUri(final Context context, final Uri uri) {
+        if (uri == null) {
+            return null;
+        }
+
+        Drawable drawable = null;
+
+        try {
+            InputStream inputStream = context.getContentResolver().openInputStream(uri);
+            drawable = Drawable.createFromStream(inputStream, uri.toString());
+            inputStream.close();
+        } catch (IOException e) {
+            TrackerManager.getInstance(context.getApplicationContext()).log(uri.toString(), e);
+        }
+
+        return drawable;
+    }
+
 }
