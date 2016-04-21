@@ -177,8 +177,11 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
         // show recent contacts if recents are empty
         if(!mHasSavedInstanceState) {
             if(ChatManager.getChatCount(DatabaseHelper.getInstance(this).getReadableDatabase(), true) <= 0) {
-                getDrawerListView().setItemChecked(1, true);
+                this.mTappedItemPosition = 1;
+            } else {
+                this.mTappedItemPosition = 0;
             }
+            getDrawerListView().setItemChecked(this.mTappedItemPosition, true);
         }
 
         // inflate and init custom action bar view
@@ -537,7 +540,17 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
             }
 
             if(didSignIn) {
-                refreshContactList();
+                // make sure everything get properly reloaded on new sign in
+                mSearchListBarView.removeOnSearchListener(ContactActivity.this);
+                mSearchListBarView.clearSearch(false);
+                mSearchListBarView.addOnSearchListener(ContactActivity.this, SEARCH_LISTENER_PRIORITY_ACTIVITY);
+                if(ChatManager.getChatCount(DatabaseHelper.getInstance(ContactActivity.this).getReadableDatabase(), true) <= 0) {
+                    ContactActivity.this.mTappedItemPosition = 1;
+                } else {
+                    ContactActivity.this.mTappedItemPosition = 0;
+                }
+                getDrawerListView().setItemChecked(ContactActivity.this.mTappedItemPosition, true);
+                onSearch(mSearchListBarView.getSearchText(), false);
             }
         }
     };

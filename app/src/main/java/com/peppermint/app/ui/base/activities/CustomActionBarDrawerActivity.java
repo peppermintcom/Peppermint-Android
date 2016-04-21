@@ -57,7 +57,7 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
     private TextView mTxtUsername;
 
     private int mCheckedItemPosition = -1;
-    protected int mTappedItemPosition = -1;
+    protected int mTappedItemPosition = 0;
 
     // authentication data
     private AuthenticationData mAuthenticationData;
