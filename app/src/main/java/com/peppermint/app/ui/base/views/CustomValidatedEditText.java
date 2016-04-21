@@ -21,6 +21,7 @@ import android.widget.TableLayout;
 
 import com.peppermint.app.R;
 import com.peppermint.app.ui.AnimatorBuilder;
+import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;
 
 import java.util.Collections;
@@ -147,7 +148,7 @@ public class CustomValidatedEditText extends FrameLayout implements TextWatcher 
         mValidatorTextView.setVisibility(GONE);
         mValidatorTextView.setTypeface(CustomFontEditText.getTypeface(context, context.getString(R.string.font_regular)));
         mValidatorTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12);
-        mValidatorTextView.setTextColor(Utils.getColor(context, R.color.white));
+        mValidatorTextView.setTextColor(ResourceUtils.getColor(context, R.color.white));
         mValidatorTextView.setBackgroundResource(R.color.orange_text);
         mValidatorTextView.setGravity(Gravity.BOTTOM);
 

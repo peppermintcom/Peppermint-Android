@@ -32,6 +32,7 @@ import com.peppermint.app.ui.base.views.CustomFontEditText;
 import com.peppermint.app.ui.base.views.CustomToast;
 import com.peppermint.app.ui.base.views.EditTextValidatorLayout;
 import com.peppermint.app.utils.DateContainer;
+import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;
 
 import java.io.File;
@@ -426,14 +427,13 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
         if(mAvatarUrl != null) {
             final int dp70 = Utils.dpToPx(this, 70);
             final int dp150 = Utils.dpToPx(this, 150);
-            Bitmap realImage =/* mAvatarUrl.startsWith(FILE_SCHEME) ? Utils.getScaledBitmap(mAvatarUrl.substring(6), dp150, dp150)
-                    : */Utils.getScaledBitmap(this, mAvatarUrl, dp150, dp150);
+            Bitmap realImage = ResourceUtils.getScaledBitmap(this, mAvatarUrl, dp150, dp150);
             if(realImage != null) {
                 // cut a square thumbnail
                 Bitmap rotatedImage = ThumbnailUtils.extractThumbnail(realImage, dp70, dp70, ThumbnailUtils.OPTIONS_RECYCLE_INPUT);
                 if(FILE_SCHEME.startsWith(mAvatarUrl.getScheme())) {
                     // rotate image according to the photo params
-                    rotatedImage = Utils.getRotatedBitmapFromFileAttributes(rotatedImage, mAvatarUrl.toString().substring(6));
+                    rotatedImage = ResourceUtils.getRotatedBitmapFromFileAttributes(rotatedImage, mAvatarUrl.toString().substring(6));
                 }
                 mBtnAddAvatar.setImageBitmap(rotatedImage);
             } else {

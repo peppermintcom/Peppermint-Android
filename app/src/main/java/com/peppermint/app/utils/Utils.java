@@ -6,18 +6,10 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Matrix;
 import android.graphics.Point;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.media.ExifInterface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -25,8 +17,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.ContactsContract;
-import android.provider.MediaStore;
-import android.support.v4.content.ContextCompat;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Base64;
@@ -39,27 +29,17 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.ImageView;
 
-import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.BuildConfig;
 import com.peppermint.app.R;
 import com.peppermint.app.tracking.TrackerManager;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.URL;
 import java.text.Normalizer;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -81,7 +61,7 @@ public class Utils {
      * @param millis the duration in milliseconds
      * @return the friendly string
      */
-    public static String getFriendlyDuration(long millis) {
+    public static String getFriendlyDuration(final long millis) {
         long totalSecs = millis / 1000;
 
         long mins = totalSecs / 60;
@@ -125,7 +105,7 @@ public class Utils {
      * @param context application context
      * @return Point structure withe the screen size
      */
-    public static Point getScreenSize(Context context) {
+    public static Point getScreenSize(final Context context) {
         WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         Display display = wm.getDefaultDisplay();
         Point size = new Point();
@@ -139,7 +119,7 @@ public class Utils {
      * @param dp value in dps
      * @return value in pixels
      */
-    public static int dpToPx(Context context, int dp) {
+    public static int dpToPx(final Context context, final int dp) {
         float density = context.getResources().getDisplayMetrics().density;
         return Math.round((float) dp * density);
     }
@@ -151,7 +131,7 @@ public class Utils {
      * @param context Context to get resources and device specific display metrics
      * @return A float value to represent dp equivalent to px value
      */
-    public static float pxToDp(Context context, float px) {
+    public static float pxToDp(final Context context, final float px) {
         float densityDpi = context.getResources().getDisplayMetrics().densityDpi;
         return px / (densityDpi / 160f);
     }
@@ -162,7 +142,7 @@ public class Utils {
      * @param percent width percentage value
      * @return value in pixels
      */
-    public static float percentScreenWidthToPx(Context context, int percent) {
+    public static float percentScreenWidthToPx(final Context context, final int percent) {
         Point size = getScreenSize(context);
         float width = size.x;
         return Math.round(width * ((float) percent) / 100);
@@ -174,7 +154,7 @@ public class Utils {
      * @param percent height percentage value
      * @return value in pixels
      */
-    public static float percentScreenHeightToPx(Context context, int percent) {
+    public static float percentScreenHeightToPx(final Context context, final int percent) {
         Point size = getScreenSize(context);
         float height = size.y;
         return Math.round(height * ((float) percent) / 100);
@@ -185,7 +165,7 @@ public class Utils {
      * @param email the email address
      * @return true if valid; false if not
      */
-    public static boolean isValidEmail(CharSequence email) {
+    public static boolean isValidEmail(final CharSequence email) {
         return !TextUtils.isEmpty(email) && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
     }
 
@@ -194,7 +174,7 @@ public class Utils {
      * @param phoneNumber the phone number
      * @return true if valid; false if not
      */
-    public static boolean isValidPhoneNumber(CharSequence phoneNumber) {
+    public static boolean isValidPhoneNumber(final CharSequence phoneNumber) {
         return !TextUtils.isEmpty(phoneNumber) && android.util.Patterns.PHONE.matcher(phoneNumber).matches();
     }
 
@@ -203,43 +183,12 @@ public class Utils {
      * @param text the name
      * @return true if valid; false if not
      */
-    public static boolean isValidName(CharSequence text) {
+    public static boolean isValidName(final CharSequence text) {
         return text != null && !TextUtils.isEmpty(text);
     }
 
-    public static boolean isValidNameMaybeEmpty(CharSequence text) {
+    public static boolean isValidNameMaybeEmpty(final CharSequence text) {
         return true;
-    }
-
-    /**
-     * Scales an image (to avoid OutOfMemory exceptions) and shows it on the specified ImageView.
-     * As seen in http://developer.android.com/training/camera/photobasics.html
-     *
-     * @param v the ImageView
-     * @param fullFilePath the file path of the image
-     * @param targetW the scaled image desired width
-     * @param targetH the scaled image desired height
-     */
-    public static void setScaledImage(ImageView v, String fullFilePath, int targetW, int targetH) {
-        // Get the dimensions of the bitmap
-        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-        bmOptions.inJustDecodeBounds = true;
-
-        BitmapFactory.decodeFile(fullFilePath, bmOptions);
-        int photoW = bmOptions.outWidth;
-        int photoH = bmOptions.outHeight;
-
-        // determine how much to scale down the image
-        int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
-
-        // decode the image file into a Bitmap sized to fill the View
-        bmOptions.inJustDecodeBounds = false;
-        bmOptions.inSampleSize = scaleFactor;
-        bmOptions.inPreferredConfig = Bitmap.Config.RGB_565;
-        bmOptions.inDither = true;
-
-        Bitmap bitmap = BitmapFactory.decodeFile(fullFilePath, bmOptions);
-        v.setImageBitmap(bitmap);
     }
 
     /**
@@ -249,7 +198,7 @@ public class Utils {
      * @param context the app or activity context
      * @return true if the internet connection is available; false otherwise
      */
-    public static boolean isInternetAvailable(Context context) {
+    public static boolean isInternetAvailable(final Context context) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
         //should check null because in air plan mode it will be null
@@ -262,7 +211,7 @@ public class Utils {
      * @param context the app or activity context
      * @return true if there's connectivity; false otherwise
      */
-    public static boolean isInternetActive(Context context) {
+    public static boolean isInternetActive(final Context context) {
         try {
             HttpURLConnection urlc = (HttpURLConnection) (new URL("http://peppermint.com").openConnection());
             urlc.setRequestProperty("User-Agent", "Test");
@@ -283,7 +232,7 @@ public class Utils {
      * @param password the password
      * @return the basic authentication token in Base64
      */
-    public static String getBasicAuthenticationToken(String username, String password) {
+    public static String getBasicAuthenticationToken(final String username, final String password) {
         String decoded = username + ":" + password;
         byte[] decodedBytes;
         try {
@@ -318,70 +267,12 @@ public class Utils {
     }
 
     /**
-     * Get IP address from first non-localhost interface
-     * @param useIPv4  true=return ipv4, false=return ipv6
-     * @return  address or empty string
-     */
-    public static String getIPAddress(boolean useIPv4) {
-        try {
-            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
-            for (NetworkInterface intf : interfaces) {
-                List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
-                for (InetAddress addr : addrs) {
-                    if (!addr.isLoopbackAddress()) {
-                        String sAddr = addr.getHostAddress().toUpperCase();
-                        //noinspection deprecation
-                        boolean isIPv4 = (addr instanceof Inet4Address);
-                        if (useIPv4) {
-                            if (isIPv4)
-                                return sAddr;
-                        } else {
-                            if (!isIPv4) {
-                                int delim = sAddr.indexOf('%'); // drop ip6 port suffix
-                                return delim<0 ? sAddr : sAddr.substring(0, delim);
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Exception ex) { /* for now eat exceptions */ }
-        return "";
-    }
-
-    /**
-     * Creates a {@link Bitmap} instance from the supplied {@link Drawable}.
-     * @param drawable the drawable
-     * @return the bitmap
-     */
-    public static Bitmap drawableToBitmap (Drawable drawable) {
-        Bitmap bitmap;
-
-        if (drawable instanceof BitmapDrawable) {
-            BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
-            if(bitmapDrawable.getBitmap() != null) {
-                return bitmapDrawable.getBitmap();
-            }
-        }
-
-        if(drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
-            bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888); // Single color bitmap will be created of 1x1 pixel
-        } else {
-            bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        }
-
-        Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
-        return bitmap;
-    }
-
-    /**
      * Normalizes the string and replaces/removes all special characters.<br />
      * The resulting string can be safely used as an ID and/or file name.
      * @param str the clean string
      * @return the original string
      */
-    public static String normalizeAndCleanString(String str) {
+    public static String normalizeAndCleanString(final String str) {
         if(str == null) {
             return null;
         }
@@ -389,278 +280,11 @@ public class Utils {
     }
 
     /**
-     * Use {@link ExifInterface} to extract image file attributes in order to assess the required
-     * rotation in degrees (depends on orientation mode when taking the picture). <br/>
-     * Rotate the bitmap accordingly.
-     *
-     * @param realImage the bitmap to rotate
-     * @param filePath the image file path of the bitmap
-     * @return the rotated bitmap
-     */
-    public static Bitmap getRotatedBitmapFromFileAttributes(Bitmap realImage, String filePath) {
-        Bitmap rotatedImage = realImage;
-
-        try {
-            ExifInterface exif = new ExifInterface(filePath);
-
-            String tagOrientation = exif.getAttribute(ExifInterface.TAG_ORIENTATION);
-            if (tagOrientation.equalsIgnoreCase("6")) {
-                rotatedImage = Utils.getRotatedBitmap(realImage, 90);
-                realImage.recycle();
-            } else if (tagOrientation.equalsIgnoreCase("8")) {
-                rotatedImage = Utils.getRotatedBitmap(realImage, 270);
-                realImage.recycle();
-            } else if (tagOrientation.equalsIgnoreCase("3")) {
-                rotatedImage = Utils.getRotatedBitmap(realImage, 180);
-                realImage.recycle();
-            }
-        } catch (IOException e) {
-            Log.e(TAG, "Unable to adjust bitmap rotation", e);
-            Crashlytics.logException(e);
-        }
-
-        return rotatedImage;
-    }
-
-    /**
-     * Rotate the supplied bitmap by the supplied degrees.
-     * @param bitmap the original bitmap
-     * @param degrees the rotation degress
-     * @return the new rotated bitmap
-     */
-    public static Bitmap getRotatedBitmap(Bitmap bitmap, int degrees) {
-        int w = bitmap.getWidth();
-        int h = bitmap.getHeight();
-
-        Matrix mtx = new Matrix();
-        mtx.setRotate(degrees);
-
-        return Bitmap.createBitmap(bitmap, 0, 0, w, h, mtx, true);
-    }
-
-    private static float getBitmapRequiredScale(InputStream fis, int width, int height) {
-        BitmapFactory.Options o = new BitmapFactory.Options();
-        o.inJustDecodeBounds = true;
-
-        BitmapFactory.decodeStream(fis, null, o);
-
-        return getBitmapRequiredScale(o, width, height);
-    }
-
-    /**
-     * Returns the multiplier necessary to adjust the scale of the bitmap image to
-     * the supplied width and height. The multiplier is obtained from the smallest height/width length value.
-     * This keeps aspect ratio.
-     * @param o the bitmap image options
-     * @param width the desired width
-     * @param height the desired height
-     * @return the scale/multiplier
-     */
-    private static float getBitmapRequiredScale(BitmapFactory.Options o, int width, int height) {
-        float scale;
-        // if image height is greater than width
-        if (o.outHeight > o.outWidth) {
-            scale = (float) o.outWidth / (float) width;
-        }
-        // if image width is greater than height
-        else {
-            scale = (float) o.outHeight / (float) height;
-        }
-
-        return scale;
-    }
-
-    private static Bitmap getScaledBitmap(InputStream fis, int scale) {
-        // decode with inSampleSize
-        BitmapFactory.Options o2 = new BitmapFactory.Options();
-        o2.inSampleSize = scale;
-        return BitmapFactory.decodeStream(fis, null, o2);
-    }
-
-    private static final String FILE_SCHEME = "file";
-    private static InputStream openInputStream(Context context, Uri uri) throws FileNotFoundException {
-        if(FILE_SCHEME.equals(uri.getScheme())) {
-            return new FileInputStream(uri.toString().substring(6));
-        }
-        return context.getContentResolver().openInputStream(uri);
-    }
-
-    /**
-     * Read and load the bitmap in the provided {@link Uri} and scale it
-     * using the {@link android.graphics.BitmapFactory.Options#inSampleSize} option.<br />
-     * The scale multiplier is obtained using {@link #getBitmapRequiredScale(InputStream, int, int)}.<br />
-     * <b>Aspect ratio is kept. See {@link #getScaledResizedBitmap(String, int, int, boolean)} for a strict resize.</b>
-     *
-     * @param context the app or activity context
-     * @param contentUri the location of the bitmap image
-     * @param width the new desired width
-     * @param height the new desired height
-     * @return the loaded and scaled bitmap
-     */
-    public static Bitmap getScaledBitmap(Context context, Uri contentUri, int width, int height) {
-        Bitmap bitmap = null;
-        try {
-            InputStream fis = openInputStream(context, contentUri);
-            int scale = Math.round(getBitmapRequiredScale(fis, width, height));
-            fis.close();
-
-            fis = openInputStream(context, contentUri);
-            bitmap = getScaledBitmap(fis, scale);
-            fis.close();
-        } catch (IOException e) {
-            Log.e(TAG, "Unable to scale bitmap", e);
-            TrackerManager.getInstance(context.getApplicationContext()).logException(e);
-        }
-        return bitmap;
-    }
-
-    /**
-     * Read and load the bitmap in the provided image file and scale it
-     * using the {@link android.graphics.BitmapFactory.Options#inSampleSize} option.<br />
-     * The scale multiplier is obtained using {@link #getBitmapRequiredScale(InputStream, int, int)}.<br />
-     * <b>Aspect ratio is kept. See {@link #getScaledResizedBitmap(String, int, int, boolean)} for a strict resize.</b>
-     *
-     * @param filePath the image file path
-     * @param width the new desired width
-     * @param height the new desired height
-     * @return the loaded and scaled bitmap
-     */
-    public static Bitmap getScaledBitmap(String filePath, int width, int height) {
-        Bitmap bitmap = null;
-        try {
-            InputStream fis = new FileInputStream(filePath);
-            int scale = Math.round(getBitmapRequiredScale(fis, width, height));
-            fis.close();
-
-            fis = new FileInputStream(filePath);
-            bitmap = getScaledBitmap(fis, scale);
-            fis.close();
-        } catch (IOException e) {
-            Log.e(TAG, "Unable to scale bitmap", e);
-            Crashlytics.logException(e);
-        }
-        return bitmap;
-    }
-
-    /**
-     * Read and load the bitmap in the provided image resource and scale it
-     * using the {@link android.graphics.BitmapFactory.Options#inSampleSize} option.<br />
-     * The scale multiplier is obtained using {@link #getBitmapRequiredScale(InputStream, int, int)}.<br />
-     * <b>Aspect ratio is kept. See {@link #getScaledResizedBitmap(Context, int, int, int, boolean)} for a strict resize.</b>
-     *
-     * @param context the context
-     * @param resId the resource id (image/drawable id)
-     * @param width the scaled image width
-     * @param height the scaled image height
-     * @return the scaled image bitmap
-     */
-    public static Bitmap getScaledBitmap(Context context, int resId, int width, int height) {
-        Bitmap bitmap = null;
-        try {
-            InputStream fis = context.getResources().openRawResource(resId);
-            int scale = Math.round(getBitmapRequiredScale(fis, width, height));
-            fis.close();
-
-            fis = context.getResources().openRawResource(resId);
-            bitmap = getScaledBitmap(fis, scale);
-            fis.close();
-        } catch (IOException e) {
-            Log.e(TAG, "Unable to scale bitmap", e);
-            TrackerManager.getInstance(context.getApplicationContext()).logException(e);
-        }
-        return bitmap;
-    }
-
-    /**
-     * Read and load the bitmap in the provided image file and scale it to the provided width and height values.<br />
-     * If the aspect ratio is to be kept, it is the same as using {@link #getScaledBitmap(String, int, int)}.
-     *
-     * @param filePath the image file path
-     * @param width the new desired width
-     * @param height the new desired height
-     * @param keepAspectRatio true to keep aspect ratio; false otherwise
-     * @return the new scaled/resized bitmap
-     */
-    public static Bitmap getScaledResizedBitmap(String filePath, int width, int height, boolean keepAspectRatio) {
-        Bitmap bitmap = getScaledBitmap(filePath, width, height);
-
-        if(bitmap != null && !keepAspectRatio) {
-            Bitmap resized = Bitmap.createScaledBitmap(bitmap, width, height, true);
-            if(resized != bitmap) {
-                bitmap.recycle();
-            }
-            bitmap = resized;
-        }
-
-        return bitmap;
-    }
-
-    /**
-     * Read and load the bitmap in the provided image resource and scale it to the provided width and height values.<br />
-     * If the aspect ratio is to be kept, it is the same as using {@link #getScaledBitmap(Context, Uri, int, int)}.
-     *
-     * @param context the context
-     * @param resId the resource id (image/drawable id)
-     * @param width the new desired width
-     * @param height the new desired height
-     * @param keepAspectRatio true to keep aspect ratio; false otherwise
-     * @return the new scaled/resized bitmap
-     */
-    public static Bitmap getScaledResizedBitmap(Context context, int resId, int width, int height, boolean keepAspectRatio) {
-        Bitmap bitmap = getScaledBitmap(context, resId, width, height);
-
-        if(bitmap != null && !keepAspectRatio) {
-            Bitmap resized = Bitmap.createScaledBitmap(bitmap, width, height, true);
-            if(resized != bitmap) {
-                bitmap.recycle();
-            }
-            bitmap = resized;
-        }
-
-        return bitmap;
-    }
-
-    /**
-     * Get a drawable from resources according to the current API.
-     * @param context the context
-     * @param drawableRes the drawable resource id
-     * @return the drawable instance
-     */
-    public static Drawable getDrawable(Context context, int drawableRes) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            return context.getResources().getDrawable(drawableRes, context.getTheme());
-        } else {
-            //noinspection deprecation
-            return context.getResources().getDrawable(drawableRes);
-        }
-    }
-
-    /**
-     * Get a color from resources according to the current API.
-     * @param context the context
-     * @param colorRes the color resource id
-     * @return the color
-     */
-    public static int getColor(Context context, int colorRes) {
-        return ContextCompat.getColor(context, colorRes);
-    }
-
-    /**
-     * Get a color state list from resources according to the current API.
-     * @param context the context
-     * @param colorRes the color resource id
-     * @return the color
-     */
-    public static ColorStateList getColorStateList(Context context, int colorRes) {
-        return ContextCompat.getColorStateList(context, colorRes);
-    }
-
-    /**
      * Get the status bar height according to the current API and theme.
      * @param context the context
      * @return the height in pixels
      */
-    public static int getStatusBarHeight(Context context) {
+    public static int getStatusBarHeight(final Context context) {
         int result = 0;
         int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
         if (resourceId > 0) {
@@ -675,7 +299,7 @@ public class Utils {
      * @param context the context
      * @return an array of strings containing: 0) the display name, 1) the photo URI; null if no data is found or doesn't have permission
      */
-    public static String[] getUserData(Context context) {
+    public static String[] getUserData(final Context context) {
         String[] data = new String[2];
         try {
             Cursor cursor = context.getContentResolver().query(ContactsContract.Profile.CONTENT_URI, null, null, null, null);
@@ -702,7 +326,7 @@ public class Utils {
      * @param context the context
      * @return true if supported; false if not
      */
-    public static boolean isSimAvailable(Context context) {
+    public static boolean isSimAvailable(final Context context) {
         if(!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return false;
         }
@@ -718,7 +342,7 @@ public class Utils {
      * @param s the string
      * @return the fully capitalized string
      */
-    public static String capitalizeFully(String s) {
+    public static String capitalizeFully(final String s) {
         if(s == null || s.length() <= 0) {
             return s;
         }
@@ -742,7 +366,7 @@ public class Utils {
      * Hide the keyboard
      * @param context the activity
      */
-    public static void hideKeyboard(Activity context, Integer additionalModes) {
+    public static void hideKeyboard(final Activity context, final Integer additionalModes) {
         int modes = WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
         if(additionalModes != null) {
             modes |= additionalModes;
@@ -772,7 +396,7 @@ public class Utils {
      * Show the keyboard
      * @param context the activity
      */
-    public static void showKeyboard(Activity context, View view, Integer additionalModes) {
+    public static void showKeyboard(final Activity context, View view, final Integer additionalModes) {
         int modes = WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
         if(additionalModes != null) {
             modes |= additionalModes;
@@ -786,19 +410,10 @@ public class Utils {
         if (view != null) {
             InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.showSoftInput(view, InputMethodManager.SHOW_FORCED);
-            /*imm.toggleSoftInputFromWindow(view.getWindowToken(), InputMethodManager.SHOW_FORCED, 0);*/
         }
     }
 
-    public static void showKeyboard(Activity context) {
-        showKeyboard(context, null, null);
-    }
-
-    public static void showKeyboard(Activity context, View view) {
-        showKeyboard(context, view, null);
-    }
-
-    public static void showKeyboard(Activity context, Integer additionalModes) {
+    public static void showKeyboard(final Activity context, final Integer additionalModes) {
         showKeyboard(context, null, additionalModes);
     }
 
@@ -807,7 +422,7 @@ public class Utils {
      * @param sData the short array
      * @return the byte array
      */
-    public static byte[] short2Byte(short[] sData, byte[] bytes) {
+    public static byte[] short2Byte(final short[] sData, byte[] bytes) {
         int shortArrsize = sData.length;
         if(bytes == null) {
             bytes = new byte[shortArrsize * 2];
@@ -828,7 +443,7 @@ public class Utils {
      * @param strs the set of strings to join
      * @return the joined string
      */
-    public static String joinString(String separator, String... strs) {
+    public static String joinString(final String separator, final String... strs) {
         StringBuilder sb = new StringBuilder();
         boolean first = true;
         for (String str : strs) {
@@ -857,7 +472,7 @@ public class Utils {
      * @param <T> the allowed values type
      * @return the conditions string
      */
-    public static <T> String getSQLConditions(String field, List<T> allowed, List<String> args, boolean isAnd) {
+    public static <T> String getSQLConditions(final String field, final List<T> allowed, final List<String> args, final boolean isAnd) {
         if(allowed == null || allowed.size() <= 0) {
             return "1";
         }
@@ -882,27 +497,10 @@ public class Utils {
     }
 
     /**
-     * Logs all key-value pairs in a {@link Bundle}.
-     * @param bundle the bundle
-     * @param parent the parent bundle name (or null if none)
-     */
-    public static void logBundle(Bundle bundle, String parent) {
-        for (String key : bundle.keySet()) {
-            key = (parent == null ? key : parent + "." + key);
-            Object obj = bundle.get(key);
-            if(obj instanceof Bundle) {
-                logBundle((Bundle) obj, key);
-            } else {
-                Log.d(TAG, key + " = " + obj);
-            }
-        }
-    }
-
-    /**
      * Deletes all app files in app data directory.
      * @param context the app context
      */
-    public static void clearApplicationData(Context context) {
+    public static void clearApplicationData(final Context context) {
         File cache = context.getCacheDir();
         File appDir = new File(cache.getParent());
         if (appDir.exists()) {
@@ -910,13 +508,13 @@ public class Utils {
             for (String s : children) {
                 File f = new File(appDir, s);
                 if(deleteDir(f)) {
-                    Log.i(TAG, String.format("**************** DELETED -> (%s) *******************", f.getAbsolutePath()));
+                    TrackerManager.getInstance(context).log("clearApplicationData() - Deleted " + f.getAbsolutePath());
                 }
             }
         }
     }
 
-    private static boolean deleteDir(File dir) {
+    private static boolean deleteDir(final File dir) {
         if (dir != null && dir.isDirectory()) {
             String[] children = dir.list();
             for (String aChildren : children) {
@@ -930,35 +528,13 @@ public class Utils {
     }
 
     /**
-     * Copies the image in the specified Uri to the local app file directory, with the specified file name.
-     * @param context the app context
-     * @param imageUri the origin image Uri
-     * @param newFileName the destination file name
-     * @return the Uri of the newly created file (null if unable to copy)
-     */
-    public static Uri copyImageToLocalDir(Context context, Uri imageUri, String newFileName) {
-        try {
-            Bitmap bitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), imageUri);
-            if(bitmap != null) {
-                FileOutputStream outStream = context.openFileOutput(newFileName, Context.MODE_PRIVATE);
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, outStream);
-                outStream.close();
-                return Uri.fromFile(new File(context.getFilesDir(), newFileName));
-            }
-        } catch (Exception e) {
-            Log.w(TAG, e);
-        }
-        return null;
-    }
-
-    /**
      * Gets the navigation bar height. Tries to find out if the device has a soft navigation bar.
      * If not, returns 0.
      *
      * @param context the app context
      * @return the height in pixels
      */
-    public static int getNavigationBarHeight(Context context) {
+    public static int getNavigationBarHeight(final Context context) {
         int result = 0;
         boolean hasMenuKey = ViewConfiguration.get(context).hasPermanentMenuKey();
         boolean hasBackKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_BACK);
@@ -987,7 +563,7 @@ public class Utils {
      * @param context the app context
      * @return true if it's a tablet; false otherwise
      */
-    public static boolean isTablet(Context context) {
+    public static boolean isTablet(final Context context) {
         return (context.getResources().getConfiguration().screenLayout
                 & Configuration.SCREENLAYOUT_SIZE_MASK)
                 >= Configuration.SCREENLAYOUT_SIZE_LARGE;
@@ -1001,7 +577,7 @@ public class Utils {
      * @param root the root view to search
      * @return the found View or null if no clickable view is found
      */
-    public static View getClickableViewAtLocation(float x, float y, View root) {
+    public static View getClickableViewAtLocation(final float x, final float y, final View root) {
         if(root instanceof ViewGroup) {
             ViewGroup v = (ViewGroup) root;
             int count = v.getChildCount();
@@ -1022,7 +598,7 @@ public class Utils {
      * @param view - view object to compare
      * @return true if the points are within view bounds, false otherwise
      */
-    private static boolean isPointInsideView(float x, float y, View view) {
+    private static boolean isPointInsideView(final float x, final float y, final View view) {
         int location[] = new int[2];
         view.getLocationOnScreen(location);
         int viewX = location[0];
@@ -1065,27 +641,20 @@ public class Utils {
     }
 
     /**
-     * Loads a {@link Drawable} from the specified location in the {@link Uri}
-     * @param context the app context
-     * @param uri the {@link Uri}
-     * @return the {@link Drawable} or null if unable to load
+     * Logs all key-value pairs in a {@link Bundle}.
+     * @param bundle the bundle
+     * @param parent the parent bundle name (or null if none)
      */
-    public static Drawable getDrawableFromUri(final Context context, final Uri uri) {
-        if (uri == null) {
-            return null;
+    public static void logBundle(final Bundle bundle, final String parent) {
+        for (String key : bundle.keySet()) {
+            key = (parent == null ? key : parent + "." + key);
+            Object obj = bundle.get(key);
+            if(obj instanceof Bundle) {
+                logBundle((Bundle) obj, key);
+            } else {
+                Log.d(TAG, key + " = " + obj);
+            }
         }
-
-        Drawable drawable = null;
-
-        try {
-            InputStream inputStream = context.getContentResolver().openInputStream(uri);
-            drawable = Drawable.createFromStream(inputStream, uri.toString());
-            inputStream.close();
-        } catch (IOException e) {
-            TrackerManager.getInstance(context.getApplicationContext()).log(uri.toString(), e);
-        }
-
-        return drawable;
     }
 
 }

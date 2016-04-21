@@ -25,6 +25,7 @@ import com.peppermint.app.ui.base.CustomActionBarView;
 import com.peppermint.app.ui.base.NavigationItem;
 import com.peppermint.app.ui.base.NavigationListAdapter;
 import com.peppermint.app.ui.base.views.RoundImageView;
+import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;
 
 import java.util.List;
@@ -93,7 +94,7 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
         });
 
         mImgUserAvatar = (RoundImageView) findViewById(R.id.imgUserAvatar);
-        mImgUserAvatar.setFallbackImageDrawable(Utils.getDrawable(this, R.drawable.ic_anonymous_green_48dp));
+        mImgUserAvatar.setFallbackImageDrawable(ResourceUtils.getDrawable(this, R.drawable.ic_anonymous_green_48dp));
         mTxtUsername = (TextView) findViewById(R.id.txtUserName);
 
         mLytDrawer = (DrawerLayout) findViewById(R.id.drawer);
@@ -254,7 +255,7 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
     protected boolean refreshProfileData() {
         String[] data = Utils.getUserData(this);
         if(data[1] != null) {
-            mImgUserAvatar.setImageDrawable(Utils.getDrawableFromUri(this, Uri.parse(data[1])));
+            mImgUserAvatar.setImageDrawable(ResourceUtils.getDrawableFromUri(this, Uri.parse(data[1])));
         } else {
             mImgUserAvatar.setImageDrawable(null);
         }

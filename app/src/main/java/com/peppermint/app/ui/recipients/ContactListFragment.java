@@ -21,6 +21,7 @@ import android.widget.PopupWindow;
 import com.peppermint.app.R;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
+import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
@@ -192,7 +193,7 @@ public abstract class ContactListFragment extends ListFragment implements
         // although this is deprecated, it is required for versions  < 22/23, otherwise the popup doesn't show up
         //noinspection deprecation
         mHoldPopup.setWindowLayoutMode(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        mHoldPopup.setBackgroundDrawable(Utils.getDrawable(mActivity, R.drawable.img_popup));
+        mHoldPopup.setBackgroundDrawable(ResourceUtils.getDrawable(mActivity, R.drawable.img_popup));
         mHoldPopup.setAnimationStyle(R.style.Peppermint_PopupAnimation);
         // do not let the popup get in the way of user interaction
         mHoldPopup.setFocusable(false);

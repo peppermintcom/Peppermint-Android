@@ -12,7 +12,7 @@ import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
 import com.peppermint.app.ui.base.views.CustomFontTextView;
 import com.peppermint.app.ui.base.views.RoundImageView;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
-import com.peppermint.app.utils.Utils;
+import com.peppermint.app.utils.ResourceUtils;
 
 /**
  * Created by Nuno Luz on 10-11-2015.
@@ -58,7 +58,7 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
             mTxtChatName = (CustomFontTextView) v.findViewById(R.id.txtChatName);
             mTxtChatVia = (CustomFontTextView) v.findViewById(R.id.txtChatVia);
             mImgAvatar = (RoundImageView) v.findViewById(R.id.imgChatAvatar);
-            mImgAvatar.setFallbackImageDrawable(Utils.getDrawable(this, R.drawable.ic_anonymous_gray_35dp));
+            mImgAvatar.setFallbackImageDrawable(ResourceUtils.getDrawable(this, R.drawable.ic_anonymous_gray_35dp));
 
             actionBarView.setContents(v, false);
         }
@@ -128,7 +128,7 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
         mTxtChatVia.setText(recipientVia);
 
         if(recipientPhotoUri != null) {
-            mImgAvatar.setImageDrawable(Utils.getDrawableFromUri(this, Uri.parse(recipientPhotoUri)));
+            mImgAvatar.setImageDrawable(ResourceUtils.getDrawableFromUri(this, Uri.parse(recipientPhotoUri)));
         } else {
             mImgAvatar.setImageDrawable(null);
         }

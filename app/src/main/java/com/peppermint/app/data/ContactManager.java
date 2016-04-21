@@ -17,6 +17,7 @@ import android.provider.ContactsContract;
 import android.text.TextUtils;
 
 import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
@@ -276,7 +277,7 @@ public class ContactManager {
         int dp100 = Utils.dpToPx(context, 100);
 
         // scale image to 200dp to save memory
-        Bitmap realImage = Utils.getScaledBitmap(context, photoUri, dp200, dp200);
+        Bitmap realImage = ResourceUtils.getScaledBitmap(context, photoUri, dp200, dp200);
 
         if(realImage != null) {
             ArrayList<ContentProviderOperation> ops = operationsList == null ? new ArrayList<ContentProviderOperation>() : operationsList;
@@ -285,7 +286,7 @@ public class ContactManager {
             Bitmap rotatedImage = ThumbnailUtils.extractThumbnail(realImage, dp100, dp100, ThumbnailUtils.OPTIONS_RECYCLE_INPUT);
             if(FILE_SCHEME.startsWith(photoUri.getScheme())) {
                 // rotate image according to the photo params
-                rotatedImage = Utils.getRotatedBitmapFromFileAttributes(rotatedImage, photoUri.toString().substring(6));
+                rotatedImage = ResourceUtils.getRotatedBitmapFromFileAttributes(rotatedImage, photoUri.toString().substring(6));
             }
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();

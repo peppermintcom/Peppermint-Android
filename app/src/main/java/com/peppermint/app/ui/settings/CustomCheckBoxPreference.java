@@ -12,7 +12,7 @@ import android.widget.TextView;
 
 import com.peppermint.app.R;
 import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.utils.Utils;
+import com.peppermint.app.utils.ResourceUtils;
 
 /**
  * Created by Nuno Luz on 22-10-2015.
@@ -65,29 +65,29 @@ public class CustomCheckBoxPreference extends CheckBoxPreference {
             mTxtContent.setText(mContent);
         }
 
-        txtTitle.setTextColor(Utils.getColor(getContext(), R.color.black));
-        txtSummary.setTextColor(Utils.getColor(getContext(), R.color.dark_grey_text));
-        mTxtContent.setTextColor(Utils.getColor(getContext(), R.color.black));
+        txtTitle.setTextColor(ResourceUtils.getColor(getContext(), R.color.black));
+        txtSummary.setTextColor(ResourceUtils.getColor(getContext(), R.color.dark_grey_text));
+        mTxtContent.setTextColor(ResourceUtils.getColor(getContext(), R.color.black));
 
         try {
             txtTitle.setTextColor(ContextCompat.getColorStateList(getContext(), R.color.color_black_to_darkgrey_disabled));
         } catch (Exception e) {
             TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
-            txtTitle.setTextColor(Utils.getColor(getContext(), R.color.black));
+            txtTitle.setTextColor(ResourceUtils.getColor(getContext(), R.color.black));
         }
 
         try {
             mTxtContent.setTextColor(ContextCompat.getColorStateList(getContext(), R.color.color_black_to_darkgrey_disabled));
         } catch (Exception e) {
             TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
-            mTxtContent.setTextColor(Utils.getColor(getContext(), R.color.black));
+            mTxtContent.setTextColor(ResourceUtils.getColor(getContext(), R.color.black));
         }
 
         try {
             txtSummary.setTextColor(ContextCompat.getColorStateList(getContext(), R.color.color_darkgrey_to_grey_disabled));
         } catch (Exception e) {
             TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
-            txtSummary.setTextColor(Utils.getColor(getContext(), R.color.dark_grey_text));
+            txtSummary.setTextColor(ResourceUtils.getColor(getContext(), R.color.dark_grey_text));
         }
     }
 

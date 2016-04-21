@@ -14,6 +14,8 @@ import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
  */
 public class PeppermintApp extends Application {
 
+    public static final boolean DEBUG = false;
+
     @Override
     public void onCreate() {
         super.onCreate();

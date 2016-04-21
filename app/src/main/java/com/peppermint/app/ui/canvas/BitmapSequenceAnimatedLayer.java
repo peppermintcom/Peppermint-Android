@@ -10,7 +10,7 @@ import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.view.View;
 
-import com.peppermint.app.utils.Utils;
+import com.peppermint.app.utils.ResourceUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +80,7 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
         if(mBitmapSequence != null && mBitmapSequence.length > frame) {
             bitmap = mBitmapSequence[frame];
         } else if(mBitmapSequenceRes.length > frame) {
-            bitmap = Utils.getScaledResizedBitmap(getContext(), mBitmapSequenceRes[frame], getBounds().width() - mBorderWidth, getBounds().height() - mBorderWidth, false);
+            bitmap = ResourceUtils.getScaledResizedBitmap(getContext(), mBitmapSequenceRes[frame], getBounds().width() - mBorderWidth, getBounds().height() - mBorderWidth, false);
             if(mLastBitmap != null && !mLastBitmap.isRecycled()) {
                 mPaint.setShader(null);
                 mLastBitmap.recycle();
@@ -114,7 +114,7 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
 
             mBitmapSequence = new Bitmap[mBitmapSequenceRes.length];
             for (int i = 0; i < mBitmapSequenceRes.length; i++) {
-                mBitmapSequence[i] = ((BitmapDrawable) Utils.getDrawable(getContext(), mBitmapSequenceRes[i])).getBitmap();
+                mBitmapSequence[i] = ((BitmapDrawable) ResourceUtils.getDrawable(getContext(), mBitmapSequenceRes[i])).getBitmap();
             }
         }
 

@@ -11,7 +11,7 @@ import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.view.View;
 
-import com.peppermint.app.utils.Utils;
+import com.peppermint.app.utils.ResourceUtils;
 
 /**
  * Created by Nuno Luz on 24-09-2015.
@@ -37,7 +37,7 @@ public class BitmapLayer extends LayerBase implements Layer {
     }
 
     private synchronized void initDrawable() {
-        mDrawable = (BitmapDrawable) Utils.getDrawable(getContext(), mBitmapRes);
+        mDrawable = (BitmapDrawable) ResourceUtils.getDrawable(getContext(), mBitmapRes);
         mPrevBounds = null;
         initShader();
     }

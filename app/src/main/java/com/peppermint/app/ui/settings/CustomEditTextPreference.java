@@ -24,6 +24,7 @@ import android.widget.TextView;
 import com.peppermint.app.R;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.base.views.CustomFontEditText;
+import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;
 
 import java.lang.reflect.Field;
@@ -86,7 +87,7 @@ public class CustomEditTextPreference extends CustomDialogPreference {
         mEditText.setPadding(dp20, 0, dp20, dp20);
         mEditText.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
         mEditText.setSingleLine(true);
-        mEditText.setTextColor(Utils.getColor(context, R.color.black));
+        mEditText.setTextColor(ResourceUtils.getColor(context, R.color.black));
         mEditText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
         mEditText.setTypeface(context.getString(R.string.font_regular));
 
@@ -118,29 +119,29 @@ public class CustomEditTextPreference extends CustomDialogPreference {
             mTxtContent.setText(mContent);
         }
 
-        txtTitle.setTextColor(Utils.getColor(getContext(), R.color.black));
-        txtSummary.setTextColor(Utils.getColor(getContext(), R.color.dark_grey_text));
-        mTxtContent.setTextColor(Utils.getColor(getContext(), R.color.black));
+        txtTitle.setTextColor(ResourceUtils.getColor(getContext(), R.color.black));
+        txtSummary.setTextColor(ResourceUtils.getColor(getContext(), R.color.dark_grey_text));
+        mTxtContent.setTextColor(ResourceUtils.getColor(getContext(), R.color.black));
 
         try {
             txtTitle.setTextColor(ContextCompat.getColorStateList(getContext(), R.color.color_black_to_darkgrey_disabled));
         } catch (Exception e) {
             TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
-            txtTitle.setTextColor(Utils.getColor(getContext(), R.color.black));
+            txtTitle.setTextColor(ResourceUtils.getColor(getContext(), R.color.black));
         }
 
         try {
             mTxtContent.setTextColor(ContextCompat.getColorStateList(getContext(), R.color.color_black_to_darkgrey_disabled));
         } catch (Exception e) {
             TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
-            mTxtContent.setTextColor(Utils.getColor(getContext(), R.color.black));
+            mTxtContent.setTextColor(ResourceUtils.getColor(getContext(), R.color.black));
         }
 
         try {
             txtSummary.setTextColor(ContextCompat.getColorStateList(getContext(), R.color.color_darkgrey_to_grey_disabled));
         } catch (Exception e) {
             TrackerManager.getInstance(getContext().getApplicationContext()).logException(e);
-            txtSummary.setTextColor(Utils.getColor(getContext(), R.color.dark_grey_text));
+            txtSummary.setTextColor(ResourceUtils.getColor(getContext(), R.color.dark_grey_text));
         }
     }
 

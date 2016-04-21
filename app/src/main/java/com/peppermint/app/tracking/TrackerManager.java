@@ -3,6 +3,8 @@ package com.peppermint.app.tracking;
 import android.content.Context;
 import android.os.StrictMode;
 
+import com.peppermint.app.PeppermintApp;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -14,19 +16,18 @@ import java.util.Set;
  */
 public class TrackerManager extends TrackerApi {
 
-    private static final boolean DEBUG = false;
     private static TrackerManager SINGLETON;
 
     /**
      * Get the singleton instance of the TrackerManager. <br />
      * <strong>Always use the global application context!</strong>
      *
-     * @param applicationContext the global application context
+     * @param context the global application context
      * @return the singleton instance
      */
-    public synchronized static TrackerManager getInstance(Context applicationContext) {
+    public synchronized static TrackerManager getInstance(Context context) {
         if(SINGLETON == null) {
-            SINGLETON = new TrackerManager(applicationContext);
+            SINGLETON = new TrackerManager(context.getApplicationContext());
         }
         return SINGLETON;
     }
@@ -37,7 +38,7 @@ public class TrackerManager extends TrackerApi {
         super(applicationContext);
 
         mTrackers = new HashSet<>();
-        if(!DEBUG) {
+        if(!PeppermintApp.DEBUG) {
             mTrackers.add(new GoogleAnalyticsTracker(applicationContext));
             mTrackers.add(new FabricTracker(applicationContext));
             mTrackers.add(new FlurryTracker(applicationContext));

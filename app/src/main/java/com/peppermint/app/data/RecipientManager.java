@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.util.Log;
 
+import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;
 
 import java.sql.SQLException;
@@ -72,7 +73,7 @@ public class RecipientManager {
 
         String photoUri = recipient.getPhotoUri();
         if(photoUri != null && !photoUri.endsWith(".peppermintAv")) {
-            Uri uri = Utils.copyImageToLocalDir(context, Uri.parse(photoUri), Utils.normalizeAndCleanString(recipient.getVia() + "_" + recipient.getAddedTimestamp()) + ".peppermintAv");
+            Uri uri = ResourceUtils.copyImageToLocalDir(context, Uri.parse(photoUri), Utils.normalizeAndCleanString(recipient.getVia() + "_" + recipient.getAddedTimestamp()) + ".peppermintAv");
             photoUri = uri == null ? null : uri.toString();
         }
 

@@ -9,7 +9,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.peppermint.app.R;
-import com.peppermint.app.utils.Utils;
+import com.peppermint.app.utils.ResourceUtils;
 
 /**
  * Created by Nuno Luz on 27-10-2015.
@@ -37,6 +37,6 @@ public class CustomPreferenceCategory extends PreferenceCategory {
     protected void onBindView(View view) {
         super.onBindView(view);
         TextView titleView = (TextView) view.findViewById(android.R.id.title);
-        titleView.setTextColor(Utils.getColor(getContext(), R.color.dark_green_text));
+        titleView.setTextColor(ResourceUtils.getColor(getContext(), R.color.dark_green_text));
     }
 }

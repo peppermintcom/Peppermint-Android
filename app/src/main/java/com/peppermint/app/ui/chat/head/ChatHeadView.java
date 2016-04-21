@@ -17,6 +17,7 @@ import android.util.AttributeSet;
 import com.peppermint.app.R;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.ui.base.views.RoundImageView;
+import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
@@ -123,7 +124,7 @@ public class ChatHeadView extends RoundImageView {
 
         // global
         setKeepAspectRatio(false);
-        setFallbackImageDrawable(Utils.getDrawable(context, R.drawable.ic_anonymous_green_48dp));
+        setFallbackImageDrawable(ResourceUtils.getDrawable(context, R.drawable.ic_anonymous_green_48dp));
         setButtonImageResource(R.drawable.ic_play_15dp);
 
         String tfPath = context.getString(R.string.font_regular);
@@ -142,9 +143,9 @@ public class ChatHeadView extends RoundImageView {
         mTextPaint.setTextAlign(Paint.Align.CENTER);
         mTextPaint.setTextSize(Utils.dpToPx(context, 10));
         mTextPaint.setTypeface(getTypeface(context, tfPath));
-        mTextPaint.setColor(Utils.getColor(context, R.color.white));
+        mTextPaint.setColor(ResourceUtils.getColor(context, R.color.white));
         final int dp1 = Utils.dpToPx(context, 1);
-        mTextPaint.setShadowLayer(dp1, dp1, dp1, Utils.getColor(context, R.color.black));
+        mTextPaint.setShadowLayer(dp1, dp1, dp1, ResourceUtils.getColor(context, R.color.black));
 
         mTextPaint.getTextBounds("W", 0, 1, mTextBounds);
         mTextHeight = mTextBounds.height();
@@ -327,7 +328,7 @@ public class ChatHeadView extends RoundImageView {
     }
 
     public void setButtonImageResource(int resId) {
-        setButtonDrawable(Utils.getDrawable(getContext(), resId));
+        setButtonDrawable(ResourceUtils.getDrawable(getContext(), resId));
     }
 
     public synchronized void setButtonDrawable(Drawable drawable) {
@@ -366,7 +367,7 @@ public class ChatHeadView extends RoundImageView {
             if (!samePhotoUri) {
                 // setup avatar
                 if (newRecipientPhotoUri != null) {
-                    setImageDrawable(Utils.getDrawableFromUri(getContext(), Uri.parse(newRecipientPhotoUri)));
+                    setImageDrawable(ResourceUtils.getDrawableFromUri(getContext(), Uri.parse(newRecipientPhotoUri)));
                 } else {
                     setImageDrawable(null);
                 }

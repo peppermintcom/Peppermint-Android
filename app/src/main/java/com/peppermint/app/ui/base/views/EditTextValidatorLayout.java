@@ -20,6 +20,7 @@ import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 
 import com.peppermint.app.R;
+import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
@@ -114,7 +115,7 @@ public class EditTextValidatorLayout extends LinearLayout implements ViewGroup.O
         mValidatorTextView.setVisibility(GONE);
         mValidatorTextView.setTypeface(CustomFontEditText.getTypeface(context, context.getString(R.string.font_regular)));
         mValidatorTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 12);
-        mValidatorTextView.setTextColor(Utils.getColor(context, R.color.white));
+        mValidatorTextView.setTextColor(ResourceUtils.getColor(context, R.color.white));
         mValidatorTextView.setBackgroundResource(R.color.orange_text);
 
         final int dp3 = Utils.dpToPx(context, 3);
