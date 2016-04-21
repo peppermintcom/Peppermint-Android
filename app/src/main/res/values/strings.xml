@@ -97,8 +97,8 @@
     <string name="pref_summary_gmailenabled">Send messages through Gmail without leaving the app (requires extra permissions)</string>
     <string name="pref_title_emailcategory">Email</string>
     <string name="sign_out_summary">Sign out from Peppermint</string>
-    <string name="chat_heads">Overlay Notifications</string>
-    <string name="chat_heads_summary">Overlay notifications will be drawn on top of apps and replace regular notifications</string>
+    <string name="chat_heads">Chat Heads</string>
+    <string name="chat_heads_summary">Chat heads will be drawn on top of apps and replace regular notifications</string>
 
     <!-- NEW CONTACT LAYOUT -->
     <string name="new_contact">New contact</string>
