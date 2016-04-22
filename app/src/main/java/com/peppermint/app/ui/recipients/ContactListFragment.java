@@ -14,8 +14,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.HeaderViewListAdapter;
-import android.widget.ListAdapter;
 import android.widget.PopupWindow;
 
 import com.peppermint.app.R;
@@ -255,10 +253,6 @@ public abstract class ContactListFragment extends ListFragment implements
 
         mHandler.removeCallbacks(mAnimationRunnable);
 
-        if(mRefreshTask != null && !mRefreshTask.isCancelled() && mRefreshTask.getStatus() != AsyncTask.Status.FINISHED) {
-            mRefreshTask.cancel(true);
-        }
-
         dismissHoldPopup();
 
         super.onStop();
@@ -266,6 +260,11 @@ public abstract class ContactListFragment extends ListFragment implements
 
     @Override
     public void onDestroy() {
+        if(mRefreshTask != null) {
+            mRefreshTask.cancel(true);
+            mRefreshTask = null;
+        }
+
         if(mThreadPoolExecutor != null) {
             mThreadPoolExecutor.shutdown();
         }
@@ -290,7 +289,7 @@ public abstract class ContactListFragment extends ListFragment implements
             return false;
         }
 
-        if(mRefreshTask != null && !mRefreshTask.isCancelled() && mRefreshTask.getStatus() != AsyncTask.Status.FINISHED) {
+        if(mRefreshTask != null) {
             mRefreshTask._doNotChangeState = true;
             mRefreshTask.cancel(true);
             mRefreshTask = null;
@@ -324,15 +323,6 @@ public abstract class ContactListFragment extends ListFragment implements
             mHoldPopup.showAtLocation(parent, Gravity.NO_GRAVITY, mLastTouchPoint.x - Utils.dpToPx(mActivity, 120), mLastTouchPoint.y + Utils.dpToPx(mActivity, 10));
             mHandler.postDelayed(mDismissPopupRunnable, 6000);
         }
-    }
-
-    /**
-     * When a footer or header is added to the ListView, the adapter set through setAdapter gets
-     * wrapped by a HeaderViewListAdapter. This returns the wrapped adapter.
-     * @return the real, wrapped adapter
-     */
-    protected ListAdapter getRealAdapter() {
-        return getListView().getAdapter() == null ? null : ((HeaderViewListAdapter) getListView().getAdapter()).getWrappedAdapter();
     }
 
     private View.OnTouchListener mTouchInterceptor = new View.OnTouchListener() {
