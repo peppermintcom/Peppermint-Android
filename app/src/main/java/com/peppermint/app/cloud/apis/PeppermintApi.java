@@ -326,6 +326,9 @@ public class PeppermintApi extends BaseApi implements Serializable {
      */
     public HttpResponse removeReceiverRecorder(final String requesterId, final String accountId, final String recorderId) throws Exception {
         final HttpRequest request = new HttpRequest(ACCOUNTS_REL_ENDPOINT.replace("{account_id}", accountId) + "/" + recorderId, HttpRequest.METHOD_DELETE);
+        // timeout after 10 secs.
+        request.setConnectTimeout(10000);
+        request.setReadTimeout(10000);
 
         final HttpResponse response = executeRequest(requesterId, request, new HttpResponse(), true);
         if(response.getCode() == 404) {

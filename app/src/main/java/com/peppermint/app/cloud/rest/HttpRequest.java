@@ -34,6 +34,9 @@ public class HttpRequest implements Parcelable {
 
 	public static final String[] METHOD_MAP = {"INVALID", "GET", "POST", "PUT", "DELETE"};
 
+	private int mConnectTimeout = -1;
+	private int mReadTimeout = -1;
+
 	private boolean mForceOnlyGetAndPost = false;
 	private String mEndpoint;
 	private int mRequestMethod;
@@ -60,6 +63,8 @@ public class HttpRequest implements Parcelable {
 		this.mCancelled = req.mCancelled;
         this.mUuid = req.mUuid;
 		this.mBody = req.mBody;
+		this.mConnectTimeout = req.mConnectTimeout;
+		this.mReadTimeout = req.mReadTimeout;
 	}
 	
 	public HttpRequest(String endpoint) {
@@ -169,6 +174,12 @@ public class HttpRequest implements Parcelable {
 		// connection
 		URL url = new URL(uriBuilder.build().toString());
 		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+		if(mConnectTimeout >= 0) {
+			conn.setConnectTimeout(mConnectTimeout);
+		}
+		if(mReadTimeout >= 0) {
+			conn.setReadTimeout(mReadTimeout);
+		}
 		conn.setUseCaches(false);
 		//conn.setDoInput(true);
 		if(mRequestMethod == METHOD_PUT || mRequestMethod == METHOD_POST) {
@@ -236,6 +247,30 @@ public class HttpRequest implements Parcelable {
 	public HttpRequest setEndpoint(String endpoint) {
 		this.mEndpoint = endpoint;
 		return this;
+	}
+
+	public int getConnectTimeout() {
+		return mConnectTimeout;
+	}
+
+	/**
+	 * See {@link HttpURLConnection#setConnectTimeout(int)}
+	 * @param mConnectTimeout
+     */
+	public void setConnectTimeout(int mConnectTimeout) {
+		this.mConnectTimeout = mConnectTimeout;
+	}
+
+	public int getReadTimeout() {
+		return mReadTimeout;
+	}
+
+	/**
+	 * See {@link HttpURLConnection#setReadTimeout(int)}
+	 * @param mReadTimeout
+     */
+	public void setReadTimeout(int mReadTimeout) {
+		this.mReadTimeout = mReadTimeout;
 	}
 
 	public String getBody() {
@@ -358,6 +393,8 @@ public class HttpRequest implements Parcelable {
         out.writeString(mBody);
         out.writeInt(mCancelled ? 1 : 0);
         out.writeSerializable(mUuid);
+		out.writeInt(mConnectTimeout);
+		out.writeInt(mReadTimeout);
 	}
 
 	public static final Creator<HttpRequest> CREATOR = new Creator<HttpRequest>() {
@@ -378,6 +415,8 @@ public class HttpRequest implements Parcelable {
         mBody = in.readString();
 		mCancelled = in.readInt() != 0;
         mUuid = (UUID) in.readSerializable();
+		mConnectTimeout = in.readInt();
+		mReadTimeout = in.readInt();
     }
 
     @Override
