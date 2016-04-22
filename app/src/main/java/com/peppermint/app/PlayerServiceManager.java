@@ -158,6 +158,14 @@ public class PlayerServiceManager {
         return mService.isPlaying();
     }
 
+    public boolean isLoading(Message message) {
+        return mService.isLoading(message);
+    }
+
+    public boolean isLoading() {
+        return mService.isLoading();
+    }
+
     public void addServiceListener(PlayServiceListener listener) {
         mServiceListenerList.add(listener);
     }

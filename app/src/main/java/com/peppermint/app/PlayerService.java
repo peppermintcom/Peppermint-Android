@@ -79,6 +79,13 @@ public class PlayerService extends Service {
         boolean isPlaying(Message message) {
             return PlayerService.this.isPlaying(message);
         }
+
+        boolean isLoading() {
+            return PlayerService.this.isLoading(null);
+        }
+        boolean isLoading(Message message) {
+            return PlayerService.this.isLoading(message);
+        }
     }
 
     private TrackerManager mTrackerManager;
@@ -86,6 +93,7 @@ public class PlayerService extends Service {
     private MediaPlayer mMediaPlayer;
     private Message mMessage;
     private int mStartPercent = 0;
+    private boolean mLoading = false;
 
     private Handler mHandler = new Handler();
 
@@ -93,6 +101,7 @@ public class PlayerService extends Service {
         @Override
         public void run() {
             if(mMessage != null && mMediaPlayer != null && mMediaPlayer.isPlaying()) {
+                mLoading = false;
                 PeppermintEventBus.postPlayerEvent(PlayerEvent.EVENT_PROGRESS, mMessage, Math.round((float) mMediaPlayer.getCurrentPosition() / (float) mMediaPlayer.getDuration() * 100f), mMediaPlayer.getCurrentPosition(), 0);
                 scheduleProgressMonitoring();
             }
@@ -107,6 +116,7 @@ public class PlayerService extends Service {
     private MediaPlayer.OnCompletionListener mOnCompletionListener = new MediaPlayer.OnCompletionListener() {
         @Override
         public void onCompletion(MediaPlayer mp) {
+            mLoading = false;
             PeppermintEventBus.postPlayerEvent(PlayerEvent.EVENT_COMPLETED, mMessage, 0, 0, 0);
         }
     };
@@ -114,6 +124,8 @@ public class PlayerService extends Service {
     private MediaPlayer.OnPreparedListener mOnPreparedListener = new MediaPlayer.OnPreparedListener() {
         @Override
         public void onPrepared(MediaPlayer mp) {
+            mLoading = false;
+
             if(mMediaPlayer == null) {
                 return;
             }
@@ -143,6 +155,8 @@ public class PlayerService extends Service {
     private MediaPlayer.OnErrorListener mOnErrorListener = new MediaPlayer.OnErrorListener() {
         @Override
         public boolean onError(MediaPlayer mp, int what, int extra) {
+            mLoading = false;
+
             if(mMediaPlayer != null) {
                 if(mMediaPlayer.isPlaying()) {
                     mMediaPlayer.stop();
@@ -226,11 +240,12 @@ public class PlayerService extends Service {
             mMediaPlayer.setOnErrorListener(mOnErrorListener);
             try {
                 mMediaPlayer.prepareAsync();
+                mLoading = true;
             } catch(IllegalStateException e) {
                 mTrackerManager.logException(e);
                 mOnErrorListener.onError(mMediaPlayer, PlayerEvent.ERROR_ILLEGAL_STATE, 0);
             }
-        } else {
+        } else if(!mLoading) {
             mOnPreparedListener.onPrepared(mMediaPlayer);
         }
     }
@@ -277,5 +292,13 @@ public class PlayerService extends Service {
         }
 
         return mMediaPlayer != null && mMediaPlayer.isPlaying();
+    }
+
+    private boolean isLoading(Message message) {
+        if(message != null && mMessage != null && !message.equals(mMessage)) {
+            return false;
+        }
+
+        return mMediaPlayer != null && mLoading;
     }
 }

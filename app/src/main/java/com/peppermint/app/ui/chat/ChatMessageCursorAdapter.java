@@ -160,6 +160,8 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
                 if(mPlayerServiceManager.isPlaying(mMessage)) {
                     mPlayingController = this;
                     setVisibility(View.GONE, View.VISIBLE, View.GONE);
+                } else if(mPlayerServiceManager.isLoading(mMessage)) {
+                    setVisibility(View.GONE, View.GONE, View.VISIBLE);
                 } else {
                     setVisibility(View.VISIBLE, View.GONE, View.GONE);
                 }
