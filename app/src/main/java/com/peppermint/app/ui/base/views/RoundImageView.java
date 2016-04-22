@@ -36,7 +36,7 @@ public class RoundImageView extends View {
     private Drawable mDrawable;
     private Drawable mFallbackDrawable;
 
-    private Bitmap mBitmap;
+    protected Bitmap mBitmap;
     private RectF mBitmapBounds = new RectF(), mBorderBounds = new RectF();
 
     private boolean mKeepAspectRatio = false;
@@ -222,10 +222,6 @@ public class RoundImageView extends View {
 
     protected void setLocalHeight(int mHeight) {
         this.mHeight = mHeight;
-    }
-
-    protected Bitmap getBitmap() {
-        return mBitmap;
     }
 
 }

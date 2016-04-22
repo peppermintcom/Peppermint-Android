@@ -243,7 +243,7 @@ public class ChatHeadView extends RoundImageView {
 
     @Override
     public synchronized void onDraw(Canvas canvas) {
-        if(getBitmap() == null) {
+        if(mBitmap == null || mBitmap.isRecycled()) {
             return;
         }
 
@@ -271,11 +271,11 @@ public class ChatHeadView extends RoundImageView {
 
         // draw play button if there are unopened messages
         if(hasButton) {
-            mButtonBounds.set(getBorderWidth(), getBorderWidth(), getBitmap().getWidth() - getBorderWidth(), getBitmap().getHeight() - getBorderWidth());
+            mButtonBounds.set(getBorderWidth(), getBorderWidth(), mBitmap.getWidth() - getBorderWidth(), mBitmap.getHeight() - getBorderWidth());
             canvas.drawRoundRect(mButtonBounds, getCornerRadius() - getBorderWidth(), getCornerRadius() - getBorderWidth(), mButtonBackgroundPaint);
 
-            int left = (getBitmap().getWidth() / 2) - (mButtonBitmap.getWidth() / 2);
-            int top = (getBitmap().getHeight() / 2) - (mButtonBitmap.getHeight() / 2);
+            int left = (mBitmap.getWidth() / 2) - (mButtonBitmap.getWidth() / 2);
+            int top = (mBitmap.getHeight() / 2) - (mButtonBitmap.getHeight() / 2);
             canvas.drawBitmap(mButtonBitmap, left, top, mBitmapPaint);
         }
 
