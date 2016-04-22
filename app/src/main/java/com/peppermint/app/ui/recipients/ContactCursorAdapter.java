@@ -17,6 +17,7 @@ import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.MessageManager;
 import com.peppermint.app.data.PeppermintFilteredCursor;
+import com.peppermint.app.data.Recipient;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.base.views.CustomFontTextView;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
@@ -117,7 +118,9 @@ public class ContactCursorAdapter extends CursorAdapter {
         long id = rawContact.getMainDataId();
         Chat chat;
         if(!mChats.containsKey(id)) {
-            chat = ChatManager.getMainChatByDroidContactId(mDatabaseHelper.getReadableDatabase(), rawContact.getContactId());
+            chat = rawContact.getPeppermint() != null ?
+                    ChatManager.getMainChatByDroidContactId(mDatabaseHelper.getReadableDatabase(), rawContact.getContactId()) :
+                    ChatManager.getChatByRecipients(mDatabaseHelper.getReadableDatabase(), new Recipient(rawContact, null));
             if(chat != null) {
                 mChats.put(id, chat);
             }

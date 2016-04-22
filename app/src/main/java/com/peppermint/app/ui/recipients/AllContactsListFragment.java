@@ -2,6 +2,7 @@ package com.peppermint.app.ui.recipients;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
@@ -22,7 +23,9 @@ import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.FilteredCursor;
 import com.peppermint.app.data.GlobalManager;
+import com.peppermint.app.data.PeppermintFilteredCursor;
 import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.ui.chat.ChatActivity;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -53,7 +56,7 @@ public class AllContactsListFragment extends ContactListFragment {
 
     // the recipient list
     private ContactCursorAdapter mAdapter;
-    private FilteredCursor mCursor;
+    private PeppermintFilteredCursor mCursor;
 
     @Override
     protected Object onAsyncRefresh(Context context, String searchName, String searchVia) {
@@ -81,7 +84,7 @@ public class AllContactsListFragment extends ContactListFragment {
 
     @Override
     protected void onAsyncRefreshFinished(Context context, Object data) {
-        mCursor = (FilteredCursor) data;
+        mCursor = (PeppermintFilteredCursor) data;
 
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
             setCursor();
@@ -140,7 +143,15 @@ public class AllContactsListFragment extends ContactListFragment {
 
     @Override
     public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
-        showHoldPopup(view);
+        ContactRaw contactRaw = mAdapter.getContactRaw(position);
+        Chat chat = mAdapter.getContactRawChat(contactRaw);
+        if(chat == null) {
+            showHoldPopup(view);
+        } else {
+            Intent intent = new Intent(mActivity, ChatActivity.class);
+            intent.putExtra(ChatActivity.PARAM_CHAT_ID, chat.getId());
+            startActivity(intent);
+        }
     }
 
     @Override
