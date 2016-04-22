@@ -9,6 +9,7 @@ import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.authenticator.AuthenticatorUtils;
 import com.peppermint.app.cloud.apis.GoogleApi;
 import com.peppermint.app.cloud.apis.PeppermintApi;
+import com.peppermint.app.cloud.apis.SparkPostApi;
 import com.peppermint.app.cloud.apis.exceptions.GoogleApiNoAuthorizationException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
@@ -182,13 +183,18 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
         PeppermintApi api = (PeppermintApi) mIdentity.getParameter(Sender.PARAM_PEPPERMINT_API);
         if(api == null) {
             api = new PeppermintApi(getContext());
-            setPeppermintApi(api);
+            setParameter(Sender.PARAM_PEPPERMINT_API, api);
         }
         return api;
     }
 
-    protected void setPeppermintApi(PeppermintApi peppermintApi) {
-        mIdentity.setParameter(Sender.PARAM_PEPPERMINT_API, peppermintApi);
+    protected SparkPostApi getSparkPostApi() {
+        SparkPostApi api = (SparkPostApi) mIdentity.getParameter(Sender.PARAM_SPARKPOST_API);
+        if(api == null) {
+            api = new SparkPostApi(getContext());
+            setParameter(Sender.PARAM_SPARKPOST_API, api);
+        }
+        return api;
     }
 
     protected void setAuthenticationData(AuthenticationData data) {
@@ -246,6 +252,10 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
         final GoogleApi googleApi = (GoogleApi) getParameter(Sender.PARAM_GOOGLE_API);
         if(googleApi != null) {
             googleApi.cancelPendingRequests(mIdentity.getId().toString());
+        }
+        final SparkPostApi sparkPostApi = (SparkPostApi) getParameter(Sender.PARAM_SPARKPOST_API);
+        if(sparkPostApi != null) {
+            sparkPostApi.cancelPendingRequests(mIdentity.getId().toString());
         }
         return cancelled;
     }

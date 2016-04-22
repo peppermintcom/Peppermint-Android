@@ -34,6 +34,7 @@ public abstract class Sender extends SenderObject {
 
     public static final String PARAM_PEPPERMINT_API = TAG + "_paramPeppermintApi";
     public static final String PARAM_GOOGLE_API = TAG + "_paramGoogleApi";
+    public static final String PARAM_SPARKPOST_API = TAG + "_paramSparkPostApi";
 
     protected SenderErrorHandler mErrorHandler;
     private SenderUploadListener mSenderUploadListener;

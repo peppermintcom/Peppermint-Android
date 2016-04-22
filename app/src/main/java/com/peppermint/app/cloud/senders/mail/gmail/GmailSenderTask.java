@@ -9,12 +9,12 @@ import com.google.api.services.gmail.model.Draft;
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.cloud.apis.GoogleApi;
+import com.peppermint.app.cloud.apis.SparkPostApi;
 import com.peppermint.app.cloud.senders.Sender;
 import com.peppermint.app.cloud.senders.SenderUploadListener;
 import com.peppermint.app.cloud.senders.SenderUploadTask;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.cloud.senders.exceptions.TryAgainException;
-import com.peppermint.app.cloud.senders.mail.MailUtils;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.utils.DateContainer;
@@ -63,7 +63,13 @@ public class GmailSenderTask extends SenderUploadTask {
         File file = getMessage().getRecordingParameter().getFile();
 
         // build the email body
-        String bodyPlain = MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_plain, url, canonicalUrl,
+        final SparkPostApi sparkPostApi = getSparkPostApi();
+        String bodyHtml = sparkPostApi.buildEmailFromTemplate(getContext(), url, canonicalUrl, fullName, data.getEmail(), SparkPostApi.TYPE_HTML, true, getId().toString());
+        String bodyPlain = sparkPostApi.buildEmailFromTemplate(getContext(), url, canonicalUrl, fullName, data.getEmail(), SparkPostApi.TYPE_TEXT, false, getId().toString());
+
+        if(isCancelled()) { return; }
+
+        /*String bodyPlain = MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_plain, url, canonicalUrl,
                 getMessage().getRecordingParameter().getDurationMillis(),
                 getMessage().getRecordingParameter().getContentType(),
                 fullName, data.getEmail());
@@ -71,7 +77,7 @@ public class GmailSenderTask extends SenderUploadTask {
         String bodyHtml = MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_html, url, canonicalUrl,
                 getMessage().getRecordingParameter().getDurationMillis(),
                 getMessage().getRecordingParameter().getContentType(),
-                fullName, data.getEmail());
+                fullName, data.getEmail());*/
 
         getMessage().setEmailBody(bodyPlain);
 

@@ -6,12 +6,11 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.support.v4.content.FileProvider;
 
-import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
+import com.peppermint.app.cloud.apis.SparkPostApi;
 import com.peppermint.app.cloud.senders.Sender;
 import com.peppermint.app.cloud.senders.SenderUploadListener;
 import com.peppermint.app.cloud.senders.SenderUploadTask;
-import com.peppermint.app.cloud.senders.mail.MailUtils;
 import com.peppermint.app.data.Message;
 
 import java.io.File;
@@ -45,29 +44,30 @@ public class IntentMailSenderTask extends SenderUploadTask {
         String url = getMessage().getServerShortUrl();
         String displayName = getSenderPreferences().getFullName();
 
-        if(!isCancelled()) {
-            // build the email body
-            getMessage().setEmailBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_plain, url, getMessage().getServerCanonicalUrl(),
-                    getMessage().getRecordingParameter().getDurationMillis(),
-                    getMessage().getRecordingParameter().getContentType(),
-                    displayName, data.getEmail()));
+        // build the email body
+        final SparkPostApi sparkPostApi = getSparkPostApi();
+        getMessage().setEmailBody(sparkPostApi.buildEmailFromTemplate(getContext(), url, getMessage().getServerCanonicalUrl(), displayName, data.getEmail(), SparkPostApi.TYPE_TEXT, true, getId().toString()));
 
-            File file = getMessage().getRecordingParameter().getFile();
+        /*getMessage().setEmailBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_plain, url, getMessage().getServerCanonicalUrl(),
+                getMessage().getRecordingParameter().getDurationMillis(),
+                getMessage().getRecordingParameter().getContentType(),
+                displayName, data.getEmail()));*/
 
-            Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + getMessage().getChatParameter().getRecipientList().get(0).getVia()));
-            i.putExtra(Intent.EXTRA_SUBJECT, getMessage().getEmailSubject());
-            i.putExtra(Intent.EXTRA_TEXT, getMessage().getEmailBody());
-            Uri fileUri = FileProvider.getUriForFile(getContext(), "com.peppermint.app", file);
-            i.putExtra(Intent.EXTRA_STREAM, fileUri);
-            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+        File file = getMessage().getRecordingParameter().getFile();
 
-            grantReadPermission(i, fileUri);
+        Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + getMessage().getChatParameter().getRecipientList().get(0).getVia()));
+        i.putExtra(Intent.EXTRA_SUBJECT, getMessage().getEmailSubject());
+        i.putExtra(Intent.EXTRA_TEXT, getMessage().getEmailBody());
+        Uri fileUri = FileProvider.getUriForFile(getContext(), "com.peppermint.app", file);
+        i.putExtra(Intent.EXTRA_STREAM, fileUri);
+        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
 
-            try {
-                getSender().getContext().startActivity(i);
-            } catch (android.content.ActivityNotFoundException ex) {
-                throw new RuntimeException("There are no email clients installed!", ex);
-            }
+        grantReadPermission(i, fileUri);
+
+        try {
+            getSender().getContext().startActivity(i);
+        } catch (android.content.ActivityNotFoundException ex) {
+            throw new RuntimeException("There are no email clients installed!", ex);
         }
     }
 
