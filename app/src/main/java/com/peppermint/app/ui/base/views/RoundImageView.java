@@ -161,16 +161,6 @@ public class RoundImageView extends View {
         canvas.setBitmap(null);
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-
-        if(mBitmap != null && !mBitmap.isRecycled()) {
-            mBitmap.recycle();
-            mBitmap = null;
-        }
-    }
-
     public void setFallbackImageDrawable(Drawable fallbackDrawable) {
         this.mFallbackDrawable = fallbackDrawable;
         initShader();

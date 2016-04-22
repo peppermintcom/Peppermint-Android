@@ -82,16 +82,6 @@ public class BitmapLayer extends LayerBase implements Layer {
     }
 
     @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-
-        if(mShaderBitmap != null && !mShaderBitmap.isRecycled()) {
-            mShaderBitmap.recycle();
-            mShaderBitmap = null;
-        }
-    }
-
-    @Override
     protected void onMeasure(Rect bounds) {
         initShader();
     }

@@ -138,19 +138,6 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
         setBitmapSequenceResourceIds(decodeAsYouGo, bitmapSequenceRes);
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        if(mBitmapSequence != null) {
-            for(int i=0; i<mBitmapSequence.length; i++) {
-                if(!mBitmapSequence[i].isRecycled()) {
-                    mBitmapSequence[i].recycle();
-                }
-            }
-        }
-        mBitmapSequence = null;
-    }
-
     public Paint getPaint() {
         return mPaint;
     }

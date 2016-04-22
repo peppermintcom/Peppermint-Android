@@ -3,6 +3,7 @@ package com.peppermint.app.ui.recipients.add;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
@@ -14,7 +15,6 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
@@ -31,6 +31,7 @@ import com.peppermint.app.ui.base.dialogs.CustomListDialog;
 import com.peppermint.app.ui.base.views.CustomFontEditText;
 import com.peppermint.app.ui.base.views.CustomToast;
 import com.peppermint.app.ui.base.views.EditTextValidatorLayout;
+import com.peppermint.app.ui.base.views.RoundImageView;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;
@@ -75,7 +76,7 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
     private static final int CHOOSE_PHOTO_CODE = 124;
 
     // UI
-    private ImageView mBtnAddAvatar;
+    private RoundImageView mBtnAddAvatar;
     private CustomFontEditText mTxtPhone, mTxtMail;
     private CustomFontEditText mTxtFirstName, mTxtLastName;
     private Button mBtnSave;
@@ -137,7 +138,8 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
         mNewAvatarDialog.setListAdapter(avatarAdapter);
 
         // add/replace avatar button
-        mBtnAddAvatar = (ImageView) findViewById(R.id.imgAddAvatar);
+        mBtnAddAvatar = (RoundImageView) findViewById(R.id.imgAddAvatar);
+        mBtnAddAvatar.setFallbackImageDrawable(ResourceUtils.getDrawable(this, R.drawable.ic_addavatar_70dp));
         mBtnAddAvatar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -435,7 +437,7 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
                     // rotate image according to the photo params
                     rotatedImage = ResourceUtils.getRotatedBitmapFromFileAttributes(rotatedImage, mAvatarUrl.toString().substring(6));
                 }
-                mBtnAddAvatar.setImageBitmap(rotatedImage);
+                mBtnAddAvatar.setImageDrawable(new BitmapDrawable(getResources(), rotatedImage));
             } else {
                 this.mAvatarUrl = prevUrl;
             }
