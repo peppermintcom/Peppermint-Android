@@ -69,16 +69,6 @@ public class GmailSenderTask extends SenderUploadTask {
 
         if(isCancelled()) { return; }
 
-        /*String bodyPlain = MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_plain, url, canonicalUrl,
-                getMessage().getRecordingParameter().getDurationMillis(),
-                getMessage().getRecordingParameter().getContentType(),
-                fullName, data.getEmail());
-
-        String bodyHtml = MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_html, url, canonicalUrl,
-                getMessage().getRecordingParameter().getDurationMillis(),
-                getMessage().getRecordingParameter().getContentType(),
-                fullName, data.getEmail());*/
-
         getMessage().setEmailBody(bodyPlain);
 
         try {

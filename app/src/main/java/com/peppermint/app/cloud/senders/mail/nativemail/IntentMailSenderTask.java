@@ -48,11 +48,6 @@ public class IntentMailSenderTask extends SenderUploadTask {
         final SparkPostApi sparkPostApi = getSparkPostApi();
         getMessage().setEmailBody(sparkPostApi.buildEmailFromTemplate(getContext(), url, getMessage().getServerCanonicalUrl(), displayName, data.getEmail(), SparkPostApi.TYPE_TEXT, true, getId().toString()));
 
-        /*getMessage().setEmailBody(MailUtils.buildEmailFromTemplate(getContext(), R.raw.email_template_plain, url, getMessage().getServerCanonicalUrl(),
-                getMessage().getRecordingParameter().getDurationMillis(),
-                getMessage().getRecordingParameter().getContentType(),
-                displayName, data.getEmail()));*/
-
         File file = getMessage().getRecordingParameter().getFile();
 
         Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + getMessage().getChatParameter().getRecipientList().get(0).getVia()));
