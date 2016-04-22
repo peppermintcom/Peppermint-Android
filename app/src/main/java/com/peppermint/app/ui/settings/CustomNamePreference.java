@@ -173,10 +173,16 @@ public class CustomNamePreference extends CustomDialogPreference {
         CustomFontEditText lastNameView = (CustomFontEditText) mDialogView.findViewById(R.id.text2);
 
         String firstName = getFirstName();
+        if(firstName == null) {
+            firstName = "";
+        }
         firstNameView.setText(firstName);
         firstNameView.setSelection(firstName.length());
 
         String lastName = getLastName();
+        if(lastName == null) {
+            lastName = "";
+        }
         lastNameView.setText(lastName);
         lastNameView.setSelection(lastName.length());
     }
