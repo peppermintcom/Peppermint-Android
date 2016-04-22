@@ -50,6 +50,13 @@ public interface SenderUploadListener {
     void onSendingUploadProgress(SenderUploadTask uploadTask, float progressValue);
 
     /**
+     * Triggered when the sender upload task is running and reaches a state when it's no longer cancellable.
+     * @param uploadTask the sender upload task instance
+     */
+    void onSendingUploadNonCancellable(SenderUploadTask uploadTask);
+
+    // TODO maybe move these to a different listener class
+    /**
      * Triggered by the {@link SenderErrorHandler} when the {@link Sender} has recovered from a failed {@link SenderUploadTask}.
      * This method may not execute on the main thread!
      *

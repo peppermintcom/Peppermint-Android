@@ -444,6 +444,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
             case SenderEvent.EVENT_ERROR:
                 controller.setStatusError();
                 break;
+            case SenderEvent.EVENT_NON_CANCELLABLE:
             case SenderEvent.EVENT_FINISHED:
                 controller.setStatusNormal();
                 break;

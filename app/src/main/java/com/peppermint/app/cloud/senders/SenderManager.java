@@ -260,6 +260,11 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
     }
 
     @Override
+    public void onSendingUploadNonCancellable(SenderUploadTask uploadTask) {
+        PeppermintEventBus.postSenderEvent(SenderEvent.EVENT_NON_CANCELLABLE, uploadTask, null);
+    }
+
+    @Override
     public void onSendingUploadStarted(SenderUploadTask uploadTask) {
         PeppermintEventBus.postSenderEvent(SenderEvent.EVENT_STARTED, uploadTask, null);
     }

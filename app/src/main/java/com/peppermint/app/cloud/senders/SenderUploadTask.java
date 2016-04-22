@@ -28,6 +28,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
 
     private SenderUploadListener mSenderUploadListener;
     private boolean mRecovering = false;
+    private boolean mNonCancellable = false;
 
     public SenderUploadTask(final SenderUploadTask uploadTask) {
         super(uploadTask);
@@ -38,6 +39,13 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
     public SenderUploadTask(final Sender sender, final Message message, final SenderUploadListener senderUploadListener) {
         super(sender, message);
         this.mSenderUploadListener = senderUploadListener;
+    }
+
+    protected void setNonCancellable() {
+        mNonCancellable = true;
+        if(mSenderUploadListener != null) {
+            mSenderUploadListener.onSendingUploadNonCancellable(this);
+        }
     }
 
     /**
@@ -83,6 +91,8 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
 
         final Recipient recipient = message.getChatParameter().getRecipientList().get(0);
         final String recipientVia = recipient.getVia();
+
+        setNonCancellable();
 
         if(isCancelled()) {
             return false;
@@ -171,5 +181,13 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
 
     public void setSenderUploadListener(final SenderUploadListener mListener) {
         this.mSenderUploadListener = mListener;
+    }
+
+    @Override
+    public boolean cancel() {
+        if(mNonCancellable) {
+            return false;
+        }
+        return super.cancel();
     }
 }

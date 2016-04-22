@@ -40,6 +40,11 @@ public class SenderEvent {
      */
     public static final int EVENT_QUEUED = 6;
 
+    /**
+     * When a {@link SenderTask} is no longer cancellable
+     */
+    public static final int EVENT_NON_CANCELLABLE = 7;
+
     private SenderTask mTask;
     private int mType;
     private Throwable mError;

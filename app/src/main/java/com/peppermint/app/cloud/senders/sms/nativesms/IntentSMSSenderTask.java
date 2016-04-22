@@ -30,6 +30,7 @@ public class IntentSMSSenderTask extends SenderUploadTask {
         setupPeppermintAuthentication();
         uploadPeppermintMessage();
 
+        setNonCancellable();
         if(isCancelled()) { return; }
 
         String url = getMessage().getServerShortUrl();
