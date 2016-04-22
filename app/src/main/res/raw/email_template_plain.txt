@@ -1,7 +1,8 @@
-Here's my message.
-{@SHORT_URL}
-{@DURATION}
+Play
+{{url}}
+
+Reply
+{{replyLink}}
 
 
-
-Peppermint Quick Reply (https://peppermint.com/reply?name={@REPLY_NAME}&mail={@REPLY_EMAIL})
+Created with Peppermint.com(https://peppermint.com) - the easiest way to send a message.

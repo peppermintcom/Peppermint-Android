@@ -42,7 +42,7 @@ public class SparkPostApi extends BaseApi {
 
     private static final String PREF_LAST_TEMPLATE_UPDATE_TIMESTAMP = TAG + "_lastTemplateUpdateTimestamp";
 
-    private static final Pattern SUBSTITUTION_PATTERN = Pattern.compile("\\{\\{\\{([^\\}]+)\\}\\}\\}");
+    private static final Pattern SUBSTITUTION_PATTERN = Pattern.compile("\\{{2,3}([^\\}]+)\\}{2,3}");
     private static final int HOURS_BEFORE_TEMPLATE_UPDATE = 24;
 
     public static final int TYPE_HTML = 1;
@@ -164,7 +164,7 @@ public class SparkPostApi extends BaseApi {
         try {
             String line;
             while((line = reader.readLine()) != null) {
-                if(line.contains("{{{")) {
+                if(line.contains("{{")) {
                     final Matcher matcher = SUBSTITUTION_PATTERN.matcher(line);
                     while (matcher.find()) {
                         String entry = matcher.group(1).trim();
