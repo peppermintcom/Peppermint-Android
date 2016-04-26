@@ -57,6 +57,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import me.leolin.shortcutbadger.ShortcutBadger;
+
 /**
  * Service handles sending and receiving {@link Message}s.
  */
@@ -156,6 +158,7 @@ public class MessagesService extends Service {
 
         @Override
         public void onSendingSupportFinished(SenderSupportTask supportTask) {
+            refreshBadge();
             PeppermintEventBus.postSyncEvent(SyncEvent.EVENT_FINISHED, mMessagesSyncTask.getReceivedMessages(), mMessagesSyncTask.getSentMessages(), null);
         }
 
@@ -368,6 +371,7 @@ public class MessagesService extends Service {
 
                 // notify
                 if(message != null) {
+                    refreshBadge();
                     PeppermintEventBus.postReceiverEvent(receiverEmail, message);
                 }
             } else if(intent.hasExtra(PARAM_DO_SYNC) && intent.getBooleanExtra(PARAM_DO_SYNC, false)) {
@@ -455,11 +459,17 @@ public class MessagesService extends Service {
         if(!message.isPlayed()) {
             try {
                 GlobalManager.markAsPlayed(this, message);
+                refreshBadge();
             } catch (SQLException e) {
                 mTrackerManager.logException(e);
             }
         }
         removeNotification(message);
+    }
+
+    private void refreshBadge() {
+        final int badgeCount = MessageManager.getUnopenedCount(DatabaseHelper.getInstance(this).getReadableDatabase());
+        ShortcutBadger.applyCount(this, badgeCount);
     }
 
     private void removeAllNotifications() {

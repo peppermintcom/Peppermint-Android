@@ -113,6 +113,18 @@ public class MessageManager {
         return count;
     }
 
+    public static int getUnopenedCount(SQLiteDatabase db) {
+        int count = 0;
+
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM v_message WHERE " +
+                "played <= 0 AND received >= 1", null);
+        if(cursor.moveToFirst()) {
+            count = cursor.getInt(0);
+        }
+        cursor.close();
+        return count;
+    }
+
     public static long getLastAutoPlayMessageIdByChat(SQLiteDatabase db, long chatId) {
         long id = 0;
         Cursor cursor = db.rawQuery("SELECT * FROM v_message WHERE v_message.chat_id = " + chatId +
