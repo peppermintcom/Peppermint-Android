@@ -6,8 +6,6 @@ import android.os.Bundle;
 import android.view.View;
 
 import com.peppermint.app.R;
-import com.peppermint.app.authenticator.AuthenticationData;
-import com.peppermint.app.data.Chat;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.base.CustomActionBarView;
 import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
@@ -82,16 +80,7 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
             return;
         }
 
-        mChatController = new ChatController(this, this, mChatControllerCallbacks) {
-            @Override
-            public boolean triggerRecording(View boundsView, Chat chat) {
-                final AuthenticationData authData = mAuthenticationPolicyEnforcer.getAuthenticationData();
-                if(authData == null) {
-                    return false;
-                }
-                return super.triggerRecording(boundsView, chat);
-            }
-        };
+        mChatController = new ChatController(this, this, mChatControllerCallbacks);
         mChatController.setChat(chatId);
         mChatController.setAutoPlayMessageId(autoPlayMessageId);
         mChatController.init(getContainerView(), mOverlayManager, this, savedInstanceState);
@@ -106,6 +95,7 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
     @Override
     public void onStart() {
         super.onStart();
+        getAuthenticationData(getIntentReplica());
         mChatController.start();
     }
 

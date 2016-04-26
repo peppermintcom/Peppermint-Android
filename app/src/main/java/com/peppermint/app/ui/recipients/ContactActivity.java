@@ -22,7 +22,6 @@ import android.widget.Toast;
 
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
-import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
 import com.peppermint.app.data.ContactManager;
@@ -59,7 +58,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
         ChatRecordOverlayController.Callbacks, OverlayManager.OverlayVisibilityChangeListener, View.OnClickListener {
 
     protected static final int SEARCH_LISTENER_PRIORITY_FRAGMENT = 1;
-    private static final int SEARCH_LISTENER_PRIORITY_ACTIVITY = 2;
+    protected static final int SEARCH_LISTENER_PRIORITY_ACTIVITY = 2;
 
     protected static final int REQUEST_NEWCONTACT = 224;
     protected static final int REQUEST_NEWCONTACT_AND_SEND = 223;
@@ -174,7 +173,6 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
         super.onCreate(savedInstanceState);
 
         mHasSavedInstanceState = savedInstanceState != null;
-        mShouldSync = savedInstanceState == null;
 
         // show recent contacts if recents are empty
         if(!mHasSavedInstanceState) {
@@ -192,10 +190,6 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
         mSearchListBarView = (SearchListBarView) LayoutInflater.from(this).inflate(R.layout.f_recipients_actionbar, null, false);
 
         customActionBarView.setContents(mSearchListBarView, false);
-
-        // authentication
-        mAuthenticationPolicyEnforcer.addAuthenticationDoneCallback(mAuthenticationDoneAlwaysCallback);
-        mAuthenticationPolicyEnforcer.addAuthenticationDoneCallback(mAuthenticationDoneCallback);
 
         // chat record overlay controller
         mChatRecordOverlayController = new ChatRecordOverlayController(this, this) {
@@ -240,16 +234,6 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                 launchChatActivity(message.getChatParameter().getPeppermintChatId() > 0 ? message.getChatParameter().getPeppermintChatId() : message.getChatParameter().getId());
 
                 return message;
-            }
-
-            @Override
-            public boolean triggerRecording(View boundsView, Chat chat) {
-                final AuthenticationData authData = mAuthenticationPolicyEnforcer.getAuthenticationData();
-                if(authData == null) {
-                    return false;
-                }
-
-                return super.triggerRecording(boundsView, chat);
             }
         };
 
@@ -308,6 +292,44 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                 }
             }
         });
+
+        final AuthenticationData authenticationData = getAuthenticationData(getIntentReplica());
+
+        // synchronize messages (only when the activity is created for the first time)
+        if(savedInstanceState == null) {
+            mChatRecordOverlayController.getMessagesServiceManager().startAndSync();
+        }
+
+        Intent paramIntent = getIntent();
+
+        if(paramIntent != null && (paramIntent.hasExtra(FAST_REPLY_NAME_PARAM) || paramIntent.hasExtra(FAST_REPLY_MAIL_PARAM))) {
+            String name = paramIntent.getStringExtra(FAST_REPLY_NAME_PARAM);
+            String mail = paramIntent.getStringExtra(FAST_REPLY_MAIL_PARAM);
+
+            if(name == null) { name = ""; }
+            if(mail == null) { mail = ""; }
+
+            if(mail.length() <= 0) {
+                // if the email was not supplied, just search for the name
+                mSearchListBarView.setSearchText(name);
+            } else {
+                // if mail is supplied, check if the contact exists
+                ContactRaw foundRecipient = ContactManager.getRawContactByVia(ContactActivity.this, mail);
+
+                // if not, add the contact
+                if(foundRecipient == null) {
+                    try {
+                        foundRecipient = ContactManager.insert(ContactActivity.this, 0, 0, name, null, null, mail, null, authenticationData.getEmail(), false);
+                    } catch (Exception e) {
+                            /* nothing to do here */
+                    }
+                }
+
+                // if it fails, add complete name+email search text to allow adding the full contact
+                // otherwise, just search by email
+                mSearchListBarView.setSearchText(foundRecipient != null || name.length() <= 0 ? mail : name + " <" + mail + ">");
+            }
+        }
     }
 
     @Override
@@ -327,6 +349,8 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
 
         // global touch interceptor to hide keyboard
         addTouchEventInterceptor(mTouchInterceptor);
+
+        getAuthenticationData(getIntentReplica());
     }
 
     @Override
@@ -368,8 +392,6 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     @Override
     protected void onDestroy() {
         PeppermintEventBus.unregisterMessages(mMessageEventListener);
-
-        mAuthenticationPolicyEnforcer.removeAuthenticationDoneCallback(mAuthenticationDoneAlwaysCallback);
 
         mSearchListBarView.removeOnSearchListener(this);
 
@@ -495,77 +517,6 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
 
         startActivityForResult(intent, ContactActivity.REQUEST_NEWCONTACT);
     }
-
-    private AuthenticationPolicyEnforcer.AuthenticationDoneCallback mAuthenticationDoneCallback = new AuthenticationPolicyEnforcer.AuthenticationDoneCallback() {
-        @Override
-        public void done(AuthenticationData data, boolean didSignIn) {
-            mAuthenticationPolicyEnforcer.removeAuthenticationDoneCallback(this);
-
-            if(mIsDestroyed) {
-                return;
-            }
-
-            // synchronize messages (only when the activity is created for the first time)
-            if(mShouldSync) {
-                mChatRecordOverlayController.getMessagesServiceManager().startAndSync();
-                mShouldSync = false;
-            }
-
-            Intent paramIntent = getIntent();
-
-            if(paramIntent != null && (paramIntent.hasExtra(FAST_REPLY_NAME_PARAM) ||paramIntent.hasExtra(FAST_REPLY_MAIL_PARAM))) {
-                String name = paramIntent.getStringExtra(FAST_REPLY_NAME_PARAM);
-                String mail = paramIntent.getStringExtra(FAST_REPLY_MAIL_PARAM);
-
-                if(name == null) { name = ""; }
-                if(mail == null) { mail = ""; }
-
-                if(mail.length() <= 0) {
-                    // if the email was not supplied, just search for the name
-                    mSearchListBarView.setSearchText(name);
-                } else {
-                    // if mail is supplied, check if the contact exists
-                    ContactRaw foundRecipient = ContactManager.getRawContactByVia(ContactActivity.this, mail);
-
-                    // if not, add the contact
-                    if(foundRecipient == null) {
-                        try {
-                            foundRecipient = ContactManager.insert(ContactActivity.this, 0, 0, name, null, null, mail, null, data.getEmail(), false);
-                        } catch (Exception e) {
-                            /* nothing to do here */
-                        }
-                    }
-
-                    // if it fails, add complete name+email search text to allow adding the full contact
-                    // otherwise, just search by email
-                    mSearchListBarView.setSearchText(foundRecipient != null || name.length() <= 0 ? mail : name + " <" + mail + ">");
-                }
-            }
-        }
-    };
-
-    private AuthenticationPolicyEnforcer.AuthenticationDoneCallback mAuthenticationDoneAlwaysCallback = new AuthenticationPolicyEnforcer.AuthenticationDoneCallback() {
-        @Override
-        public void done(AuthenticationData data, boolean didSignIn) {
-            if(mIsDestroyed) {
-                return;
-            }
-
-            if(didSignIn) {
-                // make sure everything get properly reloaded on new sign in
-                mSearchListBarView.removeOnSearchListener(ContactActivity.this);
-                mSearchListBarView.clearSearch(false);
-                mSearchListBarView.addOnSearchListener(ContactActivity.this, SEARCH_LISTENER_PRIORITY_ACTIVITY);
-                if(ChatManager.getChatCount(DatabaseHelper.getInstance(ContactActivity.this).getReadableDatabase(), true) <= 0) {
-                    ContactActivity.this.mTappedItemPosition = 1;
-                } else {
-                    ContactActivity.this.mTappedItemPosition = 0;
-                }
-                getDrawerListView().setItemChecked(ContactActivity.this.mTappedItemPosition, true);
-                onSearch(mSearchListBarView.getSearchText(), false);
-            }
-        }
-    };
 
     private void refreshContactList() {
         ContactListFragment fragment = (ContactListFragment) getCurrentFragment();

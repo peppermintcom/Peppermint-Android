@@ -19,7 +19,6 @@ import android.widget.TextView;
 
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
-import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.ui.base.CustomActionBarView;
 import com.peppermint.app.ui.base.NavigationItem;
@@ -60,9 +59,6 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
     private int mCheckedItemPosition = -1;
     protected int mTappedItemPosition = 0;
 
-    // authentication data
-    private AuthenticationData mAuthenticationData;
-
     protected int getContentViewLayoutId() { return R.layout.a_custom_actionbar_drawer_layout; }
     protected List<NavigationItem> getNavigationItems() {
         return null;
@@ -84,14 +80,6 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
                 }
             });
         }
-
-        mAuthenticationPolicyEnforcer.addAuthenticationDoneCallback(new AuthenticationPolicyEnforcer.AuthenticationDoneCallback() {
-            @Override
-            public void done(AuthenticationData data, boolean didSignIn) {
-                mAuthenticationData = data;
-                refreshProfileData();
-            }
-        });
 
         mImgUserAvatar = (RoundImageView) findViewById(R.id.imgUserAvatar);
         mImgUserAvatar.setFallbackImageDrawable(ResourceUtils.getDrawable(this, R.drawable.ic_anonymous_green_48dp));
@@ -156,6 +144,8 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
                 mLstDrawer.setItemChecked(pos, true);
             }
         }
+
+        refreshProfileData();
     }
 
     @Override
@@ -265,10 +255,11 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
         if(Utils.isValidName(data[0])) {
             mTxtUsername.setText(data[0]);
         } else {
-            if(mAuthenticationData == null) {
+            final AuthenticationData authenticationData = getAuthenticationData(null);
+            if(authenticationData == null) {
                 Log.d(TAG, "No authentication data. Skipping username refresh...");
             } else {
-                mTxtUsername.setText(mAuthenticationData.getEmail());
+                mTxtUsername.setText(authenticationData.getEmail());
             }
         }
 

@@ -8,7 +8,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
 import com.peppermint.app.data.ContactRaw;
@@ -88,15 +87,6 @@ public class FeedbackActivity extends CustomActionBarActivity implements View.On
 
                 return super.sendMessage(chat, recording);
             }
-
-            @Override
-            public boolean triggerRecording(View boundsView, Chat chat) {
-                final AuthenticationData authData = mAuthenticationPolicyEnforcer.getAuthenticationData();
-                if(authData == null) {
-                    return false;
-                }
-                return super.triggerRecording(boundsView, chat);
-            }
         };
         mChatRecordOverlayController.init(getContainerView(), mOverlayManager,
                 this, savedInstanceState);
@@ -105,6 +95,7 @@ public class FeedbackActivity extends CustomActionBarActivity implements View.On
     @Override
     protected void onStart() {
         super.onStart();
+        getAuthenticationData(getIntentReplica());
         mAnimatedAvatarView.startDrawingThread();
         mHandler.postDelayed(mAnimationRunnable, FIXED_AVATAR_ANIMATION_INTERVAL_MS + mRandom.nextInt(VARIABLE_AVATAR_ANIMATION_INTERVAL_MS));
         mChatRecordOverlayController.start();

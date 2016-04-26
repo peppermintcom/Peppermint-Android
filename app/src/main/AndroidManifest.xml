@@ -78,30 +78,13 @@
             android:theme="@style/Peppermint.Theme.NoActionBar" >
         </activity>
 
-        <!-- UI: MAIN W/ DRAWER -->
+        <!-- UI: CONTACTS -->
         <activity
             android:name=".ui.recipients.ContactActivity"
             android:label="@string/app_name"
             android:launchMode="singleTop"
             android:theme="@style/Peppermint.Theme.NoActionBar"
             android:windowSoftInputMode="stateHidden|adjustResize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https"
-                    android:host="peppermint.com"
-                    android:pathPrefix="/reply" />
-                <data android:scheme="http"
-                    android:host="peppermint.com"
-                    android:pathPrefix="/reply" />
-                <data android:scheme="peppermint"
-                    android:host="reply" android:path="/" />
-            </intent-filter>
         </activity>
 
         <!-- UI: SETTINGS -->
@@ -109,12 +92,8 @@
             android:name=".ui.settings.SettingsActivity"
             android:label="@string/app_name"
             android:launchMode="singleTop"
-            android:parentActivityName=".ui.recipients.ContactActivity"
             android:theme="@style/Peppermint.Theme.NoActionBar"
             android:windowSoftInputMode="stateHidden">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ui.recipients.ContactActivity" />
         </activity>
 
         <!-- UI: ABOUT -->
@@ -122,12 +101,8 @@
             android:name=".ui.about.AboutActivity"
             android:label="@string/app_name"
             android:launchMode="singleTop"
-            android:parentActivityName=".ui.recipients.ContactActivity"
             android:theme="@style/Peppermint.Theme.NoActionBar"
             android:windowSoftInputMode="stateHidden">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ui.recipients.ContactActivity" />
         </activity>
 
         <!-- UI: FEEDBACK -->
@@ -151,11 +126,33 @@
             android:windowSoftInputMode="stateHidden">
         </activity>
 
-        <!-- UI: HELPER GET RESULT (utilitary invisible activity that allows services to
+        <!-- DUI: STARTUP ACTIVITY -->
+        <activity android:name=".StartupActivity"
+            android:theme="@style/Peppermint.Theme.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                    android:host="peppermint.com"
+                    android:pathPrefix="/reply" />
+                <data android:scheme="http"
+                    android:host="peppermint.com"
+                    android:pathPrefix="/reply" />
+                <data android:scheme="peppermint"
+                    android:host="reply" android:path="/" />
+            </intent-filter>
+        </activity>
+
+        <!-- DUI: HELPER GET RESULT (utilitary invisible activity that allows services to
             launch other activities and obtain a result through "onActivityResult") -->
         <activity
             android:name=".cloud.senders.GetResultActivity"
-            android:theme="@style/Theme.Transparent" >
+            android:theme="@android:style/Theme.NoDisplay">
         </activity>
 
         <service

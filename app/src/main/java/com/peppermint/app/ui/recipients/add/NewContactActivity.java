@@ -89,6 +89,8 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
 
     private Uri mAvatarUrl, mAvatarInProgressUrl;
 
+    private AuthenticationData mAuthenticationData;
+
     @Override
     protected final int getContainerViewLayoutId() {
         return R.layout.f_newcontact;
@@ -222,6 +224,12 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
     }
 
     @Override
+    protected void onStart() {
+        mAuthenticationData = getAuthenticationData(getIntentReplica());
+        super.onStart();
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
 
@@ -309,9 +317,7 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
 
     @Override
     public void onClick(View v) {
-
-        AuthenticationData authData = mAuthenticationPolicyEnforcer.getAuthenticationData();
-        if(authData == null) {
+        if(mAuthenticationData == null) {
             return;
         }
 
@@ -329,7 +335,7 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
         ContactRaw recipient;
 
         try {
-            if((recipient = ContactManager.insert(this, 0, rawId, firstName, lastName, phone, email, mAvatarUrl, authData.getEmail(), false)) == null) {
+            if((recipient = ContactManager.insert(this, 0, rawId, firstName, lastName, phone, email, mAvatarUrl, mAuthenticationData.getEmail(), false)) == null) {
                 Toast.makeText(this, R.string.msg_unable_addcontact, Toast.LENGTH_LONG).show();
                 return;
             }

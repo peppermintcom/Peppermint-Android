@@ -10,9 +10,13 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
+import com.peppermint.app.authenticator.AuthenticationData;
+import com.peppermint.app.authenticator.AuthenticatorActivity;
+import com.peppermint.app.authenticator.AuthenticatorUtils;
+import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.OverlayManager;
 import com.peppermint.app.ui.PermissionsPolicyEnforcer;
@@ -27,7 +31,7 @@ import java.util.List;
 
 /**
  * Created by Nuno Luz on 22-09-2015.
- *
+ * <p/>
  * Abstract activity implementation that uses Peppermint's custom action bar.
  */
 public abstract class CustomActionBarActivity extends FragmentActivity implements TouchInterceptable,
@@ -37,13 +41,13 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     protected LoadingController mLoadingController;
 
     // chat head overlay manager
-    private ChatHeadServiceManager mChatHeadServiceManager;
+    protected ChatHeadServiceManager mChatHeadServiceManager;
 
     // activity overlay manager
     protected OverlayManager mOverlayManager;
 
     // authentication
-    protected AuthenticationPolicyEnforcer mAuthenticationPolicyEnforcer;
+    protected AuthenticatorUtils mAuthenticatorUtils;
 
     // permissions
     protected PermissionsPolicyEnforcer mPermissionsManager = new PermissionsPolicyEnforcer(
@@ -62,10 +66,21 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
 
     private List<View.OnTouchListener> mTouchEventInterceptorList = new ArrayList<>();
 
-    protected String getTrackerLabel() { return null; }
-    protected int getContainerViewLayoutId() { return 0; }
-    protected int getContentViewLayoutId() { return R.layout.a_custom_actionbar_layout; }
-    protected int getBackgroundResourceId() { return R.color.background0; }
+    protected String getTrackerLabel() {
+        return null;
+    }
+
+    protected int getContainerViewLayoutId() {
+        return 0;
+    }
+
+    protected int getContentViewLayoutId() {
+        return R.layout.a_custom_actionbar_layout;
+    }
+
+    protected int getBackgroundResourceId() {
+        return R.color.background0;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +95,7 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
         setContentView(getContentViewLayoutId());
 
         int layoutResId = getContainerViewLayoutId();
-        if(layoutResId > 0) {
+        if (layoutResId > 0) {
             final FrameLayout lytContainer = (FrameLayout) findViewById(R.id.container);
             final LayoutInflater layoutInflater = LayoutInflater.from(this);
             layoutInflater.inflate(layoutResId, lytContainer, true);
@@ -88,7 +103,7 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
 
         // init action bar view
         final CustomActionBarView actionBar = getCustomActionBar();
-        if(actionBar != null) {
+        if (actionBar != null) {
             actionBar.initViews();
             actionBar.setDisplayMenuAsUpEnabled(true);
             actionBar.getMenuButton().setOnClickListener(new View.OnClickListener() {
@@ -107,10 +122,10 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
 
         mOverlayManager = new OverlayManager(this, null, (FrameLayout) findViewById(R.id.lytOverlay));
 
-        mAuthenticationPolicyEnforcer = new AuthenticationPolicyEnforcer(this, savedInstanceState);
+        mAuthenticatorUtils = new AuthenticatorUtils(this);
 
         final String trackerLabel = getTrackerLabel();
-        if(trackerLabel != null) {
+        if (trackerLabel != null) {
             mOverlayManager.setRootScreenId(trackerLabel);
         }
     }
@@ -126,7 +141,7 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     protected void onResume() {
         super.onResume();
         final String trackerLabel = getTrackerLabel();
-        if(trackerLabel != null) {
+        if (trackerLabel != null) {
             mTrackerManager.trackScreenView(trackerLabel);
             mOverlayManager.setRootScreenId(trackerLabel);
         }
@@ -152,22 +167,10 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        for(View.OnTouchListener listener : mTouchEventInterceptorList) {
+        for (View.OnTouchListener listener : mTouchEventInterceptorList) {
             listener.onTouch(null, ev);
         }
         return super.dispatchTouchEvent(ev);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        mAuthenticationPolicyEnforcer.onActivityResult(requestCode, resultCode, data);
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        mAuthenticationPolicyEnforcer.saveInstanceState(outState);
-        super.onSaveInstanceState(outState);
     }
 
     public CustomActionBarView getCustomActionBar() {
@@ -198,5 +201,37 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
 
     public LoadingController getLoadingController() {
         return mLoadingController;
+    }
+
+    protected Intent getIntentReplica() {
+        final Intent intent = new Intent(getApplicationContext(), getClass());
+        if(getIntent() != null && getIntent().getExtras() != null) {
+            intent.putExtras(getIntent().getExtras());
+        }
+        return intent;
+    }
+
+    public AuthenticationData getAuthenticationData(Intent forwardAfterAuthIntent) {
+        // check if the account has changed (or if there's a new account)
+        mAuthenticatorUtils.refreshAccount();
+
+        AuthenticationData authenticationData = null;
+
+        try {
+            authenticationData = mAuthenticatorUtils.getAccountData();
+        } catch (PeppermintApiNoAccountException e) {
+            /* nothing to do here */
+        }
+
+        if (forwardAfterAuthIntent != null && authenticationData == null && !isFinishing()) {
+            Intent intent = new Intent(this, AuthenticatorActivity.class);
+            intent.putExtra(AuthenticatorActivity.PARAM_FORWARD_TO, forwardAfterAuthIntent);
+            startActivity(intent);
+
+            Toast.makeText(this, R.string.msg_must_authenticate_using_account, Toast.LENGTH_LONG).show();
+            finish();
+        }
+
+        return authenticationData;
     }
 }

@@ -67,6 +67,8 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     private static final int NEW_ACCOUNT_CODE = 1234;
     private static final int AUTHORIZATION_CODE = 1235;
 
+    public static final String PARAM_FORWARD_TO = TAG + "_forwardToIntent";
+
     private static final String KEY_DO_AUTH = TAG + "_DoAuth";
     private static final String KEY_SEL_ACCOUNT = TAG + "_SelectedAccount";
 
@@ -289,6 +291,13 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         if(authenticationData != null) {
             PeppermintEventBus.postSignInEvent(authenticationData);
         }
+
+        if(getIntent() != null) {
+            Intent activityIntent = getIntent().getParcelableExtra(PARAM_FORWARD_TO);
+            if(activityIntent != null) {
+                startActivity(activityIntent);
+            }
+        }
     }
 
     @Override
@@ -296,9 +305,6 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         super.onCreate(savedInstanceState);
 
         mPreferences = new SenderPreferences(this);
-
-        // do not enforce an authentication policy for the authenticator activity
-        mAuthenticationPolicyEnforcer.setRequiresAuthentication(false);
 
         FrameLayout lytContainer = (FrameLayout) findViewById(R.id.container);
         View v = getLayoutInflater().inflate(R.layout.f_authentication, null, false);
