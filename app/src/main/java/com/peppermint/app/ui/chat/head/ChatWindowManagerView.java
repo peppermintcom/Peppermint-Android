@@ -15,14 +15,13 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.peppermint.app.R;
-import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.cloud.senders.GetResultActivity;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.ui.OverlayManager;
+import com.peppermint.app.ui.base.views.TouchInterceptorView;
 import com.peppermint.app.ui.chat.ChatController;
 import com.peppermint.app.ui.chat.RecipientDataGUI;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
-import com.peppermint.app.ui.base.views.TouchInterceptorView;
 import com.peppermint.app.utils.Utils;
 
 /**
@@ -56,7 +55,7 @@ public class ChatWindowManagerView extends WindowManagerViewGroup implements Cha
         this.mOverlayManager = new OverlayManager(mContext, null, (FrameLayout) this.mChatView.findViewById(R.id.lytOverlay));
 
         this.mChatController = new ChatController(mContext, this, this);
-        this.mChatController.init(mChatView, mOverlayManager, mChatView, new AuthenticationPolicyEnforcer(mContext, null), null);
+        this.mChatController.init(mChatView, mOverlayManager, mChatView, null);
     }
 
     @Override

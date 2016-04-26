@@ -241,10 +241,20 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
 
                 return message;
             }
+
+            @Override
+            public boolean triggerRecording(View boundsView, Chat chat) {
+                final AuthenticationData authData = mAuthenticationPolicyEnforcer.getAuthenticationData();
+                if(authData == null) {
+                    return false;
+                }
+
+                return super.triggerRecording(boundsView, chat);
+            }
         };
 
         mChatRecordOverlayController.init(getContainerView(), mOverlayManager,
-                this, mAuthenticationPolicyEnforcer, savedInstanceState);
+                this, savedInstanceState);
 
         // search tip popup
         mSearchTipPopup = new PopupDialog(this) {

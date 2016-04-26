@@ -291,10 +291,6 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.R
         this.mOnRecordingFinishedCallback = mOnRecordingFinishedCallback;
     }
 
-    public View getViewBounds() {
-        return mViewBounds;
-    }
-
     public void setViewBounds(View mViewBounds) {
         this.mViewBounds = mViewBounds;
     }

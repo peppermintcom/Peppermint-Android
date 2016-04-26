@@ -11,8 +11,6 @@ import android.widget.Toast;
 
 import com.peppermint.app.PlayerServiceManager;
 import com.peppermint.app.R;
-import com.peppermint.app.authenticator.AuthenticationData;
-import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.data.Chat;
@@ -47,8 +45,6 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         MessagesServiceManager.ServiceListener,
         PlayerServiceManager.PlayServiceListener {
 
-    private static final String TAG = ChatRecordOverlayController.class.getSimpleName();
-
     public interface Callbacks {
         void onNewContact(Intent intentToLaunchActivity);
     }
@@ -64,7 +60,6 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     private SenderPreferences mPreferences;
     private OverlayManager mOverlayManager;
     private TouchInterceptable mTouchInterceptable;
-    private AuthenticationPolicyEnforcer mAuthenticationPolicyEnforcer;
     private Callbacks mCallbacks;
 
     private MessagesServiceManager mMessagesServiceManager;
@@ -163,10 +158,9 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         mPlayerServiceManager.addServiceListener(this);
     }
 
-    public void init(View rootView, OverlayManager overlayManager, TouchInterceptable touchInterceptable, AuthenticationPolicyEnforcer authenticationPolicyEnforcer, Bundle savedInstanceState) {
+    public void init(View rootView, OverlayManager overlayManager, TouchInterceptable touchInterceptable, Bundle savedInstanceState) {
         mOverlayManager = overlayManager;
         mTouchInterceptable = touchInterceptable;
-        mAuthenticationPolicyEnforcer = authenticationPolicyEnforcer;
 
         // start services
         mMessagesServiceManager.start();
@@ -255,14 +249,10 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     }
 
     public boolean triggerRecording(View boundsView, Chat chat) {
-        AuthenticationData authData = mAuthenticationPolicyEnforcer.getAuthenticationData();
-        if(authData == null) {
-            return false;
-        }
-
         String userRef = getPreferences().getFullName();
         if(userRef == null) {
-            userRef = authData.getEmail();
+            // not really important; it's only used for file naming purposes
+            userRef = mContext.getString(R.string.peppermint_com);
         }
 
         this.mChat = chat;

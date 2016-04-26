@@ -10,7 +10,6 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.peppermint.app.R;
-import com.peppermint.app.authenticator.AuthenticationPolicyEnforcer;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
 import com.peppermint.app.data.DatabaseHelper;
@@ -71,8 +70,8 @@ public class ChatController extends ChatRecordOverlayController implements View.
     }
 
     @Override
-    public void init(View rootView, OverlayManager overlayManager, TouchInterceptable touchInterceptable, AuthenticationPolicyEnforcer authenticationPolicyEnforcer, Bundle savedInstanceState) {
-        super.init(rootView, overlayManager, touchInterceptable, authenticationPolicyEnforcer, savedInstanceState);
+    public void init(View rootView, OverlayManager overlayManager, TouchInterceptable touchInterceptable, Bundle savedInstanceState) {
+        super.init(rootView, overlayManager, touchInterceptable, savedInstanceState);
 
         List<NavigationItem> errorOptions = new ArrayList<>();
         errorOptions.add(new NavigationItem(getContext().getString(R.string.retry), R.drawable.ic_drawer_refresh, null, true));
