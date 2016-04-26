@@ -4,8 +4,10 @@ import android.content.Context;
 
 import com.peppermint.app.cloud.apis.GoogleApi;
 import com.peppermint.app.cloud.apis.exceptions.GoogleApiNoAuthorizationException;
+import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.cloud.senders.SenderSupportListener;
 import com.peppermint.app.cloud.senders.SenderSupportTask;
+import com.peppermint.app.utils.Utils;
 
 /**
  * Created by Nuno Luz on 28-01-2016.
@@ -24,6 +26,7 @@ public class AuthenticationGoogleApiTask extends SenderSupportTask {
 
         // override to set the context
         getIdentity().setContext(context);
+        getIdentity().setPreferences(new SenderPreferences(context));
     }
 
     @Override
@@ -42,6 +45,23 @@ public class AuthenticationGoogleApiTask extends SenderSupportTask {
                 /* nothing to do here; eat up the exception */
             }
             mGoogleToken = googleApi.renewAuthenticationToken();
+        }
+
+        // refresh name just in case
+        final SenderPreferences senderPreferences = getSenderPreferences();
+        final GoogleApi.UserInfoResponse userInfoResponse = googleApi.getUserInfo(null);
+
+        final String firstName = userInfoResponse.getFirstName();
+        final String lastName = userInfoResponse.getLastName();
+        final String fullName = userInfoResponse.getFullName();
+
+        if (firstName != null && lastName != null && Utils.isValidName(firstName) && Utils.isValidName(lastName)) {
+            senderPreferences.setFirstName(firstName);
+            senderPreferences.setLastName(lastName);
+        } else if (fullName != null && Utils.isValidName(fullName)) {
+            String[] names = Utils.getFirstAndLastNames(fullName);
+            senderPreferences.setFirstName(names[0]);
+            senderPreferences.setLastName(names[1]);
         }
     }
 

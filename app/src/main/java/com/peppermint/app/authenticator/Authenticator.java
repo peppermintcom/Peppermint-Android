@@ -92,18 +92,7 @@ class Authenticator extends AbstractAccountAuthenticator {
 
             // extract the data from the Account Manager, and ask the server for an appropriate AuthToken.
             mAuthenticatorUtils.refreshAccount();
-/*
-            String authToken = mAuthenticatorUtils.peekAccessToken();
 
-            if (!TextUtils.isEmpty(authToken)) {
-                // use the already existent access token
-                final Bundle result = new Bundle();
-                result.putString(AccountManager.KEY_ACCOUNT_NAME, account.name);
-                result.putString(AccountManager.KEY_ACCOUNT_TYPE, account.type);
-                result.putString(AccountManager.KEY_AUTHTOKEN, authToken);
-                return result;
-            }
-*/
             AuthenticationData data = mAuthenticatorUtils.getAccountData();
             try {
                 // google account setup
