@@ -1,9 +1,8 @@
 package com.peppermint.app.ui.base.activities;
 
-import android.Manifest;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -50,21 +49,18 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     protected AuthenticatorUtils mAuthenticatorUtils;
 
     // permissions
-    protected PermissionsPolicyEnforcer mPermissionsManager = new PermissionsPolicyEnforcer(
-            Manifest.permission.READ_CONTACTS,
-            Manifest.permission.WRITE_CONTACTS,
-            "android.permission.READ_PROFILE",
-            Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.INTERNET,
-            Manifest.permission.ACCESS_NETWORK_STATE,
-            Manifest.permission.GET_ACCOUNTS,
-            "android.permission.USE_CREDENTIALS");
+    protected PermissionsPolicyEnforcer mPermissionsManager;
 
     // utility
     protected TrackerManager mTrackerManager;
 
     private List<View.OnTouchListener> mTouchEventInterceptorList = new ArrayList<>();
+
+    /**
+     * Override to add permissions to the {@link PermissionsPolicyEnforcer}
+     * @param permissionsPolicyEnforcer the permissions policy enforcer instance
+     */
+    protected void onSetupPermissions(PermissionsPolicyEnforcer permissionsPolicyEnforcer) { /* nothing to do here */ }
 
     protected String getTrackerLabel() {
         return null;
@@ -86,6 +82,8 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mPermissionsManager = new PermissionsPolicyEnforcer();
+        onSetupPermissions(mPermissionsManager);
         mLoadingController = new LoadingController(this, R.id.fragmentProgressContainer, R.id.loading);
 
         mChatHeadServiceManager = new ChatHeadServiceManager(this);
@@ -115,9 +113,6 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
             });
         }
 
-        // one more permission required
-        mPermissionsManager.addPermission(Manifest.permission.SEND_SMS, true, PackageManager.FEATURE_TELEPHONY);
-
         mTrackerManager = TrackerManager.getInstance(getApplicationContext());
 
         mOverlayManager = new OverlayManager(this, null, (FrameLayout) findViewById(R.id.lytOverlay));
@@ -140,11 +135,14 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     @Override
     protected void onResume() {
         super.onResume();
+
         final String trackerLabel = getTrackerLabel();
         if (trackerLabel != null) {
             mTrackerManager.trackScreenView(trackerLabel);
             mOverlayManager.setRootScreenId(trackerLabel);
         }
+
+        mPermissionsManager.requestPermissions(this);
     }
 
     @Override
@@ -163,6 +161,21 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
     protected void onDestroy() {
         mOverlayManager.destroyAllOverlays();
         super.onDestroy();
+    }
+
+    /**
+     * Override to take action whenever the user accepts all mandatory permissions.
+     */
+    protected void onPermissionsAccepted() { /* nothing to do here */ }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(mPermissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults)) {
+            onPermissionsAccepted();
+        } else {
+            Toast.makeText(this, R.string.msg_must_supply_mandatory_permissions, Toast.LENGTH_LONG).show();
+            finish();
+        }
     }
 
     @Override

@@ -16,6 +16,7 @@
 
 package com.peppermint.app.authenticator;
 
+import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
@@ -48,6 +49,7 @@ import com.peppermint.app.cloud.senders.SenderSupportTask;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.ui.PermissionsPolicyEnforcer;
 import com.peppermint.app.ui.base.CustomActionBarView;
 import com.peppermint.app.ui.base.activities.CustomAuthenticatorActivity;
 import com.peppermint.app.ui.base.views.CustomFontTextView;
@@ -298,6 +300,15 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
                 startActivity(activityIntent);
             }
         }
+    }
+
+    @Override
+    protected void onSetupPermissions(PermissionsPolicyEnforcer permissionsPolicyEnforcer) {
+        super.onSetupPermissions(permissionsPolicyEnforcer);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.INTERNET, false, null);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.ACCESS_NETWORK_STATE, false, null);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.GET_ACCOUNTS, false, null);
+        permissionsPolicyEnforcer.addPermission("android.permission.USE_CREDENTIALS", false, null);
     }
 
     @Override

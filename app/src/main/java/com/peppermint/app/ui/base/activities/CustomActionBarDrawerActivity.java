@@ -199,6 +199,12 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
         super.onBackPressed();
     }
 
+    @Override
+    protected void onPermissionsAccepted() {
+        super.onPermissionsAccepted();
+        refreshProfileData();
+    }
+
     private void setFragmentArgumentsFromIntent(Fragment fragment, Intent intent) {
         if(intent != null && fragment != null) {
             Bundle bundle = new Bundle();

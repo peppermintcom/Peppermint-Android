@@ -1,16 +1,17 @@
 package com.peppermint.app.ui.recipients;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
-import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -36,6 +37,7 @@ import com.peppermint.app.events.SenderEvent;
 import com.peppermint.app.events.SyncEvent;
 import com.peppermint.app.ui.Overlay;
 import com.peppermint.app.ui.OverlayManager;
+import com.peppermint.app.ui.PermissionsPolicyEnforcer;
 import com.peppermint.app.ui.about.AboutActivity;
 import com.peppermint.app.ui.base.CustomActionBarView;
 import com.peppermint.app.ui.base.NavigationItem;
@@ -166,6 +168,21 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
             }
         }, true));
         return navItems;
+    }
+
+    @Override
+    protected void onSetupPermissions(PermissionsPolicyEnforcer permissionsPolicyEnforcer) {
+        super.onSetupPermissions(permissionsPolicyEnforcer);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.READ_CONTACTS, false, null);
+        permissionsPolicyEnforcer.addPermission("android.permission.READ_PROFILE", false, null);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.WRITE_CONTACTS, false, null);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.RECORD_AUDIO, false, null);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, false, null);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.INTERNET, false, null);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.ACCESS_NETWORK_STATE, false, null);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.GET_ACCOUNTS, false, null);
+        permissionsPolicyEnforcer.addPermission("android.permission.USE_CREDENTIALS", false, null);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.SEND_SMS, true, PackageManager.FEATURE_TELEPHONY);
     }
 
     @Override
@@ -356,7 +373,6 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     @Override
     protected void onResume() {
         super.onResume();
-        mPermissionsManager.requestPermissions(this);
 
         // avoid cursor focus and keyboard when opening
         // if it is on onStart(), it doesn't work for screen rotations
@@ -428,19 +444,15 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if(mPermissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults)) {
-            refreshContactList();
-        } else {
-            Toast.makeText(this, R.string.msg_must_supply_mandatory_permissions, Toast.LENGTH_LONG).show();
-            finish();
-        }
-    }
-
-    @Override
     protected void onSaveInstanceState(Bundle outState) {
         mChatRecordOverlayController.saveInstanceState(outState);
         super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onPermissionsAccepted() {
+        super.onPermissionsAccepted();
+        refreshContactList();
     }
 
     @Override
