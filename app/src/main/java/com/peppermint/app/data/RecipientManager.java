@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.util.Log;
 
+import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;
 
@@ -85,6 +86,9 @@ public class RecipientManager {
         cv.put("via", recipient.getVia());
         cv.put("mimetype", recipient.getMimeType());
         cv.put("photo_uri", photoUri);
+        if(recipient.getAddedTimestamp() == null) {
+            recipient.setAddedTimestamp(DateContainer.getCurrentUTCTimestamp());
+        }
         cv.put("added_ts", recipient.getAddedTimestamp());
         cv.put("is_peppermint", recipient.isPeppermint() ? 1 : 0);
 
@@ -113,7 +117,9 @@ public class RecipientManager {
         cv.put("via", recipient.getVia());
         cv.put("mimetype", recipient.getMimeType());
         cv.put("photo_uri", recipient.getPhotoUri());
-        cv.put("added_ts", recipient.getAddedTimestamp());
+        if(recipient.getAddedTimestamp() != null) {
+            cv.put("added_ts", recipient.getAddedTimestamp());
+        }
         cv.put("is_peppermint", recipient.isPeppermint() ? 1 : 0);
 
         long id = db.update("tbl_recipient", cv, "recipient_id = " + recipient.getId(), null);
