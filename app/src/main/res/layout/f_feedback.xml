@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/lytRecord"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:gravity="center_vertical"
+        android:background="@drawable/background_white_to_solid_pressed">
+
+        <com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView
+            android:id="@+id/imgPhoto"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginRight="16dp"
+            android:layout_alignParentLeft="true"
+            custom:cornerRadius="10dp"
+            custom:roundBorderWidth="2dp"
+            custom:roundBorderColor="@color/white" />
+
+        <com.peppermint.app.ui.base.views.CustomFontTextView
+            android:id="@+id/txtName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@id/imgPhoto"
+            android:singleLine="true"
+            android:text="@string/support_display_name"
+            custom:textFont="@string/font_semibold"
+            android:textSize="18dp"
+            android:textColor="@color/color_black_to_white_pressed" />
+
+        <com.peppermint.app.ui.base.views.CustomFontTextView
+            android:id="@+id/txtContact"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/imgPhoto"
+            android:layout_below="@id/txtName"
+            android:singleLine="true"
+            android:text="@string/send_us_audio_feedback_on_the_app"
+            custom:textFont="@string/font_semibold"
+            android:textColor="@color/color_green_to_white_pressed"
+            android:textStyle="bold" />
+
+    </RelativeLayout>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:src="@color/divider_grey"/>
+
+    <com.peppermint.app.ui.base.views.CustomFontTextView
+        android:id="@+id/txtEmailUs"
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="20dp"
+        android:gravity="center"
+        custom:textFont="@string/font_semibold"
+        android:textColor="@color/green2_text"
+        android:textSize="16dp"
+        android:text="@string/or_email_us_for_support" />
+
+</LinearLayout>

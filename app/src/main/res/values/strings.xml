@@ -171,4 +171,10 @@
     <string name="msg_no_conversations">No conversations have been found</string>
     <string name="chats">Conversations</string>
 
+    <!-- FEEDBACK SCREEN -->
+    <string name="or_email_us_for_support">or email us for support</string>
+    <string name="support_display_name">Peppermint Support</string>
+    <string name="support_email">support@peppermint.com</string>
+    <string name="send_us_audio_feedback_on_the_app">Send us audio feedback on the app</string>
+
 </resources>

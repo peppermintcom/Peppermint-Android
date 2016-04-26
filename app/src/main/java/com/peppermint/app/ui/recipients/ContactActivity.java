@@ -45,6 +45,7 @@ import com.peppermint.app.ui.base.activities.CustomActionBarDrawerActivity;
 import com.peppermint.app.ui.base.dialogs.PopupDialog;
 import com.peppermint.app.ui.chat.ChatActivity;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
+import com.peppermint.app.ui.feedback.FeedbackActivity;
 import com.peppermint.app.ui.recipients.add.NewContactActivity;
 import com.peppermint.app.ui.settings.SettingsActivity;
 import com.peppermint.app.utils.Utils;
@@ -154,7 +155,8 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
         navItems.add(new NavigationItem(getString(R.string.drawer_menu_help_feedback), R.drawable.ic_drawer_feedback, new NavigationItemSimpleAction() {
             @Override
             public void onPreFragmentInit(Fragment newFragment, boolean isNewInstance) {
-                Utils.triggerSupportEmail(ContactActivity.this);
+                Intent intent = new Intent(ContactActivity.this, FeedbackActivity.class);
+                startActivity(intent);
             }
         }, true));
         navItems.add(new NavigationItem(getString(R.string.drawer_menu_about), R.drawable.ic_drawer_help, new NavigationItemSimpleAction() {

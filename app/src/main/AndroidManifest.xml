@@ -130,6 +130,19 @@
                 android:value=".ui.recipients.ContactActivity" />
         </activity>
 
+        <!-- UI: FEEDBACK -->
+        <activity
+            android:name=".ui.feedback.FeedbackActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTop"
+            android:parentActivityName=".ui.recipients.ContactActivity"
+            android:theme="@style/Peppermint.Theme.NoActionBar"
+            android:windowSoftInputMode="stateHidden">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ui.recipients.ContactActivity" />
+        </activity>
+
         <!-- UI: CHAT -->
         <activity
             android:name=".ui.chat.ChatActivity"
