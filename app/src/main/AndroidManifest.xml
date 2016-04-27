@@ -152,7 +152,7 @@
             launch other activities and obtain a result through "onActivityResult") -->
         <activity
             android:name=".cloud.senders.GetResultActivity"
-            android:theme="@android:style/Theme.NoDisplay">
+            android:theme="@style/Peppermint.Theme.Dim50">
         </activity>
 
         <service

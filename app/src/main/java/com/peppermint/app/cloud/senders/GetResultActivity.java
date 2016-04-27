@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 
-import com.peppermint.app.R;
 import com.peppermint.app.tracking.TrackerManager;
 
 import java.util.UUID;
@@ -38,7 +37,6 @@ public class GetResultActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.a_getresult_layout);
 
         TrackerManager trackerManager = TrackerManager.getInstance(getApplicationContext());
 

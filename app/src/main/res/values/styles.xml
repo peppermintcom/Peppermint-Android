@@ -1,5 +1,10 @@
 <resources>
 
+    <style name="Peppermint.Theme.Dim50" parent="@style/Theme.Transparent">
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.5</item>
+    </style>
+
     <style name="Peppermint.Theme.Fullscreen.Tutorial" parent="Peppermint.Theme.Fullscreen">
         <item name="recordProgressStyle">@style/Peppermint.RecordProgress.Tutorial</item>
         <item name="android:windowBackground">@drawable/background_gradient</item>
