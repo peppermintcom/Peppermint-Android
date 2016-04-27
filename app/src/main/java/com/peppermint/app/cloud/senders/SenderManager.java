@@ -5,7 +5,6 @@ import android.provider.ContactsContract;
 
 import com.peppermint.app.cloud.senders.exceptions.ElectableForQueueingException;
 import com.peppermint.app.cloud.senders.mail.gmail.GmailSender;
-import com.peppermint.app.cloud.senders.mail.nativemail.IntentMailSender;
 import com.peppermint.app.cloud.senders.sms.directsms.SMSSender;
 import com.peppermint.app.cloud.senders.sms.nativesms.IntentSMSSender;
 import com.peppermint.app.data.Message;
@@ -89,13 +88,6 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
         GmailSender gmailSender = new GmailSender(this, this);
         gmailSender.getParameters().putAll(defaultSenderParameters);
         gmailSender.setTrackerManager(mTrackerManager);
-
-        IntentMailSender intentMailSender = new IntentMailSender(this, this);
-        intentMailSender.getParameters().putAll(defaultSenderParameters);
-        intentMailSender.setTrackerManager(mTrackerManager);
-
-        // if sending the email through gmail sender fails, try through intent mail sender
-        gmailSender.setFailureChainSender(intentMailSender);
 
         mSenderMap.put(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, gmailSender);
 
@@ -237,6 +229,23 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
             }
         }
         return false;
+    }
+
+    /**
+     * Checks if there's an upload task sending the supplied message and if it's possible to cancel
+     * the operation.
+     * @param message the message
+     * @return true if sending/uploading and cancellable; false otherwise
+     */
+    public boolean isSendingAndCancellable(Message message) {
+        for(SenderTask senderTask : mTaskMap.values()) {
+            if(!senderTask.isCancelled() && !(senderTask instanceof SenderUploadTask && ((SenderUploadTask) senderTask).isNonCancellable()) &&
+                    senderTask.getMessage().equals(message)) {
+                return true;
+            }
+        }
+        return false;
+
     }
 
     /**

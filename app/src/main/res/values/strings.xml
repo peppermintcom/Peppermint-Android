@@ -83,12 +83,13 @@
     <string name="sender_default_sms_body">Here\'s my message from Peppermint. Listen at %1$s</string>
     <string name="sender_default_mail_subject">I sent you an audio message</string>
 
-    <string name="sender_msg_cancelled_gmail_api">No permission to send emails. You will be forwarded to the native email app from now on.</string>
     <string name="sender_msg_send_error">An error occurred while trying to send your Peppermint message to %1$s. Please try again later.</string>
     <string name="sender_msg_no_internet">No internet connection. Peppermint will send your message when you connect.</string>
     <string name="sender_msg_no_gplay">No Google play services available. The task of sending your record has been queued. Please make sure you have an up to date version of Google play services installed.</string>
     <string name="sender_msg_sms_disabled">Your device either has telephony disabled or does not support it. Sending text messages is not possible.</string>
     <string name="sender_msg_secure_connection">Could not establish a secure connection to the Peppermint server. The task of sending your record has been queued.</string>
+
+    <string name="sender_msg_unable_to_send_permissions">Unable to send your email message through Gmail. Please retry and accept the required permissions.</string>
 
     <!-- PREFERENCES -->
     <string name="pref_title_displayname">Your name</string>
@@ -158,6 +159,7 @@
     <string name="account_settings_desc">Your name, message channels, and more</string>
 
     <!-- CHAT -->
+    <string name="sending">Sending</string>
     <string name="cancel_sending">Cancel\nSending</string>
     <string name="cancelling">Cancelling</string>
     <string name="hold_to_record">Hold to Record</string>

@@ -41,13 +41,6 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         this.mSenderUploadListener = senderUploadListener;
     }
 
-    protected void setNonCancellable() {
-        mNonCancellable = true;
-        if(mSenderUploadListener != null) {
-            mSenderUploadListener.onSendingUploadNonCancellable(this);
-        }
-    }
-
     /**
      * Uploads the {@link Message} to the Peppermint server.<br />
      * If successful, access URLs will be accessible through {@link Message#getServerShortUrl()}
@@ -189,5 +182,16 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
             return false;
         }
         return super.cancel();
+    }
+
+    protected void setNonCancellable() {
+        mNonCancellable = true;
+        if(mSenderUploadListener != null) {
+            mSenderUploadListener.onSendingUploadNonCancellable(this);
+        }
+    }
+
+    public boolean isNonCancellable() {
+        return mNonCancellable;
     }
 }

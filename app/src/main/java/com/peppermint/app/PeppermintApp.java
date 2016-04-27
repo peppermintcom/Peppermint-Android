@@ -1,8 +1,13 @@
 package com.peppermint.app;
 
 import android.app.Application;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 import com.peppermint.app.cloud.MessagesServiceManager;
+import com.peppermint.app.cloud.senders.SenderObject;
+import com.peppermint.app.cloud.senders.SenderPreferences;
+import com.peppermint.app.cloud.senders.mail.gmail.GmailSender;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
 
@@ -15,6 +20,8 @@ import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
 public class PeppermintApp extends Application {
 
     public static final boolean DEBUG = false;
+
+    private static final String PREF_LAST_VERSION = "PeppermintApp_LastVersion";
 
     @Override
     public void onCreate() {
@@ -29,6 +36,25 @@ public class PeppermintApp extends Application {
 
         // try to start and enable the chat head overlay
         ChatHeadServiceManager.startAndEnable(this);
+
+        // check onUpgrade
+        final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        final int lastVersion = sharedPreferences.getInt(PREF_LAST_VERSION, 0);
+        if(lastVersion < BuildConfig.VERSION_CODE) {
+            // important! this will be executed if the app's data is cleared
+            onUpgrade(lastVersion, BuildConfig.VERSION_CODE);
+            final SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putInt(PREF_LAST_VERSION, BuildConfig.VERSION_CODE);
+            editor.commit();
+        }
     }
 
+    private void onUpgrade(final int lastVersion, final int newVersion) {
+        if(lastVersion < 15) {  // Upgrade to 1.1.13
+            // always enabled (forced) gmail sender
+            final SenderObject senderObject = new SenderObject(this, TrackerManager.getInstance(this), null, new SenderPreferences(this));
+            final GmailSender gmailSender = new GmailSender(senderObject, null);
+            gmailSender.setEnabled(true);
+        }
+    }
 }

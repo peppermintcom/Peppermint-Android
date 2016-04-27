@@ -6,13 +6,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
-import android.widget.Toast;
 
 import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
-import com.peppermint.app.R;
 import com.peppermint.app.cloud.apis.exceptions.GoogleApiNoAuthorizationException;
-import com.peppermint.app.cloud.senders.mail.gmail.GmailSender;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -110,9 +107,6 @@ public class SenderErrorHandler extends SenderObject {
                 checkRetries(recoveringTask);
                 return;
             }
-
-            Sender.setEnabled(mContext, GmailSender.class, false);
-            Toast.makeText(getContext(), R.string.sender_msg_cancelled_gmail_api, Toast.LENGTH_LONG).show();
         }
 
         doNotRecover(recoveringTask);   // nothing to recover; must be overriden to include additional behaviour

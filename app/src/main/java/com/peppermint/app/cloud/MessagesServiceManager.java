@@ -170,6 +170,8 @@ public class MessagesServiceManager {
         return mService.isSending();
     }
 
+    public boolean isSendingAndCancellable(Message message) { return mService.isSendingAndCancellable(message); }
+
     public void addServiceListener(ServiceListener listener) {
         mServiceListenerList.add(listener);
     }

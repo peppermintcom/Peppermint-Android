@@ -24,6 +24,7 @@ import android.widget.Toast;
 
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticatorUtils;
+import com.peppermint.app.cloud.apis.exceptions.GoogleApiNoAuthorizationException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
 import com.peppermint.app.cloud.gcm.RegistrationIntentService;
 import com.peppermint.app.cloud.senders.SenderManager;
@@ -122,6 +123,10 @@ public class MessagesService extends Service {
         }
         boolean isSending(Message message) {
             return MessagesService.this.isSending(message);
+        }
+
+        boolean isSendingAndCancellable(Message message) {
+            return MessagesService.this.isSendingAndCancellable(message);
         }
 
         void markAsPlayed(Message message) {
@@ -421,7 +426,11 @@ public class MessagesService extends Service {
                 Toast.makeText(this, String.format(getString(R.string.sender_msg_send_error), event.getSenderTask().getMessage().getChatParameter().getTitle()), Toast.LENGTH_SHORT).show();
             case SenderEvent.EVENT_QUEUED:
                 if (event.getError().getMessage() != null) {
-                    Toast.makeText(this, event.getError().getMessage(), Toast.LENGTH_LONG).show();
+                    if(event.getError() instanceof GoogleApiNoAuthorizationException) {
+                        Toast.makeText(this, R.string.sender_msg_unable_to_send_permissions, Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(this, event.getError().getMessage(), Toast.LENGTH_LONG).show();
+                    }
                 }
                 break;
 
@@ -524,6 +533,13 @@ public class MessagesService extends Service {
             return mSenderManager.isSending(message);
         }
         return mSenderManager.isSending();
+    }
+
+    private boolean isSendingAndCancellable(final Message message) {
+        if(message != null) {
+            return mSenderManager.isSendingAndCancellable(message);
+        }
+        return false;
     }
 
     // UPDATE NOTIFICATION

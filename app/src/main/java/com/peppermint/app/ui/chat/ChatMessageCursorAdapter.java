@@ -218,7 +218,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
                     ((RelativeLayout.LayoutParams) lytBalloon.getLayoutParams()).setMargins(mBalloonMargin, 0, 0, 0);
 
                     if(mMessagesServiceManager.isSending(message)) {
-                        setStatusSending();
+                        setStatusSending(mMessagesServiceManager.isSendingAndCancellable(message));
                     } else if(message.isSent()) {
                         setStatusNormal();
                     } else {
@@ -261,14 +261,20 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
             }
         }
 
-        public void setStatusSending() {
+        public void setStatusSending(boolean isCancellable) {
             if(mRootView != null) {
                 FrameLayout lytBalloon = (FrameLayout) mRootView.findViewById(R.id.lytBalloon);
                 ((RelativeLayout.LayoutParams) lytBalloon.getLayoutParams()).setMargins(mBalloonMargin, 0, 0, 0);
 
                 CustomFontButton btnCancel = (CustomFontButton) mRootView.findViewById(R.id.btnCancel);
                 ImageView btnExclamation = (ImageView) mRootView.findViewById(R.id.btnExclamation);
-                btnCancel.setText(R.string.cancel_sending);
+                if(isCancellable) {
+                    btnCancel.setText(R.string.cancel_sending);
+                    btnCancel.setEnabled(true);
+                } else {
+                    btnCancel.setText(R.string.sending);
+                    btnCancel.setEnabled(false);
+                }
                 btnCancel.setVisibility(View.VISIBLE);
                 btnExclamation.setVisibility(View.GONE);
             }
@@ -439,12 +445,14 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
 
         switch (event.getType()) {
             case SenderEvent.EVENT_STARTED:
-                controller.setStatusSending();
+                controller.setStatusSending(true);
                 break;
             case SenderEvent.EVENT_ERROR:
                 controller.setStatusError();
                 break;
             case SenderEvent.EVENT_NON_CANCELLABLE:
+                controller.setStatusSending(false);
+                break;
             case SenderEvent.EVENT_FINISHED:
                 controller.setStatusNormal();
                 break;
