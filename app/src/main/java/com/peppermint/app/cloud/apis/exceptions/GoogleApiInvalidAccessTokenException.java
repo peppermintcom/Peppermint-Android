@@ -1,11 +1,12 @@
 package com.peppermint.app.cloud.apis.exceptions;
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.peppermint.app.cloud.senders.exceptions.ElectableForQueueingException;
 
 /**
  * Created by Nuno Luz on 25-01-2016.
  */
-public class GoogleApiInvalidAccessTokenException extends Exception {
+public class GoogleApiInvalidAccessTokenException extends Exception implements ElectableForQueueingException {
 
     public GoogleApiInvalidAccessTokenException() {
     }

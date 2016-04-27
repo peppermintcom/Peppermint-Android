@@ -4,11 +4,12 @@ import android.content.Intent;
 
 import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
+import com.peppermint.app.cloud.senders.exceptions.ElectableForQueueingException;
 
 /**
  * Created by Nuno Luz on 01-02-2016.
  */
-public class GoogleApiNoAuthorizationException extends Exception {
+public class GoogleApiNoAuthorizationException extends Exception implements ElectableForQueueingException {
 
     private Intent mHandleIntent;
 
