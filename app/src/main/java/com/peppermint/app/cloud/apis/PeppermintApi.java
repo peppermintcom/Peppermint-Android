@@ -3,6 +3,7 @@ package com.peppermint.app.cloud.apis;
 import android.content.Context;
 import android.os.Build;
 
+import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.authenticator.AuthenticatorUtils;
 import com.peppermint.app.cloud.apis.data.AccountsResponse;
 import com.peppermint.app.cloud.apis.data.JWTsResponse;
@@ -51,6 +52,7 @@ public class PeppermintApi extends BaseApi implements Serializable {
     public static final int ACCOUNT_TYPE_FACEBOOK = 3;
 
     // client-app API key
+    private static final String DEBUG_API_KEY = "abc123";
     private static final String API_KEY = "la8H4E6Iw5teA6nelVZWgZWqVJh7kWc6Gn1rj21hsYcTP7y7JAmDDQ";
 
     // server base URL
@@ -78,7 +80,7 @@ public class PeppermintApi extends BaseApi implements Serializable {
 
     public PeppermintApi(final Context mContext) {
         super(mContext);
-        this.mApiKey = API_KEY;
+        this.mApiKey = PeppermintApp.DEBUG ? DEBUG_API_KEY : API_KEY;
     }
 
     @Override
@@ -275,7 +277,7 @@ public class PeppermintApi extends BaseApi implements Serializable {
      */
     public AccountsResponse registerAccount(final String requesterId, final String email, final String password, final String fullName, final int accountType) throws Exception {
         final HttpRequest request = new HttpRequest(ACCOUNTS_ENDPOINT, HttpRequest.METHOD_POST);
-        request.setBody("{ \"api_key\": \"" + API_KEY + "\", \"u\": { \"email\": \"" + email +
+        request.setBody("{ \"api_key\": \"" + mApiKey + "\", \"u\": { \"email\": \"" + email +
                 "\", \"password\": \"" + password + "\", \"full_name\": \"" + fullName + "\" } }");
 
         final HttpJSONResponse<AccountsResponse> response = executeRequest(requesterId, request, new HttpJSONResponse<>(mAccountsResponseParser), false);
@@ -353,7 +355,7 @@ public class PeppermintApi extends BaseApi implements Serializable {
      */
     public RecorderResponse registerRecorder(final String requesterId, final String recorderId, final String recorderKey, final String description) throws Exception {
         final HttpRequest request = new HttpRequest(RECORDER_ENDPOINT, HttpRequest.METHOD_POST);
-        request.setBody("{ \"api_key\": \"" + API_KEY + "\", \"recorder\": { \"description\": \"" + description +
+        request.setBody("{ \"api_key\": \"" + mApiKey + "\", \"recorder\": { \"description\": \"" + description +
                 "\", \"recorder_client_id\": \"" + recorderId + "\", \"recorder_key\": \"" + recorderKey + "\" } }");
 
         final HttpJSONResponse<RecorderResponse> response = executeRequest(requesterId, request, new HttpJSONResponse<>(mRecorderResponseParser), false);
