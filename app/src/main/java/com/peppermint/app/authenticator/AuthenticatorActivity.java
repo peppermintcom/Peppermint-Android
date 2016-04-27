@@ -305,10 +305,10 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     @Override
     protected void onSetupPermissions(PermissionsPolicyEnforcer permissionsPolicyEnforcer) {
         super.onSetupPermissions(permissionsPolicyEnforcer);
-        permissionsPolicyEnforcer.addPermission(Manifest.permission.INTERNET, false, null);
-        permissionsPolicyEnforcer.addPermission(Manifest.permission.ACCESS_NETWORK_STATE, false, null);
-        permissionsPolicyEnforcer.addPermission(Manifest.permission.GET_ACCOUNTS, false, null);
-        permissionsPolicyEnforcer.addPermission("android.permission.USE_CREDENTIALS", false, null);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.INTERNET, false);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.ACCESS_NETWORK_STATE, false);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.GET_ACCOUNTS, false);
+        permissionsPolicyEnforcer.addPermission("android.permission.USE_CREDENTIALS", false);
     }
 
     @Override

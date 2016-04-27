@@ -24,6 +24,7 @@ import android.widget.TextView;
 import com.peppermint.app.R;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -192,11 +193,21 @@ public class SearchListBarView extends FrameLayout {
             mBtnClear.setVisibility(VISIBLE);
         }
 
-        int onSearchListenerAmount = mOnSearchListeners.size();
+        // avoid recursive listener invocations
+        List<OnSearchListener> tmpList = new ArrayList<>(mOnSearchListeners);
+        List<Integer> tmpPriorities = new ArrayList<>(mOnSearchListenerPriorities);
+
+        mOnSearchListeners.clear();
+        mOnSearchListenerPriorities.clear();
+
+        Iterator<OnSearchListener> it = tmpList.iterator();
         boolean stopPropagation = false;
-        for(int i=0; i<onSearchListenerAmount && !stopPropagation; i++) {
-            stopPropagation = mOnSearchListeners.get(i).onSearch(searchText, wasClear);
+        while(it.hasNext() && !stopPropagation) {
+            stopPropagation = it.next().onSearch(searchText, wasClear);
         }
+
+        mOnSearchListeners.addAll(tmpList);
+        mOnSearchListenerPriorities.addAll(tmpPriorities);
     }
 
     public boolean clearSearch(boolean forceTriggerListeners) {

@@ -167,7 +167,7 @@ public class AllContactsListFragment extends ContactListFragment {
             return true;
         }
 
-        if(!mActivity.getChatRecordOverlayController().triggerRecording(view, tappedChat)) {
+        if(!mChatRecordOverlayController.triggerRecording(view, tappedChat)) {
             final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(mActivity);
             databaseHelper.lock();
             try {

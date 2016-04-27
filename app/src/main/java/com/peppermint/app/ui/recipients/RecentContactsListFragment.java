@@ -111,7 +111,7 @@ public class RecentContactsListFragment extends ContactListFragment {
 
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        mActivity.getChatRecordOverlayController().triggerRecording(view, mAdapter.getChat(position));
+        mChatRecordOverlayController.triggerRecording(view, mAdapter.getChat(position));
         return true;
     }
 

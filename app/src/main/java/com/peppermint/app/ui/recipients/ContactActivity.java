@@ -1,7 +1,6 @@
 package com.peppermint.app.ui.recipients;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -23,18 +22,11 @@ import android.widget.Toast;
 
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
-import com.peppermint.app.data.Chat;
+import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.data.ChatManager;
 import com.peppermint.app.data.ContactManager;
 import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.data.DatabaseHelper;
-import com.peppermint.app.data.Message;
-import com.peppermint.app.data.Recording;
-import com.peppermint.app.events.MessageEvent;
-import com.peppermint.app.events.PeppermintEventBus;
-import com.peppermint.app.events.ReceiverEvent;
-import com.peppermint.app.events.SenderEvent;
-import com.peppermint.app.events.SyncEvent;
 import com.peppermint.app.ui.Overlay;
 import com.peppermint.app.ui.OverlayManager;
 import com.peppermint.app.ui.PermissionsPolicyEnforcer;
@@ -44,37 +36,25 @@ import com.peppermint.app.ui.base.NavigationItem;
 import com.peppermint.app.ui.base.NavigationItemSimpleAction;
 import com.peppermint.app.ui.base.activities.CustomActionBarDrawerActivity;
 import com.peppermint.app.ui.base.dialogs.PopupDialog;
-import com.peppermint.app.ui.chat.ChatActivity;
-import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
 import com.peppermint.app.ui.feedback.FeedbackActivity;
-import com.peppermint.app.ui.recipients.add.NewContactActivity;
 import com.peppermint.app.ui.settings.SettingsActivity;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ContactActivity extends CustomActionBarDrawerActivity implements SearchListBarView.OnSearchListener,
-        ChatRecordOverlayController.Callbacks, OverlayManager.OverlayVisibilityChangeListener, View.OnClickListener {
+        OverlayManager.OverlayVisibilityChangeListener {
 
     protected static final int SEARCH_LISTENER_PRIORITY_FRAGMENT = 1;
     protected static final int SEARCH_LISTENER_PRIORITY_ACTIVITY = 2;
-
-    protected static final int REQUEST_NEWCONTACT = 224;
-    protected static final int REQUEST_NEWCONTACT_AND_SEND = 223;
-
-    private static final Pattern VIA_PATTERN = Pattern.compile("<([^\\s]*)>");
 
     // intent params
     public static final String FAST_REPLY_NAME_PARAM = "name";
     public static final String FAST_REPLY_MAIL_PARAM = "mail";
 
-    private ChatRecordOverlayController mChatRecordOverlayController;
     private SearchListBarView mSearchListBarView;
 
-    private boolean mShouldSync = true;
     private boolean mHasSavedInstanceState = false;
     private boolean mIsDestroyed = false;
 
@@ -133,14 +113,6 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
         }
     };
 
-    private Object mMessageEventListener = new Object() {
-        public void onEventMainThread(MessageEvent event) {
-            if(event.getType() == MessageEvent.EVENT_MARK_PLAYED) {
-                refreshContactList();
-            }
-        }
-    };
-
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
@@ -173,15 +145,15 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     @Override
     protected void onSetupPermissions(PermissionsPolicyEnforcer permissionsPolicyEnforcer) {
         super.onSetupPermissions(permissionsPolicyEnforcer);
-        permissionsPolicyEnforcer.addPermission(Manifest.permission.READ_CONTACTS, false, null);
-        permissionsPolicyEnforcer.addPermission("android.permission.READ_PROFILE", false, null);
-        permissionsPolicyEnforcer.addPermission(Manifest.permission.WRITE_CONTACTS, false, null);
-        permissionsPolicyEnforcer.addPermission(Manifest.permission.RECORD_AUDIO, false, null);
-        permissionsPolicyEnforcer.addPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, false, null);
-        permissionsPolicyEnforcer.addPermission(Manifest.permission.INTERNET, false, null);
-        permissionsPolicyEnforcer.addPermission(Manifest.permission.ACCESS_NETWORK_STATE, false, null);
-        permissionsPolicyEnforcer.addPermission(Manifest.permission.GET_ACCOUNTS, false, null);
-        permissionsPolicyEnforcer.addPermission("android.permission.USE_CREDENTIALS", false, null);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.READ_CONTACTS, false);
+        permissionsPolicyEnforcer.addPermission("android.permission.READ_PROFILE", false);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.WRITE_CONTACTS, false);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.RECORD_AUDIO, false);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, false);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.INTERNET, false);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.ACCESS_NETWORK_STATE, false);
+        permissionsPolicyEnforcer.addPermission(Manifest.permission.GET_ACCOUNTS, false);
+        permissionsPolicyEnforcer.addPermission("android.permission.USE_CREDENTIALS", false);
         permissionsPolicyEnforcer.addPermission(Manifest.permission.SEND_SMS, true, PackageManager.FEATURE_TELEPHONY);
     }
 
@@ -208,55 +180,6 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
 
         customActionBarView.setContents(mSearchListBarView, false);
 
-        // chat record overlay controller
-        mChatRecordOverlayController = new ChatRecordOverlayController(this, this) {
-            @Override
-            public void onEventMainThread(SyncEvent event) {
-                super.onEventMainThread(event);
-                if(event.getType() == SyncEvent.EVENT_FINISHED) {
-                    if(mSearchListBarView.getSearchText() == null) {
-                        refreshContactList();
-                    }
-                }
-            }
-
-            @Override
-            public void onEventMainThread(ReceiverEvent event) {
-                super.onEventMainThread(event);
-                if(event.getType() == ReceiverEvent.EVENT_RECEIVED) {
-                    if(mSearchListBarView.getSearchText() == null) {
-                        refreshContactList();
-                    }
-                }
-            }
-
-            @Override
-            public void onEventMainThread(SenderEvent event) {
-                super.onEventMainThread(event);
-                if(event.getType() == SenderEvent.EVENT_FINISHED) {
-                    if(mSearchListBarView.getSearchText() == null) {
-                        refreshContactList();
-                    }
-                }
-            }
-
-            @Override
-            protected Message sendMessage(Chat chat, Recording recording) {
-                Message message = super.sendMessage(chat, recording);
-
-                // if the user has gone through the sending process without
-                // discarding the recording, then clear the search filter
-                mSearchListBarView.clearSearch(true);
-
-                launchChatActivity(message.getChatParameter().getPeppermintChatId() > 0 ? message.getChatParameter().getPeppermintChatId() : message.getChatParameter().getId());
-
-                return message;
-            }
-        };
-
-        mChatRecordOverlayController.init(getContainerView(), mOverlayManager,
-                this, savedInstanceState);
-
         // search tip popup
         mSearchTipPopup = new PopupDialog(this) {
             @Override
@@ -270,7 +193,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
             @Override
             public void onDismiss(DialogInterface dialog) {
                 // set first run to false to avoid showing it again
-                mChatRecordOverlayController.getPreferences().setFirstRun(false);
+                mPreferences.setFirstRun(false);
 
                 if (mSearchTipPopup != null) {
                     EditText searchEditText = mSearchListBarView.getSearchEditText();
@@ -314,7 +237,8 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
 
         // synchronize messages (only when the activity is created for the first time)
         if(savedInstanceState == null) {
-            mChatRecordOverlayController.getMessagesServiceManager().startAndSync();
+            final MessagesServiceManager messagesServiceManager = new MessagesServiceManager(this);
+            messagesServiceManager.startAndSync();
         }
 
         Intent paramIntent = getIntent();
@@ -353,14 +277,11 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         mSearchListBarView.addOnSearchListener(this, SEARCH_LISTENER_PRIORITY_ACTIVITY);
-        PeppermintEventBus.registerMessages(mMessageEventListener);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-
-        mChatRecordOverlayController.start();
 
         mOverlayManager.addOverlayVisibilityChangeListener(this);
 
@@ -400,53 +321,19 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
 
         mOverlayManager.removeOverlayVisibilityChangeListener(this);
 
-        mChatRecordOverlayController.stop();
-
         super.onStop();
     }
 
     @Override
     protected void onDestroy() {
-        PeppermintEventBus.unregisterMessages(mMessageEventListener);
-
         mSearchListBarView.removeOnSearchListener(this);
 
         mSearchTipPopup.setOnDismissListener(null);
         mSearchTipPopup.dismiss();
 
-        mChatRecordOverlayController.deinit();
-        mChatRecordOverlayController.setContext(null);
-
         mIsDestroyed = true;
 
         super.onDestroy();
-    }
-
-    @Override
-    public void onNewContact(Intent intentToLaunchActivity) {
-        startActivityForResult(intentToLaunchActivity, REQUEST_NEWCONTACT_AND_SEND);
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if(requestCode == REQUEST_NEWCONTACT) {
-            if(resultCode == Activity.RESULT_OK) {
-                ContactRaw contact = (ContactRaw) data.getSerializableExtra(NewContactActivity.KEY_RECIPIENT);
-                if(contact != null) {
-                    mSearchListBarView.setSearchText(contact.getDisplayName());
-                }
-            }
-        } else if(requestCode == REQUEST_NEWCONTACT_AND_SEND) {
-            mChatRecordOverlayController.handleNewContactResult(resultCode, data);
-        }
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        mChatRecordOverlayController.saveInstanceState(outState);
-        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -483,51 +370,6 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                 v.requestFocus();
             }
         }
-    }
-
-    private void launchChatActivity(long chatId) {
-        Intent chatIntent = new Intent(this, ChatActivity.class);
-        chatIntent.putExtra(ChatActivity.PARAM_CHAT_ID, chatId);
-        startActivity(chatIntent);
-    }
-
-    protected static String[] getFilterData(String filter) {
-        String[] viaName = new String[2];
-        Matcher matcher = VIA_PATTERN.matcher(filter);
-        if (matcher.find()) {
-            viaName[0] = matcher.group(1);
-            viaName[1] = filter.replaceAll(VIA_PATTERN.pattern(), "").trim();
-
-            if(viaName[0].length() <= 0) {
-                viaName[0] = null; // adjust filter to via so that only one (or no) result is shown
-            }
-        } else {
-            viaName[1] = filter;
-        }
-        return viaName;
-    }
-
-    public ChatRecordOverlayController getChatRecordOverlayController() {
-        return mChatRecordOverlayController;
-    }
-
-    @Override
-    public void onClick(View v) {
-        Intent intent = new Intent(ContactActivity.this, NewContactActivity.class);
-
-        String filter = mSearchListBarView.getSearchText();
-        if (filter != null) {
-            String[] viaName = getFilterData(filter);
-            intent.putExtra(NewContactActivity.KEY_VIA, viaName[0]);
-
-            if (viaName[0] == null && (Utils.isValidPhoneNumber(viaName[1]) || Utils.isValidEmail(viaName[1]))) {
-                intent.putExtra(NewContactActivity.KEY_VIA, viaName[1]);
-            } else {
-                intent.putExtra(NewContactActivity.KEY_NAME, viaName[1]);
-            }
-        }
-
-        startActivityForResult(intent, ContactActivity.REQUEST_NEWCONTACT);
     }
 
     private void refreshContactList() {

@@ -3,6 +3,7 @@ package com.peppermint.app.ui.recipients;
 import android.app.Activity;
 import android.app.ListFragment;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Point;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -17,8 +18,20 @@ import android.widget.Button;
 import android.widget.PopupWindow;
 
 import com.peppermint.app.R;
+import com.peppermint.app.data.Chat;
+import com.peppermint.app.data.ContactRaw;
+import com.peppermint.app.data.Message;
+import com.peppermint.app.data.Recording;
+import com.peppermint.app.events.MessageEvent;
+import com.peppermint.app.events.PeppermintEventBus;
+import com.peppermint.app.events.ReceiverEvent;
+import com.peppermint.app.events.SenderEvent;
+import com.peppermint.app.events.SyncEvent;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
+import com.peppermint.app.ui.chat.ChatActivity;
+import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
+import com.peppermint.app.ui.recipients.add.NewContactActivity;
 import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;
 
@@ -28,20 +41,28 @@ import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class ContactListFragment extends ListFragment implements
         AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener,
-        SearchListBarView.OnSearchListener {
+        SearchListBarView.OnSearchListener, View.OnClickListener, ChatRecordOverlayController.Callbacks {
+
+    protected static final int REQUEST_NEWCONTACT = 224;
+    protected static final int REQUEST_NEWCONTACT_AND_SEND = 223;
+
+    private static final Pattern VIA_PATTERN = Pattern.compile("<([^\\s]*)>");
 
     // avatar animation frequency
     private static final int FIXED_AVATAR_ANIMATION_INTERVAL_MS = 7500;
     private static final int VARIABLE_AVATAR_ANIMATION_INTERVAL_MS = 7500;
 
     protected ContactActivity mActivity;
+    protected ChatRecordOverlayController mChatRecordOverlayController;
 
     // UI
+    private SearchListBarView mSearchListBarView;
     private ViewGroup mListFooterView;
-    private View.OnClickListener mAddContactClickListener;
 
     // hold popup
     private PopupWindow mHoldPopup;
@@ -71,17 +92,17 @@ public abstract class ContactListFragment extends ListFragment implements
 
         @Override
         protected void onPreExecute() {
-            if(_filter == null) {
-                return;
-            }
-
-            if(mActivity != null) {
+            if(mActivity != null && mActivity.getLoadingController() != null) {
                 mActivity.getLoadingController().setLoading(true);
             }
 
             onAsyncRefreshStarted(_context);
 
-            String[] viaName = ContactActivity.getFilterData(_filter);
+            if(_filter == null) {
+                return;
+            }
+
+            String[] viaName = getFilterData(_filter);
             _via = viaName[0]; _name = viaName[1];
         }
 
@@ -107,7 +128,7 @@ public abstract class ContactListFragment extends ListFragment implements
             onAsyncRefreshFinished(_context, data);
 
             // check if data is valid and activity has not been destroyed by the main thread
-            if(mActivity != null) {
+            if(mActivity != null && mActivity.getLoadingController() != null) {
                 mActivity.getLoadingController().setLoading(false);
             }
         }
@@ -116,7 +137,7 @@ public abstract class ContactListFragment extends ListFragment implements
         protected void onCancelled(Object o) {
             onAsyncRefreshCancelled(_context, o);
 
-            if(mActivity != null) {
+            if(mActivity != null && mActivity.getLoadingController() != null) {
                 mActivity.getLoadingController().setLoading(false);
             }
         }
@@ -162,6 +183,14 @@ public abstract class ContactListFragment extends ListFragment implements
         }
     };
 
+    private Object mMessageEventListener = new Object() {
+        public void onEventMainThread(MessageEvent event) {
+            if(event.getType() == MessageEvent.EVENT_MARK_PLAYED) {
+                refresh();
+            }
+        }
+    };
+
     public ContactListFragment() {
         this.mThreadPoolExecutor = new ThreadPoolExecutor(1, 1,
                 60, TimeUnit.SECONDS,
@@ -173,7 +202,7 @@ public abstract class ContactListFragment extends ListFragment implements
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         mActivity = (ContactActivity) activity;
-        mAddContactClickListener = mActivity;
+        mSearchListBarView = mActivity.getSearchListBarView();
 
         refresh();
     }
@@ -201,23 +230,14 @@ public abstract class ContactListFragment extends ListFragment implements
         final View v = inflater.inflate(R.layout.f_recipients_layout, container, false);
 
         // init no recipients view
-        final View.OnClickListener addContactClickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(mAddContactClickListener != null) {
-                    mAddContactClickListener.onClick(v);
-                }
-            }
-        };
-
         mListFooterView = (ViewGroup) inflater.inflate(R.layout.v_recipients_footer_layout, null);
 
         final Button btnAddContact = (Button) mListFooterView.findViewById(R.id.btnAddContact);
         btnAddContact.setId(0);
-        btnAddContact.setOnClickListener(addContactClickListener);
+        btnAddContact.setOnClickListener(this);
 
         final Button btnAddContactEmpty = (Button) v.findViewById(R.id.btnAddContact);
-        btnAddContactEmpty.setOnClickListener(addContactClickListener);
+        btnAddContactEmpty.setOnClickListener(this);
 
         return v;
     }
@@ -232,12 +252,70 @@ public abstract class ContactListFragment extends ListFragment implements
 
         getListView().addFooterView(mListFooterView);
 
-        mActivity.getSearchListBarView().addOnSearchListener(this, ContactActivity.SEARCH_LISTENER_PRIORITY_FRAGMENT);
+        mSearchListBarView = mActivity.getSearchListBarView();
+        mSearchListBarView.addOnSearchListener(this, ContactActivity.SEARCH_LISTENER_PRIORITY_FRAGMENT);
+
+        // chat record overlay controller
+        mChatRecordOverlayController = new ChatRecordOverlayController(mActivity, this) {
+            @Override
+            public void onEventMainThread(SyncEvent event) {
+                super.onEventMainThread(event);
+                if(event.getType() == SyncEvent.EVENT_FINISHED) {
+                    if(mSearchListBarView.getSearchText() == null) {
+                        refresh();
+                    }
+                }
+            }
+
+            @Override
+            public void onEventMainThread(ReceiverEvent event) {
+                super.onEventMainThread(event);
+                if(event.getType() == ReceiverEvent.EVENT_RECEIVED) {
+                    if(mSearchListBarView.getSearchText() == null) {
+                        refresh();
+                    }
+                }
+            }
+
+            @Override
+            public void onEventMainThread(SenderEvent event) {
+                super.onEventMainThread(event);
+                if(event.getType() == SenderEvent.EVENT_FINISHED) {
+                    if(mSearchListBarView.getSearchText() == null) {
+                        refresh();
+                    }
+                }
+            }
+
+            @Override
+            protected Message sendMessage(Chat chat, Recording recording) {
+                Message message = super.sendMessage(chat, recording);
+
+                // launch chat activity
+                long chatId = message.getChatParameter().getPeppermintChatId() > 0 ? message.getChatParameter().getPeppermintChatId() : message.getChatParameter().getId();
+                Intent chatIntent = new Intent(mActivity, ChatActivity.class);
+                chatIntent.putExtra(ChatActivity.PARAM_CHAT_ID, chatId);
+                startActivity(chatIntent);
+
+                // if the user has gone through the sending process without
+                // discarding the recording, then clear the search filter
+                mSearchListBarView.clearSearch(true);
+
+                return message;
+            }
+        };
+
+        mChatRecordOverlayController.init(getListView(), mActivity.getOverlayManager(),
+                mActivity, savedInstanceState);
+
+        PeppermintEventBus.registerMessages(mMessageEventListener);
     }
 
     @Override
     public void onStart() {
         super.onStart();
+
+        mChatRecordOverlayController.start();
 
         mActivity.getLoadingController().setText(R.string.loading_contacts);
 
@@ -255,11 +333,15 @@ public abstract class ContactListFragment extends ListFragment implements
 
         dismissHoldPopup();
 
+        mChatRecordOverlayController.stop();
+
         super.onStop();
     }
 
     @Override
     public void onDestroy() {
+        PeppermintEventBus.unregisterMessages(mMessageEventListener);
+
         if(mRefreshTask != null) {
             mRefreshTask.cancel(true);
             mRefreshTask = null;
@@ -268,19 +350,44 @@ public abstract class ContactListFragment extends ListFragment implements
         if(mThreadPoolExecutor != null) {
             mThreadPoolExecutor.shutdown();
         }
+
+        mChatRecordOverlayController.deinit();
+        mChatRecordOverlayController.setContext(null);
+
         super.onDestroy();
     }
 
     @Override
     public void onDetach() {
         if(mActivity != null) {
-            mActivity.getSearchListBarView().removeOnSearchListener(this);
+            mSearchListBarView.removeOnSearchListener(this);
             mActivity.getLoadingController().setLoading(false);
             mActivity = null;
-            mAddContactClickListener = null;
         }
 
         super.onDetach();
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode == REQUEST_NEWCONTACT) {
+            if(resultCode == Activity.RESULT_OK) {
+                ContactRaw contact = (ContactRaw) data.getSerializableExtra(NewContactActivity.KEY_RECIPIENT);
+                if(contact != null) {
+                    mSearchListBarView.setSearchText(contact.getDisplayName());
+                }
+            }
+        } else if(requestCode == REQUEST_NEWCONTACT_AND_SEND) {
+            mChatRecordOverlayController.handleNewContactResult(resultCode, data);
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        mChatRecordOverlayController.saveInstanceState(outState);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -304,9 +411,14 @@ public abstract class ContactListFragment extends ListFragment implements
     }
 
     protected void refresh() {
-        if(mActivity != null && mActivity.getSearchListBarView() != null) {
-            onSearch(mActivity.getSearchListBarView().getSearchText(), false);
+        if(mActivity != null) {
+            onSearch(mSearchListBarView != null ? mSearchListBarView.getSearchText() : null, false);
         }
+    }
+
+    @Override
+    public void onNewContact(Intent intentToLaunchActivity) {
+        startActivityForResult(intentToLaunchActivity, REQUEST_NEWCONTACT_AND_SEND);
     }
 
     protected void dismissHoldPopup() {
@@ -336,7 +448,38 @@ public abstract class ContactListFragment extends ListFragment implements
         }
     };
 
-    public void setAddContactClickListener(View.OnClickListener mAddContactClickListener) {
-        this.mAddContactClickListener = mAddContactClickListener;
+    @Override
+    public void onClick(View v) {
+        Intent intent = new Intent(mActivity, NewContactActivity.class);
+
+        String filter = mSearchListBarView.getSearchText();
+        if (filter != null) {
+            String[] viaName = getFilterData(filter);
+            intent.putExtra(NewContactActivity.KEY_VIA, viaName[0]);
+
+            if (viaName[0] == null && (Utils.isValidPhoneNumber(viaName[1]) || Utils.isValidEmail(viaName[1]))) {
+                intent.putExtra(NewContactActivity.KEY_VIA, viaName[1]);
+            } else {
+                intent.putExtra(NewContactActivity.KEY_NAME, viaName[1]);
+            }
+        }
+
+        startActivityForResult(intent, REQUEST_NEWCONTACT);
+    }
+
+    private static String[] getFilterData(String filter) {
+        String[] viaName = new String[2];
+        Matcher matcher = VIA_PATTERN.matcher(filter);
+        if (matcher.find()) {
+            viaName[0] = matcher.group(1);
+            viaName[1] = filter.replaceAll(VIA_PATTERN.pattern(), "").trim();
+
+            if(viaName[0].length() <= 0) {
+                viaName[0] = null; // adjust filter to via so that only one (or no) result is shown
+            }
+        } else {
+            viaName[1] = filter;
+        }
+        return viaName;
     }
 }

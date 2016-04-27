@@ -2,6 +2,7 @@ package com.peppermint.app;
 
 import android.app.Application;
 import android.content.SharedPreferences;
+import android.os.StrictMode;
 import android.preference.PreferenceManager;
 
 import com.peppermint.app.cloud.MessagesServiceManager;
@@ -46,6 +47,21 @@ public class PeppermintApp extends Application {
             final SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putInt(PREF_LAST_VERSION, BuildConfig.VERSION_CODE);
             editor.commit();
+        }
+
+        if(DEBUG) {
+            StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                    .detectDiskReads()
+                    .detectDiskWrites()
+                    .detectNetwork()   // or .detectAll() for all detectable problems
+                    .penaltyLog()
+                    .build());
+            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+                    .detectLeakedSqlLiteObjects()
+                    .detectLeakedClosableObjects()
+                    .penaltyLog()
+                    .penaltyDeath()
+                    .build());
         }
     }
 

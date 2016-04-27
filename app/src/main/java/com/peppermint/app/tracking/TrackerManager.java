@@ -1,7 +1,6 @@
 package com.peppermint.app.tracking;
 
 import android.content.Context;
-import android.os.StrictMode;
 
 import com.peppermint.app.PeppermintApp;
 
@@ -44,19 +43,6 @@ public class TrackerManager extends TrackerApi {
             mTrackers.add(new FlurryTracker(applicationContext));
         } else {
             mTrackers.add(new ConsoleTracker(applicationContext));
-
-            StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
-                    .detectDiskReads()
-                    .detectDiskWrites()
-                    .detectNetwork()   // or .detectAll() for all detectable problems
-                    .penaltyLog()
-                    .build());
-            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
-                    .detectLeakedSqlLiteObjects()
-                    .detectLeakedClosableObjects()
-                    .penaltyLog()
-                    .penaltyDeath()
-                    .build());
         }
     }
 

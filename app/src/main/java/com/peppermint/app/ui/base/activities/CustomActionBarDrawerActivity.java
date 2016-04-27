@@ -310,6 +310,7 @@ public abstract class CustomActionBarDrawerActivity extends CustomActionBarActiv
 
             getFragmentManager().beginTransaction()
                     .replace(R.id.container, fragment, navItem.getTag()).commit();
+            getFragmentManager().executePendingTransactions();
         } else {
             if(navItem.getAction() != null) {
                 navItem.getAction().onPreFragmentInit(null, false);
