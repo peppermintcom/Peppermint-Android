@@ -52,10 +52,6 @@ public class Utils {
 
     private static final String TAG = Utils.class.getSimpleName();
 
-    private static final String SUPPORT_EMAIL = "support@peppermint.com";
-    private static final String SUPPORT_SUBJECT = "Feedback or question about Peppermint Android app";
-    private static final String SUPPORT_BODY = "\n\n\n\nNote regarding this feedback. Was provided by %1$s running %2$s with Peppermint v" + BuildConfig.VERSION_NAME;
-
     /**
      * Get a presentation friendly string with the supplied duration in the format MM:SS
      * @param millis the duration in milliseconds
@@ -633,9 +629,9 @@ public class Utils {
      * @param context the app context
      */
     public static void triggerSupportEmail(final Context context) {
-        Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + SUPPORT_EMAIL));
-        i.putExtra(Intent.EXTRA_SUBJECT, SUPPORT_SUBJECT);
-        i.putExtra(Intent.EXTRA_TEXT, String.format(SUPPORT_BODY, Utils.getDeviceName(), Utils.getAndroidVersion()));
+        Intent i = new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + context.getString(R.string.support_email)));
+        i.putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.support_text_subject));
+        i.putExtra(Intent.EXTRA_TEXT, String.format(context.getString(R.string.support_text_body), Utils.getDeviceName(), Utils.getAndroidVersion(), BuildConfig.VERSION_NAME));
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(Intent.createChooser(i, context.getString(R.string.send_email)));
     }

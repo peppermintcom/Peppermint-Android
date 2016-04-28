@@ -176,7 +176,10 @@
     <!-- FEEDBACK SCREEN -->
     <string name="or_email_us_for_support">or email us for support</string>
     <string name="support_display_name">Peppermint Support</string>
+    <string name="support_audio_subject">Android feedback from email address</string>
+    <string name="support_text_subject">Feedback or question about Peppermint Android app</string>
     <string name="support_email">support@peppermint.com</string>
+    <string name="support_text_body">\n\n\n\nNote regarding this feedback. Was provided by %1$s running %2$s with Peppermint v%3$s</string>
     <string name="send_us_audio_feedback_on_the_app">Send us audio feedback on the app</string>
 
 </resources>

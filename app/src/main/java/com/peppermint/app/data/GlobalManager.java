@@ -161,8 +161,11 @@ public class GlobalManager {
         db.beginTransaction();
 
         try {
+            boolean sendingToPeppermintSupport = true;
+
             // insert recipients
             for(Recipient recipient : chat.getRecipientList()) {
+                sendingToPeppermintSupport = sendingToPeppermintSupport && recipient.getVia().compareToIgnoreCase(context.getString(R.string.support_email)) == 0;
                 RecipientManager.insertOrUpdate(context, db, recipient);
             }
 
@@ -175,7 +178,8 @@ public class GlobalManager {
 
             // insert message
             message = new Message(0, chat.getId(), recording.getId(), 0,
-                    context.getString(R.string.sender_default_mail_subject), context.getString(R.string.sender_default_message),
+                    sendingToPeppermintSupport ? context.getString(R.string.support_audio_subject) : context.getString(R.string.sender_default_mail_subject),
+                    context.getString(R.string.sender_default_message),
                     DateContainer.getCurrentUTCTimestamp(),
                     false, false, false, null, null, null, null);
             message.setRecipientIds(chat.getRecipientListIds());
