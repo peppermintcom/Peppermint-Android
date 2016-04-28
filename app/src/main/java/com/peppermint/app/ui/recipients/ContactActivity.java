@@ -102,7 +102,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                     v = Utils.getClickableViewAtLocation(event.getRawX(), event.getRawY(), getContainerView());
                 }
 
-                if (!(v instanceof Button)) {
+                if (!(v instanceof Button) && !(v instanceof EditText)) {
                     mSearchListBarView.removeSearchTextFocus(event);
                     getContainerView().requestFocus();
                 }
