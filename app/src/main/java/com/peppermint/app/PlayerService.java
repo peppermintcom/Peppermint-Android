@@ -88,8 +88,6 @@ public class PlayerService extends Service {
         }
     }
 
-    private TrackerManager mTrackerManager;
-
     private MediaPlayer mMediaPlayer;
     private Message mMessage;
     private int mStartPercent = 0;
@@ -172,12 +170,6 @@ public class PlayerService extends Service {
     };
 
     @Override
-    public void onCreate() {
-        super.onCreate();
-        mTrackerManager = TrackerManager.getInstance(getApplicationContext());
-    }
-
-    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent != null) {
             if(intent.hasExtra(PARAM_MESSAGE)) {
@@ -230,7 +222,7 @@ public class PlayerService extends Service {
             try {
                 mMediaPlayer.setDataSource(dataSourceUri);
             } catch (Throwable e) {
-                mTrackerManager.logException(e);
+                TrackerManager.getInstance(this).logException(e);
                 mOnErrorListener.onError(mMediaPlayer, PlayerEvent.ERROR_DATA_SOURCE, 0);
                 return;
             }
@@ -242,7 +234,7 @@ public class PlayerService extends Service {
                 mMediaPlayer.prepareAsync();
                 mLoading = true;
             } catch(IllegalStateException e) {
-                mTrackerManager.logException(e);
+                TrackerManager.getInstance(this).logException(e);
                 mOnErrorListener.onError(mMediaPlayer, PlayerEvent.ERROR_ILLEGAL_STATE, 0);
             }
         } else if(!mLoading) {
