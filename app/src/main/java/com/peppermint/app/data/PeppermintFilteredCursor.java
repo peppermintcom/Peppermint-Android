@@ -43,12 +43,14 @@ public class PeppermintFilteredCursor extends FilteredCursor {
         setFilter(new Filter() {
             @Override
             public boolean isValid(Cursor cursor) {
-                // removes duplicate contacts
+                // this algorithm assumes that contacts are ordered by mimetype with Peppermint first,
+                // followed by Email mimetype.
+
                 long contactId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data.CONTACT_ID));
 
                 // check if there's already a peppermint contact there
                 if(mPeppermintContacts.containsKey(contactId)) {
-                    String peppermintVia = contactId + "_Peppermint";
+                    final String peppermintVia = contactId + "_Peppermint";
                     if (mViaSet.contains(peppermintVia)) {
                         addFilteredContact(cursor);
                         return false;
@@ -57,6 +59,13 @@ public class PeppermintFilteredCursor extends FilteredCursor {
                     addFilteredContact(peppermintContact);
                     mViaSet.add(peppermintVia);
                 }
+
+                final String emailVia = contactId + "_" + ContactData.EMAIL_MIMETYPE;
+                if (mViaSet.contains(emailVia)) {
+                    addFilteredContact(cursor);
+                    return false;
+                }
+                mViaSet.add(emailVia);
 
                 // check for duplicates
                 String via = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA1)).trim().toLowerCase() +

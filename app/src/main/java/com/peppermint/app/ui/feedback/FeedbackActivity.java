@@ -31,7 +31,7 @@ import java.util.Random;
  *
  * Feedback Activity.
  */
-public class FeedbackActivity extends CustomActionBarActivity implements View.OnClickListener, View.OnLongClickListener, ChatRecordOverlayController.Callbacks {
+public class FeedbackActivity extends CustomActionBarActivity implements View.OnClickListener, View.OnLongClickListener {
 
     // avatar animation frequency
     private static final int FIXED_AVATAR_ANIMATION_INTERVAL_MS = 7500;
@@ -76,7 +76,7 @@ public class FeedbackActivity extends CustomActionBarActivity implements View.On
         mAnimatedAvatarView = (AnimatedAvatarView) findViewById(R.id.imgPhoto);
 
         // record overlay controller
-        mChatRecordOverlayController = new ChatRecordOverlayController(this, this) {
+        mChatRecordOverlayController = new ChatRecordOverlayController(this) {
             @Override
             protected Message sendMessage(Chat chat, Recording recording) {
                 Intent chatIntent = new Intent(FeedbackActivity.this, ChatActivity.class);
@@ -132,7 +132,7 @@ public class FeedbackActivity extends CustomActionBarActivity implements View.On
     public boolean onLongClick(View v) {
 
         final ContactRaw contactRaw = new ContactRaw(0, 0, false, null, null, getString(R.string.support_display_name), null, getString(R.string.support_email),
-                null, null);
+                null);
 
         Chat tappedChat;
         try {
@@ -155,10 +155,5 @@ public class FeedbackActivity extends CustomActionBarActivity implements View.On
         }
 
         return true;
-    }
-
-    @Override
-    public void onNewContact(Intent intentToLaunchActivity) {
-        /* nothing to do here */
     }
 }

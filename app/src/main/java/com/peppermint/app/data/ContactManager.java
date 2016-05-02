@@ -56,12 +56,17 @@ public class ContactManager {
             ContactsContract.Data.IN_VISIBLE_GROUP
     };
 
+    private static final String SQL_VIA_CONDITION = "(LOWER(REPLACE(" + ContactsContract.Data.DATA1 + ", ' ', '')) LIKE %1$s AND " + ContactsContract.Data.MIMETYPE + " = " + DatabaseUtils.sqlEscapeString(ContactData.EMAIL_MIMETYPE) + ")";
+
     // prioritize visible and primary entries
-    private static final String GENERAL_ORDER = ContactsContract.Data.IN_VISIBLE_GROUP + " DESC, " + ContactsContract.Data.IS_SUPER_PRIMARY + " DESC, " + ContactsContract.Data.IS_PRIMARY + " DESC";
+    private static final String SQL_GENERAL_ORDER = ContactsContract.Data.IN_VISIBLE_GROUP + " DESC, " + ContactsContract.Data.IS_SUPER_PRIMARY + " DESC, " + ContactsContract.Data.IS_PRIMARY + " DESC";
     // prioritize peppermint contacts
-    private static final String PEPPERMINT_ORDER = "(CASE WHEN " + ContactsContract.Data.RAW_CONTACT_ID + " IN (SELECT " + ContactsContract.Data.RAW_CONTACT_ID + " FROM view_data WHERE " + ContactsContract.Data.MIMETYPE + " = " + DatabaseUtils.sqlEscapeString(ContactData.PEPPERMINT_MIMETYPE) + ") THEN 1 ELSE 0 END) DESC, ";
+    private static final String SQL_PEPPERMINT_ORDER = "(CASE WHEN " + ContactsContract.Data.RAW_CONTACT_ID + " IN (SELECT " + ContactsContract.Data.RAW_CONTACT_ID + " FROM view_data WHERE " + ContactsContract.Data.MIMETYPE + " = " + DatabaseUtils.sqlEscapeString(ContactData.PEPPERMINT_MIMETYPE) + ") THEN 1 ELSE 0 END) DESC, ";
+
+    private static final String SQL_EMAIL_FIRST_ORDER = "(CASE WHEN " + ContactsContract.Data.MIMETYPE + " = " + DatabaseUtils.sqlEscapeString(ContactData.EMAIL_MIMETYPE) + " THEN 1 ELSE 0 END) DESC, ";
 
     private static final String PEPPERMINT_GROUP_TITLE = "Peppermint";
+
 
     /**
      * Gets the data inside the Cursor's current position and puts it in an instance of the
@@ -105,7 +110,7 @@ public class ContactManager {
         List<String> mimeTypes = new ArrayList<>();
         mimeTypes.add(ContactData.PEPPERMINT_MIMETYPE);
 
-        Cursor cursor = get(context, null, null, mimeTypes, null);
+        Cursor cursor = getRaw(context, null, null, mimeTypes, null);
         while(cursor.moveToNext()) {
             ContactData contact = getContactFromCursor(cursor);
             map.put(contact.getContactId(), contact);
@@ -122,7 +127,7 @@ public class ContactManager {
         mimeTypes.add(ContactData.PEPPERMINT_MIMETYPE);
 
         ContactData data = null;
-        Cursor cursor = get(context, contactIds, null, mimeTypes, via);
+        Cursor cursor = getRaw(context, contactIds, null, mimeTypes, via);
         if(cursor != null) {
             if (cursor.moveToNext()) {
                 data = getContactFromCursor(cursor);
@@ -138,7 +143,7 @@ public class ContactManager {
 
         Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, null,
                 ContactsContract.Data.DATA1 + " = " + DatabaseUtils.sqlEscapeString(via),
-                null,  GENERAL_ORDER);
+                null,  SQL_GENERAL_ORDER);
 
         if(cursor != null) {
             if (cursor.moveToNext()) {
@@ -173,7 +178,7 @@ public class ContactManager {
         Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, null,
                 ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE) +
                         " AND " + ContactsContract.Data.RAW_CONTACT_ID + "=" + rawId,
-                null, GENERAL_ORDER);
+                null, SQL_GENERAL_ORDER);
 
         if(cursor != null) {
             if (cursor.moveToNext()) {
@@ -190,7 +195,7 @@ public class ContactManager {
         rawIds.add(rawId);
         List<String> mimeTypes = new ArrayList<>();
         mimeTypes.add(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-        return get(context, null, rawIds, mimeTypes, phone);
+        return getRaw(context, null, rawIds, mimeTypes, phone);
     }
 
     public static Cursor getEmail(Context context, long rawId, String email) {
@@ -198,7 +203,7 @@ public class ContactManager {
         rawIds.add(rawId);
         List<String> mimeTypes = new ArrayList<>();
         mimeTypes.add(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE);
-        return get(context, null, rawIds, mimeTypes, email);
+        return getRaw(context, null, rawIds, mimeTypes, email);
     }
 
     public static Cursor getPeppermintByRawId(Context context, long rawId) {
@@ -206,7 +211,7 @@ public class ContactManager {
         rawIds.add(rawId);
         List<String> mimeTypes = new ArrayList<>();
         mimeTypes.add(ContactData.PEPPERMINT_MIMETYPE);
-        return get(context, null, rawIds, mimeTypes, null);
+        return getRaw(context, null, rawIds, mimeTypes, null);
     }
 
     public static Cursor getByEmailOrPhone(Context context, String email, String phone, String googleAccountName) {
@@ -221,10 +226,10 @@ public class ContactManager {
                                 ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)),
                         ContactsContract.RawContacts.ACCOUNT_TYPE + "=" + DatabaseUtils.sqlEscapeString(GOOGLE_ACCOUNT_TYPE),
                         ContactsContract.RawContacts.ACCOUNT_NAME + "=" + DatabaseUtils.sqlEscapeString(googleAccountName)),
-                null, GENERAL_ORDER);
+                null, SQL_GENERAL_ORDER);
     }
 
-    private static Cursor get(Context context, List<Long> allowedContactIds, List<Long> allowedRawIds, List<String> allowedMimeTypes, String viaSearch) {
+    private static Cursor getRaw(Context context, List<Long> allowedContactIds, List<Long> allowedRawIds, List<String> allowedMimeTypes, String viaSearch) {
         List<String> args = new ArrayList<>();
         String condViaSearch = (viaSearch == null ? "" : " AND (LOWER(REPLACE(" + ContactsContract.Data.DATA1 + ", ' ', '')) LIKE " +
                 DatabaseUtils.sqlEscapeString(viaSearch + "%") + ")");
@@ -234,7 +239,7 @@ public class ContactManager {
 
         return context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, PROJECTION,
                 "1" + condViaSearch + " AND (" + condMimeTypes + ")" + " AND (" + condRawIds + ") AND (" + condIds + ")",
-                args.toArray(new String[args.size()]), FIELD_DISPLAY_NAME + " COLLATE NOCASE, " + GENERAL_ORDER);
+                args.toArray(new String[args.size()]), FIELD_DISPLAY_NAME + " COLLATE NOCASE, " + SQL_GENERAL_ORDER);
     }
 
     /**
@@ -246,22 +251,21 @@ public class ContactManager {
      * @param context the context
      * @param allowedIds the allowed ids filter
      * @param freeTextSearch the via/display name free text filter
-     * @param areStarred the starred/favorite filter
      * @param allowedMimeTypes the allowed mime types
      * @return the result cursor
      */
-    public static Cursor get(final Context context, final List<Long> allowedIds, String freeTextSearch, Boolean areStarred, List<String> allowedMimeTypes, String enforcedViaSearch) {
+    public static Cursor get(final Context context, final List<Long> allowedIds, String freeTextSearch, List<String> allowedMimeTypes, String enforcedViaSearch) {
         List<String> args = new ArrayList<>();
-        String condStarred = (areStarred == null ? "" : ContactsContract.Contacts.STARRED + "=" + (areStarred ? "1" : "0") + " AND");
-        String condFreeSearch = (freeTextSearch == null ? "1=1" : "(LOWER(" + FIELD_DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString(freeTextSearch + "%") + " OR LOWER(" + FIELD_DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString("% " + freeTextSearch + "%") + " OR LOWER(REPLACE(" + ContactsContract.Data.DATA1 + ", ' ', '')) LIKE " + DatabaseUtils.sqlEscapeString(freeTextSearch + "%") + ")");
-        String condViaSearch = (enforcedViaSearch == null ? " AND 1=1" : " AND (LOWER(REPLACE(" + ContactsContract.Data.DATA1 + ", ' ', '')) LIKE " + DatabaseUtils.sqlEscapeString(enforcedViaSearch + "%") + ")");
+
+        String condFreeSearch = (freeTextSearch == null ? null : "(LOWER(" + FIELD_DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString(freeTextSearch + "%") + " OR LOWER(" + FIELD_DISPLAY_NAME + ") LIKE " + DatabaseUtils.sqlEscapeString("% " + freeTextSearch + "%") + " OR " + String.format(SQL_VIA_CONDITION, DatabaseUtils.sqlEscapeString(freeTextSearch + "%")) + ")");
+        String condViaSearch = (enforcedViaSearch == null ? null : String.format(SQL_VIA_CONDITION, DatabaseUtils.sqlEscapeString(freeTextSearch + "%")));
+
         String condMimeTypes = Utils.getSQLConditions(ContactsContract.Data.MIMETYPE, allowedMimeTypes, args, false);
         String condIds = Utils.getSQLConditions(ContactsContract.Data._ID, allowedIds, null, false);
 
         Cursor rootCursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, PROJECTION,
-                "1 AND " + condStarred + " (" + condFreeSearch + condViaSearch + ")" + " AND (" + condMimeTypes + ")" +
-                        " AND (" + condIds + ")",
-                args.toArray(new String[args.size()]), PEPPERMINT_ORDER + FIELD_DISPLAY_NAME + " COLLATE NOCASE, " + GENERAL_ORDER);
+                Utils.joinString(" AND ", condFreeSearch, condViaSearch, "(" + condMimeTypes + ")", "(" + condIds + ")"),
+                args.toArray(new String[args.size()]), SQL_PEPPERMINT_ORDER + FIELD_DISPLAY_NAME + " COLLATE NOCASE, " + SQL_EMAIL_FIRST_ORDER + SQL_GENERAL_ORDER);
 
         if(allowedIds != null) {
             return rootCursor;

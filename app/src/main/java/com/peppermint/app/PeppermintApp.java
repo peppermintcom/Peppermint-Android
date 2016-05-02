@@ -20,7 +20,7 @@ import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
  */
 public class PeppermintApp extends Application {
 
-    public static final boolean DEBUG = false;
+    public static final boolean DEBUG = true;
 
     private static final String PREF_LAST_VERSION = "PeppermintApp_LastVersion";
 

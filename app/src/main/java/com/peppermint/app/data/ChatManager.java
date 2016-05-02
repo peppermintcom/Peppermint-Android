@@ -41,7 +41,9 @@ public class ChatManager {
         chat.setTitle(cursor.getString(cursor.getColumnIndex("title")));
         chat.setLastMessageTimestamp(cursor.getString(cursor.getColumnIndex("last_message_ts")));
         chat.setPeppermintChatId(cursor.getLong(cursor.getColumnIndex("peppermint_chat_id")));
-        chat.setRecipientList(RecipientManager.getByChatId(db, chat.getId()));
+        if(db != null) {
+            chat.setRecipientList(RecipientManager.getByChatId(db, chat.getId()));
+        }
         return chat;
     }
 

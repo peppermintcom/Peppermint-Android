@@ -17,7 +17,6 @@ import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.MessageManager;
 import com.peppermint.app.data.PeppermintFilteredCursor;
-import com.peppermint.app.data.Recipient;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.base.views.CustomFontTextView;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
@@ -61,6 +60,7 @@ public class ContactCursorAdapter extends CursorAdapter {
         AnimatedAvatarView imgPhoto = (AnimatedAvatarView) v.findViewById(R.id.imgPhoto);
         TextView txtName = (TextView) v.findViewById(R.id.txtName);
         TextView txtContact = (TextView) v.findViewById(R.id.txtContact);
+        TextView txtVia = (TextView) v.findViewById(R.id.txtVia);
 
         if(rawContact != null && rawContact.getPhotoUri() != null) {
             imgPhoto.setStaticDrawable(Uri.parse(rawContact.getPhotoUri()));
@@ -74,8 +74,14 @@ public class ContactCursorAdapter extends CursorAdapter {
             txtName.setText(rawContact.getDisplayName());
             if(rawContact.getPeppermint() != null) {
                 txtContact.setText(mContext.getString(R.string.app_name));
+                txtVia.setVisibility(View.VISIBLE);
             } else {
                 txtContact.setText(rawContact.getMainDataVia());
+                if(rawContact.getMainDataVia() == null || rawContact.getMainDataVia().length() <= 0) {
+                    txtVia.setVisibility(View.GONE);
+                } else {
+                    txtVia.setVisibility(View.VISIBLE);
+                }
             }
 
             CustomFontTextView txtUnreadMessages = (CustomFontTextView) v.findViewById(R.id.txtUnreadMessages);
@@ -116,11 +122,13 @@ public class ContactCursorAdapter extends CursorAdapter {
 
     protected Chat getContactRawChat(ContactRaw rawContact) {
         long id = rawContact.getMainDataId();
+        if(id <= 0) {
+            return null;
+        }
+
         Chat chat;
         if(!mChats.containsKey(id)) {
-            chat = rawContact.getPeppermint() != null ?
-                    ChatManager.getMainChatByDroidContactId(mDatabaseHelper.getReadableDatabase(), rawContact.getContactId()) :
-                    ChatManager.getChatByRecipients(mDatabaseHelper.getReadableDatabase(), new Recipient(rawContact, null));
+            chat = ChatManager.getMainChatByDroidContactId(mDatabaseHelper.getReadableDatabase(), rawContact.getContactId());
             if(chat != null) {
                 mChats.put(id, chat);
             }

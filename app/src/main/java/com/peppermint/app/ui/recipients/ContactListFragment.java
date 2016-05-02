@@ -46,10 +46,9 @@ import java.util.regex.Pattern;
 
 public abstract class ContactListFragment extends ListFragment implements
         AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener,
-        SearchListBarView.OnSearchListener, View.OnClickListener, ChatRecordOverlayController.Callbacks {
+        SearchListBarView.OnSearchListener, View.OnClickListener {
 
     protected static final int REQUEST_NEWCONTACT = 224;
-    protected static final int REQUEST_NEWCONTACT_AND_SEND = 223;
 
     private static final Pattern VIA_PATTERN = Pattern.compile("<([^\\s]*)>");
 
@@ -256,7 +255,7 @@ public abstract class ContactListFragment extends ListFragment implements
         mSearchListBarView.addOnSearchListener(this, ContactActivity.SEARCH_LISTENER_PRIORITY_FRAGMENT);
 
         // chat record overlay controller
-        mChatRecordOverlayController = new ChatRecordOverlayController(mActivity, this) {
+        mChatRecordOverlayController = new ChatRecordOverlayController(mActivity) {
             @Override
             public void onEventMainThread(SyncEvent event) {
                 super.onEventMainThread(event);
@@ -379,8 +378,6 @@ public abstract class ContactListFragment extends ListFragment implements
                     mSearchListBarView.setSearchText(contact.getDisplayName());
                 }
             }
-        } else if(requestCode == REQUEST_NEWCONTACT_AND_SEND) {
-            mChatRecordOverlayController.handleNewContactResult(resultCode, data);
         }
     }
 
@@ -414,11 +411,6 @@ public abstract class ContactListFragment extends ListFragment implements
         if(mActivity != null) {
             onSearch(mSearchListBarView != null ? mSearchListBarView.getSearchText() : null, false);
         }
-    }
-
-    @Override
-    public void onNewContact(Intent intentToLaunchActivity) {
-        startActivityForResult(intentToLaunchActivity, REQUEST_NEWCONTACT_AND_SEND);
     }
 
     protected void dismissHoldPopup() {

@@ -9,7 +9,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -77,14 +76,14 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
 
     // UI
     private RoundImageView mBtnAddAvatar;
-    private CustomFontEditText mTxtPhone, mTxtMail;
+    private CustomFontEditText mTxtMail;
     private CustomFontEditText mTxtFirstName, mTxtLastName;
     private Button mBtnSave;
 
     private CustomListDialog mNewAvatarDialog;
 
     // validators
-    private EditTextValidatorLayout mNameValidatorLayout, mEmailValidatorLayout, mPhoneValidatorLayout;
+    private EditTextValidatorLayout mNameValidatorLayout, mEmailValidatorLayout;
     private EditTextValidatorLayout.ValidityChecker mValidityChecker;
 
     private Uri mAvatarUrl, mAvatarInProgressUrl;
@@ -156,21 +155,16 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
         mTxtFirstName = (CustomFontEditText) findViewById(R.id.txtFirstName);
         mTxtLastName = (CustomFontEditText) findViewById(R.id.txtLastName);
         mTxtMail = (CustomFontEditText) findViewById(R.id.txtEmail);
-        mTxtPhone = (CustomFontEditText) findViewById(R.id.txtPhoneNumber);
         mEmailValidatorLayout = (EditTextValidatorLayout) findViewById(R.id.lytEmailValidator);
-        mPhoneValidatorLayout = (EditTextValidatorLayout) findViewById(R.id.lytPhoneValidator);
 
         // input validators
         mNameValidatorLayout.setValidator(mNameValidator);
         mEmailValidatorLayout.setValidator(mEmailValidator);
-        mPhoneValidatorLayout.setValidator(mPhoneValidator);
-        mEmailValidatorLayout.setLinkedEditTextValidatorLayout(mPhoneValidatorLayout);
 
         mNameValidatorLayout.setOnValidityChangeListener(mValidityChangeListener);
         mEmailValidatorLayout.setOnValidityChangeListener(mValidityChangeListener);
-        mPhoneValidatorLayout.setOnValidityChangeListener(mValidityChangeListener);
 
-        mValidityChecker = new EditTextValidatorLayout.ValidityChecker(mNameValidatorLayout, mEmailValidatorLayout, mPhoneValidatorLayout);
+        mValidityChecker = new EditTextValidatorLayout.ValidityChecker(mNameValidatorLayout, mEmailValidatorLayout);
 
         // get intent data
         Intent paramIntent = getIntent();
@@ -190,13 +184,8 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
             }
 
             if(via != null) {
-                if(Utils.isValidPhoneNumber(via)) {
-                    mTxtPhone.setText(via);
-                    mTxtPhone.setSelection(via.length());
-                } else {
-                    mTxtMail.setText(via);
-                    mTxtMail.setSelection(via.length());
-                }
+                mTxtMail.setText(via);
+                mTxtMail.setSelection(via.length());
             }
         }
 
@@ -235,7 +224,6 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
 
         mNameValidatorLayout.validate();
         mEmailValidatorLayout.validate();
-        mPhoneValidatorLayout.validate();
 
         Utils.showKeyboard(this, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
     }
@@ -329,13 +317,12 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
 
         String firstName = mTxtFirstName.getText().toString();
         String lastName = mTxtLastName.getText().toString();
-        String phone = mTxtPhone.getText().toString().trim();
         String email = mTxtMail.getText().toString().trim();
 
         ContactRaw recipient;
 
         try {
-            if((recipient = ContactManager.insert(this, 0, rawId, firstName, lastName, phone, email, mAvatarUrl, mAuthenticationData.getEmail(), false)) == null) {
+            if((recipient = ContactManager.insert(this, 0, rawId, firstName, lastName, null, email, mAvatarUrl, mAuthenticationData.getEmail(), false)) == null) {
                 Toast.makeText(this, R.string.msg_unable_addcontact, Toast.LENGTH_LONG).show();
                 return;
             }
@@ -472,28 +459,11 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
         @Override
         public String getValidatorMessage(Set<Integer> indicesWithError, CharSequence[] text) {
             String email = mTxtMail.getText().toString().trim();
-            String phone = mTxtPhone.getText().toString().trim();
 
-            if(!Utils.isValidEmail(email) && !(TextUtils.isEmpty(email) && Utils.isValidPhoneNumber(phone))) {
+            if(!Utils.isValidEmail(email)) {
                 mBtnSave.setEnabled(false);
                 indicesWithError.add(0);
                 return getString(R.string.msg_insert_mail);
-            }
-
-            return null;
-        }
-    };
-
-    private EditTextValidatorLayout.Validator mPhoneValidator = new EditTextValidatorLayout.Validator() {
-        @Override
-        public String getValidatorMessage(Set<Integer> indicesWithError, CharSequence[] text) {
-            String email = mTxtMail.getText().toString().trim();
-            String phone = mTxtPhone.getText().toString().trim();
-
-            if(!Utils.isValidPhoneNumber(phone) && !(TextUtils.isEmpty(phone) && Utils.isValidEmail(email))) {
-                mBtnSave.setEnabled(false);
-                indicesWithError.add(0);
-                return getString(R.string.msg_insert_phone);
             }
 
             return null;

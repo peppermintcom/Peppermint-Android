@@ -94,10 +94,6 @@ public class ContactData implements Serializable {
         return mMimeType != null && EMAIL_MIMETYPE.compareTo(mMimeType) == 0;
     }
 
-    public boolean isPhone() {
-        return mMimeType != null && PHONE_MIMETYPE.compareTo(mMimeType) == 0;
-    }
-
     public boolean isPeppermint() {
         return mMimeType != null && PEPPERMINT_MIMETYPE.compareTo(mMimeType) == 0;
     }

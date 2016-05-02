@@ -133,18 +133,6 @@ public class Recipient implements Serializable {
         this.mPeppermint = mPeppermint;
     }
 
-    public boolean hasPhoneMimetype() {
-        return mMimeType != null && mMimeType.compareTo(ContactData.PHONE_MIMETYPE) == 0;
-    }
-
-    public boolean hasEmailMimetype() {
-        return mMimeType != null && mMimeType.compareTo(ContactData.EMAIL_MIMETYPE) == 0;
-    }
-
-    public boolean hasPeppermintMimetype() {
-        return mMimeType != null && mMimeType.compareTo(ContactData.PEPPERMINT_MIMETYPE) == 0;
-    }
-
     @Override
     public boolean equals(Object o) {
         if(o instanceof Recipient) {

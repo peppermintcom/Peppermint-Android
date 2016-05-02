@@ -5,8 +5,6 @@ import android.provider.ContactsContract;
 
 import com.peppermint.app.cloud.senders.exceptions.ElectableForQueueingException;
 import com.peppermint.app.cloud.senders.mail.gmail.GmailSender;
-import com.peppermint.app.cloud.senders.sms.directsms.SMSSender;
-import com.peppermint.app.cloud.senders.sms.nativesms.IntentSMSSender;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.events.SenderEvent;
@@ -90,20 +88,6 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
         gmailSender.setTrackerManager(mTrackerManager);
 
         mSenderMap.put(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, gmailSender);
-
-        //sms/text message sender
-        SMSSender smsSender = new SMSSender(this, this);
-        smsSender.getParameters().putAll(defaultSenderParameters);
-        smsSender.setTrackerManager(mTrackerManager);
-
-        IntentSMSSender intentSmsSender = new IntentSMSSender(this, this);
-        intentSmsSender.getParameters().putAll(defaultSenderParameters);
-        intentSmsSender.setTrackerManager(mTrackerManager);
-
-        // if sending the email through SMS sender fails, try through intent SMS sender
-        smsSender.setFailureChainSender(intentSmsSender);
-
-        mSenderMap.put(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE, smsSender);
     }
 
     /**

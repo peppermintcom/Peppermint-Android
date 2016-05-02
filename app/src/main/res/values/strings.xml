@@ -31,7 +31,6 @@
     <string name="msg_nomicdata_error">Unable to get any audio from the microphone. Please ensure that no other apps are using it.</string>
     <string name="msg_exceeded_maxduration">Maximum recording time has been reached. Stopped recording</string>
     <string name="msg_must_authenticate_using_account">You must authenticate using a Google account</string>
-    <string name="msg_sms_disabled_add_contact">Sending via SMS is not possible in your device. Would you like to add an email contact?</string>
     <string name="msg_no_external_storage">No access to external storage. Please make sure it is available</string>
     <string name="msg_press_back_again_exit">Press \"back\" again to exit.</string>
     <string name="hold_record_release_send_p1">Hold </string>
@@ -41,23 +40,14 @@
     <!-- RECIPIENTS LAYOUT: ITEM -->
     <string name="via">via</string>
 
-    <!-- RECIPIENTS LAYOUT: DROPDOWN -->
-    <string name="recipient_type_email">Email Contacts</string>
-    <string name="recipient_type_all">All Contacts</string>
-    <string name="recipient_type_phone">Phone Contacts</string>
-    <string name="recipient_type_recent">Recent Contacts</string>
-
     <!-- RECIPIENTS LAYOUT: RECORDING OVERLAY -->
     <string name="swipe_to_cancel">Swipe anywhere\nto cancel</string>
     <string name="recording_for">Recording for %1$s</string>
 
-    <!-- RECIPIENTS LAYOUT: SMS CONFIRMATION -->
-    <string name="sending_via_sms">Sending via SMS</string>
-    <string name="when_you_send_via_sms">Sending via SMS may cost you money. Continue?</string>
-    <string name="do_not_show_this_again">Do not ask this again and always send the SMS message</string>
-    <string name="send_to_email_instead">Send to Email Instead</string>
-    <string name="must_add_an_email_address_first">Add email address</string>
-    <string name="msg_no_email_address">No email address found. Please try again and insert a valid email address.</string>
+    <!-- RECIPIENTS LAYOUT: ADD EMAIL DIALOGS -->
+    <string name="sending_via_email">Sending via Email</string>
+    <string name="add_email">Add Email</string>
+    <string name="msg_no_email_address">No email address found. Do you want to add an email address for this contact?</string>
 
     <!-- RECIPIENTS LAYOUT: TIPS -->
     <string name="search_here_for_your_friend">Search here for your friend.</string>
@@ -66,7 +56,6 @@
     <!-- NOTIFICATIONS -->
     <string name="recording">Recording…</string>
     <string name="paused">Paused</string>
-    <string name="uploading">Uploading…</string>
     <string name="you_have_installed_peppermint">You have installed Peppermint</string>
     <string name="now_send_your_first_audio_message">Now send your first audio message!</string>
     <string name="new_message">New Message on Peppermint</string>
@@ -80,13 +69,11 @@
 
     <!-- SENDER MESSAGES -->
     <string name="sender_default_message">Here\'s my message from Peppermint.</string>
-    <string name="sender_default_sms_body">Here\'s my message from Peppermint. Listen at %1$s</string>
     <string name="sender_default_mail_subject">I sent you an audio message</string>
 
     <string name="sender_msg_send_error">An error occurred while trying to send your Peppermint message to %1$s. Please try again later.</string>
     <string name="sender_msg_no_internet">No internet connection. Peppermint will send your message when you connect.</string>
     <string name="sender_msg_no_gplay">No Google play services available. The task of sending your record has been queued. Please make sure you have an up to date version of Google play services installed.</string>
-    <string name="sender_msg_sms_disabled">Your device either has telephony disabled or does not support it. Sending text messages is not possible.</string>
     <string name="sender_msg_secure_connection">Could not establish a secure connection to the Peppermint server. The task of sending your record has been queued.</string>
 
     <string name="sender_msg_unable_to_send_permissions">Unable to send your email message through Gmail. Please retry and accept the required permissions.</string>
@@ -116,7 +103,7 @@
     <string name="msg_no_camera_app">Your device doesn\'t have a camera app installed</string>
     <string name="msg_external_storage_error">Unable to create photo file in external storage</string>
     <string name="msg_contact_added">Contact added successfully!</string>
-    <string name="you_can_add_phone_contact_or_email">You can add a phone contact, an\nemail contact or both</string>
+    <string name="you_can_add_phone_contact_or_email">Please add an email contact</string>
 
     <!-- AUTHENTICATION LAYOUT -->
     <string name="peppermint_sign_in">Sign in to Peppermint</string>

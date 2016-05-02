@@ -1,12 +1,8 @@
 package com.peppermint.app.ui.chat.head;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
-import android.support.v4.content.LocalBroadcastManager;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -15,21 +11,17 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.peppermint.app.R;
-import com.peppermint.app.cloud.senders.GetResultActivity;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.ui.OverlayManager;
 import com.peppermint.app.ui.base.views.TouchInterceptorView;
 import com.peppermint.app.ui.chat.ChatController;
 import com.peppermint.app.ui.chat.RecipientDataGUI;
-import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
 import com.peppermint.app.utils.Utils;
 
 /**
  * Created by Nuno Luz on 20-03-2016.
  */
-public class ChatWindowManagerView extends WindowManagerViewGroup implements ChatRecordOverlayController.Callbacks, RecipientDataGUI {
-
-    private static final int REQUEST_NEWCONTACT_AND_SEND = 154;
+public class ChatWindowManagerView extends WindowManagerViewGroup implements RecipientDataGUI {
 
     // chat controller
     private TouchInterceptorView mChatView;
@@ -54,7 +46,7 @@ public class ChatWindowManagerView extends WindowManagerViewGroup implements Cha
 
         this.mOverlayManager = new OverlayManager(mContext, null, (FrameLayout) this.mChatView.findViewById(R.id.lytOverlay));
 
-        this.mChatController = new ChatController(mContext, this, this);
+        this.mChatController = new ChatController(mContext, this);
         this.mChatController.init(mChatView, mOverlayManager, mChatView, null);
     }
 
@@ -63,8 +55,6 @@ public class ChatWindowManagerView extends WindowManagerViewGroup implements Cha
         boolean shown = super.show();
         if(shown) {
             mChatController.start();
-            // register the activity result broadcast listener
-            LocalBroadcastManager.getInstance(mContext).registerReceiver(mReceiver, mFilter);
         }
         return shown;
     }
@@ -73,7 +63,6 @@ public class ChatWindowManagerView extends WindowManagerViewGroup implements Cha
     public boolean hide() {
         boolean hidden = super.hide();
         if(hidden) {
-            LocalBroadcastManager.getInstance(mContext).unregisterReceiver(mReceiver);
             mChatController.stop();
         }
         return hidden;
@@ -96,44 +85,6 @@ public class ChatWindowManagerView extends WindowManagerViewGroup implements Cha
         mChatViewLayoutParams.height = point.y - mTopMargin - statusBarHeight;
         setViewPosition(0, 0, mTopMargin + statusBarHeight);
     }
-
-    @Override
-    public void onNewContact(Intent intentToLaunchActivity) {
-        Intent i = new Intent(mContext, GetResultActivity.class);
-        i.putExtra(GetResultActivity.INTENT_ID, mChatController.getChat().getId());
-        i.putExtra(GetResultActivity.INTENT_REQUESTCODE, REQUEST_NEWCONTACT_AND_SEND);
-        i.putExtra(GetResultActivity.INTENT_DATA, intentToLaunchActivity);
-        i.putExtra(GetResultActivity.INTENT_BROADCAST_TYPE, BROADCAST_TYPE);
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(i);
-    }
-
-    /**
-     * This broadcast receiver gets results from {@link GetResultActivity}<br />
-     * It allows any SenderErrorHandler to recover from an error by triggering activities.<br />
-     * This is useful for using APIs that request permissions through another Activity, such as the Google API
-     **/
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if(intent == null) {
-                return;
-            }
-
-            int requestCode = intent.getIntExtra(GetResultActivity.INTENT_REQUESTCODE, -1);
-            int resultCode = intent.getIntExtra(GetResultActivity.INTENT_RESULTCODE, -1);
-            long chatId = intent.getLongExtra(GetResultActivity.INTENT_ID, 0l);
-            Intent data = intent.getParcelableExtra(GetResultActivity.INTENT_DATA);
-
-            if(requestCode == REQUEST_NEWCONTACT_AND_SEND &&
-                    chatId == mChatController.getChat().getId() &&
-                    data != null) {
-                mChatController.handleNewContactResult(resultCode, data);
-            }
-        }
-    };
-    private static final String BROADCAST_TYPE = ChatWindowManagerView.class.getSimpleName();
-    private final IntentFilter mFilter = new IntentFilter(BROADCAST_TYPE);
 
     @Override
     public void setRecipientData(String recipientName, String recipientVia, String recipientPhotoUri) {
