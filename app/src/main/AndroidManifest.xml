@@ -72,6 +72,7 @@
 
         <!-- UI: NEW RECIPIENT -->
         <activity
+            android:launchMode="singleTop"
             android:name=".ui.recipients.add.NewContactActivity"
             android:label="@string/app_name"
             android:windowSoftInputMode="stateVisible|adjustResize"
@@ -80,36 +81,36 @@
 
         <!-- UI: CONTACTS -->
         <activity
+            android:launchMode="singleTop"
             android:name=".ui.recipients.ContactActivity"
             android:label="@string/app_name"
-            android:launchMode="singleTop"
             android:theme="@style/Peppermint.Theme.NoActionBar"
             android:windowSoftInputMode="stateHidden|adjustResize">
         </activity>
 
         <!-- UI: SETTINGS -->
         <activity
+            android:launchMode="singleTop"
             android:name=".ui.settings.SettingsActivity"
             android:label="@string/app_name"
-            android:launchMode="singleTop"
             android:theme="@style/Peppermint.Theme.NoActionBar"
             android:windowSoftInputMode="stateHidden">
         </activity>
 
         <!-- UI: ABOUT -->
         <activity
+            android:launchMode="singleTop"
             android:name=".ui.about.AboutActivity"
             android:label="@string/app_name"
-            android:launchMode="singleTop"
             android:theme="@style/Peppermint.Theme.NoActionBar"
             android:windowSoftInputMode="stateHidden">
         </activity>
 
         <!-- UI: FEEDBACK -->
         <activity
+            android:launchMode="singleTop"
             android:name=".ui.feedback.FeedbackActivity"
             android:label="@string/app_name"
-            android:launchMode="singleTop"
             android:parentActivityName=".ui.recipients.ContactActivity"
             android:theme="@style/Peppermint.Theme.NoActionBar"
             android:windowSoftInputMode="stateHidden">
@@ -120,6 +121,7 @@
 
         <!-- UI: CHAT -->
         <activity
+            android:launchMode="singleTop"
             android:name=".ui.chat.ChatActivity"
             android:label="@string/app_name"
             android:theme="@style/Peppermint.Theme.NoActionBar"
@@ -128,6 +130,8 @@
 
         <!-- DUI: STARTUP ACTIVITY -->
         <activity android:name=".StartupActivity"
+            android:launchMode="singleTask"
+            android:label="@string/app_name"
             android:theme="@style/Peppermint.Theme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -137,6 +141,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.LAUNCHER" />
                 <data android:scheme="https"
                     android:host="peppermint.com"
                     android:pathPrefix="/reply" />
@@ -152,13 +157,14 @@
             launch other activities and obtain a result through "onActivityResult") -->
         <activity
             android:name=".cloud.senders.GetResultActivity"
+            android:noHistory="true"
             android:theme="@style/Peppermint.Theme.Dim50">
         </activity>
 
         <service
             android:name=".ui.chat.head.ChatHeadService"
             android:enabled="true"
-            android:exported="false" >
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.peppermint.app.ChatHeadService.ENABLE" />
                 <action android:name="com.peppermint.app.ChatHeadService.DISABLE" />
@@ -202,9 +208,9 @@
         </service>
 
         <activity
+            android:launchMode="singleTop"
             android:name=".authenticator.AuthenticatorActivity"
             android:label="@string/app_name"
-            android:launchMode="singleTop"
             android:windowSoftInputMode="stateHidden|adjustPan"
             android:theme="@style/Peppermint.Theme.NoActionBar" >
         </activity>
