@@ -218,8 +218,13 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
 
     protected Intent getIntentReplica() {
         final Intent intent = new Intent(getApplicationContext(), getClass());
-        if(getIntent() != null && getIntent().getExtras() != null) {
-            intent.putExtras(getIntent().getExtras());
+        if(getIntent() != null) {
+            if(getIntent().getExtras() != null) {
+                intent.putExtras(getIntent().getExtras());
+            }
+            if(getIntent().getData() != null) {
+                intent.setData(getIntent().getData());
+            }
         }
         return intent;
     }

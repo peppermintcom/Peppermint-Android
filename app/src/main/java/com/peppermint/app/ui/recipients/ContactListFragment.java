@@ -57,7 +57,7 @@ public abstract class ContactListFragment extends ListFragment implements
     private static final int FIXED_AVATAR_ANIMATION_INTERVAL_MS = 7500;
     private static final int VARIABLE_AVATAR_ANIMATION_INTERVAL_MS = 7500;
 
-    protected ContactActivity mActivity;
+    protected ContactListActivity mActivity;
     protected ChatRecordOverlayController mChatRecordOverlayController;
 
     // UI
@@ -201,7 +201,7 @@ public abstract class ContactListFragment extends ListFragment implements
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mActivity = (ContactActivity) activity;
+        mActivity = (ContactListActivity) activity;
         mSearchListBarView = mActivity.getSearchListBarView();
 
         refresh();
@@ -253,7 +253,7 @@ public abstract class ContactListFragment extends ListFragment implements
         getListView().addFooterView(mListFooterView);
 
         mSearchListBarView = mActivity.getSearchListBarView();
-        mSearchListBarView.addOnSearchListener(this, ContactActivity.SEARCH_LISTENER_PRIORITY_FRAGMENT);
+        mSearchListBarView.addOnSearchListener(this, ContactListActivity.SEARCH_LISTENER_PRIORITY_FRAGMENT);
 
         // chat record overlay controller
         mChatRecordOverlayController = new ChatRecordOverlayController(mActivity, this) {

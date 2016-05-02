@@ -636,6 +636,20 @@ public class Utils {
         context.startActivity(Intent.createChooser(i, context.getString(R.string.send_email)));
     }
 
+    public static Bundle getParamsFromUri(final Uri uri) {
+        Bundle bundle = null;
+        if(uri != null) {
+            bundle = new Bundle();
+            for(String paramName : uri.getQueryParameterNames()) {
+                String paramValue = uri.getQueryParameter(paramName);
+                if (paramValue != null) {
+                    bundle.putString(paramName, paramValue);
+                }
+            }
+        }
+        return bundle;
+    }
+
     /**
      * Logs all key-value pairs in a {@link Bundle}.
      * @param bundle the bundle

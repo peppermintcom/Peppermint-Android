@@ -28,7 +28,7 @@ public class RecentContactsListFragment extends ContactListFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        mActivity.getSearchListBarView().setSearchText(null);
+        /*mActivity.getSearchListBarView().setSearchText(null);*/
         return super.onCreateView(inflater, container, savedInstanceState);
     }
 

@@ -43,7 +43,7 @@ import com.peppermint.app.utils.Utils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ContactActivity extends CustomActionBarDrawerActivity implements SearchListBarView.OnSearchListener,
+public class ContactListActivity extends CustomActionBarDrawerActivity implements SearchListBarView.OnSearchListener,
         OverlayManager.OverlayVisibilityChangeListener {
 
     protected static final int SEARCH_LISTENER_PRIORITY_FRAGMENT = 1;
@@ -116,26 +116,32 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
-        navItems.add(new NavigationItem(getString(R.string.drawer_menu_recent_contacts), R.drawable.ic_drawer_recent, RecentContactsListFragment.class, false, R.string.loading_contacts, null));
+        navItems.add(new NavigationItem(getString(R.string.drawer_menu_recent_contacts), R.drawable.ic_drawer_recent, RecentContactsListFragment.class, false, R.string.loading_contacts, new NavigationItemSimpleAction() {
+            @Override
+            public void onPreFragmentInit(Fragment newFragment, boolean isNewInstance) {
+                super.onPreFragmentInit(newFragment, isNewInstance);
+                mSearchListBarView.clearSearch(false);
+            }
+        }));
         navItems.add(new NavigationItem(getString(R.string.drawer_menu_all_contacts), R.drawable.ic_drawer_contacts, AllContactsListFragment.class, false, R.string.loading_contacts, null));
         navItems.add(new NavigationItem(getString(R.string.drawer_menu_settings), R.drawable.ic_drawer_settings, new NavigationItemSimpleAction() {
             @Override
             public void onPreFragmentInit(Fragment newFragment, boolean isNewInstance) {
-                Intent intent = new Intent(ContactActivity.this, SettingsActivity.class);
+                Intent intent = new Intent(ContactListActivity.this, SettingsActivity.class);
                 startActivity(intent);
             }
         }, true));
         navItems.add(new NavigationItem(getString(R.string.drawer_menu_help_feedback), R.drawable.ic_drawer_feedback, new NavigationItemSimpleAction() {
             @Override
             public void onPreFragmentInit(Fragment newFragment, boolean isNewInstance) {
-                Intent intent = new Intent(ContactActivity.this, FeedbackActivity.class);
+                Intent intent = new Intent(ContactListActivity.this, FeedbackActivity.class);
                 startActivity(intent);
             }
         }, true));
         navItems.add(new NavigationItem(getString(R.string.drawer_menu_about), R.drawable.ic_drawer_help, new NavigationItemSimpleAction() {
             @Override
             public void onPreFragmentInit(Fragment newFragment, boolean isNewInstance) {
-                Intent intent = new Intent(ContactActivity.this, AboutActivity.class);
+                Intent intent = new Intent(ContactListActivity.this, AboutActivity.class);
                 startActivity(intent);
             }
         }, true));
@@ -170,7 +176,6 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
             } else {
                 this.mTappedItemPosition = 0;
             }
-            getDrawerListView().setItemChecked(this.mTappedItemPosition, true);
         }
 
         // inflate and init custom action bar view
@@ -207,7 +212,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                         }
                         if (mSearchRect.contains((int) mSearchTipPoint.x, (int) mSearchTipPoint.y) || (mSearchTipPoint.y < 0 && mSearchRect.contains((int) mSearchTipPoint.x, mSearchRect.centerY()))) {
                             searchEditText.requestFocus();
-                            Utils.showKeyboard(ContactActivity.this, searchEditText, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+                            Utils.showKeyboard(ContactListActivity.this, searchEditText, WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
                             // hack for some devices with Android < 5
                             searchEditText.dispatchTouchEvent(MotionEvent.obtain(
@@ -233,7 +238,9 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
             }
         });
 
-        final AuthenticationData authenticationData = getAuthenticationData(getIntentReplica());
+        if(handleIntent(getIntent())) {
+            this.mTappedItemPosition = 1;
+        }
 
         // synchronize messages (only when the activity is created for the first time)
         if(savedInstanceState == null) {
@@ -241,11 +248,22 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
             messagesServiceManager.startAndSync();
         }
 
-        Intent paramIntent = getIntent();
+        getDrawerListView().setItemChecked(this.mTappedItemPosition, true);
+    }
 
-        if(paramIntent != null && (paramIntent.hasExtra(FAST_REPLY_NAME_PARAM) || paramIntent.hasExtra(FAST_REPLY_MAIL_PARAM))) {
-            String name = paramIntent.getStringExtra(FAST_REPLY_NAME_PARAM);
-            String mail = paramIntent.getStringExtra(FAST_REPLY_MAIL_PARAM);
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleIntent(intent);
+    }
+
+    private boolean handleIntent(Intent paramIntent) {
+        final AuthenticationData authenticationData = getAuthenticationData(getIntentReplica());
+        Bundle paramBundle = paramIntent != null ? Utils.getParamsFromUri(paramIntent.getData()) : null;
+
+        if(paramBundle != null && (paramBundle.containsKey(FAST_REPLY_NAME_PARAM) || paramBundle.containsKey(FAST_REPLY_MAIL_PARAM))) {
+            String name = paramBundle.getString(FAST_REPLY_NAME_PARAM);
+            String mail = paramBundle.getString(FAST_REPLY_MAIL_PARAM);
 
             if(name == null) { name = ""; }
             if(mail == null) { mail = ""; }
@@ -255,12 +273,12 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                 mSearchListBarView.setSearchText(name);
             } else {
                 // if mail is supplied, check if the contact exists
-                ContactRaw foundRecipient = ContactManager.getRawContactByVia(ContactActivity.this, mail);
+                ContactRaw foundRecipient = ContactManager.getRawContactByVia(ContactListActivity.this, mail);
 
                 // if not, add the contact
                 if(foundRecipient == null) {
                     try {
-                        foundRecipient = ContactManager.insert(ContactActivity.this, 0, 0, name, null, null, mail, null, authenticationData.getEmail(), false);
+                        foundRecipient = ContactManager.insert(ContactListActivity.this, 0, 0, name, null, null, mail, null, authenticationData.getEmail(), false);
                     } catch (Exception e) {
                             /* nothing to do here */
                     }
@@ -270,7 +288,11 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
                 // otherwise, just search by email
                 mSearchListBarView.setSearchText(foundRecipient != null || name.length() <= 0 ? mail : name + " <" + mail + ">");
             }
+
+            return true;
         }
+
+        return false;
     }
 
     @Override
@@ -355,7 +377,7 @@ public class ContactActivity extends CustomActionBarDrawerActivity implements Se
             return;
         }
 
-        Toast.makeText(ContactActivity.this, R.string.msg_press_back_again_exit, Toast.LENGTH_SHORT).show();
+        Toast.makeText(ContactListActivity.this, R.string.msg_press_back_again_exit, Toast.LENGTH_SHORT).show();
     }
 
     @Override
