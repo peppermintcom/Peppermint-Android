@@ -63,8 +63,8 @@ public class ChatController extends ChatRecordOverlayController implements View.
     private CustomListDialog mErrorDialog;
     private long mMessageIdWithError;
 
-    public ChatController(Context context, RecipientDataGUI recipientDataGUI, Callbacks callbacks) {
-        super(context, callbacks);
+    public ChatController(Context context, RecipientDataGUI recipientDataGUI) {
+        super(context);
         this.mRecipientDataGUI = recipientDataGUI;
         mDatabaseHelper = DatabaseHelper.getInstance(context);
     }

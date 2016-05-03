@@ -101,33 +101,6 @@
 
         </com.peppermint.app.ui.base.views.EditTextValidatorLayout>
 
-        <com.peppermint.app.ui.base.views.EditTextValidatorLayout
-            android:id="@+id/lytPhoneValidator"
-            android:background="@drawable/background_border_bottom"
-            android:layout_margin="0dp"
-            android:padding="0dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <com.peppermint.app.ui.base.views.CustomFontEditText
-                android:id="@+id/txtPhoneNumber"
-                android:padding="15dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                custom:textFont="@string/font_regular"
-                android:textSize="17dp"
-                android:textColor="@color/black"
-                android:hint="@string/phone_number"
-                android:inputType="phone"
-                android:textColorHint="@color/black_50percent"
-                android:drawablePadding="15dp"
-                android:drawableRight="@drawable/background_input_phone"
-                android:maxLength="40"
-                android:singleLine="true"
-                android:textCursorDrawable="@drawable/ic_cursor"/>
-
-        </com.peppermint.app.ui.base.views.EditTextValidatorLayout>
-
         <com.peppermint.app.ui.base.views.CustomFontTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

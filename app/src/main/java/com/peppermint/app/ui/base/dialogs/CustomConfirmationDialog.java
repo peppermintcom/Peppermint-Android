@@ -57,13 +57,15 @@ public class CustomConfirmationDialog extends CustomDialog {
             mTxtMessage.setText(mMessageText);
         }
 
-        mBtnCheck.setSelected(mChecked);
-        mBtnCheck.setOnClickListener(mCheckClickListener);
+        if(mBtnCheck != null) {
+            mBtnCheck.setSelected(mChecked);
+            mBtnCheck.setOnClickListener(mCheckClickListener);
 
-        if(mCheckText != null) {
-            mBtnCheck.setText(mCheckText);
-        } else {
-            mBtnCheck.setVisibility(View.GONE);
+            if (mCheckText != null) {
+                mBtnCheck.setText(mCheckText);
+            } else {
+                mBtnCheck.setVisibility(View.GONE);
+            }
         }
     }
 

@@ -34,7 +34,7 @@ public class ContactRaw implements Serializable {
         this.mPhotoUri = mPhotoUri;
     }
 
-    public ContactRaw(long mRawId, long mContactId, boolean mDeleted, String mAccountType, String mAccountName, String mDisplayName, String mPhotoUri, ContactData mEmail, ContactData mPhone, ContactData mPeppermint) {
+    public ContactRaw(long mRawId, long mContactId, boolean mDeleted, String mAccountType, String mAccountName, String mDisplayName, String mPhotoUri, ContactData mEmail, ContactData mPeppermint) {
         this.mRawId = mRawId;
         this.mContactId = mContactId;
         this.mDeleted = mDeleted;
@@ -44,11 +44,10 @@ public class ContactRaw implements Serializable {
         this.mPhotoUri = mPhotoUri;
 
         mContactData.put(ContactData.EMAIL_MIMETYPE, mEmail);
-        mContactData.put(ContactData.PHONE_MIMETYPE, mPhone);
         mContactData.put(ContactData.PEPPERMINT_MIMETYPE, mPeppermint);
     }
 
-    public ContactRaw(long mRawId, long mContactId, boolean mDeleted, String mAccountType, String mAccountName, String mDisplayName, String mPhotoUri, String mEmailVia, String mPhoneVia, String mPeppermintVia) {
+    public ContactRaw(long mRawId, long mContactId, boolean mDeleted, String mAccountType, String mAccountName, String mDisplayName, String mPhotoUri, String mEmailVia, String mPeppermintVia) {
         this.mRawId = mRawId;
         this.mContactId = mContactId;
         this.mDeleted = mDeleted;
@@ -61,27 +60,19 @@ public class ContactRaw implements Serializable {
             mContactData.put(ContactData.PEPPERMINT_MIMETYPE, new ContactData(0, mRawId, mContactId, false, ContactData.PEPPERMINT_MIMETYPE, mPeppermintVia));
         } else if(mEmailVia != null) {
             mContactData.put(ContactData.EMAIL_MIMETYPE, new ContactData(0, mRawId, mContactId, false, ContactData.EMAIL_MIMETYPE, mEmailVia));
-        } else if(mPhoneVia != null) {
-            mContactData.put(ContactData.PHONE_MIMETYPE, new ContactData(0, mRawId, mContactId, false, ContactData.PHONE_MIMETYPE, mPhoneVia));
         }
     }
 
     public long getMainDataId() {
-        return getEmail() != null ? getEmail().getId() : (
-                getPhone() != null ? getPhone().getId() : 0
-        );
+        return getEmail() != null ? getEmail().getId() : 0;
     }
 
     public String getMainDataVia() {
-        return getEmail() != null ? getEmail().getVia() : (
-                getPhone() != null ? getPhone().getVia() : null
-        );
+        return getEmail() != null ? getEmail().getVia() : null;
     }
 
     public String getMainDataMimetype() {
-        return getEmail() != null ? getEmail().getMimeType() : (
-                getPhone() != null ? getPhone().getMimeType() : null
-        );
+        return getEmail() != null ? getEmail().getMimeType() : null;
     }
 
     public long getContactId() {
@@ -132,14 +123,6 @@ public class ContactRaw implements Serializable {
         mContactData.put(ContactData.EMAIL_MIMETYPE, mEmail);
     }
 
-    public ContactData getPhone() {
-        return mContactData.get(ContactData.PHONE_MIMETYPE);
-    }
-
-    public void setPhone(ContactData mPhone) {
-        mContactData.put(ContactData.PHONE_MIMETYPE, mPhone);
-    }
-
     public ContactData getPeppermint() {
         return mContactData.get(ContactData.PEPPERMINT_MIMETYPE);
     }
@@ -180,6 +163,7 @@ public class ContactRaw implements Serializable {
                 ", mAccountType='" + mAccountType + '\'' +
                 ", mDeleted=" + mDeleted +
                 ", mRawId=" + mRawId +
+                ", mContactId=" + mContactId +
                 '}';
     }
 }

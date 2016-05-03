@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:paddingRight="20dp"
+    android:paddingLeft="20dp"
+    android:orientation="vertical">
+
+    <com.peppermint.app.ui.base.views.CustomFontTextView
+        android:id="@+id/text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:gravity="left|center_vertical"
+        android:singleLine="false"
+        custom:textFont="@string/font_regular"
+        android:textSize="16dp"
+        android:textColor="@color/black"
+        android:text="@string/msg_no_email_address"/>
+
+    <com.peppermint.app.ui.base.views.EditTextValidatorLayout
+        android:id="@+id/lytEmailValidator"
+        android:layout_margin="10dp"
+        android:padding="0dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.peppermint.app.ui.base.views.CustomFontEditText
+            android:id="@+id/txtEmail"
+            android:padding="15dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            custom:textFont="@string/font_regular"
+            android:textSize="17dp"
+            android:textColor="@color/black"
+            android:hint="@string/email"
+            android:inputType="textEmailAddress"
+            android:textColorHint="@color/black_50percent"
+            android:drawablePadding="15dp"
+            android:drawableRight="@drawable/background_input_email"
+            android:maxLength="250"
+            android:singleLine="true"
+            android:textCursorDrawable="@drawable/ic_cursor"
+            android:background="@null"/>
+
+    </com.peppermint.app.ui.base.views.EditTextValidatorLayout>
+
+</LinearLayout>

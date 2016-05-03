@@ -15,7 +15,9 @@ import com.peppermint.app.utils.ScriptFileReader;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -43,7 +45,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 	private static final String TAG = DatabaseHelper.class.getSimpleName();
 	private static final String DATABASE_NAME = "peppermint.db";        // database filename
-	private static final int DATABASE_VERSION = 17;                     // database version
+	private static final int DATABASE_VERSION = 18;                     // database version
 
 	private Context mContext;
     private ReentrantLock mLock = new ReentrantLock();
@@ -203,6 +205,28 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
             } finally {
                 recipientCursor.close();
+			}
+		}
+
+		if(_oldVersion < 18) {
+			// delete all phone contact conversations (no longer supported)
+			Set<Long> idsToDelete = new HashSet<>();
+
+			Cursor chatCursor = ChatManager.getAll(_db, false);
+			while(chatCursor.moveToNext()) {
+				Chat chat = ChatManager.getChatFromCursor(_db, chatCursor);
+				if(chat.getRecipientList() == null || chat.getRecipientList().size() <= 0 || chat.getRecipientList().get(0).getMimeType().compareTo(ContactData.PHONE_MIMETYPE) == 0) {
+					idsToDelete.add(chat.getId());
+				}
+			}
+			chatCursor.close();
+
+			for(long id : idsToDelete) {
+				try {
+					ChatManager.delete(_db, id);
+				} catch (SQLException e) {
+					TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
+				}
 			}
 		}
 	}

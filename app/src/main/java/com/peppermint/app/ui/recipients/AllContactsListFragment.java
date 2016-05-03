@@ -33,7 +33,11 @@ import java.util.List;
 
 public class AllContactsListFragment extends ContactListFragment {
 
+    private static final String TAG = AllContactsListFragment.class.getSimpleName();
+
     private static final String SCREEN_ID = "AllContacts";
+
+    private static final String SAVED_DIALOG_STATE_KEY = TAG + "_AddEmailDialogState";
 
     private static final List<String> MIMETYPES = new ArrayList<>();
     static {
@@ -54,6 +58,9 @@ public class AllContactsListFragment extends ContactListFragment {
     }
     private ContactsContentObserver mContactsObserver;
 
+    // dialogs
+    private AddEmailDialog mAddContactDialog;
+
     // the recipient list
     private ContactCursorAdapter mAdapter;
     private PeppermintFilteredCursor mCursor;
@@ -62,10 +69,10 @@ public class AllContactsListFragment extends ContactListFragment {
     protected Object onAsyncRefresh(Context context, String searchName, String searchVia) {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
             // get normal full, email or phone contact list
-            FilteredCursor cursor = (FilteredCursor) ContactManager.get(context, null, searchName, null, MIMETYPES, searchVia);
+            FilteredCursor cursor = (FilteredCursor) ContactManager.get(context, null, searchName, MIMETYPES, searchVia);
             if (cursor.getOriginalCursor().getCount() <= 0 && searchName != null && searchVia != null) {
                 cursor.close();
-                cursor = (FilteredCursor) ContactManager.get(context, null, null, null, MIMETYPES, searchVia);
+                cursor = (FilteredCursor) ContactManager.get(context, null, null, MIMETYPES, searchVia);
             }
             cursor.filter();
             return cursor;
@@ -95,11 +102,45 @@ public class AllContactsListFragment extends ContactListFragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // dialog for unsupported SMS
+        mAddContactDialog = new AddEmailDialog(mActivity);
+        mAddContactDialog.setPositiveButtonListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final ContactRaw contactRaw = mAddContactDialog.getContact();
+                final String emailAddress = mAddContactDialog.getEmail();
+                try {
+                    ContactManager.insertEmail(mActivity, emailAddress, contactRaw.getRawId(), 0, null);
+                    mAddContactDialog.dismiss();
+                } catch (ContactManager.InvalidEmailException e) {
+                    TrackerManager.getInstance(mActivity).log("Invalid email address: " + emailAddress, e);
+                    Toast.makeText(mActivity, R.string.msg_insert_mail, Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+
+        if(savedInstanceState != null) {
+            Bundle dialogState = savedInstanceState.getBundle(SAVED_DIALOG_STATE_KEY);
+            if (dialogState != null) {
+                mAddContactDialog.onRestoreInstanceState(dialogState);
+            }
+        }
+
         mContactsObserver = new ContactsContentObserver(new Handler(mActivity.getMainLooper()));
         mActivity.getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI, true, mContactsObserver);
 
         mAdapter = new ContactCursorAdapter(mActivity, null);
         getListView().setAdapter(mAdapter);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        // save add contact dialog state as well
+        Bundle dialogState = mAddContactDialog.onSaveInstanceState();
+        if (dialogState != null) {
+            outState.putBundle(SAVED_DIALOG_STATE_KEY, dialogState);
+        }
     }
 
     private synchronized void setCursor() {
@@ -157,6 +198,14 @@ public class AllContactsListFragment extends ContactListFragment {
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
         final ContactRaw contactRaw = mAdapter.getContactRaw(position);
+        if (contactRaw.getEmail() == null) {
+            mAddContactDialog.setContact(contactRaw);
+            if(!mAddContactDialog.isShowing()) {
+                mAddContactDialog.show();
+            }
+            return false;
+        }
+        mAddContactDialog.setContact(null);
 
         Chat tappedChat;
         try {
@@ -180,4 +229,5 @@ public class AllContactsListFragment extends ContactListFragment {
 
         return true;
     }
+
 }

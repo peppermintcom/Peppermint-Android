@@ -11,7 +11,6 @@ import com.peppermint.app.ui.base.CustomActionBarView;
 import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
 import com.peppermint.app.ui.base.views.CustomFontTextView;
 import com.peppermint.app.ui.base.views.RoundImageView;
-import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
 import com.peppermint.app.utils.ResourceUtils;
 
 /**
@@ -33,12 +32,6 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
     private RoundImageView mImgAvatar;
 
     private ChatController mChatController;
-    private ChatRecordOverlayController.Callbacks mChatControllerCallbacks = new ChatRecordOverlayController.Callbacks() {
-        @Override
-        public void onNewContact(Intent intentToLaunchActivity) {
-            startActivityForResult(intentToLaunchActivity, REQUEST_NEWCONTACT_AND_SEND);
-        }
-    };
 
     @Override
     protected final int getContainerViewLayoutId() {
@@ -80,7 +73,7 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
             return;
         }
 
-        mChatController = new ChatController(this, this, mChatControllerCallbacks);
+        mChatController = new ChatController(this, this);
         mChatController.setChat(chatId);
         mChatController.setAutoPlayMessageId(autoPlayMessageId);
         mChatController.init(getContainerView(), mOverlayManager, this, savedInstanceState);
@@ -112,14 +105,6 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
             mChatController.setContext(null);
         }
         super.onDestroy();
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == REQUEST_NEWCONTACT_AND_SEND) {
-            mChatController.handleNewContactResult(resultCode, data);
-        }
     }
 
     @Override
