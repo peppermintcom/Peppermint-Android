@@ -47,16 +47,17 @@ public class ChatHeadView extends RoundImageView {
     public static final int BADGE_ORIENTATION_TOP_LEFT = 1;
     public static final int BADGE_ORIENTATION_TOP_RIGHT = 2;
 
-    // avatar and button
+    // avatar and play button
     private static final String DEF_BUTTON_BACKGROUND_COLOR = "#4D000000"; // black 30%
 
     protected static final int DEF_AVATAR_SIZE_DP = 42;
     protected static final int DEF_AVATAR_BORDER_WIDTH_DP = 3;
 
-    // badge
+    // badge w/ amount of unplayed messages
     private static final String DEF_BADGE_BACKGROUND_COLOR = "#f1693f";
 
     protected static final int DEF_BADGE_DISPLACEMENT_DP = 5;
+
     private static final int DEF_BADGE_RADIUS_DP = 10;
     private static final int DEF_BADGE_BORDER_DP = 2;
 
@@ -120,14 +121,13 @@ public class ChatHeadView extends RoundImageView {
     }
 
     private void init() {
-        Context context = getContext();
+        final Context context = getContext();
+        final String tfPath = context.getString(R.string.font_regular);
 
         // global
         setKeepAspectRatio(false);
         setFallbackImageDrawable(ResourceUtils.getDrawable(context, R.drawable.ic_anonymous_green_48dp));
         setButtonImageResource(R.drawable.ic_play_15dp);
-
-        String tfPath = context.getString(R.string.font_regular);
 
         mBitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -297,7 +297,7 @@ public class ChatHeadView extends RoundImageView {
         // draw text
         if(hasName) {
             canvas.save();
-            int lines = mTextList.size();
+            int lines = Math.min(mTextList.size(), DEF_TEXT_MAX_LINES);
 
             if(!mSelectMode) {
                 canvas.translate(0, mAvatarSize + (mAvatarBorderWidth * 2) + (mShowBadge ? mBadgeDisplacement : 0) + mTextPadding);
@@ -376,8 +376,6 @@ public class ChatHeadView extends RoundImageView {
             setImageDrawable(null);
         }
 
-        /*initShader();*/
-
         this.mChat = mChat;
 
         // setup display name
@@ -388,54 +386,42 @@ public class ChatHeadView extends RoundImageView {
         mTextList.clear();
 
         if(mChat == null) {
+            // no display name
             return;
         }
 
         // the following code splits the display name into several strings
-        // each corresponding to one line
-        // this allows the name to fit into the width of the view
-        String displayName = mChat.getTitle();
-        mTextPaint.getTextBounds(displayName, 0, displayName.length(), mTextBounds);
+        // each corresponding to one line in the UI/View
+        // this allows the name to fit into the width of the View
+        String displayName = mChat.getTitle().trim().replaceAll("\\s+", " ");
+        do {
+            mTextPaint.getTextBounds(displayName, 0, displayName.length(), mTextBounds);
 
-        if(mTextBounds.width() > getLocalWidth()) {
-            // try to cut by space
-            String[] splitRes = displayName.split("\\s+");
-            String displayNameLine = "";
-            for(int i=0; i<splitRes.length && mTextList.size() < DEF_TEXT_MAX_LINES; i++) {
-                String tmpLine = displayNameLine + (displayNameLine.length() > 0 ? " " : "") + splitRes[i];
-                mTextPaint.getTextBounds(tmpLine, 0, tmpLine.length(), mTextBounds);
-                if(mTextBounds.width() > getLocalWidth()) {
-                    if(displayNameLine.trim().length() > 0) {
-                        mTextList.add(displayNameLine);
-                        displayNameLine = splitRes[i];
-                    } else {
-                        // just cut the string, even if it has no spaces
-                        int cutoffIndex = getCutIndex(splitRes[i]);
-                        mTextList.add(splitRes[i].substring(0, cutoffIndex));
-                        splitRes[i] = splitRes[i].substring(cutoffIndex);
-                        i--;
+            if(mTextBounds.width() > getLocalWidth()) {
+                boolean fromSpace = false;
+                int spaceIndex = displayName.indexOf(" ");
+                if(spaceIndex >= 0) {
+                    String displayNameWord = displayName.substring(0, spaceIndex);
+                    mTextPaint.getTextBounds(displayNameWord, 0, displayNameWord.length(), mTextBounds);
+                    if (mTextBounds.width() <= getLocalWidth()) {
+                        mTextList.add(displayNameWord);
+                        displayName = displayName.substring(spaceIndex + 1);
+                        fromSpace = true;
                     }
-                } else {
-                    displayNameLine = tmpLine;
                 }
-            }
-            if(displayNameLine.length() > 0) {
-                mTextList.add(displayNameLine);
+                if(!fromSpace) {
+                    int cutoffIndex = getCutIndex(displayName);
+                    String displayNameCut = displayName.substring(0, cutoffIndex);
+                    mTextList.add(displayNameCut);
+                    displayName = displayName.substring(cutoffIndex + 1);
+                }
+            } else {
+                mTextList.add(displayName);
+                displayName = "";
             }
 
-            /*mTextTotalHeight = 0;
-            if(mTextList.size() > 0) {
-                mTextTotalHeight = mTextLineSpacing * (mTextList.size() - 1);
-                for (String nameLine : mTextList) {
-                    mTextPaint.getTextBounds(nameLine, 0, nameLine.length(), mTextBounds);
-                    mTextTotalHeight += mTextBounds.height();
-                }
-            }*/
-        } else {
-            // whole name fits
-            mTextList.add(displayName);
-            /*mTextTotalHeight = mTextBounds.height();*/
-        }
+
+        } while(mTextList.size() < DEF_TEXT_MAX_LINES && displayName.length() > 0);
     }
 
     private int getCutIndex(String str) {
