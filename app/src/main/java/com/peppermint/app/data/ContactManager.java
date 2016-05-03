@@ -370,7 +370,7 @@ public class ContactManager {
         return -1;
     }
 
-    private static long insertEmail(Context context, String email, long rawId, int rawIdBackRef, ArrayList<ContentProviderOperation> operationsList) throws InvalidEmailException {
+    public static long insertEmail(Context context, String email, long rawId, int rawIdBackRef, ArrayList<ContentProviderOperation> operationsList) throws InvalidEmailException {
         if(!Utils.isValidEmail(email)) {
             throw new InvalidEmailException();
         }

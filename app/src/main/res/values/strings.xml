@@ -47,7 +47,7 @@
     <!-- RECIPIENTS LAYOUT: ADD EMAIL DIALOGS -->
     <string name="sending_via_email">Sending via Email</string>
     <string name="add_email">Add Email</string>
-    <string name="msg_no_email_address">No email address found. Do you want to add an email address for this contact?</string>
+    <string name="msg_no_email_address">No email address found. Please insert an email address for this contact.</string>
 
     <!-- RECIPIENTS LAYOUT: TIPS -->
     <string name="search_here_for_your_friend">Search here for your friend.</string>
