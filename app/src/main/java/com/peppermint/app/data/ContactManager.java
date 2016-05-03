@@ -632,6 +632,13 @@ public class ContactManager {
             cursor.close();
         }
 
+        if(rawId > 0 || contactId > 0) {
+            if(Utils.isValidEmail(firstName)) {
+                firstName = null;
+                lastName = null;
+            }
+        }
+
         return insert(context, contactId, rawId, firstName, lastName, phone, email, photoUri, googleAccountName, hasPeppermint);
     }
 
