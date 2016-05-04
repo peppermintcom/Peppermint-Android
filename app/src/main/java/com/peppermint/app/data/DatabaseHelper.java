@@ -209,6 +209,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		}
 
 		if(_oldVersion < 18) {
+
+			try {
+				ChatManager.getChatCount(_db, true);
+			} catch(RuntimeException e) {
+				TrackerManager.getInstance(mContext).log("Issue with local database. Resetting...", e);
+				dropAll(_db);
+				onCreate(_db);
+				return;
+			}
+
 			// delete all phone contact conversations (no longer supported)
 			Set<Long> idsToDelete = new HashSet<>();
 
