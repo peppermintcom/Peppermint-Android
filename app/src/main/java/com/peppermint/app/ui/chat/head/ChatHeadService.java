@@ -152,7 +152,10 @@ public class ChatHeadService extends Service {
                     mDisplay.dim(0f);
                 }
                 if (newState == ChatHeadGroupDisplayView.STATE_HIDDEN) {
-                    mBinder.hide();
+                    if(mVisibleActivities.size() <= 0) {
+                        setVisible(false);
+                    }
+                    refreshChatHeadController();
                 }
             }
         }
