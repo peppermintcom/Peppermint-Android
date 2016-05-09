@@ -37,7 +37,7 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
         // allow focus for back button
         mViewLayoutParams.flags = mViewOriginalLayoutParams.flags = WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED |
                 WindowManager.LayoutParams.FLAG_LAYOUT_ATTACHED_IN_DECOR;
-        mView.setVisibility(View.GONE);
+        mView.setVisibility(View.INVISIBLE);
 
         this.mOverlayManager = new OverlayManager(mContext, null, (FrameLayout) mView.findViewById(R.id.lytOverlay));
 
@@ -56,10 +56,12 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
     public void init() {
         super.init();
         super.show();
+        mChatController.start();
     }
 
     public void deinit() {
         super.hide();
+        mChatController.stop();
         mView.removeAllKeyEventInterceptors();
         mChatController.deinit();
         mChatController.setContext(null);
@@ -70,7 +72,6 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
     @Override
     public boolean show() {
         if(mView.getVisibility() != View.VISIBLE) {
-            mChatController.start();
             mView.setVisibility(View.VISIBLE);
             setViewPosition(0, mTopMargin, false);
             return true;
@@ -80,9 +81,8 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
 
     @Override
     public boolean hide() {
-        if(mView.getVisibility() != View.GONE) {
-            mChatController.stop();
-            mView.setVisibility(View.GONE);
+        if(mView.getVisibility() != View.INVISIBLE) {
+            mView.setVisibility(View.INVISIBLE);
             return true;
         }
         return false;
@@ -90,7 +90,7 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
 
     public void setChat(Chat chat) {
         mChatController.setAutoPlayMessageId(chat.getLastReceivedUnplayedId());
-        mChatController.setChat(chat.getId());
+        mChatController.setChat(chat);
     }
 
     @Override

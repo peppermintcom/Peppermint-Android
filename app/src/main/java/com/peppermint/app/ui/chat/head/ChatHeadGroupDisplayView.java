@@ -141,15 +141,17 @@ public class ChatHeadGroupDisplayView extends DisplayView {
 
         @Override
         public boolean onClick(DisplayView<ChatHeadView> displayView) {
+            final ChatHeadView v = displayView.getView();
             if(mState == STATE_EXPANDING || mState == STATE_EXPANDED) {
-                final ChatHeadView v = displayView.getView();
                 if(v.isSelected()) {
                     shrink(null);
                 } else {
                     setSelected(displayView);
                 }
             } else {
-                setSelected(displayView);
+                if(!v.isSelected()) {
+                    setSelected(displayView);
+                }
                 expand();
             }
             return true;
@@ -338,7 +340,7 @@ public class ChatHeadGroupDisplayView extends DisplayView {
 
     protected void setSelected(final DisplayView<ChatHeadView> displayView) {
         final ChatHeadView v = displayView.getView();
-        if(v.isSelected()) {
+        if(v.getChat() == null || v.isSelected()) {
             return;
         }
 
@@ -467,6 +469,10 @@ public class ChatHeadGroupDisplayView extends DisplayView {
                 // make sure the dragged element is on top
                 mChatHeadDisplayViews.remove(displayViewIndex);
                 mChatHeadDisplayViews.add(draggingChatHeadDisplayView);
+
+                if(!draggingChatHeadDisplayView.getView().isSelected()) {
+                    setSelected(draggingChatHeadDisplayView);
+                }
             }
         }
 

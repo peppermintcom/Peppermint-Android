@@ -3,6 +3,7 @@ package com.peppermint.app.ui.chat;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,6 +45,64 @@ public class ChatController extends ChatRecordOverlayController implements View.
     private static final String STATE_MESSAGE_ID_WITH_ERROR = TAG + "_messageIdWithError";
 
     private static final String SCREEN_ID = "Chat";
+
+    protected class RefreshMessageCursorAsyncTask extends AsyncTask<Void, Void, Cursor> {
+        private long _autoPlayMessageId = 0;
+        @Override
+        protected Cursor doInBackground(Void... params) {
+            _autoPlayMessageId = MessageManager.getLastAutoPlayMessageIdByChat(getDatabase(), mChat.getId());
+            return MessageManager.getByChatId(getDatabase(), mChat.getId());
+        }
+
+        @Override
+        protected void onCancelled(Cursor cursor) {
+            if(cursor != null) {
+                cursor.close();
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Cursor cursor) {
+            if(mAdapter == null) {
+                mAdapter = new ChatMessageCursorAdapter(getContext(), getMessagesServiceManager(),
+                        getPlayerServiceManager(), cursor, getDatabase(), TrackerManager.getInstance(getContext().getApplicationContext()));
+                mAdapter.setExclamationClickListener(new ChatMessageCursorAdapter.ExclamationClickListener() {
+                    @Override
+                    public void onClick(View v, long messageId) {
+                        showErrorDialog(messageId);
+                    }
+                });
+                mListView.setAdapter(mAdapter);
+            } else {
+                mAdapter.changeCursor(cursor);
+            }
+
+            if(mAutoPlayMessageId < 0) {
+                mAutoPlayMessageId = _autoPlayMessageId;
+            }
+
+            if(mAutoPlayMessageId > 0) {
+                int count = mAdapter.getCount();
+                Message chosenMessage = null;
+                int chosenIndex = -1;
+                for(int i=count-1; i>=0 && chosenMessage == null; i--) {
+                    Message message = mAdapter.getMessage(i);
+                    if(message.getId() == mAutoPlayMessageId) {
+                        chosenMessage = message;
+                        chosenIndex = i;
+                    }
+                }
+
+                if(chosenMessage != null) {
+                    mAutoPlayMessageId = 0;
+                    mListView.setSelection(chosenIndex);
+                    getPlayerServiceManager().play(chosenMessage, 0);
+                }
+            }
+        }
+    }
+
+    private RefreshMessageCursorAsyncTask mRefreshMessageCursorAsyncTask;
 
     // GENERIC
     private DatabaseHelper mDatabaseHelper;
@@ -221,43 +280,13 @@ public class ChatController extends ChatRecordOverlayController implements View.
             return;
         }
 
-        Cursor cursor = MessageManager.getByChatId(getDatabase(), mChat.getId());
-        if(mAdapter == null) {
-            mAdapter = new ChatMessageCursorAdapter(getContext(), getMessagesServiceManager(),
-                    getPlayerServiceManager(), cursor, getDatabase(), TrackerManager.getInstance(getContext().getApplicationContext()));
-            mAdapter.setExclamationClickListener(new ChatMessageCursorAdapter.ExclamationClickListener() {
-                @Override
-                public void onClick(View v, long messageId) {
-                    showErrorDialog(messageId);
-                }
-            });
-            mListView.setAdapter(mAdapter);
-        } else {
-            mAdapter.changeCursor(cursor);
+        if(mRefreshMessageCursorAsyncTask != null) {
+            mRefreshMessageCursorAsyncTask.cancel(true);
+            mRefreshMessageCursorAsyncTask = null;
         }
 
-        if(mAutoPlayMessageId < 0) {
-            mAutoPlayMessageId = MessageManager.getLastAutoPlayMessageIdByChat(getDatabase(), mChat.getId());
-        }
-
-        if(mAutoPlayMessageId > 0) {
-            int count = mAdapter.getCount();
-            Message chosenMessage = null;
-            int chosenIndex = -1;
-            for(int i=count-1; i>=0 && chosenMessage == null; i--) {
-                Message message = mAdapter.getMessage(i);
-                if(message.getId() == mAutoPlayMessageId) {
-                    chosenMessage = message;
-                    chosenIndex = i;
-                }
-            }
-
-            if(chosenMessage != null) {
-                mAutoPlayMessageId = 0;
-                mListView.setSelection(chosenIndex);
-                getPlayerServiceManager().play(chosenMessage, 0);
-            }
-        }
+        mRefreshMessageCursorAsyncTask = new RefreshMessageCursorAsyncTask();
+        mRefreshMessageCursorAsyncTask.execute();
     }
 
     private SQLiteDatabase getDatabase() {
@@ -282,7 +311,11 @@ public class ChatController extends ChatRecordOverlayController implements View.
     }
 
     public void setChat(long chatId) {
-        this.mChat = ChatManager.getChatById(getDatabase(), chatId);
+        setChat(ChatManager.getChatById(getDatabase(), chatId));
+    }
+
+    public void setChat(Chat chat) {
+        this.mChat = chat;
         if(mChat == null) {
             return;
         }

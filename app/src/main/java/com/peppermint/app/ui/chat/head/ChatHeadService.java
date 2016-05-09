@@ -240,6 +240,8 @@ public class ChatHeadService extends Service {
                 mChatHeadView.addChat(chat);
             }
 
+            // pre-select the main chat
+            mChatHeadView.setSelected(mChatHeadView.getMainChatHeadDisplayView());
             mChatHeadView.show();
         } else {
             mChatView.hide();
