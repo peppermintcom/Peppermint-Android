@@ -13,6 +13,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.util.AttributeSet;
+import android.view.ViewGroup;
 
 import com.peppermint.app.R;
 import com.peppermint.app.data.Chat;
@@ -72,7 +73,7 @@ public class ChatHeadView extends RoundImageView {
 
     // -------------
     private Chat mChat;
-    private boolean mSelectMode = false;
+    private boolean mSelectable = false;
     private boolean mSelected = false;
     private boolean mShowBadge = true;
 
@@ -200,7 +201,7 @@ public class ChatHeadView extends RoundImageView {
 
     /**
      * Returns the expected height of the view when in select mode.<br />
-     * See {@link #setSelectMode(boolean)} for more information.
+     * See {@link #setSelectable(boolean)} for more information.
      * @return the expected height of the view when in select mode
      */
     public int getSelectModeHeight() {
@@ -214,19 +215,26 @@ public class ChatHeadView extends RoundImageView {
     }
 
     private boolean hasBadge() {
-        return mShowBadge && hasAvatar() && (mSelected || mSelectMode) && mChat.getAmountUnopened() > 0;
+        return mShowBadge && mChat.getAmountUnopened() > 0;
     }
 
     private boolean hasName() {
-        return hasAvatar() && (mSelected || mSelectMode) && mChat.getRecipientList().get(0).getPhotoUri() == null;
+        return hasAvatar() && (mSelected || mSelectable) && mChat.getRecipientList().get(0).getPhotoUri() == null;
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+
+        if(getLayoutParams().height == getLayoutParams().width && getLayoutParams().width == ViewGroup.LayoutParams.MATCH_PARENT) {
+            setMeasuredDimension(getDefaultSize(getSuggestedMinimumWidth(), widthMeasureSpec),
+                    getDefaultSize(getSuggestedMinimumHeight(), heightMeasureSpec));
+            return;
+        }
+
         int tmpHeight = mAvatarSize + (mAvatarBorderWidth * 2) + (mShowBadge ? mBadgeDisplacement : 0);
         int tmpWidth = tmpHeight + (mShowBadge ? mBadgeDisplacement : 0);      // fixed width
 
-        if(isSelectMode()) {
+        if(mSelectable) {
             tmpHeight += (mTextHeight * 2) + mTextLineSpacing + mTextPadding;
             tmpHeight += mSelectionTriangleMargin + (mSelectionTriangleLength / 2);
         } else {
@@ -252,15 +260,15 @@ public class ChatHeadView extends RoundImageView {
         boolean hasName = hasName();
         boolean hasButton = validChatAndAvatar && mChat.getLastReceivedUnplayedId() != 0 && mButtonBitmap != null;
 
-        if(mShowBadge && !mSelectMode && mBadgeOrientation == BADGE_ORIENTATION_TOP_LEFT) {
-            canvas.translate(mBadgeDisplacement, 0);
+        if(mShowBadge && !mSelectable && mBadgeOrientation == BADGE_ORIENTATION_TOP_LEFT) {
+            canvas.translate(mBadgeDisplacement + (mBadgeBorderWidth * 2), 0);
         }
 
         int textTotalHeight = (mTextHeight * 2) + mTextLineSpacing + mTextPadding;
 
         // draw avatar
         canvas.save();
-        canvas.translate(0, (mShowBadge ? mBadgeDisplacement : 0) + (mSelectMode ? textTotalHeight : 0));
+        canvas.translate(0, (mShowBadge ? mBadgeDisplacement : 0) + (mSelectable ? textTotalHeight : 0));
 
         super.onDraw(canvas);
 
@@ -284,8 +292,8 @@ public class ChatHeadView extends RoundImageView {
             String amountText = String.valueOf(mChat.getAmountUnopened());
             int centerX = mWidth - mBadgeBorderWidth - mBadgeRadius;
             int centerY = mBadgeRadius + mBadgeBorderWidth - mBadgeDisplacement;
-            if(!mSelectMode && mBadgeOrientation == BADGE_ORIENTATION_TOP_LEFT) {
-                centerX = mBadgeRadius + mBadgeBorderWidth - mBadgeDisplacement;
+            if(!mSelectable && mBadgeOrientation == BADGE_ORIENTATION_TOP_LEFT) {
+                centerX = mBadgeRadius - mBadgeBorderWidth - mBadgeDisplacement;
             }
             canvas.drawCircle(centerX, centerY, mBadgeRadius + mBadgeBorderWidth, mBadgeBorderPaint);
             canvas.drawCircle(centerX, centerY, mBadgeRadius, mBadgePaint);
@@ -299,7 +307,7 @@ public class ChatHeadView extends RoundImageView {
             canvas.save();
             int lines = Math.min(mTextList.size(), DEF_TEXT_MAX_LINES);
 
-            if(!mSelectMode) {
+            if(!mSelectable) {
                 canvas.translate(0, mAvatarSize + (mAvatarBorderWidth * 2) + (mShowBadge ? mBadgeDisplacement : 0) + mTextPadding);
             } else {
                 if(lines < 2) {
@@ -319,7 +327,7 @@ public class ChatHeadView extends RoundImageView {
         }
 
         // draw selector triangle
-        if(mSelectMode && mSelected) {
+        if(mSelectable && mSelected) {
             canvas.save();
             canvas.translate((mAvatarSize + (mAvatarBorderWidth * 2)) / 2 - (mSelectionTriangleLength / 2), mHeight - (mSelectionTriangleLength / 2));
             canvas.drawPath(mSelectionTrianglePath, mSelectionTrianglePaint);
@@ -444,16 +452,16 @@ public class ChatHeadView extends RoundImageView {
         return 0;
     }
 
-    public boolean isSelectMode() {
-        return mSelectMode;
+    public boolean isSelectable() {
+        return mSelectable;
     }
 
     /**
-     * Select mode draws the chat head display name on top of the avatar.
-     * @param mSelectMode
+     * When selectable draws the chat head display name on top of the avatar.
+     * @param mSelectable selectable or not
      */
-    public void setSelectMode(boolean mSelectMode) {
-        this.mSelectMode = mSelectMode;
+    public void setSelectable(boolean mSelectable) {
+        this.mSelectable = mSelectable;
     }
 
     public boolean isSelected() {

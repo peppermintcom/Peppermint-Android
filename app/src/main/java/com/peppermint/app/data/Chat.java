@@ -150,6 +150,10 @@ public class Chat implements Serializable {
 
     @Override
     public boolean equals(Object o) {
+        if(o == null) {
+            return false;
+        }
+
         // to allow comparison operations performed by native Java lists
         if(o instanceof Chat) {
             if(((Chat) o).mId > 0 && mId > 0) {

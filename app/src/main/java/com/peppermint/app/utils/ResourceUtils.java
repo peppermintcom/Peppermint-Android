@@ -12,6 +12,7 @@ import android.os.Build;
 import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.view.WindowManager;
 
 import com.crashlytics.android.Crashlytics;
 import com.peppermint.app.tracking.TrackerManager;
@@ -22,13 +23,42 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 
 /**
  * Created by Nuno Luz on 21-04-2016.
+ *
+ * Utility routines to handle UI and non-UI resources.
  */
 public class ResourceUtils {
 
     private static final String TAG = ResourceUtils.class.getSimpleName();
+
+    public static void disableChangeAnimations(final Context context, final WindowManager.LayoutParams layoutParams) {
+        layoutParams.windowAnimations = 0;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            layoutParams.rotationAnimation = 0;
+        }
+        layoutParams.layoutAnimationParameters = null;
+
+        String className = "android.view.WindowManager$LayoutParams";
+        try {
+            Class layoutParamsClass = Class.forName(className);
+
+            Field privateFlags = layoutParamsClass.getField("privateFlags");
+            Field noAnim = layoutParamsClass.getField("PRIVATE_FLAG_NO_MOVE_ANIMATION");
+            Field forceHardware = layoutParamsClass.getField("PRIVATE_FLAG_FORCE_HARDWARE_ACCELERATED");
+
+            int privateFlagsValue = privateFlags.getInt(layoutParams);
+            int noAnimFlag = noAnim.getInt(layoutParams);
+            int forceHardwareFlag = forceHardware.getInt(layoutParams);
+            privateFlagsValue |= noAnimFlag | forceHardwareFlag;
+
+            privateFlags.setInt(layoutParams, privateFlagsValue);
+        } catch (Exception e) {
+            TrackerManager.getInstance(context).logException(e);
+        }
+    }
 
     /**
      * Use {@link ExifInterface} to extract image file attributes in order to assess the required
@@ -282,8 +312,10 @@ public class ResourceUtils {
 
         try {
             InputStream inputStream = context.getContentResolver().openInputStream(uri);
-            drawable = Drawable.createFromStream(inputStream, uri.toString());
-            inputStream.close();
+            if(inputStream != null) {
+                drawable = Drawable.createFromStream(inputStream, uri.toString());
+                inputStream.close();
+            }
         } catch (IOException e) {
             TrackerManager.getInstance(context).log(uri.toString(), e);
         }
