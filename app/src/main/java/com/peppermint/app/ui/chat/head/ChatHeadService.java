@@ -5,12 +5,16 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.provider.Settings;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
 
 import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.senders.SenderPreferences;
@@ -32,6 +36,9 @@ import java.util.List;
  */
 public class ChatHeadService extends Service {
 
+    private static final String TAG = ChatHeadService.class.getSimpleName();
+    private static final String PREF_VISIBLE = TAG + "_prefVisible";
+
     public static final String ACTION_ENABLE = "com.peppermint.app.ChatHeadService.ENABLE";
     public static final String ACTION_DISABLE = "com.peppermint.app.ChatHeadService.DISABLE";
 
@@ -39,26 +46,9 @@ public class ChatHeadService extends Service {
     public static final String ACTION_HIDE = "com.peppermint.app.ChatHeadService.HIDE";
 
     private List<String> mVisibleActivities = new ArrayList<>();
-    private List<Chat> mChats = new ArrayList<>();
-    private ChatHeadController mChatHeadController;
 
     private SenderPreferences mPreferences;
     private MessagesServiceManager mMessagesServiceManager;
-    private boolean mWasVisible = false;
-
-    private final BroadcastReceiver mRotationBroadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if(needsToStop()) {
-                return;
-            }
-
-            if(mChatHeadController != null) {
-                mChatHeadController.requestLayout();
-            }
-        }
-    };
-    private final IntentFilter mRotationIntentFilter = new IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED);
 
     protected ChatHeadServiceBinder mBinder = new ChatHeadServiceBinder();
 
@@ -66,24 +56,21 @@ public class ChatHeadService extends Service {
      * The service binder used by external components to interact with the service.
      */
     public class ChatHeadServiceBinder extends Binder {
-        void enable() { /* nothing to do */ }
+        void enable() { refreshChatHeadController(); }
         void disable() { stopSelf(); }
-        void show() { refreshChatHeadController(); }
-        boolean hide() { return mChatHeadController != null && mChatHeadController.hide(); }
+        void show() { setVisible(true); refreshChatHeadController(); }
+        boolean hide() { setVisible(false); refreshChatHeadController(); return true; }
 
         void addVisibleActivity(String activityFullClassName) {
             mVisibleActivities.add(activityFullClassName);
-            boolean hidden = hide();
-            if(mVisibleActivities.size() <= 1) {
-                mWasVisible = hidden;
-            }
+            Log.d(TAG, "addVisibleActivity() # " + activityFullClassName + " " + isVisible() + " " + mVisibleActivities);
+            refreshChatHeadController();
         }
 
         boolean removeVisibleActivity(String activityFullClassName) {
             boolean ret = mVisibleActivities.remove(activityFullClassName);
-            if(mWasVisible) {
-                show();
-            }
+            Log.d(TAG, "removeVisibleActivity() # " + activityFullClassName + " " + isVisible() + " " + mVisibleActivities);
+            refreshChatHeadController();
             return ret;
         }
     }
@@ -96,18 +83,91 @@ public class ChatHeadService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent != null && intent.getAction() != null) {
             if(intent.getAction().compareTo(ACTION_ENABLE) == 0) {
-                /* nothing to do */
+                mBinder.enable();
             } else if(intent.getAction().compareTo(ACTION_DISABLE) == 0) {
-                stopSelf();
+                mBinder.disable();
             } else if(intent.getAction().compareTo(ACTION_SHOW) == 0) {
-                refreshChatHeadController();
+                mBinder.show();
             } else if(intent.getAction().compareTo(ACTION_HIDE) == 0) {
-                mChatHeadController.hide();
+                mBinder.hide();
             }
         }
 
         return START_NOT_STICKY;
     }
+
+    // chat head specific
+    private Display mDisplay;
+
+    // ui
+    private ChatHeadGroupDisplayView mChatHeadView;
+    private ChatDisplayView mChatView;
+
+    private final BroadcastReceiver mHomeAppsReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(Intent.ACTION_CLOSE_SYSTEM_DIALOGS)) {
+                if(mChatHeadView.isVisible() && (mChatHeadView.getState() == ChatHeadGroupDisplayView.STATE_EXPANDING || mChatHeadView.getState() == ChatHeadGroupDisplayView.STATE_EXPANDED)) {
+                    mChatHeadView.shrink(null);
+                }
+            }
+        }
+    };
+    private final IntentFilter mHomeAppsIntentFilter = new IntentFilter(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+
+    private final View.OnKeyListener mOnKeyListener = new View.OnKeyListener() {
+        @Override
+        public boolean onKey(View v, int keyCode, KeyEvent event) {
+            if(event.getAction() == KeyEvent.ACTION_DOWN) {
+                switch (keyCode) {
+                    case KeyEvent.KEYCODE_BACK:
+                    case KeyEvent.KEYCODE_HOME:
+                    case KeyEvent.KEYCODE_APP_SWITCH:
+                        mChatHeadView.shrink(null);
+                        break;
+                }
+            }
+            return false;
+        }
+    };
+
+    private ChatHeadGroupDisplayView.OnStateChangedListener mOnStateChangeListener = new ChatHeadGroupDisplayView.OnStateChangedListener() {
+        @Override
+        public void onStateChanged(int oldState, int newState) {
+            if(newState != ChatHeadGroupDisplayView.STATE_EXPANDED && (oldState == ChatHeadGroupDisplayView.STATE_EXPANDING || oldState == ChatHeadGroupDisplayView.STATE_EXPANDED)) {
+                Log.d(TAG, "CHAT HEAD Shrink Started!");
+                mChatView.hide();
+            } else if(newState == ChatHeadGroupDisplayView.STATE_EXPANDING) {
+                Log.d(TAG, "CHAT HEAD Expanding Started!");
+                mChatView.show();
+            }
+
+            if(newState == ChatHeadGroupDisplayView.STATE_EXPANDING || newState == ChatHeadGroupDisplayView.STATE_EXPANDED || newState == ChatHeadGroupDisplayView.STATE_DRAGGING) {
+                if(mDisplay.getDim() <= 0) {
+                    mDisplay.dim(0.5f);
+                }
+            } else {
+                if(mDisplay.getDim() > 0) {
+                    mDisplay.dim(0f);
+                }
+                if (newState == ChatHeadGroupDisplayView.STATE_HIDDEN) {
+                    if(mVisibleActivities.size() <= 0) {
+                        setVisible(false);
+                    }
+                    refreshChatHeadController();
+                }
+            }
+        }
+    };
+
+    private ChatHeadGroupDisplayView.OnChatHeadSelectedListener mOnChatHeadSelectedListener = new ChatHeadGroupDisplayView.OnChatHeadSelectedListener() {
+        @Override
+        public void onChatHeadSelected(Chat selectedChat) {
+            mChatView.setChat(selectedChat);
+            mChatView.invalidate();
+        }
+    };
 
     @Override
     public void onCreate() {
@@ -119,23 +179,40 @@ public class ChatHeadService extends Service {
 
         PeppermintEventBus.registerMessages(this);
 
-        mChatHeadController = new ChatHeadController(this);
-        mChatHeadController.requestLayout();
+        this.mDisplay = new Display(this);
+        mDisplay.init();
 
-        registerReceiver(mRotationBroadcastReceiver, mRotationIntentFilter);
+        mChatHeadView = new ChatHeadGroupDisplayView(this, mDisplay);
+        mChatHeadView.addOnStateChangedListener(mOnStateChangeListener);
+        mChatHeadView.setOnChatSelectedListener(mOnChatHeadSelectedListener);
+        mChatHeadView.init();
+
+        mChatView = new ChatDisplayView(this, mDisplay);
+        mChatView.addKeyEventInterceptor(mOnKeyListener);
+        // -2px to make sure there's no visible space
+        mChatView.setTopMargin(mChatHeadView.getExpandedHeight() - 2);
+        mChatView.init();
+
+        registerReceiver(mHomeAppsReceiver, mHomeAppsIntentFilter);
+
+        refreshChatHeadController();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(mRotationBroadcastReceiver);
 
-        if(mChatHeadController != null) {
-            mChatHeadController.hide();
-            mChatHeadController.destroy();
-        }
-        mChatHeadController = null;
+        mChatView.hide();
+        mChatHeadView.hide();
+
+        unregisterReceiver(mHomeAppsReceiver);
+
+        mChatHeadView.deinit();
+        mChatView.deinit();
+        mDisplay.deinit();
+
         mMessagesServiceManager.unbind();
+
         PeppermintEventBus.unregisterMessages(this);
     }
 
@@ -144,38 +221,47 @@ public class ChatHeadService extends Service {
             return false;
         }
 
-        mWasVisible = true;
+        if(isVisible() && mVisibleActivities.size() <= 0) {
+            List<Chat> chatList = new ArrayList<>();
+            SQLiteDatabase db = DatabaseHelper.getInstance(this).getReadableDatabase();
+            Cursor chatCursor = ChatManager.getAll(db, true);
+            int i = 0;
+            while(chatCursor.moveToNext() && i < ChatHeadGroupDisplayView.MAX_CHAT_HEADS) {
+                Chat chat = ChatManager.getChatFromCursor(db, chatCursor);
+                chat.setAmountUnopened(MessageManager.getUnopenedCountByChat(db, chat.getId()));
+                chat.setLastReceivedUnplayedId(MessageManager.getLastAutoPlayMessageIdByChat(db, chat.getId()));
+                chatList.add(0, chat);
+                i++;
+            }
+            chatCursor.close();
 
-        if(mVisibleActivities.size() > 0) {
-            return false;
+            // reverse the order (push the most recent last)
+            for(Chat chat : chatList) {
+                mChatHeadView.addChat(chat);
+            }
+
+            // pre-select the main chat
+            mChatHeadView.setSelected(mChatHeadView.getMainChatHeadDisplayView());
+            mChatHeadView.show();
+        } else {
+            mChatView.hide();
+            mChatHeadView.hide();
         }
-
-        mChats.clear();
-        SQLiteDatabase db = DatabaseHelper.getInstance(this).getReadableDatabase();
-        Cursor chatCursor = ChatManager.getAll(db, true);
-        int i = 0;
-        while(chatCursor.moveToNext() && i < ChatHeadChainView.MAX_CHAT_HEADS) {
-            Chat chat = ChatManager.getChatFromCursor(db, chatCursor);
-            chat.setAmountUnopened(MessageManager.getUnopenedCountByChat(db, chat.getId()));
-            chat.setLastReceivedUnplayedId(MessageManager.getLastAutoPlayMessageIdByChat(db, chat.getId()));
-            mChats.add(0, chat);
-            i++;
-        }
-        chatCursor.close();
-
-        // reverse the order (push the most recent last)
-        for(Chat chat : mChats) {
-            mChatHeadController.pushChat(chat);
-        }
-
-        mChatHeadController.show();
 
         return true;
     }
 
     public void onEventMainThread(ReceiverEvent event) {
         if(event.getType() == ReceiverEvent.EVENT_RECEIVED) {
-            refreshChatHeadController();
+            if(isVisible() && mVisibleActivities.size() <= 0) {
+                final SQLiteDatabase db = DatabaseHelper.getInstance(this).getReadableDatabase();
+                final Chat chat = event.getMessage().getChatParameter();
+                chat.setAmountUnopened(MessageManager.getUnopenedCountByChat(db, chat.getId()));
+                chat.setLastReceivedUnplayedId(MessageManager.getLastAutoPlayMessageIdByChat(db, chat.getId()));
+                mChatHeadView.addChat(chat);
+            } else {
+                mBinder.show();
+            }
         }
     }
 
@@ -185,10 +271,11 @@ public class ChatHeadService extends Service {
                 return;
             }
 
-            if(mChats.size() > 0) {
-                SQLiteDatabase db = DatabaseHelper.getInstance(this).getReadableDatabase();
+            final List<Chat> chatList = mChatHeadView.getChats();
+            if(chatList.size() > 0) {
+                final SQLiteDatabase db = DatabaseHelper.getInstance(this).getReadableDatabase();
 
-                for(Chat chat : mChats) {
+                for(Chat chat : chatList) {
                     if(chat.getId() == event.getMessage().getChatId()) {
                         chat.setAmountUnopened(MessageManager.getUnopenedCountByChat(db, chat.getId()));
                         chat.setLastReceivedUnplayedId(MessageManager.getLastAutoPlayMessageIdByChat(db, chat.getId()));
@@ -196,7 +283,7 @@ public class ChatHeadService extends Service {
                 }
             }
 
-            mChatHeadController.invalidate();
+            mChatHeadView.invalidate();
         }
     }
 
@@ -219,4 +306,13 @@ public class ChatHeadService extends Service {
         return false;
     }
 
+    private boolean isVisible() {
+        return mPreferences.getSharedPreferences().getBoolean(PREF_VISIBLE, false);
+    }
+
+    private void setVisible(boolean wasVisible) {
+        final SharedPreferences.Editor editor = mPreferences.getSharedPreferences().edit();
+        editor.putBoolean(PREF_VISIBLE, wasVisible);
+        editor.commit();
+    }
 }
