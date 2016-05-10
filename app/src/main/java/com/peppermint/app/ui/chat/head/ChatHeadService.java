@@ -141,6 +141,7 @@ public class ChatHeadService extends Service {
             } else if(newState == ChatHeadGroupDisplayView.STATE_EXPANDING) {
                 Log.d(TAG, "CHAT HEAD Expanding Started!");
                 mChatView.show();
+                mChatView.invalidate();
             }
 
             if(newState == ChatHeadGroupDisplayView.STATE_EXPANDING || newState == ChatHeadGroupDisplayView.STATE_EXPANDED || newState == ChatHeadGroupDisplayView.STATE_DRAGGING) {
@@ -164,6 +165,7 @@ public class ChatHeadService extends Service {
     private ChatHeadGroupDisplayView.OnChatHeadSelectedListener mOnChatHeadSelectedListener = new ChatHeadGroupDisplayView.OnChatHeadSelectedListener() {
         @Override
         public void onChatHeadSelected(Chat selectedChat) {
+            Log.d(TAG, "onChatHeadSelected() # " + selectedChat);
             mChatView.setChat(selectedChat);
             mChatView.invalidate();
         }

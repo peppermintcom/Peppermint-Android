@@ -318,6 +318,7 @@ public class ChatHeadGroupDisplayView extends DisplayView {
                 j = 0;
                 for (int i = 0; i < MAX_CHAT_HEADS; i++) {
                     final ChatHeadView chatHeadView = mChatHeadDisplayViews.get(i).getView();
+                    final Chat previousChat = chatHeadView.getChat();
 
                     if(i < startsAt) {
                         chatHeadView.setChat(null);
@@ -334,6 +335,12 @@ public class ChatHeadGroupDisplayView extends DisplayView {
 
                     if(i != MAIN_CHAT_HEAD_INDEX) {
                         mChatHeadDisplayViews.get(i).hide();
+                    } else {
+                        if(previousChat == null || !previousChat.equals(chatHeadView.getChat())) {
+                            // reset state to allow #setSelected to work
+                            chatHeadView.setSelected(false);
+                        }
+                        setSelected(mChatHeadDisplayViews.get(i));
                     }
                 }
                 break;
@@ -463,7 +470,6 @@ public class ChatHeadGroupDisplayView extends DisplayView {
             // push selected chat to the top
             addChat(getSelectedChat());
             doLayout();
-            setSelected(getMainChatHeadDisplayView());
             resetToSavedPosition(true);
         } else {
             final int displayViewIndex = mChatHeadDisplayViews.indexOf(draggingChatHeadDisplayView);
