@@ -47,6 +47,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     private ChatRecordOverlay mChatRecordOverlay;
 
     private Chat mChat;
+    private boolean mStarted = false;
 
     public ChatRecordOverlayController(Context context) {
         mContext = context;
@@ -85,6 +86,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     }
 
     public void start() {
+        mStarted = true;
         mMessagesServiceManager.bind();
         mPlayerServiceManager.bind();
         mChatRecordOverlay.bindService();
@@ -95,6 +97,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         mChatRecordOverlay.unbindService();
         mPlayerServiceManager.unbind();
         mMessagesServiceManager.unbind();
+        mStarted = false;
     }
 
     public void deinit() {
@@ -160,6 +163,10 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
 
     public void setTouchInterceptable(TouchInterceptable mTouchInterceptable) {
         this.mTouchInterceptable = mTouchInterceptable;
+    }
+
+    public boolean isStarted() {
+        return mStarted;
     }
 
     public void onEventMainThread(SyncEvent event) {

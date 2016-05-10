@@ -81,24 +81,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
                 mAutoPlayMessageId = _autoPlayMessageId;
             }
 
-            if(mAutoPlayMessageId > 0) {
-                int count = mAdapter.getCount();
-                Message chosenMessage = null;
-                int chosenIndex = -1;
-                for(int i=count-1; i>=0 && chosenMessage == null; i--) {
-                    Message message = mAdapter.getMessage(i);
-                    if(message.getId() == mAutoPlayMessageId) {
-                        chosenMessage = message;
-                        chosenIndex = i;
-                    }
-                }
-
-                if(chosenMessage != null) {
-                    mAutoPlayMessageId = 0;
-                    mListView.setSelection(chosenIndex);
-                    getPlayerServiceManager().play(chosenMessage, 0);
-                }
-            }
+            doAutoPlay();
         }
     }
 
@@ -121,6 +104,31 @@ public class ChatController extends ChatRecordOverlayController implements View.
     // error dialog
     private CustomListDialog mErrorDialog;
     private long mMessageIdWithError;
+
+    private void doAutoPlay() {
+        if(mChat == null || !getMessagesServiceManager().isBound() || !getPlayerServiceManager().isBound() ||
+                mAutoPlayMessageId <= 0) {
+            return;
+        }
+
+        int count = mAdapter.getCount();
+        Message chosenMessage = null;
+        int chosenIndex = -1;
+        for(int i=count-1; i>=0 && chosenMessage == null; i--) {
+            Message message = mAdapter.getMessage(i);
+            if(message.getId() == mAutoPlayMessageId) {
+                chosenMessage = message;
+                chosenIndex = i;
+            }
+        }
+
+        mAutoPlayMessageId = 0;
+
+        if(chosenMessage != null) {
+            mListView.setSelection(chosenIndex);
+            getPlayerServiceManager().play(chosenMessage, 0);
+        }
+    }
 
     public ChatController(Context context, RecipientDataGUI recipientDataGUI) {
         super(context);

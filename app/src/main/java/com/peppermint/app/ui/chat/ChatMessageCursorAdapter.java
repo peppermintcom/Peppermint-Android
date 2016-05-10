@@ -387,7 +387,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
             cursor.moveToNext();
         }
 
-        if(message.isReceived()) {
+        if(message.isReceived() && mMessagesServiceManager.isBound()) {
             mMessagesServiceManager.markAsPlayed(message);
         }
 

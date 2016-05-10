@@ -56,13 +56,12 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
     public void init() {
         super.init();
         super.show();
-        mChatController.start();
     }
 
     public void deinit() {
         super.hide();
-        mChatController.stop();
         mView.removeAllKeyEventInterceptors();
+        stop();
         mChatController.deinit();
         mChatController.setContext(null);
         mOverlayManager.destroyAllOverlays();
@@ -86,6 +85,18 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
             return true;
         }
         return false;
+    }
+
+    public void start() {
+        if(!mChatController.isStarted()) {
+            mChatController.start();
+        }
+    }
+
+    public void stop() {
+        if(mChatController.isStarted()) {
+            mChatController.stop();
+        }
     }
 
     public void setChat(Chat chat) {
