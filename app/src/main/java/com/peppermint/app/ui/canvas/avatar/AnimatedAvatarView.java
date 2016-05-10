@@ -7,21 +7,18 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.Log;
 
 import com.peppermint.app.R;
 import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.ui.canvas.AnimatedView;
 import com.peppermint.app.ui.canvas.BitmapLayer;
 import com.peppermint.app.ui.canvas.BitmapSequenceAnimatedLayer;
+import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -199,7 +196,12 @@ public class AnimatedAvatarView extends AnimatedView {
     }
 
     public synchronized boolean setStaticDrawable(Uri drawableUri) {
-        mStaticAvatar.setBitmapDrawable((BitmapDrawable) getBitmapFromURI(drawableUri));
+        // scale bitmap to avoid black images to show up some times
+        int width = getMeasuredWidth();
+        int height = getMeasuredHeight();
+        final int fixedSize = Utils.dpToPx(getContext(), 50);
+        final BitmapDrawable bitmapDrawable = new BitmapDrawable(getContext().getResources(), ResourceUtils.getScaledBitmap(getContext(), drawableUri, width > 0 ? width : fixedSize, height > 0 ? height : fixedSize));
+        mStaticAvatar.setBitmapDrawable(bitmapDrawable);
         doDraw();
         return mStaticAvatar.getBitmapDrawable() != null;
     }
@@ -208,18 +210,6 @@ public class AnimatedAvatarView extends AnimatedView {
         mStaticAvatar.setBitmapResourceId(drawableRes);
         doDraw();
         return true;
-    }
-
-    protected Drawable getBitmapFromURI(Uri uri) {
-        try {
-            InputStream inputStream = getContext().getContentResolver().openInputStream(uri);
-            Drawable drawable = Drawable.createFromStream(inputStream, uri.toString());
-            inputStream.close();
-            return drawable;
-        } catch (IOException e) {
-            Log.e(TAG, "Unable to get bitmap from URI!");
-        }
-        return null;
     }
 
     public boolean isShowStaticAvatar() {
