@@ -15,6 +15,7 @@ import android.widget.AdapterView;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
+import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ChatManager;
 import com.peppermint.app.data.ContactData;
@@ -102,11 +103,17 @@ public class AllContactsListFragment extends ContactListFragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // dialog for unsupported SMS
+        // dialog for adding missing email
         mAddContactDialog = new AddEmailDialog(mActivity);
         mAddContactDialog.setPositiveButtonListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                final AuthenticationData authenticationData = mActivity.getAuthenticationData();
+                if(authenticationData == null) {
+                    // no authentication; do nothing
+                    return;
+                }
+
                 final ContactRaw contactRaw = mAddContactDialog.getContact();
                 final String emailAddress = mAddContactDialog.getEmail();
                 try {
