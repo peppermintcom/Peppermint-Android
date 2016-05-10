@@ -214,7 +214,7 @@ public class ContactManager {
         return getRaw(context, null, rawIds, mimeTypes, null);
     }
 
-    public static Cursor getByEmailOrPhone(Context context, String email, String phone, String googleAccountName) {
+    public static Cursor getByEmailOrPhone(Context context, String email, String phone/*, String googleAccountName*/) {
         return context.getContentResolver().query(ContactsContract.Data.CONTENT_URI,
                 PROJECTION,
                 Utils.joinString(" AND ",
@@ -223,9 +223,9 @@ public class ContactManager {
                                 phone != null ? ContactsContract.Data.DATA1 + " = " + DatabaseUtils.sqlEscapeString(phone) : null),
                         Utils.joinString(" OR ",
                                 ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE),
-                                ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)),
+                                ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE))/*,
                         ContactsContract.RawContacts.ACCOUNT_TYPE + "=" + DatabaseUtils.sqlEscapeString(GOOGLE_ACCOUNT_TYPE),
-                        ContactsContract.RawContacts.ACCOUNT_NAME + "=" + DatabaseUtils.sqlEscapeString(googleAccountName)),
+                        ContactsContract.RawContacts.ACCOUNT_NAME + "=" + DatabaseUtils.sqlEscapeString(googleAccountName)*/),
                 null, SQL_GENERAL_ORDER);
     }
 
@@ -612,7 +612,7 @@ public class ContactManager {
         executeOperations(context, ops);
 
         ContactRaw recipient = null;
-        Cursor cursor = getByEmailOrPhone(context, email, phone, googleAccountName);
+        Cursor cursor = getByEmailOrPhone(context, email, phone/*, googleAccountName*/);
         while(cursor.moveToNext() && (recipient == null || recipient.getRawId() != rawId)) {
             recipient = getRawContactFromCursor(context, cursor);
         }
@@ -624,7 +624,7 @@ public class ContactManager {
     public static ContactRaw insertOrUpdate(Context context, long contactId, long rawId, String firstName, String lastName, String phone, String email, Uri photoUri, String googleAccountName, boolean hasPeppermint) throws InvalidPhoneException, InvalidNameException, InvalidEmailException {
         // try to find the rawId by email or phone
         if(rawId <= 0 || contactId <= 0) {
-            Cursor cursor = getByEmailOrPhone(context, email, phone, googleAccountName);
+            Cursor cursor = getByEmailOrPhone(context, email, phone/*, googleAccountName*/);
             if(cursor.moveToNext()) {
                 contactId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data.CONTACT_ID));
                 rawId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Data.RAW_CONTACT_ID));

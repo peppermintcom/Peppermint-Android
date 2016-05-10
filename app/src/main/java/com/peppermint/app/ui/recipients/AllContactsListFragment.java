@@ -102,7 +102,7 @@ public class AllContactsListFragment extends ContactListFragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // dialog for unsupported SMS
+        // dialog for adding missing email
         mAddContactDialog = new AddEmailDialog(mActivity);
         mAddContactDialog.setPositiveButtonListener(new View.OnClickListener() {
             @Override
