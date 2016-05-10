@@ -105,7 +105,6 @@ public class ChatHeadGroupDisplayView extends DisplayView {
         public void run() {
             synchronized (ChatHeadGroupDisplayView.this) {
                 doLayout();
-                mDoLayoutScheduled = false;
             }
         }
     };
@@ -279,6 +278,9 @@ public class ChatHeadGroupDisplayView extends DisplayView {
 
     protected void doLayout() {
         Log.d(TAG, "doLayout() # State = " + mState);
+
+        mHandler.removeCallbacks(mDoLayoutRunnable);
+        mDoLayoutScheduled = false;
 
         final int viewWidth = getChatHeadViewWidth();
 
@@ -460,7 +462,9 @@ public class ChatHeadGroupDisplayView extends DisplayView {
         if(draggingChatHeadDisplayView == null) {
             // push selected chat to the top
             addChat(getSelectedChat());
+            doLayout();
             setSelected(getMainChatHeadDisplayView());
+            resetToSavedPosition(true);
         } else {
             final int displayViewIndex = mChatHeadDisplayViews.indexOf(draggingChatHeadDisplayView);
             if(displayViewIndex >= 0 && displayViewIndex != MAIN_CHAT_HEAD_INDEX) {
@@ -474,12 +478,6 @@ public class ChatHeadGroupDisplayView extends DisplayView {
                     setSelected(draggingChatHeadDisplayView);
                 }
             }
-        }
-
-        // shrink
-        if(draggingChatHeadDisplayView == null) {
-            resetToSavedPosition(true);
-        } else {
             snapTo(getViewPositionX(), getViewPositionY(), 0, 0, false);
         }
     }
