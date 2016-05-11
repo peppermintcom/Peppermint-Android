@@ -171,6 +171,10 @@ public class AllContactsListFragment extends ContactListFragment {
 
     @Override
     public void onDestroy() {
+        if(mAddContactDialog != null && mAddContactDialog.isShowing()) {
+            mAddContactDialog.dismiss();
+        }
+
         if(mActivity != null) {
             mActivity.getContentResolver().unregisterContentObserver(mContactsObserver);
         }
