@@ -19,7 +19,7 @@ import java.util.Set;
  */
 public class PermissionsPolicyEnforcer {
 
-    public static final int PERMISSION_REQUEST_CODE = 112;
+    public static final int PERMISSION_REQUEST_CODE = 113;
 
     protected class RequiredPermission {
         String permission;
@@ -76,7 +76,7 @@ public class PermissionsPolicyEnforcer {
     }
 
     public boolean onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if(requestCode == PERMISSION_REQUEST_CODE) {
+        if(requestCode == PERMISSION_REQUEST_CODE && mPermissionsToAsk != null && grantResults != null) {
             if (grantResults.length == mPermissionsToAsk.size()) {
                 boolean permissionsGranted = true;
                 for(int i=0; i<grantResults.length && permissionsGranted; i++) {
