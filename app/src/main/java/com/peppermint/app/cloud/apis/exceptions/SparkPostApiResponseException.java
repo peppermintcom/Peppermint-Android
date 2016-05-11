@@ -9,6 +9,10 @@ public class SparkPostApiResponseException extends HttpResponseException {
     public SparkPostApiResponseException() {
     }
 
+    public SparkPostApiResponseException(int code) {
+        super(code);
+    }
+
     public SparkPostApiResponseException(int code, String detailMessage) {
         super(code, detailMessage);
     }

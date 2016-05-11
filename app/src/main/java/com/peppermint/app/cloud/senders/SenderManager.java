@@ -3,11 +3,11 @@ package com.peppermint.app.cloud.senders;
 import android.content.Context;
 import android.provider.ContactsContract;
 
-import com.peppermint.app.cloud.senders.exceptions.ElectableForQueueingException;
 import com.peppermint.app.cloud.senders.mail.gmail.GmailSender;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.events.SenderEvent;
+import com.peppermint.app.tracking.TrackerApi;
 import com.peppermint.app.tracking.TrackerManager;
 
 import java.util.HashMap;
@@ -40,6 +40,8 @@ import java.util.concurrent.TimeUnit;
  * </ul>
  */
 public class SenderManager extends SenderObject implements SenderUploadListener {
+
+    private static final String TAG = SenderManager.class.getSimpleName();
 
     private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
 
@@ -305,14 +307,12 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
         Message message = previousUploadTask.getMessage();
         Sender nextSender = previousUploadTask.getSender().getFailureChainSender();
 
-        if(nextSender == null || error instanceof ElectableForQueueingException) {
+        if(nextSender == null) {
             mTaskMap.remove(previousUploadTask.getId());
-            if (error instanceof ElectableForQueueingException) {
-                PeppermintEventBus.postSenderEvent(SenderEvent.EVENT_QUEUED, previousUploadTask, error);
-            } else {
-                mTrackerManager.logException(error);
-                PeppermintEventBus.postSenderEvent(SenderEvent.EVENT_ERROR, previousUploadTask, error);
+            if(error != null) {
+                mTrackerManager.track(TrackerApi.TYPE_EVENT, error, TAG);
             }
+            PeppermintEventBus.postSenderEvent(SenderEvent.EVENT_QUEUED, previousUploadTask, error);
         } else {
             send(message, nextSender, previousUploadTask);
         }

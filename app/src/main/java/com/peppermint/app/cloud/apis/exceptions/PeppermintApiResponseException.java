@@ -9,6 +9,10 @@ public class PeppermintApiResponseException extends HttpResponseException {
     public PeppermintApiResponseException() {
     }
 
+    public PeppermintApiResponseException(int code) {
+        super(code);
+    }
+
     public PeppermintApiResponseException(int code, String detailMessage) {
         super(code, detailMessage);
     }

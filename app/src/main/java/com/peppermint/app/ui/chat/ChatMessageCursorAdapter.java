@@ -448,6 +448,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
                 controller.setStatusSending(true);
                 break;
             case SenderEvent.EVENT_ERROR:
+            case SenderEvent.EVENT_QUEUED:
                 controller.setStatusError();
                 break;
             case SenderEvent.EVENT_NON_CANCELLABLE:
@@ -455,9 +456,6 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
                 break;
             case SenderEvent.EVENT_FINISHED:
                 controller.setStatusNormal();
-                break;
-            case SenderEvent.EVENT_QUEUED:
-                controller.setStatusError();
                 break;
         }
     }

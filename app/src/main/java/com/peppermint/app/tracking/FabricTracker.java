@@ -71,28 +71,11 @@ public class FabricTracker extends TrackerApi {
             return;
         }
 
-        try {
-            StringBuilder writer = new StringBuilder();
-            writer.append(log).append("\n");
-            for(boolean e = true; t != null; t = t.getCause()) {
-                String message = t.getLocalizedMessage();
-                message = message == null ? "" : message.replaceAll("(\r\n|\n|\f)", " ");
-                String causedBy = e ? "" : "Caused by: ";
-                writer.append(causedBy).append(t.getClass().getName()).append(": ").append(message).append("\n");
-                e = false;
-                StackTraceElement[] arr$ = t.getStackTrace();
-                int len$ = arr$.length;
-
-                for(int i$ = 0; i$ < len$; ++i$) {
-                    StackTraceElement element = arr$[i$];
-                    writer.append("\tat ").append(element.toString()).append("\n");
-                }
-            }
-
-            Crashlytics.log(writer.toString());
-        } catch (Exception ex) {
-            Crashlytics.log(log);
-            Crashlytics.logException(ex);
+        final String printableThrowable = TrackerApi.getThrowableString(t, log);
+        if(printableThrowable != null) {
+            Crashlytics.log(printableThrowable);
+        } else {
+            Crashlytics.log(log + " # " + t.getMessage());
         }
     }
 

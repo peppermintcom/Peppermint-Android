@@ -1,13 +1,19 @@
 package com.peppermint.app.cloud.apis.exceptions;
 
-import com.peppermint.app.cloud.senders.exceptions.ElectableForQueueingException;
-
 /**
  * Created by Nuno Luz on 28-10-2015.
  */
-public class PeppermintApiInvalidAccessTokenException extends PeppermintApiException implements ElectableForQueueingException {
+public class PeppermintApiInvalidAccessTokenException extends PeppermintApiResponseException {
 
     public PeppermintApiInvalidAccessTokenException() {
+    }
+
+    public PeppermintApiInvalidAccessTokenException(int code) {
+        super(code);
+    }
+
+    public PeppermintApiInvalidAccessTokenException(int code, String detailMessage) {
+        super(code, detailMessage);
     }
 
     public PeppermintApiInvalidAccessTokenException(String detailMessage) {

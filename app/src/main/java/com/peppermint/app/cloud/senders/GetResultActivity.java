@@ -22,8 +22,6 @@ import java.util.UUID;
  */
 public class GetResultActivity extends Activity {
 
-    private static final String SCREEN_ID = "Service-GetResult-";
-
     public static final String INTENT_ID = "GetResultActivity_Id";
     public static final String INTENT_BROADCAST_TYPE = "GetResultActivity_BroadcastType";
     public static final String INTENT_REQUESTCODE = "GetResultActivity_RequestCode";
@@ -52,8 +50,6 @@ public class GetResultActivity extends Activity {
             trackerManager.log("Intent data is null on GetResultActivity! ReqCode=" + mRequestCode + " BroadcastType=" + mBroadcastType + " UUID=" + mUuid);
             return;
         }
-
-        trackerManager.trackScreenView(SCREEN_ID + i.getAction());
 
         startActivityForResult(i, mRequestCode);
     }

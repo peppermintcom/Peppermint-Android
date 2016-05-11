@@ -1,13 +1,19 @@
 package com.peppermint.app.cloud.apis.exceptions;
 
-import com.peppermint.app.cloud.senders.exceptions.ElectableForQueueingException;
-
 /**
  * Created by Nuno Luz on 28-01-2016.
  */
-public class PeppermintApiTooManyRequestsException extends PeppermintApiException implements ElectableForQueueingException {
+public class PeppermintApiTooManyRequestsException extends PeppermintApiResponseException {
 
     public PeppermintApiTooManyRequestsException() {
+    }
+
+    public PeppermintApiTooManyRequestsException(int code) {
+        super(code);
+    }
+
+    public PeppermintApiTooManyRequestsException(int code, String detailMessage) {
+        super(code, detailMessage);
     }
 
     public PeppermintApiTooManyRequestsException(String detailMessage) {

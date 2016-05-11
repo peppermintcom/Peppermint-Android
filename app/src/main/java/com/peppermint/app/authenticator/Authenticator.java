@@ -20,7 +20,6 @@ import com.peppermint.app.cloud.apis.data.JWTsResponse;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiResponseException;
-import com.peppermint.app.cloud.apis.exceptions.PeppermintApiTooManyRequestsException;
 import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.utils.Utils;
@@ -96,6 +95,7 @@ class Authenticator extends AbstractAccountAuthenticator {
             AuthenticationData data = mAuthenticatorUtils.getAccountData();
             try {
                 // google account setup
+                TrackerManager.getInstance(mContext).setUserEmail(data.getEmail());
                 mGoogleApi.setAccountName(data.getEmail());
                 final String accountPassword = mGoogleApi.renewAuthenticationToken();
 
@@ -132,7 +132,7 @@ class Authenticator extends AbstractAccountAuthenticator {
                 }
             } catch (PeppermintApiInvalidAccessTokenException e) {
                 Log.w(TAG, "Invalid credentials!", e);
-            } catch (PeppermintApiResponseException | PeppermintApiTooManyRequestsException e) {
+            } catch (PeppermintApiResponseException e) {
                 throw new NetworkErrorException(e);
             }
 
@@ -141,7 +141,6 @@ class Authenticator extends AbstractAccountAuthenticator {
             throw new RuntimeException(e);
         } catch (Throwable e) {
             TrackerManager.getInstance(mContext.getApplicationContext()).logException(e);
-
             final Bundle result = new Bundle();
             result.putString(AccountManager.KEY_ERROR_MESSAGE, e.getMessage());
             return result;

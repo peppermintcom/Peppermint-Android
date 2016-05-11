@@ -108,7 +108,7 @@ public class PeppermintApi extends BaseApi implements Serializable {
         super.processGenericExceptions(request, response);
 
         if(response.getCode() == 401) {
-            throw new PeppermintApiInvalidAccessTokenException(request.toString());
+            throw new PeppermintApiInvalidAccessTokenException(response.getCode(), request.toString());
         }
 
         if((response.getCode() / 100) != 2) {
@@ -134,7 +134,7 @@ public class PeppermintApi extends BaseApi implements Serializable {
 
         final HttpJSONResponse<MessageListResponse> response = executeRequest(requesterId, request, new HttpJSONResponse<>(mMessageListResponseParser), true);
         if(response.getCode() == 404) {
-            throw new PeppermintApiRecipientNoAppException();
+            throw new PeppermintApiRecipientNoAppException(response.getCode());
         }
         processGenericExceptions(request, response);
 
@@ -160,7 +160,7 @@ public class PeppermintApi extends BaseApi implements Serializable {
 
         final HttpJSONResponse<MessagesResponse> response = executeRequest(requesterId, request, new HttpJSONResponse<>(mMessagesResponseParser), true);
         if(response.getCode() == 404) {
-            throw new PeppermintApiRecipientNoAppException();
+            throw new PeppermintApiRecipientNoAppException(response.getCode());
         }
         processGenericExceptions(request, response);
 
@@ -248,10 +248,10 @@ public class PeppermintApi extends BaseApi implements Serializable {
 
         final HttpJSONResponse<JWTsResponse> response = executeRequest(requesterId, request, new HttpJSONResponse<>(mJWTsResponseParser), false);
         if(response.getCode() == 404) {
-            throw new PeppermintApiInvalidAccessTokenException(request.toString());
+            throw new PeppermintApiInvalidAccessTokenException(response.getCode(), request.toString());
         }
         if(response.getCode() == 429) {
-            throw new PeppermintApiTooManyRequestsException(request.toString());
+            throw new PeppermintApiTooManyRequestsException(response.getCode(), request.toString());
         }
         processGenericExceptions(request, response);
 
@@ -282,7 +282,7 @@ public class PeppermintApi extends BaseApi implements Serializable {
 
         final HttpJSONResponse<AccountsResponse> response = executeRequest(requesterId, request, new HttpJSONResponse<>(mAccountsResponseParser), false);
         if(response.getCode() == 409) {
-            throw new PeppermintApiAlreadyRegisteredException(request.toString());
+            throw new PeppermintApiAlreadyRegisteredException(response.getCode(), request.toString());
         }
         processGenericExceptions(request, response);
 
@@ -310,7 +310,7 @@ public class PeppermintApi extends BaseApi implements Serializable {
 
         final HttpResponse response = executeRequest(requesterId, request, new HttpResponse(), true);
         if(response.getCode() == 403) {
-            throw new PeppermintApiInvalidAccessTokenException(request.toString());
+            throw new PeppermintApiInvalidAccessTokenException(response.getCode(), request.toString());
         }
         processGenericExceptions(request, response);
 
@@ -334,7 +334,7 @@ public class PeppermintApi extends BaseApi implements Serializable {
 
         final HttpResponse response = executeRequest(requesterId, request, new HttpResponse(), true);
         if(response.getCode() == 404) {
-            throw new PeppermintApiInvalidAccessTokenException(request.toString());
+            throw new PeppermintApiInvalidAccessTokenException(response.getCode(), request.toString());
         }
         processGenericExceptions(request, response);
 
@@ -360,7 +360,7 @@ public class PeppermintApi extends BaseApi implements Serializable {
 
         final HttpJSONResponse<RecorderResponse> response = executeRequest(requesterId, request, new HttpJSONResponse<>(mRecorderResponseParser), false);
         if(response.getCode() == 409) {
-            throw new PeppermintApiAlreadyRegisteredException(request.toString());
+            throw new PeppermintApiAlreadyRegisteredException(response.getCode(), request.toString());
         }
         processGenericExceptions(request, response);
 

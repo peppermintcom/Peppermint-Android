@@ -424,6 +424,11 @@ public class HttpRequest implements Parcelable {
         return mEndpoint +
                 " [" + mRequestMethod + "] { URLPARAMS=" + mUrlParams +
                 ", HEADERPARAMS=" + mHeaderParams +
-                ", BODY=" + mBody + "}";
+                ", BODY=" + mBody +
+				", Cancelled=" + mCancelled +
+				", Method=" + (mRequestMethod == METHOD_GET ? "GET" :
+                    mRequestMethod == METHOD_POST ? "POST" :
+                            mRequestMethod == METHOD_PUT ? "PUT" :
+                                    mRequestMethod == METHOD_DELETE ? "DELETE" : mRequestMethod) + "}";
     }
 }

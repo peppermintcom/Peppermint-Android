@@ -14,7 +14,7 @@ import com.peppermint.app.cloud.senders.Sender;
 import com.peppermint.app.cloud.senders.SenderUploadListener;
 import com.peppermint.app.cloud.senders.SenderUploadTask;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
-import com.peppermint.app.cloud.senders.exceptions.TryAgainException;
+import com.peppermint.app.cloud.senders.exceptions.NoPlayServicesException;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.utils.DateContainer;
@@ -126,12 +126,12 @@ public class GmailSenderTask extends SenderUploadTask {
             throw e;
         } catch(GooglePlayServicesAvailabilityIOException|GooglePlayServicesAvailabilityException e) {
             // no google play services installed on device
-            throw new TryAgainException(getSender().getContext().getString(R.string.sender_msg_no_gplay), e);
+            throw new NoPlayServicesException();
         } catch(UserRecoverableAuthIOException|UserRecoverableAuthException e) {
             // recover by requesting permission to access the api
             throw e;
         } catch(IOException e) {
-            throw new NoInternetConnectionException(getSender().getContext().getString(R.string.sender_msg_no_internet), e);
+            throw new NoInternetConnectionException(e);
         }
     }
 

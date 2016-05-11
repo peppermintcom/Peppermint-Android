@@ -9,6 +9,10 @@ public class GoogleApiResponseException extends HttpResponseException {
     public GoogleApiResponseException() {
     }
 
+    public GoogleApiResponseException(int code) {
+        super(code);
+    }
+
     public GoogleApiResponseException(int code, String detailMessage) {
         super(code, detailMessage);
     }

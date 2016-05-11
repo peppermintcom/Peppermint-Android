@@ -4,7 +4,6 @@ import android.content.Context;
 import android.os.AsyncTask;
 
 import com.google.android.gms.auth.GoogleAuthException;
-import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.authenticator.AuthenticatorUtils;
 import com.peppermint.app.cloud.apis.GoogleApi;
@@ -14,7 +13,6 @@ import com.peppermint.app.cloud.apis.exceptions.GoogleApiNoAuthorizationExceptio
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
-import com.peppermint.app.cloud.senders.exceptions.TryAgainException;
 import com.peppermint.app.cloud.senders.mail.gmail.GmailSender;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.tracking.TrackerManager;
@@ -23,8 +21,6 @@ import com.peppermint.app.utils.Utils;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
-
-import javax.net.ssl.SSLException;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
@@ -79,7 +75,7 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
 
     protected void checkInternetConnection() throws NoInternetConnectionException {
         if(!Utils.isInternetAvailable(getContext()) || !Utils.isInternetActive(getContext())) {
-            throw new NoInternetConnectionException(getContext().getString(R.string.sender_msg_no_internet));
+            throw new NoInternetConnectionException();
         }
     }
 
@@ -94,15 +90,7 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
         try {
             execute();
         } catch (Throwable e) {
-            // hack to queue SSL errors
-            // some wifi networks require proxies that override security certificates
-            // this queues the message and retries sending after connection is established
-            // on some other network
-            if(e instanceof SSLException) {
-                mError = new TryAgainException(getContext().getString(R.string.sender_msg_secure_connection), e);
-            } else {
-                mError = e;
-            }
+            mError = e;
         }
         return null;
     }

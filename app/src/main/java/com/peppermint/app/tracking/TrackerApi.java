@@ -1,6 +1,9 @@
 package com.peppermint.app.tracking;
 
 import android.content.Context;
+import android.util.Log;
+
+import com.crashlytics.android.Crashlytics;
 
 /**
  * Created by Nuno Luz on 17-12-2015.
@@ -9,6 +12,8 @@ import android.content.Context;
  * concrete tracker/report/analytics features.
  */
 public abstract class TrackerApi {
+
+    private static final String TAG = TrackerApi.class.getSimpleName();
 
     /**
      * Represents a screen view event
@@ -108,5 +113,34 @@ public abstract class TrackerApi {
 
     public Context getApplicationContext() {
         return mApplicationContext;
+    }
+
+    public static String getThrowableString(Throwable t, String additionalMessage) {
+        try {
+            StringBuilder writer = new StringBuilder();
+            if(additionalMessage != null) {
+                writer.append(additionalMessage).append("\n");
+            }
+            for(boolean e = true; t != null; t = t.getCause()) {
+                String message = t.getLocalizedMessage();
+                message = message == null ? "" : message.replaceAll("(\r\n|\n|\f)", " ");
+                String causedBy = e ? "" : "Caused by: ";
+                writer.append(causedBy).append(t.getClass().getName()).append(": ").append(message).append("\n");
+                e = false;
+                StackTraceElement[] arr$ = t.getStackTrace();
+                int len$ = arr$.length;
+
+                for(int i$ = 0; i$ < len$; ++i$) {
+                    StackTraceElement element = arr$[i$];
+                    writer.append("\tat ").append(element.toString()).append("\n");
+                }
+            }
+
+            return writer.toString();
+        } catch (Exception ex) {
+            Log.e(TAG, "Unable to get printable throwable!", ex);
+            Crashlytics.logException(ex);
+            return null;
+        }
     }
 }

@@ -5,6 +5,8 @@ import android.content.Context;
 import com.peppermint.app.cloud.rest.HttpRequest;
 import com.peppermint.app.cloud.rest.HttpResponse;
 import com.peppermint.app.cloud.rest.HttpResponseException;
+import com.peppermint.app.tracking.TrackerApi;
+import com.peppermint.app.tracking.TrackerManager;
 
 import java.io.Serializable;
 import java.util.HashSet;
@@ -85,7 +87,7 @@ public class BaseApi implements Serializable {
         }
 
         // retry with new authentication token, if necessary
-        if(response.getException() == null && requiresAuthenticationToken && isAuthenticationTokenRenewalRequired(response)) {
+        if(requiresAuthenticationToken && isAuthenticationTokenRenewalRequired(response)) {
             request.setHeaderParam("Authorization", "Bearer " + renewAuthenticationToken());
             addPendingRequest(requesterId, request);
             try {
@@ -96,7 +98,12 @@ public class BaseApi implements Serializable {
         }
 
         if(response.getException() != null) {
+            TrackerManager.getInstance(mContext).track(TrackerApi.TYPE_EVENT, request.toString(), response.getException(), getClass().getSimpleName());
             throw new HttpResponseException(response.getException());
+        }
+
+        if(response.getCode() / 100 != 2) {
+            TrackerManager.getInstance(mContext).track(TrackerApi.TYPE_EVENT, "Code: " + response.getCode() + "\n" + request.toString(), getClass().getSimpleName());
         }
 
         return response;

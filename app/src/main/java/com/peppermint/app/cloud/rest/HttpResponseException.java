@@ -10,6 +10,11 @@ public class HttpResponseException extends RuntimeException {
     public HttpResponseException() {
     }
 
+    public HttpResponseException(int code) {
+        super("Code " + code);
+        this.mResponseCode = code;
+    }
+
     public HttpResponseException(int code, String detailMessage) {
         super("Code " + code + ": " + detailMessage);
         this.mResponseCode = code;

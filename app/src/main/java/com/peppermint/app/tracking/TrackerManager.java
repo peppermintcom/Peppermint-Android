@@ -77,6 +77,24 @@ public class TrackerManager extends TrackerApi {
         }
     }
 
+    public void track(int type, Throwable t, String category) {
+        final String printableThrowable = TrackerApi.getThrowableString(t, null);
+        if(printableThrowable != null) {
+            track(type, printableThrowable, category);
+        } else {
+            track(type, t.getMessage(), category);
+        }
+    }
+
+    public void track(int type, String log, Throwable t, String category) {
+        final String printableThrowable = TrackerApi.getThrowableString(t, null);
+        if(printableThrowable != null) {
+            track(type, log + "\n\n" + printableThrowable, category);
+        } else {
+            track(type, log + "\n\n" + t.getMessage(), category);
+        }
+    }
+
     @Override
     public void logException(Throwable t) {
         for(TrackerApi tracker : mTrackers) {

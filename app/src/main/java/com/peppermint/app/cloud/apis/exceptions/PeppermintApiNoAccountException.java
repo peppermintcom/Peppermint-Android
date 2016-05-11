@@ -1,11 +1,9 @@
 package com.peppermint.app.cloud.apis.exceptions;
 
-import com.peppermint.app.cloud.senders.exceptions.ElectableForQueueingException;
-
 /**
  * Created by Nuno Luz on 28-10-2015.
  */
-public class PeppermintApiNoAccountException extends PeppermintApiException implements ElectableForQueueingException {
+public class PeppermintApiNoAccountException extends Exception {
 
     public PeppermintApiNoAccountException() {
     }

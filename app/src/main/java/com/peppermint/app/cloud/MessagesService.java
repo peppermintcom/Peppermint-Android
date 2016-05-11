@@ -33,6 +33,7 @@ import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.cloud.senders.SenderSupportListener;
 import com.peppermint.app.cloud.senders.SenderSupportTask;
 import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
+import com.peppermint.app.cloud.senders.exceptions.NoPlayServicesException;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ContactManager;
 import com.peppermint.app.data.DatabaseHelper;
@@ -57,6 +58,8 @@ import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import javax.net.ssl.SSLException;
 
 import me.leolin.shortcutbadger.ShortcutBadger;
 
@@ -423,13 +426,18 @@ public class MessagesService extends Service {
 
         switch (event.getType()) {
             case SenderEvent.EVENT_ERROR:
-                Toast.makeText(this, String.format(getString(R.string.sender_msg_send_error), event.getSenderTask().getMessage().getChatParameter().getTitle()), Toast.LENGTH_SHORT).show();
             case SenderEvent.EVENT_QUEUED:
-                if (event.getError().getMessage() != null) {
-                    if(event.getError() instanceof GoogleApiNoAuthorizationException) {
+                if (event.getError() != null) {
+                    if(event.getError() instanceof NoInternetConnectionException) {
+                        Toast.makeText(this, R.string.sender_msg_no_internet, Toast.LENGTH_LONG).show();
+                    } else if(event.getError() instanceof SSLException) {
+                        Toast.makeText(this, R.string.sender_msg_secure_connection, Toast.LENGTH_LONG).show();
+                    } else if(event.getError() instanceof GoogleApiNoAuthorizationException) {
                         Toast.makeText(this, R.string.sender_msg_unable_to_send_permissions, Toast.LENGTH_LONG).show();
+                    } else if(event.getError() instanceof NoPlayServicesException) {
+                        Toast.makeText(this, R.string.sender_msg_no_gplay, Toast.LENGTH_LONG).show();
                     } else {
-                        Toast.makeText(this, event.getError().getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, String.format(getString(R.string.sender_msg_send_error), event.getSenderTask().getMessage().getChatParameter().getTitle()), Toast.LENGTH_LONG).show();
                     }
                 }
                 break;
