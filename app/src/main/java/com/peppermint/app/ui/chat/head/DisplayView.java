@@ -44,6 +44,7 @@ public class DisplayView<T extends View> implements Display.OnDisplaySizeObtaine
     // views
     protected boolean mTouchable = false;
     protected boolean mVisible = false;
+    protected boolean mInitialized = false;
     protected T mView;
     protected WindowManager.LayoutParams mViewLayoutParams, mViewOriginalLayoutParams;
 
@@ -151,6 +152,8 @@ public class DisplayView<T extends View> implements Display.OnDisplaySizeObtaine
     }
 
     public void init() {
+        mInitialized = true;
+
         if(mDisplay.isGotSize()) {
             onDisplaySizeObtained(0, 0, mDisplay.getDisplayWidth(), mDisplay.getDisplayHeight());
         }
@@ -160,6 +163,12 @@ public class DisplayView<T extends View> implements Display.OnDisplaySizeObtaine
     public void deinit() {
         mDisplay.removeOnDisplaySizeObtainedListener(this);
         hide();
+
+        mInitialized = false;
+    }
+
+    public boolean isInitialized() {
+        return mInitialized;
     }
 
     // VIEWS

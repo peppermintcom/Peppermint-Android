@@ -182,18 +182,15 @@ public class ChatHeadService extends Service {
         PeppermintEventBus.registerMessages(this);
 
         this.mDisplay = new Display(this);
-        mDisplay.init();
 
         mChatHeadView = new ChatHeadGroupDisplayView(this, mDisplay);
         mChatHeadView.addOnStateChangedListener(mOnStateChangeListener);
         mChatHeadView.setOnChatSelectedListener(mOnChatHeadSelectedListener);
-        mChatHeadView.init();
 
         mChatView = new ChatDisplayView(this, mDisplay);
         mChatView.addKeyEventInterceptor(mOnKeyListener);
         // -2px to make sure there's no visible space
         mChatView.setTopMargin(mChatHeadView.getExpandedHeight() - 2);
-        mChatView.init();
 
         registerReceiver(mHomeAppsReceiver, mHomeAppsIntentFilter);
 
@@ -221,6 +218,14 @@ public class ChatHeadService extends Service {
     private boolean refreshChatHeadController() {
         if(needsToStop()) {
             return false;
+        }
+
+        mDisplay.init();
+        if(!mChatView.isInitialized()) {
+            mChatView.init();
+        }
+        if(!mChatHeadView.isInitialized()) {
+            mChatHeadView.init();
         }
 
         if(isVisible() && mVisibleActivities.size() <= 0) {
