@@ -63,9 +63,16 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
         @Override
         protected void onPostExecute(Cursor cursor) {
+            if(getContext() == null) {
+                if(cursor != null) {
+                    cursor.close();
+                }
+                return;
+            }
+
             if(mAdapter == null) {
                 mAdapter = new ChatMessageCursorAdapter(getContext(), getMessagesServiceManager(),
-                        getPlayerServiceManager(), cursor, getDatabase(), TrackerManager.getInstance(getContext().getApplicationContext()));
+                        getPlayerServiceManager(), cursor, getDatabase(), TrackerManager.getInstance(getContext()));
                 mAdapter.setExclamationClickListener(new ChatMessageCursorAdapter.ExclamationClickListener() {
                     @Override
                     public void onClick(View v, long messageId) {
@@ -105,7 +112,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
     private CustomListDialog mErrorDialog;
     private long mMessageIdWithError;
 
-    private void doAutoPlay() {
+    public void doAutoPlay() {
         if(mChat == null || !getMessagesServiceManager().isBound() || !getPlayerServiceManager().isBound() ||
                 mAutoPlayMessageId <= 0) {
             return;
@@ -126,6 +133,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
         if(chosenMessage != null) {
             mListView.setSelection(chosenIndex);
+            getMessagesServiceManager().markAsPlayed(chosenMessage);
             getPlayerServiceManager().play(chosenMessage, 0);
         }
     }

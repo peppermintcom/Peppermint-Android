@@ -70,6 +70,9 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
                 SeekBar seekBar = (SeekBar) this.mRootView.findViewById(R.id.seekBar);
                 startPercent = seekBar.getProgress();
             }
+            if(mMessage.isReceived() && mMessagesServiceManager.isBound()) {
+                mMessagesServiceManager.markAsPlayed(mMessage);
+            }
             mPlayerServiceManager.play(mMessage, startPercent);
         }
 
@@ -385,10 +388,6 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
         if(cursor.moveToPrevious()) {
             prevMessage = getMessage(cursor);
             cursor.moveToNext();
-        }
-
-        if(message.isReceived() && mMessagesServiceManager.isBound()) {
-            mMessagesServiceManager.markAsPlayed(message);
         }
 
         if(view.getTag() != null) {
