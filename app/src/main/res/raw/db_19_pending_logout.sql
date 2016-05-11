@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS tbl_pending_logout (pending_logout_id INTEGER PRIMARY KEY AUTOINCREMENT, account_server_id varchar(255), device_server_id varchar(255));

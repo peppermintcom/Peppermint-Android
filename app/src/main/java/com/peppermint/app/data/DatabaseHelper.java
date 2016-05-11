@@ -239,5 +239,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 				}
 			}
 		}
+
+		if(_oldVersion < 19) {
+			Log.d(TAG, "Updating Database: v19 Pending Logout...");
+
+			try {
+				execSQLScript(R.raw.db_19_pending_logout, _db);
+			} catch (Exception e) {
+				TrackerManager.getInstance(mContext).logException(e);
+			}
+		}
 	}
 }

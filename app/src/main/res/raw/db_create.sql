@@ -1,4 +1,6 @@
 -- Tables
+CREATE TABLE IF NOT EXISTS tbl_pending_logout (pending_logout_id INTEGER PRIMARY KEY AUTOINCREMENT, account_server_id varchar(255), device_server_id varchar(255), auth_token text);
+
 CREATE TABLE IF NOT EXISTS tbl_chat (chat_id INTEGER PRIMARY KEY AUTOINCREMENT, title varchar(255), last_message_ts varchar(19));
 
 CREATE TABLE IF NOT EXISTS tbl_recipient (recipient_id INTEGER PRIMARY KEY AUTOINCREMENT, droid_contact_data_id bigint, droid_contact_raw_id bigint, droid_contact_id bigint, display_name varchar(255), via varchar(255), mimetype varchar(255), photo_uri text, added_ts varchar(19) NOT NULL, is_peppermint int default 0);

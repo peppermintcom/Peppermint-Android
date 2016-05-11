@@ -126,4 +126,8 @@ public class BaseApi implements Serializable {
     protected void processGenericExceptions(final HttpRequest request, final HttpResponse response) throws Exception {
         /* implement on sub-class */
     }
+
+    public void setAuthenticationToken(final String authenticationToken) {
+        this.mAuthToken = authenticationToken;
+    }
 }

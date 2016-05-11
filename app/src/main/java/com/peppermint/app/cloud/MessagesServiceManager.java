@@ -159,7 +159,20 @@ public class MessagesServiceManager {
     }
 
     public boolean cancel() {
-        return mService.cancel();
+        if(mService != null) {
+            return mService.cancel();
+        }
+
+        Intent intent = new Intent(mContext, MessagesService.class);
+        intent.setAction(MessagesService.ACTION_CANCEL);
+        mContext.startService(intent);
+        return true;
+    }
+
+    public void doPendingLogouts() {
+        Intent intent = new Intent(mContext, MessagesService.class);
+        intent.setAction(MessagesService.ACTION_DO_PENDING_LOGOUTS);
+        mContext.startService(intent);
     }
 
     public boolean isSending(Message message) {

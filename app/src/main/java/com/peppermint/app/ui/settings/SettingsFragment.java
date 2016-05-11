@@ -1,7 +1,6 @@
 package com.peppermint.app.ui.settings;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -17,20 +16,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.authenticator.SignOutPeppermintTask;
-import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
+import com.peppermint.app.authenticator.AuthenticatorUtils;
+import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
 import com.peppermint.app.cloud.senders.SenderPreferences;
-import com.peppermint.app.cloud.senders.SenderSupportListener;
-import com.peppermint.app.cloud.senders.SenderSupportTask;
-import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
 import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
 import com.peppermint.app.utils.Utils;
 
-import javax.net.ssl.SSLException;
-
-public class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener, SenderSupportListener {
+public class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static final String SCREEN_ID = "Settings";
 
@@ -42,9 +36,6 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
     private CustomActionBarActivity mActivity;
     private SenderPreferences mPreferences;
-
-    private ProgressDialog mProgressDialog;
-    private SignOutPeppermintTask mSignOutTask;
 
     public SettingsFragment() {
     }
@@ -101,19 +92,16 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         findPreference(PREF_SIGN_OUT_KEY).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                showProgress();
-                mSignOutTask = new SignOutPeppermintTask(mActivity, SettingsFragment.this);
-                mSignOutTask.getIdentity().setTrackerManager(mActivity.getTrackerManager());
-                mSignOutTask.getIdentity().setPreferences(mPreferences);
-                mSignOutTask.execute((Void) null);
+                AuthenticatorUtils authenticatorUtils = new AuthenticatorUtils(mActivity);
+                try {
+                    authenticatorUtils.signOut();
+                } catch (PeppermintApiNoAccountException e) {
+                    /* just logout normally */
+                }
+                mActivity.finish();
                 return false;
             }
         });
-
-        mProgressDialog = new ProgressDialog(mActivity);
-        mProgressDialog.setMessage(getText(R.string.signing_out_));
-        mProgressDialog.setIndeterminate(true);
-        mProgressDialog.setCancelable(false);
     }
 
     @Override
@@ -140,13 +128,6 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
     @Override
     public void onDestroy() {
-        hideProgress();
-
-        if (mSignOutTask != null) {
-            mSignOutTask.cancel(true);
-            mSignOutTask = null;
-        }
-
         mPreferences.getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
 
         // custom dialog preferences can't listen to activity events
@@ -199,56 +180,4 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         }
     }
 
-    @Override
-    public void onSendingSupportStarted(SenderSupportTask supportTask) { /* nothing to do here */  }
-
-    @Override
-    public void onSendingSupportProgress(SenderSupportTask supportTask, float progressValue) { /* nothing to do here */ }
-
-    @Override
-    public void onSendingSupportCancelled(SenderSupportTask supportTask) {
-        hideProgress();
-    }
-
-    @Override
-    public void onSendingSupportFinished(SenderSupportTask supportTask) {
-        hideProgress();
-        mActivity.finish();
-    }
-
-    @Override
-    public void onSendingSupportError(SenderSupportTask supportTask, Throwable error) {
-        hideProgress();
-
-        if(error instanceof NoInternetConnectionException) {
-            Toast.makeText(mActivity, R.string.msg_no_internet_try_again, Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        if(error.getCause() != null && error.getCause() instanceof SSLException) {
-            Toast.makeText(mActivity, R.string.msg_secure_connection, Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        if(error instanceof PeppermintApiInvalidAccessTokenException) {
-            Toast.makeText(mActivity, R.string.msg_invalid_credentials, Toast.LENGTH_LONG).show();
-            mActivity.finish();
-            return;
-        }
-
-        Toast.makeText(mActivity, R.string.msg_authentication_error, Toast.LENGTH_LONG).show();
-        mActivity.getTrackerManager().logException(error);
-    }
-
-    private void showProgress() {
-        if(mProgressDialog != null) {
-            mProgressDialog.show();
-        }
-    }
-
-    private void hideProgress() {
-        if (mProgressDialog != null) {
-            mProgressDialog.dismiss();
-        }
-    }
 }

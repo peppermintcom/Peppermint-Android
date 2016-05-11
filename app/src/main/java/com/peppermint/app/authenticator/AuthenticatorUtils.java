@@ -5,10 +5,23 @@ import android.accounts.AccountManager;
 import android.accounts.OperationCanceledException;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Build;
+import android.preference.PreferenceManager;
 
+import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
+import com.peppermint.app.data.ContactData;
+import com.peppermint.app.data.ContactManager;
+import com.peppermint.app.data.DatabaseHelper;
+import com.peppermint.app.data.PendingLogout;
+import com.peppermint.app.data.PendingLogoutManager;
+import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.utils.Utils;
+
+import java.sql.SQLException;
+import java.util.Map;
 
 /**
  * Created by Nuno Luz on 02-02-2016.
@@ -124,6 +137,39 @@ public class AuthenticatorUtils {
             throw new PeppermintApiNoAccountException();
         }
 
+        // cancel all pending messages
+        final MessagesServiceManager messagesServiceManager = new MessagesServiceManager(mContext);
+        messagesServiceManager.cancel();
+
+        // remove all peppermint contacts
+        Map<Long, ContactData> peppermintContacts = ContactManager.getPeppermintContacts(mContext);
+        for(ContactData contactData : peppermintContacts.values()) {
+            ContactManager.deletePeppermint(mContext, contactData.getRawId(), null);
+        }
+
+        // clear app data and preferences
+        Utils.clearApplicationData(mContext);
+        clearSharedPreferences();
+        DatabaseHelper.clearInstance();
+
+        // register logout request to the backend
+        final PendingLogout pendingLogout = new PendingLogout(0,
+                mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_DEVICE_SERVER_ID),
+                mAccountManager.getUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_ACCOUNT_SERVER_ID),
+                peekAccessToken());
+
+        final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(mContext);
+        databaseHelper.lock();
+        try {
+            PendingLogoutManager.insert(DatabaseHelper.getInstance(mContext).getWritableDatabase(), pendingLogout);
+        } catch (SQLException e) {
+            mTrackerManager.logException(e);
+        }
+        databaseHelper.unlock();
+
+        messagesServiceManager.doPendingLogouts();
+
+        // remove the account
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             mAccountManager.removeAccountExplicitly(getAccount());
         } else {
@@ -132,9 +178,20 @@ public class AuthenticatorUtils {
             mAccountManager.setAuthToken(mAccount, AuthenticatorConstants.FULL_TOKEN_TYPE, null);
         }
 
+        // clear all notifications
         NotificationManager notificationManager =
                 (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancelAll();
+
+        // send global sign out event
+        PeppermintEventBus.postSignOutEvent();
+    }
+
+    private void clearSharedPreferences() {
+        final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        final SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.clear();
+        editor.commit();
     }
 
     /**

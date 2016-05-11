@@ -70,6 +70,9 @@ public class MessagesService extends Service {
 
     private static final String TAG = MessagesService.class.getSimpleName();
 
+    public static final String ACTION_CANCEL = "com.peppermint.app.cloud.MessagesService.CANCEL";
+    public static final String ACTION_DO_PENDING_LOGOUTS = "com.peppermint.app.cloud.MessagesService.DO_PENDING_LOGOUTS";
+
     // intent parameters to send a message
     public static final String PARAM_MESSAGE_SEND_RECORDING = TAG + "_paramMessageSendRecording";
     public static final String PARAM_MESSAGE_SEND_CHAT = TAG + "_paramMessageSendChat";
@@ -151,6 +154,7 @@ public class MessagesService extends Service {
     private SenderPreferences mPreferences;
     private SenderManager mSenderManager;
     private AuthenticatorUtils mAuthenticatorUtils;
+    private PendingLogoutPeppermintTask mPendingLogoutPeppermintTask;
 
     private MessagesSyncTask mMessagesSyncTask;
     private SenderSupportListener mMessagesSyncTaskListener = new SenderSupportListener() {
@@ -258,6 +262,7 @@ public class MessagesService extends Service {
             // the lack of internet connectivity
             try {
                 if (Utils.isInternetAvailable(MessagesService.this)) {
+                    doPendingLogouts();
                     doGcmRegistration();
 
                     List<Message> queued = MessageManager.getMessagesQueued(DatabaseHelper.getInstance(MessagesService.this).getReadableDatabase());
@@ -384,6 +389,12 @@ public class MessagesService extends Service {
                 }
             } else if(intent.hasExtra(PARAM_DO_SYNC) && intent.getBooleanExtra(PARAM_DO_SYNC, false)) {
                 runMessagesSync();
+            } else if(intent.getAction() != null) {
+                if(intent.getAction().compareTo(ACTION_CANCEL) == 0) {
+                    cancel(null);
+                } else if(intent.getAction().compareTo(ACTION_DO_PENDING_LOGOUTS) == 0) {
+                    doPendingLogouts();
+                }
             }
         }
 
@@ -417,6 +428,13 @@ public class MessagesService extends Service {
         mSenderManager.deinit();
 
         super.onDestroy();
+    }
+
+    private void doPendingLogouts() {
+        if(mPendingLogoutPeppermintTask == null || mPendingLogoutPeppermintTask.getStatus() == AsyncTask.Status.FINISHED) {
+            mPendingLogoutPeppermintTask = new PendingLogoutPeppermintTask(this);
+            mPendingLogoutPeppermintTask.execute((Void) null);
+        }
     }
 
     public void onEventMainThread(SenderEvent event) {
