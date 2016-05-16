@@ -23,6 +23,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
@@ -352,6 +353,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         mProgressDialog.setMessage(getText(R.string.authenticating_));
         mProgressDialog.setIndeterminate(true);
         mProgressDialog.setCancelable(true);
+        mProgressDialog.setCanceledOnTouchOutside(false);
         mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
             public void onCancel(DialogInterface dialog) {
                 mDoingAuth = false;
@@ -482,6 +484,17 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     public void onResume() {
         super.onResume();
         refreshAccountList();
+        if((mAuthenticationPeppermintTask != null && mAuthenticationPeppermintTask.getStatus() != AsyncTask.Status.FINISHED) ||
+                (mAuthenticationGoogleApiTask != null && mAuthenticationGoogleApiTask.getStatus() != AsyncTask.Status.FINISHED) ||
+                (mMessagesSyncTask != null && mMessagesSyncTask.getStatus() != AsyncTask.Status.FINISHED)) {
+            showProgress();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        hideProgress();
     }
 
     @Override
