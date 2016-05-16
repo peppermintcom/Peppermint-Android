@@ -1,7 +1,12 @@
 package com.peppermint.app;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
@@ -88,10 +93,13 @@ public class PlayerService extends Service {
         }
     }
 
+    private SensorManager mSensorManager;
     private MediaPlayer mMediaPlayer;
     private Message mMessage;
     private int mStartPercent = 0;
     private boolean mLoading = false;
+    private boolean mNearEar = false;
+    private boolean mForceReset = false;
 
     private Handler mHandler = new Handler();
 
@@ -169,6 +177,67 @@ public class PlayerService extends Service {
         }
     };
 
+    private SensorEventListener mProximitySensorEventListener = new SensorEventListener() {
+        @Override
+        public void onSensorChanged(SensorEvent event) {
+            if (event.sensor.getType() == Sensor.TYPE_PROXIMITY) {
+                if (event.values[0] == 0) {
+                    //near
+                    if(!mNearEar) {
+                        mNearEar = true;
+                        reloadMediaPlayer();
+                    }
+                } else {
+                    //far
+                    if(mNearEar) {
+                        mNearEar = false;
+                        reloadMediaPlayer();
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+            /* nothing to do here */
+        }
+    };
+
+    private void reloadMediaPlayer() {
+        if(mMediaPlayer == null) {
+            return;
+        }
+
+        final boolean wasPlaying = mMediaPlayer.isPlaying();
+        pause(mMessage, false);
+        mForceReset = true;
+
+        if(wasPlaying) {
+            final int startPercent = Math.round((mMediaPlayer.getCurrentPosition() - 2000f) / (float) mMediaPlayer.getDuration() * 100f);
+            play(mMessage, startPercent < 0 ? 0 : startPercent);
+        }
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        Sensor proximitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+
+        if(proximitySensor != null) {
+            mSensorManager.registerListener(mProximitySensorEventListener, proximitySensor, SensorManager.SENSOR_DELAY_NORMAL);
+        } else {
+            TrackerManager.getInstance(this).log("No Proximity Sensor Available!");
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        mSensorManager.unregisterListener(mProximitySensorEventListener);
+        super.onDestroy();
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent != null) {
@@ -197,7 +266,8 @@ public class PlayerService extends Service {
 
     private void play(Message message, int startPercent) {
         this.mStartPercent = startPercent;
-        if(mMessage == null || !message.equals(mMessage)) {
+        if(mForceReset || mMessage == null || !message.equals(mMessage)) {
+            mForceReset = false;
             mMessage = message;
 
             File dataSourceFile = message.getRecordingParameter().getValidatedFile();
@@ -218,7 +288,8 @@ public class PlayerService extends Service {
             }
 
             mMediaPlayer = new MediaPlayer();
-            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            mMediaPlayer.reset();
+            mMediaPlayer.setAudioStreamType(mNearEar ? AudioManager.STREAM_VOICE_CALL : AudioManager.STREAM_MUSIC);
             try {
                 mMediaPlayer.setDataSource(dataSourceUri);
             } catch (Throwable e) {
