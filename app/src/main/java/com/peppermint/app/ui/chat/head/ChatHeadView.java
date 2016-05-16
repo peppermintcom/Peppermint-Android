@@ -407,7 +407,7 @@ public class ChatHeadView extends RoundImageView {
 
             if(mTextBounds.width() > getLocalWidth()) {
                 boolean fromSpace = false;
-                int spaceIndex = displayName.indexOf(" ");
+                int spaceIndex = mTextList.size() < DEF_TEXT_MAX_LINES - 1 ? displayName.indexOf(" ") : -1;
                 if(spaceIndex >= 0) {
                     String displayNameWord = displayName.substring(0, spaceIndex);
                     mTextPaint.getTextBounds(displayNameWord, 0, displayNameWord.length(), mTextBounds);
@@ -421,7 +421,7 @@ public class ChatHeadView extends RoundImageView {
                     int cutoffIndex = getCutIndex(displayName);
                     String displayNameCut = displayName.substring(0, cutoffIndex);
                     mTextList.add(displayNameCut);
-                    displayName = displayName.substring(cutoffIndex + 1);
+                    displayName = displayName.substring(cutoffIndex);
                 }
             } else {
                 mTextList.add(displayName);
