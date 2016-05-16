@@ -1,0 +1,160 @@
+<resources>
+    <string name="send_email">E-Posta Gönder</string>
+
+    <string name="date_today">Bugün</string>
+    <string name="date_yesterday">Dün</string>
+
+    <string name="cancel">İptal</string>
+    <string name="yes">Evet</string>
+    <string name="no">Hayır</string>
+    <string name="ok">Tamam</string>
+
+    <string name="msg_must_authenticate_using_account">Google hesabınız ile giriş yapmanız gerekiyor.</string>
+    <string name="msg_database_error">Verilerinizi güncellemeye çalışırken bir hata oluştu. Bu durum devam ederse destek ekibine başvurun.</string>
+    <string name="msg_must_supply_mandatory_permissions">Bir veya daha fazla gerekli izin devre dışı. Lütfen gerekli izinleri onaylayarak tekrar deneyin.</string>
+
+
+    <!-- MENU DRAWER -->
+    <string name="drawer_menu_recent_contacts">Güncel Kişiler</string>
+    <string name="drawer_menu_all_contacts">Tüm Kişiler</string>
+    <string name="drawer_menu_settings">Ayarlar</string>
+    <string name="drawer_menu_help_feedback">Yardım &amp; Geri bildirim</string>
+    <string name="drawer_menu_about">Hakkında</string>
+
+    <string name="drawer_open_desc">Çekmece menü açık!</string>
+    <string name="drawer_closed_desc">Çekmece menü kapalı!</string>
+
+
+    <!-- CONTACTS LAYOUT -->
+    <string name="search_contacts">Kişileri Ara</string>
+    <string name="loading_contacts">Kişiler\nYükleniyor…</string>
+    <string name="add_contact">Kişi Ekle</string>
+    <string name="hold_record_release_send_p1">Kaydetmek için </string>   <!-- this sentence continues in hold_record_release_send_p2 -->
+    <string name="hold_record_release_send_p2">basılı tutup, göndermek için bırakın</string>
+
+    <string name="msg_no_contacts">Kayıtlı kişi bulunamadı</string>
+
+    <string name="msg_record_at_least">Gönderebilmek için lütfen en az 1 saniye kayıt yapın</string>
+    <string name="msg_record_error">Kayıt sırasında bir hata oluştu. Lütfen daha sonra tekrar deneyin. Hata devam ederse, destek ekibimizle irtibata geçin.</string>
+    <string name="msg_nomicdata_error">Mikrofondan veri alınamıyor. Lütfen diğer uygulamaların mikrofonu kullanmadığından emin olun.</string>
+    <string name="msg_exceeded_maxduration">Kayıt süresi limitine ulaşıldı. Kayıt durduruldu</string>
+    <string name="msg_no_external_storage">Harici depolama erişimi mevcut değil. Lütfen kullanılabilir olduğundan emin olun</string>
+    
+    <string name="msg_press_back_again_exit">Çıkmak için tekrar \"geri\" tuşuna basınız.</string>
+
+
+    <!-- CONTACTS LAYOUT: ITEM -->
+    <string name="via">kanal</string>
+
+    <!-- CONTACTS LAYOUT: RECORDING OVERLAY -->
+    <string name="swipe_to_cancel">İptal etmek için\nherhangi bir yere kaydırın.</string>
+    <string name="recording_for">%1$s için kaydediliyor</string>
+
+    <!-- CONTACTS LAYOUT: ADD EMAIL DIALOG -->
+    <string name="sending_via_email">E-Posta adresi ile gönder</string>
+    <string name="add_email">E-Posta Ekle</string>
+    <string name="no_email_address">Hiçbir e-posta adresi bulunamadı. Bu kişi için bir e-posta adresi giriniz.</string>
+
+    <!-- CONTACTS LAYOUT: TIPS -->
+    <string name="search_here_for_your_friend">Arkadaşlarınızı burada arayın.</string>
+    <string name="then_tap_and_hold_to_send">Sonra onlara bir sesli mesaj\ngöndermek için basılı tutun.</string>
+
+
+    <!-- NEW CONTACT LAYOUT -->
+    <string name="new_contact">Yeni Kişi</string>
+    <string name="first_name">İsim</string>
+    <string name="last_name">Soyisim</string>
+    <string name="save">Kaydet</string>
+    <string name="email">E-Posta</string>
+    <string name="take_photo">Fotoğraf çek</string>
+    <string name="choose_photo">Fotoğraf seç</string>
+    <string name="select_photo">Fotoğraf seç</string>
+    <string name="you_can_add_phone_contact_or_email">Yeni kişi kaydedin</string>
+
+    <string name="msg_invalid_contactname">Lütfen geçerli bir isim girin</string>
+    <string name="msg_insert_mail">Lütfen geçerli bir e-posta girin</string>
+    <string name="msg_insert_phone">Lütfen geçerli bir telefon girin</string>
+    <string name="msg_unable_addcontact">Kişi eklenemiyor. Lütfen tekrar deneyin</string>
+    <string name="msg_no_camera_app">Cihazınızda bir kamera uygulaması mevcut değil</string>
+    <string name="msg_external_storage_error">Harici depolama alanında kayıt oluşturulamıyor</string>
+    <string name="msg_contact_added">Kişi başarı ile kaydedildi!</string>
+
+
+    <!-- NOTIFICATIONS -->
+    <string name="recording">Kaydediyor…</string>
+    <string name="paused">Duraklatıldı</string>
+    <string name="you_have_installed_peppermint">Peppermint\'i yüklediniz</string>
+    <string name="now_send_your_first_audio_message">Şimdi ilk sesli mesajınızı gönderin!</string>
+    <string name="new_message">Peppermint ile yeni mesaj</string>
+    <string name="sent_you_a_message">size bir mesaj gönderdi</string>
+
+
+    <!-- SENDER MESSAGES -->
+    <string name="sender_msg_send_error">%1$s için Peppermint mesajı gönderilirken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.</string>
+    <string name="sender_msg_no_internet">İnternet bağlantısı mevcut değil. Peppermint mesajınızı bağlantı sağlanınca gönderecek.</string>
+    <string name="sender_msg_no_gplay">Google Play Servisleri mevcut değil. Mesaj gönderme işlemi sıraya alındı. Lütfen cihazınızda güncel Google Play Servislerinin yüklü olduğunu kontrol edin.</string>
+    <string name="sender_msg_secure_connection">Sunucular ile güvenli iletişim sağlanamadı. Mesaj gönderme işlemi sıraya alındı.</string>
+    <string name="sender_msg_unable_to_send_permissions">E-Posta mesajınız Gmail ile gönderilemedi. Lütfen tekrar deneyin ve gerekli izinleri verdiğinizden emin olun.</string>
+
+
+    <!-- AUTHENTICATION LAYOUT -->
+    <string name="peppermint_sign_in">Peppermint oturum açın</string>
+    <string name="pick_account">Bir Google hesabı seçin</string>
+    <string name="this_account_will_be_used">Bu hesap kimlik doğrulaması ve e-posta mesajları göndermek için kullanılacak</string>
+    <string name="no_google_accounts_found">Google hesabı bulunamadı!</string>
+    <string name="add_account_to_start"><u>Peppermint\'i kullanmaya başlamak için yeni bir Google hesabı ile oturum açın</u></string>
+    <string name="only_one_peppermint_account_supported">Sadece bir Peppermint hesabı kullanılabilir.</string>
+    <string name="authenticating_">Kimlik doğrulanıyor…</string>
+    <string name="syncing_messages_">Mesajlar senkronize ediliyor…</string>
+    <string name="msg_secure_connection">Sunucular ile güvenli iletişim sağlanamadı. Lütfen daha sonra tekrar deneyin.</string>
+    <string name="msg_authentication_error">Oturum açılamadı. Lütfen daha sonra tekrar deneyin.</string>
+    <string name="msg_google_api_denied">Devam etmek için Google sign-in gerekiyor.</string>
+    <string name="msg_invalid_credentials">Geçersiz kimlik bilgileri.</string>
+    <string name="msg_no_internet_try_again">İnternet bağlantısı sağlanamadı. Lütfen bağlantı ayarlarınızı kontrol edin.</string>
+    <string name="dont_want_to_use_account">Mevcut hesapları kullanmak istemiyor musunuz?</string>
+    <string name="sign_up_new_google_account"><u>Yeni bir Google hesabı ile oturum açın</u></string>
+    <string name="sign_in">Oturum aç</string>
+    <string name="cant_sign_in">Oturum açamıyor musunuz?</string>
+    <string name="contact_us_for_questions"><u> Sorularınız için bize ulaşın</u></string>
+
+
+    <!-- SETTINGS -->
+    <string name="pref_title_displayname">Adınız</string>
+    <string name="pref_summary_displayname">Alıcı mesajlarınız ile birlikte adınızı görecek. Lütfen bilinen adınızı girdiğinizden emin olun</string>
+
+    <string name="pref_sign_out_displayname">Oturumu kapat</string>
+    <string name="pref_sign_out_summary">Peppermint oturumunu kapat</string>
+
+    <string name="pref_chat_heads_displayname">Sohbet balonları</string>
+    <string name="pref_chat_heads_summary">Sohbet balonları uygulamaların üzerinde görüntülenecek ve bildirimlerin yerini alacak</string>
+
+    <string name="msg_insert_name">Lütfen geçerli bir isim giriniz</string>
+
+    <!-- SETTINGS: ACCOUNT AUTHENTICATOR -->
+    <string name="account_general_settings">Genel Ayarlar</string>
+    <string name="account_settings">Hesap Ayarları</string>
+    <string name="account_settings_desc">Adınız, sohbet balonları ve daha fazlası</string>
+
+
+    <!-- CHAT -->
+    <string name="sending">Gönderiliyor</string>
+    <string name="cancel_sending">Göndermeyi\niptal et</string>
+    <string name="cancelling">İptal ediliyor</string>
+    <string name="hold_to_record">Kayıt için basılı tutun</string>
+    <string name="retry">Terkar dene</string>
+    <string name="delete">Sil</string>
+    <string name="unable_to_send_message">Mesaj gönderilemiyor</string>
+    <string name="msg_unable_to_play">Mesaj açılmaya çalışılırken bir sorun oluştu.</string>
+
+
+    <!-- ABOUT LAYOUT -->
+    <string name="about">Hakkında</string>
+    <string name="privacy_policy_terms_of_use">Gizlilik Politikası\n&amp; Kullanım Şartları</string>
+    <string name="privacy_policy_terms_of_use_singleline">Gizlilik Politikası &amp; Kullanım Şartları</string>
+    <string name="version">Versiyon</string>
+
+
+    <!-- FEEDBACK SCREEN -->
+    <string name="send_us_audio_feedback_on_the_app">Sesli bir geri bildirim yapın</string>
+    <string name="or_email_us_for_support">ya da destek için e-posta atın</string>
+</resources>
