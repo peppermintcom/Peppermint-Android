@@ -1,0 +1,161 @@
+<resources>
+    <string name="send_email">Enviar Email</string>
+
+    <string name="date_today">Hoje</string>
+    <string name="date_yesterday">Ontem</string>
+
+    <string name="cancel">Cancelar</string>
+    <string name="yes">Sim</string>
+    <string name="no">Não</string>
+    <string name="ok">OK</string>
+
+    <string name="msg_must_authenticate_using_account">É necessária a autenticação com conta Google</string>
+    <string name="msg_database_error">Ocorreu um erro na sincronização de dados. Por favor contacte a equipa de suporte caso o erro persista.</string>
+    <string name="msg_must_supply_mandatory_permissions">Pelo menos uma das permissões necessárias não foram aceites. Por favor aceite as permissões e tente novamente.</string>
+
+
+    <!-- MENU DRAWER -->
+    <string name="drawer_menu_recent_contacts">Contactos Recentes</string>
+    <string name="drawer_menu_all_contacts">Todos os Contactos</string>
+    <string name="drawer_menu_settings">Definições</string>
+    <string name="drawer_menu_help_feedback">Ajuda &amp; Opinião</string>
+    <string name="drawer_menu_about">Sobre</string>
+
+    <string name="drawer_open_desc">O menu está aberto!</string>
+    <string name="drawer_closed_desc">O menu está fechado!</string>
+
+
+    <!-- CONTACTS LAYOUT -->
+    <string name="search_contacts">Procurar Contactos</string>
+    <string name="loading_contacts">A Carregar\nContactos…</string>
+    <string name="add_contact">Adicionar Contacto</string>
+    <string name="hold_record_release_send_p1">Manter pressionado </string>   <!-- this sentence continues in hold_record_release_send_p2 -->
+    <string name="hold_record_release_send_p2">para gravar, soltar para enviar</string>
+
+    <string name="msg_no_contacts">Não foram encontrados contactos</string>
+
+    <string name="msg_record_at_least">Por favor grave durante pelo menos 1 segundo antes de enviar</string>
+    <string name="msg_record_error">Ocorreu um erro ao efectuar a gravação. Se o erro persistir, por favor contacte a nossa equipa de suporte.</string>
+    <string name="msg_nomicdata_error">Não foi possível obter dados do microfone. Por favor verifique que o mesmo não está a ser usado por outra aplicação.</string>
+    <string name="msg_exceeded_maxduration">A duração máxima para uma gravação foi atingida. A gravação foi concluída</string>
+    <string name="msg_no_external_storage">Sem acesso ao sistema de armazenamento de dados. Por favor verifique que o mesmo está disponível</string>
+
+    <string name="msg_press_back_again_exit">Para sair, pressione \"voltar\" novamente.</string>
+
+
+    <!-- CONTACTS LAYOUT: ITEM -->
+    <string name="via">via</string>
+
+    <!-- CONTACTS LAYOUT: RECORDING OVERLAY -->
+    <string name="swipe_to_cancel">Deslize e solte\npara cancelar</string>
+    <string name="recording_for">A gravar para %1$s</string>
+
+    <!-- CONTACTS LAYOUT: ADD EMAIL DIALOG -->
+    <string name="sending_via_email">A enviar via Email</string>
+    <string name="add_email">Adicionar Email</string>
+    <string name="no_email_address">Nenhum email encontrado. Por favor adicione um email para este contacto.</string>
+
+    <!-- CONTACTS LAYOUT: TIPS -->
+    <string name="search_here_for_your_friend">Procure aqui pelo seu contacto.</string>
+    <string name="then_tap_and_hold_to_send">Depois pressione e mantenha\npara gravar e enviar uma mensagem de voz.</string>
+
+
+    <!-- NEW CONTACT LAYOUT -->
+    <string name="new_contact">Novo contacto</string>
+    <string name="first_name">Nome</string>
+    <string name="last_name">Apelido</string>
+    <string name="save">Guardar</string>
+    <string name="email">Email</string>
+    <string name="take_photo">Usar Câmera</string>
+    <string name="choose_photo">Escolher Imagem</string>
+    <string name="select_photo">Nova Fotografia</string>
+    <string name="you_can_add_phone_contact_or_email">Por favor adicione um email</string>
+
+    <string name="msg_invalid_contactname">Por favor insire um nome e apelido válidos</string>
+    <string name="msg_insert_mail">Por favor insira um email válido</string>
+    <string name="msg_insert_phone">Por favor insira um contacto telefónico válido</string>
+    <string name="msg_unable_addcontact">Não foi possível adicionar o contacto.</string>
+    <string name="msg_no_camera_app">O seu dispositivo não possui uma aplicação que permita a utilização da câmera</string>
+    <string name="msg_external_storage_error">Não foi possível guardar a imagem na unidade de armazenamento externo</string>
+    <string name="msg_contact_added">Contacto adicionado com sucesso!</string>
+
+
+    <!-- NOTIFICATIONS -->
+    <string name="recording">A Gravar…</string>
+    <string name="paused">Em Pausa</string>
+    <string name="you_have_installed_peppermint">Acabou de instalar o Peppermint</string>
+    <string name="now_send_your_first_audio_message">Envie agora a sua primeira messagem de voz!</string>
+    <string name="new_message">Nova Mensagem no Peppermint</string>
+    <string name="sent_you_a_message">enviou-lhe uma mensagem</string>
+
+
+    <!-- SENDER MESSAGES -->
+    <string name="sender_msg_send_error">Ocorreu um erro ao enviar a mensagem de voz para %1$s. Por favor tente novamente.</string>
+    <string name="sender_msg_no_internet">Sem ligação à Internet. O Peppermint tentará enviar a mensagem quando a ligação for re-estabelecida.</string>
+    <string name="sender_msg_no_gplay">Os serviços Google Play não estão disponíveis. As suas mensagens serão guardadas para posterior envio. Por favor verifique que possui os serviços Google Play instalados e actualizados.</string>
+    <string name="sender_msg_secure_connection">Não foi possível estabelecer uma ligação segura ao servidor Peppermint. As suas mensagens serão guardadas para posterior envio.</string>
+    <string name="sender_msg_unable_to_send_permissions">Não foi possível enviar o seu email através do Gmail. Por favor tente novamente e aceite as permissões requisitadas.</string>
+
+
+    <!-- AUTHENTICATION LAYOUT -->
+    <string name="peppermint_sign_in">Iniciar Sessão no Peppermint</string>
+    <string name="pick_account">Escolha uma Conta Google</string>
+    <string name="this_account_will_be_used">Esta conta será usada para autenticação e envio de mensagens através de email</string>
+    <string name="no_google_accounts_found">Não foram encontradas contas Google no dispositivo!</string>
+    <string name="add_account_to_start"><u>Autentique-se com uma nova conta Google para começar a usar o Peppermint</u></string>
+    <string name="only_one_peppermint_account_supported">Apenas uma conta Peppermint é permitida de cada vez.</string>
+    <string name="authenticating_">A Autenticar…</string>
+    <string name="syncing_messages_">A Sincronizar Mensagens…</string>
+    <string name="msg_secure_connection">Não foi possível estabelecer uma ligação segura ao servidor. Por favor tente novamente mais tarde.</string>
+    <string name="msg_authentication_error">Não foi possível concluír o processo de autenticação. Por favor tente novamente mais tarde.</string>
+    <string name="msg_google_api_denied">A autenticação com uma conta Google é necessária para continuar.</string>
+    <string name="msg_invalid_credentials">Credenciais inválidas.</string>
+    <string name="msg_no_internet_try_again">Sem ligação à Internet. Por favor verifique a sua ligação e tente novamente.</string>
+    <string name="dont_want_to_use_account">Não quer usar nenhuma destas contas?</string>
+    <string name="sign_up_new_google_account"><u>Autentique-se com uma Nova Conta Google</u></string>
+    <string name="sign_in">Iniciar Sessão</string>
+    <string name="cant_sign_in">Não consegue autenticar-se?</string>
+    <string name="contact_us_for_questions"><u>Contacte-nos se tiver mais questões</u></string>
+
+
+    <!-- SETTINGS -->
+    <string name="pref_title_displayname">O seu nome</string>
+    <string name="pref_summary_displayname">O seu nome é enviado para o destinatário juntamente com a mensagem. Recomendamos que insira o seu verdadeiro nome</string>
+
+    <string name="pref_sign_out_displayname">Terminar Sessão</string>
+    <string name="pref_sign_out_summary">Terminar a Sessão Peppermint</string>
+
+    <string name="pref_chat_heads_displayname">Ícone de Chat</string>
+    <string name="pref_chat_heads_summary">Um ícone de chat será desenhado por cima das aplicações</string>
+
+    <string name="msg_insert_name">Por favor insira um nome válido</string>
+
+    <!-- SETTINGS: ACCOUNT AUTHENTICATOR -->
+    <string name="account_general_settings">Definições Gerais</string>
+    <string name="account_settings">Definições da Conta</string>
+    <string name="account_settings_desc">O seu nome, ícone de chat, entre outros</string>
+
+
+    <!-- CHAT -->
+    <string name="sending">A Enviar</string>
+    <string name="cancel_sending">Cancelar\nEnvio</string>
+    <string name="cancelling">A Cancelar</string>
+    <string name="hold_to_record">Pressione para Gravar</string>
+    <string name="retry">Tentar Novamente</string>
+    <string name="delete">Apagar</string>
+    <string name="unable_to_send_message">Erro no Envio</string>
+    <string name="msg_unable_to_play">Ocorreu um erro ao reproduzir a mensagem.</string>
+
+
+    <!-- ABOUT LAYOUT -->
+    <string name="about">Sobre</string>
+    <string name="privacy_policy_terms_of_use">Política de Privacidade\n&amp; Condições de Serviço</string>
+    <string name="privacy_policy_terms_of_use_singleline">Política de Privacidade &amp; Condições de Serviço</string>
+    <string name="version">Versão</string>
+
+
+    <!-- FEEDBACK SCREEN -->
+    <string name="send_us_audio_feedback_on_the_app">Envie-nos a sua opinião numa mensagem de voz</string>
+    <string name="or_email_us_for_support">ou através de um email</string>
+
+</resources>
