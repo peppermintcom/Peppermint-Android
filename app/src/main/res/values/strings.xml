@@ -1,14 +1,27 @@
 <resources>
-    <string name="app_name">Peppermint</string>
-    <string name="peppermint_com">Peppermint.com</string>
-    <string name="google_app_id">peppermint-1077</string>
-    <string name="gcm_default_sender_id">621894935907</string>
+    <!-- BO: Keep English Only -->
+        <string name="app_name">Peppermint</string>
+        <string name="peppermint_com">Peppermint.com</string>
+        <string name="google_app_id">peppermint-1077</string>
+        <string name="gcm_default_sender_id">621894935907</string>
+
+        <string name="filename_message_from">Message-from-</string>
+    <!-- EO: Keep English Only -->
 
     <string name="send_email">Send Email</string>
-    <string name="filename_message_from">Message-from-</string>
 
     <string name="date_today">Today</string>
     <string name="date_yesterday">Yesterday</string>
+
+    <string name="cancel">Cancel</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="ok">OK</string>
+
+    <string name="msg_must_authenticate_using_account">You must authenticate using a Google account</string>
+    <string name="msg_database_error">An error occurred while trying to update your data. Please contact the support team if this persists.</string>
+    <string name="msg_must_supply_mandatory_permissions">One or more of the required permissions are disabled. Please grant all required permissions and try again.</string>
+
 
     <!-- MENU DRAWER -->
     <string name="drawer_menu_recent_contacts">Recent Contacts</string>
@@ -20,38 +33,61 @@
     <string name="drawer_open_desc">Drawer menu is open!</string>
     <string name="drawer_closed_desc">Drawer menu is closed!</string>
 
-    <!-- RECIPIENTS LAYOUT -->
+
+    <!-- CONTACTS LAYOUT -->
     <string name="search_contacts">Search for Contacts</string>
     <string name="loading_contacts">Loading\nContacts…</string>
     <string name="add_contact">Add Contact</string>
+    <string name="hold_record_release_send_p1">Hold </string>   <!-- this sentence continues in hold_record_release_send_p2 -->
+    <string name="hold_record_release_send_p2">to record, release to send</string>
+
     <string name="msg_no_contacts">No contacts have been found</string>
+
     <string name="msg_record_at_least">Please record at least 1 second before sending</string>
     <string name="msg_record_error">An error has occurred while recording. Please try again later. If the error persists, please contact our support team.</string>
-    <string name="msg_must_supply_mandatory_permissions">One or more of the required permissions are disabled. Please grant all required permissions and try again.</string>
     <string name="msg_nomicdata_error">Unable to get any audio from the microphone. Please ensure that no other apps are using it.</string>
     <string name="msg_exceeded_maxduration">Maximum recording time has been reached. Stopped recording</string>
-    <string name="msg_must_authenticate_using_account">You must authenticate using a Google account</string>
     <string name="msg_no_external_storage">No access to external storage. Please make sure it is available</string>
-    <string name="msg_press_back_again_exit">Press \"back\" again to exit.</string>
-    <string name="hold_record_release_send_p1">Hold </string>
-    <string name="hold_record_release_send_p2">to record, release to send</string>
-    <string name="msg_database_error">An error occurred while trying to update your data. Please contact the support team if this persists.</string>
 
-    <!-- RECIPIENTS LAYOUT: ITEM -->
+    <string name="msg_press_back_again_exit">Press \"back\" again to exit.</string>
+
+
+    <!-- CONTACTS LAYOUT: ITEM -->
     <string name="via">via</string>
 
-    <!-- RECIPIENTS LAYOUT: RECORDING OVERLAY -->
+    <!-- CONTACTS LAYOUT: RECORDING OVERLAY -->
     <string name="swipe_to_cancel">Swipe anywhere\nto cancel</string>
     <string name="recording_for">Recording for %1$s</string>
 
-    <!-- RECIPIENTS LAYOUT: ADD EMAIL DIALOGS -->
+    <!-- CONTACTS LAYOUT: ADD EMAIL DIALOG -->
     <string name="sending_via_email">Sending via Email</string>
     <string name="add_email">Add Email</string>
-    <string name="msg_no_email_address">No email address found. Please insert an email address for this contact.</string>
+    <string name="no_email_address">No email address found. Please insert an email address for this contact.</string>
 
-    <!-- RECIPIENTS LAYOUT: TIPS -->
+    <!-- CONTACTS LAYOUT: TIPS -->
     <string name="search_here_for_your_friend">Search here for your friend.</string>
     <string name="then_tap_and_hold_to_send">Then tap and hold\nto send them an audio message.</string>
+
+
+    <!-- NEW CONTACT LAYOUT -->
+    <string name="new_contact">New contact</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="save">Save</string>
+    <string name="email">Email</string>
+    <string name="take_photo">Take photo</string>
+    <string name="choose_photo">Choose photo</string>
+    <string name="select_photo">Select Photo</string>
+    <string name="you_can_add_phone_contact_or_email">Please add an email contact</string>
+
+    <string name="msg_invalid_contactname">Please enter a valid contact name</string>
+    <string name="msg_insert_mail">Please enter a valid email address</string>
+    <string name="msg_insert_phone">Please enter a valid phone number</string>
+    <string name="msg_unable_addcontact">Unable to add contact. Please try again later</string>
+    <string name="msg_no_camera_app">Your device doesn\'t have a camera app installed</string>
+    <string name="msg_external_storage_error">Unable to create photo file in external storage</string>
+    <string name="msg_contact_added">Contact added successfully!</string>
+
 
     <!-- NOTIFICATIONS -->
     <string name="recording">Recording…</string>
@@ -61,49 +97,19 @@
     <string name="new_message">New Message on Peppermint</string>
     <string name="sent_you_a_message">sent you a message</string>
 
-    <!-- CUSTOM VIEWS -->
-    <string name="cancel">Cancel</string>
-    <string name="yes">Yes</string>
-    <string name="no">No</string>
-    <string name="ok">OK</string>
 
     <!-- SENDER MESSAGES -->
-    <string name="sender_default_message">Here\'s my message from Peppermint.</string>
-    <string name="sender_default_mail_subject">I sent you an audio message</string>
+    <!-- BO: Keep English Only -->
+        <string name="sender_default_message">Here\'s my message from Peppermint.</string>
+        <string name="sender_default_mail_subject">I sent you an audio message</string>
+    <!-- EO: Keep English Only -->
 
     <string name="sender_msg_send_error">An error occurred while trying to send your Peppermint message to %1$s. Please try again later.</string>
     <string name="sender_msg_no_internet">No internet connection. Peppermint will send your message when you connect.</string>
     <string name="sender_msg_no_gplay">No Google play services available. The task of sending your record has been queued. Please make sure you have an up to date version of Google play services installed.</string>
     <string name="sender_msg_secure_connection">Could not establish a secure connection to the Peppermint server. The task of sending your record has been queued.</string>
-
     <string name="sender_msg_unable_to_send_permissions">Unable to send your email message through Gmail. Please retry and accept the required permissions.</string>
 
-    <!-- PREFERENCES -->
-    <string name="pref_title_displayname">Your name</string>
-    <string name="pref_summary_displayname">The receiver will see your name when receiving a message so you need to make sure it\'s your real name</string>
-    <string name="pref_title_gmailenabled">In-app Gmail</string>
-    <string name="pref_summary_gmailenabled">Send messages through Gmail without leaving the app (requires extra permissions)</string>
-    <string name="pref_title_emailcategory">Email</string>
-    <string name="sign_out_summary">Sign out from Peppermint</string>
-    <string name="chat_heads">Chat Heads</string>
-    <string name="chat_heads_summary">Chat heads will be drawn on top of apps and replace regular notifications</string>
-
-    <!-- NEW CONTACT LAYOUT -->
-    <string name="new_contact">New contact</string>
-    <string name="save">Save</string>
-    <string name="phone_number">Phone Number</string>
-    <string name="email">Email</string>
-    <string name="take_photo">Take photo</string>
-    <string name="choose_photo">Choose photo</string>
-    <string name="select_photo">Select Photo</string>
-    <string name="msg_invalid_contactname">Please enter a valid contact name</string>
-    <string name="msg_insert_mail">Please enter a valid email address</string>
-    <string name="msg_insert_phone">Please enter a valid phone number</string>
-    <string name="msg_unable_addcontact">Unable to add contact. Please try again later</string>
-    <string name="msg_no_camera_app">Your device doesn\'t have a camera app installed</string>
-    <string name="msg_external_storage_error">Unable to create photo file in external storage</string>
-    <string name="msg_contact_added">Contact added successfully!</string>
-    <string name="you_can_add_phone_contact_or_email">Please add an email contact</string>
 
     <!-- AUTHENTICATION LAYOUT -->
     <string name="peppermint_sign_in">Sign in to Peppermint</string>
@@ -125,25 +131,24 @@
     <string name="cant_sign_in">Can\'t sign in?</string>
     <string name="contact_us_for_questions"><u>Contact us for questions</u></string>
 
-    <!-- AUTHENTICATION/NEW CONTACT -->
-    <string name="first_name">First Name</string>
-    <string name="last_name">Last Name</string>
 
     <!-- SETTINGS -->
+    <string name="pref_title_displayname">Your name</string>
+    <string name="pref_summary_displayname">The receiver will see your name when receiving a message so you need to make sure it\'s your real name</string>
+
+    <string name="pref_sign_out_displayname">Sign Out</string>
+    <string name="pref_sign_out_summary">Sign out from Peppermint</string>
+
+    <string name="pref_chat_heads_displayname">Chat Heads</string>
+    <string name="pref_chat_heads_summary">Chat heads will be drawn on top of apps and replace regular notifications</string>
+
     <string name="msg_insert_name">Please enter a valid name</string>
-    <string name="sign_out">Sign Out</string>
-    <string name="signing_out_">Signing out…</string>
 
-    <!-- ABOUT LAYOUT -->
-    <string name="about">About</string>
-    <string name="privacy_policy_terms_of_use">Privacy Policy\n&amp; Terms of Use</string>
-    <string name="privacy_policy_terms_of_use_singleline">Privacy Policy &amp; Terms of Use</string>
-    <string name="version">Version</string>
-
-    <!-- ACCOUNT AUTHENTICATOR -->
+    <!-- SETTINGS: ACCOUNT AUTHENTICATOR -->
     <string name="account_general_settings">General Settings</string>
     <string name="account_settings">Account Settings</string>
-    <string name="account_settings_desc">Your name, message channels, and more</string>
+    <string name="account_settings_desc">Your name, chat heads, and more</string>
+
 
     <!-- CHAT -->
     <string name="sending">Sending</string>
@@ -155,18 +160,24 @@
     <string name="unable_to_send_message">Unable to Send Message</string>
     <string name="msg_unable_to_play">An error occurred while trying to play the message.</string>
 
-    <!-- CHAT LIST -->
-    <string name="loading_chats">Loading\\nConversations…</string>
-    <string name="msg_no_conversations">No conversations have been found</string>
-    <string name="chats">Conversations</string>
+
+    <!-- ABOUT LAYOUT -->
+    <string name="about">About</string>
+    <string name="privacy_policy_terms_of_use">Privacy Policy\n&amp; Terms of Use</string>
+    <string name="privacy_policy_terms_of_use_singleline">Privacy Policy &amp; Terms of Use</string>
+    <string name="version">Version</string>
+
 
     <!-- FEEDBACK SCREEN -->
-    <string name="or_email_us_for_support">or email us for support</string>
-    <string name="support_display_name">Peppermint Support</string>
-    <string name="support_audio_subject">Android feedback from email address</string>
-    <string name="support_text_subject">Feedback or question about Peppermint Android app</string>
-    <string name="support_email">support@peppermint.com</string>
-    <string name="support_text_body">\n\n\n\nNote regarding this feedback. Was provided by %1$s running %2$s with Peppermint v%3$s</string>
     <string name="send_us_audio_feedback_on_the_app">Send us audio feedback on the app</string>
+    <string name="or_email_us_for_support">or email us for support</string>
+
+    <!-- BO: Keep English Only -->
+        <string name="support_display_name">Peppermint Support</string>
+        <string name="support_audio_subject">Android feedback from email address</string>
+        <string name="support_text_subject">Feedback or question about Peppermint Android app</string>
+        <string name="support_email">support@peppermint.com</string>
+        <string name="support_text_body">\n\n\n\nNote regarding this feedback. Was provided by %1$s running %2$s with Peppermint v%3$s</string>
+    <!-- EO: Keep English Only -->
 
 </resources>

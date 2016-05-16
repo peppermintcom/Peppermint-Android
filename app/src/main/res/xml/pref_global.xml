@@ -11,11 +11,11 @@
 
     <com.peppermint.app.ui.settings.CustomCheckBoxPreference
         android:key="chatHeads"
-        android:title="@string/chat_heads"
-        android:summary="@string/chat_heads_summary" />
+        android:title="@string/pref_chat_heads_displayname"
+        android:summary="@string/pref_chat_heads_summary" />
 
     <com.peppermint.app.ui.settings.CustomPreference
         android:key="signOut"
-        android:title="@string/sign_out"
-        android:summary="@string/sign_out_summary" />
+        android:title="@string/pref_sign_out_displayname"
+        android:summary="@string/pref_sign_out_summary" />
 </PreferenceScreen>
