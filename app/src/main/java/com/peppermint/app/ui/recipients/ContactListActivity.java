@@ -7,10 +7,12 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -35,7 +37,9 @@ import com.peppermint.app.ui.base.CustomActionBarView;
 import com.peppermint.app.ui.base.NavigationItem;
 import com.peppermint.app.ui.base.NavigationItemSimpleAction;
 import com.peppermint.app.ui.base.activities.CustomActionBarDrawerActivity;
+import com.peppermint.app.ui.base.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.ui.base.dialogs.PopupDialog;
+import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
 import com.peppermint.app.ui.feedback.FeedbackActivity;
 import com.peppermint.app.ui.settings.SettingsActivity;
 import com.peppermint.app.utils.Utils;
@@ -45,6 +49,8 @@ import java.util.List;
 
 public class ContactListActivity extends CustomActionBarDrawerActivity implements SearchListBarView.OnSearchListener,
         OverlayManager.OverlayVisibilityChangeListener {
+
+    private static final int OVERLAY_PERMISSION_REQUEST_CODE = 121;
 
     protected static final int SEARCH_LISTENER_PRIORITY_FRAGMENT = 1;
     protected static final int SEARCH_LISTENER_PRIORITY_ACTIVITY = 2;
@@ -58,6 +64,8 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
     private boolean mHasSavedInstanceState = false;
     private boolean mIsDestroyed = false;
 
+    private CustomConfirmationDialog mOverlayPermissionDialog;
+
     // search tip popup
     private Handler mHandler = new Handler();
     private PopupDialog mSearchTipPopup;
@@ -70,7 +78,12 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
                 if(customActionBarView.getHeight() <= 0) {
                     mHandler.postDelayed(mSearchTipRunnable, 100);
                 } else {
-                    mSearchTipPopup.show(customActionBarView);
+                    if(!mPreferences.areChatHeadsEnabled() ||
+                            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(ContactListActivity.this))) {
+                        mOverlayPermissionDialog.show();
+                    } else {
+                        mSearchTipPopup.show(customActionBarView);
+                    }
                 }
             }
         }
@@ -178,6 +191,35 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
             }
         }
 
+        // dialog for overlay permission
+        mOverlayPermissionDialog = new CustomConfirmationDialog(this);
+        mOverlayPermissionDialog.setTitleText(R.string.enable_chat_heads);
+        mOverlayPermissionDialog.setMessageText(R.string.pref_chat_heads_summary);
+        mOverlayPermissionDialog.setPositiveButtonText(R.string.enable);
+        mOverlayPermissionDialog.setNegativeButtonText(R.string.not_now);
+        mOverlayPermissionDialog.setPositiveButtonListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(ContactListActivity.this)) {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:" + getPackageName()));
+                    startActivityForResult(intent, OVERLAY_PERMISSION_REQUEST_CODE);
+                } else {
+                    mPreferences.setChatHeadsEnabled(true);
+                    ChatHeadServiceManager.startAndEnable(ContactListActivity.this);
+                }
+                mOverlayPermissionDialog.dismiss();
+                mSearchTipPopup.show(getCustomActionBar());
+            }
+        });
+        mOverlayPermissionDialog.setNegativeButtonListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mOverlayPermissionDialog.dismiss();
+                mSearchTipPopup.show(getCustomActionBar());
+            }
+        });
+
         // inflate and init custom action bar view
         final CustomActionBarView customActionBarView = getCustomActionBar();
 
@@ -249,6 +291,21 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
         }
 
         getDrawerListView().setItemChecked(this.mTappedItemPosition, true);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // check the result of the overlay permission request
+        if(requestCode == OVERLAY_PERMISSION_REQUEST_CODE) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (Settings.canDrawOverlays(this)) {
+                    mPreferences.setChatHeadsEnabled(true);
+                    ChatHeadServiceManager.startAndEnable(ContactListActivity.this);
+                }
+            }
+        }
     }
 
     @Override
@@ -349,6 +406,8 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
     @Override
     protected void onDestroy() {
         mSearchListBarView.removeOnSearchListener(this);
+
+        mOverlayPermissionDialog.dismiss();
 
         mSearchTipPopup.setOnDismissListener(null);
         mSearchTipPopup.dismiss();

@@ -31,6 +31,9 @@
     <string name="add_contact">Adicionar Contacto</string>
     <string name="hold_record_release_send_p1">Manter pressionado </string>   <!-- this sentence continues in hold_record_release_send_p2 -->
     <string name="hold_record_release_send_p2">para gravar, soltar para enviar</string>
+    <string name="enable_chat_heads">Activar Ícone de Chat?</string>
+    <string name="enable">Activar</string>
+    <string name="not_now">Agora Não</string>
 
     <string name="msg_no_contacts">Não foram encontrados contactos</string>
 
@@ -126,7 +129,7 @@
     <string name="pref_sign_out_summary">Terminar a Sessão Peppermint</string>
 
     <string name="pref_chat_heads_displayname">Ícone de Chat</string>
-    <string name="pref_chat_heads_summary">Um ícone de chat será desenhado por cima das aplicações</string>
+    <string name="pref_chat_heads_summary">Um ícone de chat, que permite o acesso rápido aos contactos e mensagens mais recentes, será desenhado por cima das aplicações</string>
 
     <string name="msg_insert_name">Por favor insira um nome válido</string>
 

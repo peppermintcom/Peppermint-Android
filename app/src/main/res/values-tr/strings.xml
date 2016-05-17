@@ -31,6 +31,9 @@
     <string name="add_contact">Kişi Ekle</string>
     <string name="hold_record_release_send_p1">Kaydetmek için </string>   <!-- this sentence continues in hold_record_release_send_p2 -->
     <string name="hold_record_release_send_p2">basılı tutup, göndermek için bırakın</string>
+    <string name="enable_chat_heads">Sohbet Balonları Etkinleştirin?</string>
+    <string name="enable">Etkinleştirin</string>
+    <string name="not_now">Şimdi Değil</string>
 
     <string name="msg_no_contacts">Kayıtlı kişi bulunamadı</string>
 
