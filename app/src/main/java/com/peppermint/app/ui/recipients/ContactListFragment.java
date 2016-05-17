@@ -298,7 +298,14 @@ public abstract class ContactListFragment extends ListFragment implements
 
                 // if the user has gone through the sending process without
                 // discarding the recording, then clear the search filter
-                mSearchListBarView.clearSearch(true);
+                // delay so that there's some time to show the new chat activity
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        mSearchListBarView.clearSearch(true);
+                    }
+                }, 100);
+
 
                 return message;
             }
