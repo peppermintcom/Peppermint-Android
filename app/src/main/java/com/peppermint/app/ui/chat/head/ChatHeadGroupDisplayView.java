@@ -408,6 +408,13 @@ public class ChatHeadGroupDisplayView extends DisplayView {
         return -1;
     }
 
+    public void setChats(List<Chat> chatList) {
+        mChats.clear();
+        for(final Chat chat : chatList) {
+            addChat(chat);
+        }
+    }
+
     public void addChat(Chat chat) {
         int foundChatHeadIndex = getViewIndexForChat(chat);
         if(foundChatHeadIndex >= 0) {

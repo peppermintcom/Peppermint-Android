@@ -243,9 +243,7 @@ public class ChatHeadService extends Service {
             chatCursor.close();
 
             // reverse the order (push the most recent last)
-            for(Chat chat : chatList) {
-                mChatHeadView.addChat(chat);
-            }
+            mChatHeadView.setChats(chatList);
 
             // pre-select the main chat
             mChatHeadView.setSelected(mChatHeadView.getMainChatHeadDisplayView());
