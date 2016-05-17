@@ -21,7 +21,7 @@ import com.peppermint.app.utils.Utils;
  */
 public class HideDisplayView extends DisplayView<View> {
 
-    private static final int BOTTOM_MARGIN_DP = 10;
+    private static final int BOTTOM_MARGIN_DP = 30;
     private static final int INFLUENCE_RADIUS_DP = 50;
     private static final int VIEW_SIZE_DP = ChatHeadGroupDisplayView.CHAT_HEAD_SIZE_DP + 10;
 
