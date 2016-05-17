@@ -262,37 +262,13 @@ public class ChatHeadService extends Service {
 
     public void onEventMainThread(ReceiverEvent event) {
         if(event.getType() == ReceiverEvent.EVENT_RECEIVED) {
-            if(isVisible() && mVisibleActivities.size() <= 0) {
-                final SQLiteDatabase db = DatabaseHelper.getInstance(this).getReadableDatabase();
-                final Chat chat = event.getMessage().getChatParameter();
-                chat.setAmountUnopened(MessageManager.getUnopenedCountByChat(db, chat.getId()));
-                chat.setLastReceivedUnplayedId(MessageManager.getLastAutoPlayMessageIdByChat(db, chat.getId()));
-                mChatHeadView.addChat(chat);
-            } else {
-                mBinder.show();
-            }
+            mBinder.show();
         }
     }
 
     public void onEventMainThread(MessageEvent event) {
         if(event.getType() == MessageEvent.EVENT_MARK_PLAYED) {
-            if(needsToStop()) {
-                return;
-            }
-
-            final List<Chat> chatList = mChatHeadView.getChats();
-            if(chatList.size() > 0) {
-                final SQLiteDatabase db = DatabaseHelper.getInstance(this).getReadableDatabase();
-
-                for(Chat chat : chatList) {
-                    if(chat.getId() == event.getMessage().getChatId()) {
-                        chat.setAmountUnopened(MessageManager.getUnopenedCountByChat(db, chat.getId()));
-                        chat.setLastReceivedUnplayedId(MessageManager.getLastAutoPlayMessageIdByChat(db, chat.getId()));
-                    }
-                }
-            }
-
-            mChatHeadView.invalidate();
+            refreshChatHeadController();
         }
     }
 

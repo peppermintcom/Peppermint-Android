@@ -290,6 +290,8 @@ public class ChatHeadGroupDisplayView extends DisplayView {
         switch(mState) {
             case STATE_EXPANDED:
             case STATE_EXPANDING:
+                final Chat selectedChat = getSelectedChat();
+
                 for(int i=0; i<MAX_CHAT_HEADS; i++) {
                     final DisplayView<ChatHeadView> displayView = mChatHeadDisplayViews.get(MAX_CHAT_HEADS - 1 - i);
                     final int maxX = mDisplay.getDisplayWidth() - viewWidth;
@@ -298,9 +300,17 @@ public class ChatHeadGroupDisplayView extends DisplayView {
                     final ChatHeadView chatHeadView = mChatHeadDisplayViews.get(i).getView();
 
                     if(i < startsAt) {
+                        chatHeadView.setSelected(false);
                         chatHeadView.setChat(null);
                         chatHeadView.setVisibility(View.GONE);
                     } else {
+                        if(selectedChat != null) {
+                            if(mChats.get(j).equals(selectedChat)) {
+                                chatHeadView.setSelected(true);
+                            } else {
+                                chatHeadView.setSelected(false);
+                            }
+                        }
                         chatHeadView.setChat(mChats.get(j));
                         chatHeadView.setVisibility(View.VISIBLE);
                         j++;
@@ -321,6 +331,7 @@ public class ChatHeadGroupDisplayView extends DisplayView {
                     final Chat previousChat = chatHeadView.getChat();
 
                     if(i < startsAt) {
+                        chatHeadView.setSelected(false);
                         chatHeadView.setChat(null);
                         chatHeadView.setVisibility(View.GONE);
                     } else {
@@ -369,14 +380,22 @@ public class ChatHeadGroupDisplayView extends DisplayView {
         }
     }
 
-    public Chat getSelectedChat() {
+    private int getSelectedViewIndex() {
         for(int i=0; i < MAX_CHAT_HEADS; i++) {
             final ChatHeadView v = mChatHeadDisplayViews.get(i).getView();
             if(v.isSelected()) {
-                return v.getChat();
+                return i;
             }
         }
-        return null;
+        return -1;
+    }
+
+    public Chat getSelectedChat() {
+        int selectedViewIndex = getSelectedViewIndex();
+        if(selectedViewIndex < 0) {
+            return null;
+        }
+        return mChatHeadDisplayViews.get(selectedViewIndex).getView().getChat();
     }
 
     private int getViewIndexForChat(final Chat chat) {
@@ -399,6 +418,18 @@ public class ChatHeadGroupDisplayView extends DisplayView {
         // enforce the max. chat head amount
         if(mChats.size() > MAX_CHAT_HEADS) {
             mChats.remove(0);
+
+            // do not remove the selected chat if EXPANDED
+            int selectedViewIndex = getSelectedViewIndex();
+            Chat selectedChat = null;
+            if((mState == STATE_EXPANDING || mState == STATE_EXPANDED) && selectedViewIndex >= 0) {
+                selectedChat = mChatHeadDisplayViews.get(selectedViewIndex).getView().getChat();
+            }
+
+            if(selectedChat != null && !mChats.contains(selectedChat)) {
+                mChats.remove(0);
+                mChats.add(0, selectedChat);
+            }
         }
 
         Log.d(TAG, "addChat() # " + mChats.size() + " . " + chat.toString());
@@ -572,7 +603,11 @@ public class ChatHeadGroupDisplayView extends DisplayView {
 
         for(int i=0; i < MAX_CHAT_HEADS; i++) {
             if(i != MAIN_CHAT_HEAD_INDEX) {
-                mChatHeadDisplayViews.get(i).hide();
+                if(mState != STATE_EXPANDED && mState != STATE_EXPANDING) {
+                    mChatHeadDisplayViews.get(i).hide();
+                } else {
+                    mChatHeadDisplayViews.get(i).show();
+                }
             }
         }
         return getMainChatHeadDisplayView().show();
