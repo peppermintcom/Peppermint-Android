@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.peppermint.app.ui.chat.recorder.ChatRecordOverlayView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" />
+    android:layout_height="match_parent">
+
+    <com.peppermint.app.ui.chat.recorder.ChatRecordOverlayView
+        android:id="@+id/chatRecordOverlayView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <com.peppermint.app.ui.chat.recorder.ExplosionView
+        android:id="@+id/explosionView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</FrameLayout>

@@ -5,6 +5,7 @@ import android.media.MediaPlayer;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
@@ -32,7 +33,7 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.R
 
     public static final String SCREEN_RECORDING_ID = "Recording";
 
-    private static final int RECORDING_OVERLAY_HIDE_DELAY = 1000;
+    private static final int RECORDING_OVERLAY_HIDE_DELAY = 800;
 
     private static final long MIN_DURATION_MILLIS = 1000;
     private static final long MAX_DURATION_MILLIS = 300000; // 5min
@@ -45,6 +46,7 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.R
     private RecordServiceManager mRecordServiceManager;
 
     // actual View of the overlay
+    private ExplosionView mExplosionView;
     private ChatRecordOverlayView mView;
     private View mViewBounds;
 
@@ -98,7 +100,9 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.R
 
     @Override
     protected View onCreateView(LayoutInflater layoutInflater) {
-        mView = (ChatRecordOverlayView) super.onCreateView(layoutInflater);
+        FrameLayout containerView = (FrameLayout) super.onCreateView(layoutInflater);
+        mView = (ChatRecordOverlayView) containerView.findViewById(R.id.chatRecordOverlayView);
+        mExplosionView = (ExplosionView) containerView.findViewById(R.id.explosionView);
 
         mRecordServiceManager = new RecordServiceManager(getContext());
         mRecordServiceManager.setListener(this);
@@ -109,7 +113,7 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.R
 
         getOverlayManager().addOverlayVisibilityChangeListener(this);
 
-        return mView;
+        return containerView;
     }
 
     @Override
@@ -127,6 +131,8 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.R
 
     @Override
     public void onOverlayShown(Overlay overlay) {
+        mExplosionView.resetAnimations();
+        mView.setVisibility(View.VISIBLE);
         mView.doSlideIn();
     }
 
@@ -172,12 +178,15 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.R
         }
 
         if(cancel) {
-            mView.doSlideOut();
+            mExplosionView.takeScreenshot(mView);
+            mExplosionView.startExplosion();
+            mExplosionView.doDraw();
+            mView.setVisibility(View.GONE);
         } else {
             mView.doFadeOut();
         }
 
-        return super.hide(animated, RECORDING_OVERLAY_HIDE_DELAY, cancel);
+        return super.hide(false, RECORDING_OVERLAY_HIDE_DELAY, cancel);
     }
 
     public void onEventMainThread(RecorderEvent event) {
