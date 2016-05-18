@@ -1,11 +1,11 @@
 <resources>
     <!-- BO: Keep English Only -->
-        <string name="app_name">Peppermint</string>
-        <string name="peppermint_com">Peppermint.com</string>
-        <string name="google_app_id">peppermint-1077</string>
-        <string name="gcm_default_sender_id">621894935907</string>
+        <string name="app_name" translatable="false">Peppermint</string>
+        <string name="peppermint_com" translatable="false">Peppermint.com</string>
+        <string name="google_app_id" translatable="false">peppermint-1077</string>
+        <string name="gcm_default_sender_id" translatable="false">621894935907</string>
 
-        <string name="filename_message_from">Message-from-</string>
+        <string name="filename_message_from" translatable="false">Message-from-</string>
     <!-- EO: Keep English Only -->
 
     <string name="send_email">Send Email</string>
@@ -103,8 +103,8 @@
 
     <!-- SENDER MESSAGES -->
     <!-- BO: Keep English Only -->
-        <string name="sender_default_message">Here\'s my message from Peppermint.</string>
-        <string name="sender_default_mail_subject">I sent you an audio message</string>
+        <string name="sender_default_message" translatable="false">Here\'s my message from Peppermint.</string>
+        <string name="sender_default_mail_subject" translatable="false">I sent you an audio message</string>
     <!-- EO: Keep English Only -->
 
     <string name="sender_msg_send_error">An error occurred while trying to send your Peppermint message to %1$s. Please try again later.</string>
@@ -176,11 +176,11 @@
     <string name="or_email_us_for_support">or email us for support</string>
 
     <!-- BO: Keep English Only -->
-        <string name="support_display_name">Peppermint Support</string>
-        <string name="support_audio_subject">Android feedback from email address</string>
-        <string name="support_text_subject">Feedback or question about Peppermint Android app</string>
-        <string name="support_email">support@peppermint.com</string>
-        <string name="support_text_body">\n\n\n\nNote regarding this feedback. Was provided by %1$s running %2$s with Peppermint v%3$s</string>
+        <string name="support_display_name" translatable="false">Peppermint Support</string>
+        <string name="support_audio_subject" translatable="false">Android feedback from email address</string>
+        <string name="support_text_subject" translatable="false">Feedback or question about Peppermint Android app</string>
+        <string name="support_email" translatable="false">support@peppermint.com</string>
+        <string name="support_text_body" translatable="false">\n\n\n\nNote regarding this feedback. Was provided by %1$s running %2$s with Peppermint v%3$s</string>
     <!-- EO: Keep English Only -->
 
 </resources>
