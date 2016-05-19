@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.net.Uri;
@@ -173,7 +172,6 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
         permissionsPolicyEnforcer.addPermission(Manifest.permission.ACCESS_NETWORK_STATE, false);
         permissionsPolicyEnforcer.addPermission(Manifest.permission.GET_ACCOUNTS, false);
         permissionsPolicyEnforcer.addPermission("android.permission.USE_CREDENTIALS", false);
-        permissionsPolicyEnforcer.addPermission(Manifest.permission.SEND_SMS, true, PackageManager.FEATURE_TELEPHONY);
     }
 
     @Override

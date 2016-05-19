@@ -20,10 +20,7 @@ import java.util.ArrayList;
  */
 public class SenderPreferences {
 
-    public static final String CHAT_TIP_SHOWN_KEY = "chatTipShown";
-
     public static final String RECENT_CONTACT_URIS_KEY = "recentContactUris";
-    public static final String SHOWN_SMS_CONFIRMATION_KEY = "shownSmsConfirmation";
 
     public static final String IS_FIRST_RUN_KEY = "isFirstRun";
     public static final String HAS_SENT_KEY = "hasSentMessage";
@@ -65,16 +62,6 @@ public class SenderPreferences {
         }
 
         return recentContactUris;
-    }
-
-    public void setShownSmsConfirmation(boolean shown) {
-        SharedPreferences.Editor editor = getSharedPreferences().edit();
-        editor.putBoolean(SHOWN_SMS_CONFIRMATION_KEY, shown);
-        editor.commit();
-    }
-
-    public boolean isShownSmsConfirmation() {
-        return getSharedPreferences().getBoolean(SHOWN_SMS_CONFIRMATION_KEY, false);
     }
 
     public void setLastSyncTimestamp(String ts) {
@@ -140,16 +127,6 @@ public class SenderPreferences {
     public void setFirstRun(boolean val) {
         SharedPreferences.Editor editor = getSharedPreferences().edit();
         editor.putBoolean(IS_FIRST_RUN_KEY, val);
-        editor.commit();
-    }
-
-    public boolean isChatTipShown() {
-        return getSharedPreferences().getBoolean(CHAT_TIP_SHOWN_KEY, false);
-    }
-
-    public void setChatTipShown(boolean val) {
-        SharedPreferences.Editor editor = getSharedPreferences().edit();
-        editor.putBoolean(CHAT_TIP_SHOWN_KEY, val);
         editor.commit();
     }
 

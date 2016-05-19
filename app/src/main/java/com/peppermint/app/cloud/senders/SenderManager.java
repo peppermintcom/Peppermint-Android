@@ -35,8 +35,6 @@ import java.util.concurrent.TimeUnit;
  * <ul>
  *     <li>Emails through the Gmail API</li>
  *     <li>Emails through the native Android email app</li>
- *     <li>SMS/text messages through the native Android API</li>
- *     <li>SMS/text messages through the native SMS app</li>
  * </ul>
  */
 public class SenderManager extends SenderObject implements SenderUploadListener {

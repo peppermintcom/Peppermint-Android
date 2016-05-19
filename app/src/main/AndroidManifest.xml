@@ -9,7 +9,6 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.SEND_SMS" />
 
     <!-- GET_ACCOUNTS & USE_CREDENTIALS is used to obtain account details and credentials for the Gmail API -->
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
