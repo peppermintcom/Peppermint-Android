@@ -114,7 +114,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
     public void doAutoPlay() {
         if(mChat == null || !getMessagesServiceManager().isBound() || !getPlayerServiceManager().isBound() ||
-                mAutoPlayMessageId <= 0) {
+                mAutoPlayMessageId <= 0 || mAdapter == null) {
             return;
         }
 
