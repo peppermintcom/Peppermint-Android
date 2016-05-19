@@ -1,16 +1,12 @@
 package com.peppermint.app.ui.chat.head;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.Typeface;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.util.AttributeSet;
 import android.view.ViewGroup;
@@ -48,9 +44,7 @@ public class ChatHeadView extends RoundImageView {
     public static final int BADGE_ORIENTATION_TOP_LEFT = 1;
     public static final int BADGE_ORIENTATION_TOP_RIGHT = 2;
 
-    // avatar and play button
-    private static final String DEF_BUTTON_BACKGROUND_COLOR = "#4D000000"; // black 30%
-
+    // avatar
     protected static final int DEF_AVATAR_SIZE_DP = 42;
     protected static final int DEF_AVATAR_BORDER_WIDTH_DP = 3;
 
@@ -79,13 +73,6 @@ public class ChatHeadView extends RoundImageView {
 
     // global
     private int mWidth, mHeight;
-    private Paint mBitmapPaint;
-
-    // button (play)
-    private Bitmap mButtonBitmap;
-    private int mButtonBitmapHeight, mButtonBitmapWidth;
-    private Paint mButtonBackgroundPaint;
-    private RectF mButtonBounds = new RectF();
 
     // text (display name)
     private Paint mTextPaint;
@@ -128,13 +115,6 @@ public class ChatHeadView extends RoundImageView {
         // global
         setKeepAspectRatio(false);
         setFallbackImageDrawable(ResourceUtils.getDrawable(context, R.drawable.ic_anonymous_green_48dp));
-        setButtonImageResource(R.drawable.ic_play_15dp);
-
-        mBitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-
-        // button (play)
-        mButtonBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mButtonBackgroundPaint.setColor(Color.parseColor(DEF_BUTTON_BACKGROUND_COLOR));
 
         // text (display name)
         mTextPadding = Utils.dpToPx(context, DEF_TEXT_PADDING_DP);
@@ -258,7 +238,6 @@ public class ChatHeadView extends RoundImageView {
         boolean validChatAndAvatar = hasAvatar();
         boolean hasBadge = hasBadge();
         boolean hasName = hasName();
-        boolean hasButton = validChatAndAvatar && mChat.getLastReceivedUnplayedId() != 0 && mButtonBitmap != null;
 
         if(mShowBadge && !mSelectable && mBadgeOrientation == BADGE_ORIENTATION_TOP_LEFT) {
             canvas.translate(mBadgeDisplacement + (mBadgeBorderWidth * 2), 0);
@@ -275,16 +254,6 @@ public class ChatHeadView extends RoundImageView {
         if(!validChatAndAvatar) {
             canvas.restore();
             return;
-        }
-
-        // draw play button if there are unopened messages
-        if(hasButton) {
-            mButtonBounds.set(getBorderWidth(), getBorderWidth(), mBitmap.getWidth() - getBorderWidth(), mBitmap.getHeight() - getBorderWidth());
-            canvas.drawRoundRect(mButtonBounds, getCornerRadius() - getBorderWidth(), getCornerRadius() - getBorderWidth(), mButtonBackgroundPaint);
-
-            int left = (mBitmap.getWidth() / 2) - (mButtonBitmap.getWidth() / 2);
-            int top = (mBitmap.getHeight() / 2) - (mButtonBitmap.getHeight() / 2);
-            canvas.drawBitmap(mButtonBitmap, left, top, mBitmapPaint);
         }
 
         // draw badge
@@ -332,32 +301,6 @@ public class ChatHeadView extends RoundImageView {
             canvas.translate((mAvatarSize + (mAvatarBorderWidth * 2)) / 2 - (mSelectionTriangleLength / 2), mHeight - (mSelectionTriangleLength / 2));
             canvas.drawPath(mSelectionTrianglePath, mSelectionTrianglePaint);
             canvas.restore();
-        }
-    }
-
-    public void setButtonImageResource(int resId) {
-        setButtonDrawable(ResourceUtils.getDrawable(getContext(), resId));
-    }
-
-    public synchronized void setButtonDrawable(Drawable drawable) {
-        if (drawable == null) {
-            mButtonBitmap = null;
-            return;
-        }
-
-        mButtonBitmapHeight = drawable.getIntrinsicHeight();
-        mButtonBitmapWidth = drawable.getIntrinsicWidth();
-
-        // draw to bitmap
-        if(drawable instanceof BitmapDrawable) {
-            mButtonBitmap = ((BitmapDrawable) drawable).getBitmap();
-        } else {
-            mButtonBitmap = Bitmap.createBitmap(mButtonBitmapWidth,
-                    mButtonBitmapHeight, Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(mButtonBitmap);
-            drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-            drawable.draw(canvas);
-            canvas.setBitmap(null);
         }
     }
 

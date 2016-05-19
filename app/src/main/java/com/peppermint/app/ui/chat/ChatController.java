@@ -47,10 +47,8 @@ public class ChatController extends ChatRecordOverlayController implements View.
     private static final String SCREEN_ID = "Chat";
 
     protected class RefreshMessageCursorAsyncTask extends AsyncTask<Void, Void, Cursor> {
-        private long _autoPlayMessageId = 0;
         @Override
         protected Cursor doInBackground(Void... params) {
-            _autoPlayMessageId = MessageManager.getLastAutoPlayMessageIdByChat(getDatabase(), mChat.getId());
             return MessageManager.getByChatId(getDatabase(), mChat.getId());
         }
 
@@ -83,12 +81,6 @@ public class ChatController extends ChatRecordOverlayController implements View.
             } else {
                 mAdapter.changeCursor(cursor);
             }
-
-            if(mAutoPlayMessageId < 0) {
-                mAutoPlayMessageId = _autoPlayMessageId;
-            }
-
-            doAutoPlay();
         }
     }
 
@@ -104,39 +96,12 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
     // DATA
     private Chat mChat;
-    private long mAutoPlayMessageId;
 
     private ChatMessageCursorAdapter mAdapter;
 
     // error dialog
     private CustomListDialog mErrorDialog;
     private long mMessageIdWithError;
-
-    public void doAutoPlay() {
-        if(mChat == null || !getMessagesServiceManager().isBound() || !getPlayerServiceManager().isBound() ||
-                mAutoPlayMessageId <= 0 || mAdapter == null) {
-            return;
-        }
-
-        int count = mAdapter.getCount();
-        Message chosenMessage = null;
-        int chosenIndex = -1;
-        for(int i=count-1; i>=0 && chosenMessage == null; i--) {
-            Message message = mAdapter.getMessage(i);
-            if(message.getId() == mAutoPlayMessageId) {
-                chosenMessage = message;
-                chosenIndex = i;
-            }
-        }
-
-        mAutoPlayMessageId = 0;
-
-        if(chosenMessage != null) {
-            mListView.setSelection(chosenIndex);
-            getMessagesServiceManager().markAsPlayed(chosenMessage);
-            getPlayerServiceManager().play(chosenMessage, 0);
-        }
-    }
 
     public ChatController(Context context, RecipientDataGUI recipientDataGUI) {
         super(context);
@@ -342,9 +307,5 @@ public class ChatController extends ChatRecordOverlayController implements View.
                     recipient.getPhotoUri());
         }
         refreshList();
-    }
-
-    public void setAutoPlayMessageId(long mAutoPlayMessageId) {
-        this.mAutoPlayMessageId = mAutoPlayMessageId;
     }
 }

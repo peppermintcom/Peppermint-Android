@@ -22,9 +22,6 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
 
     private static final String TAG = ChatActivity.class.getSimpleName();
 
-    private static final int REQUEST_NEWCONTACT_AND_SEND = 223;
-
-    public static final String PARAM_AUTO_PLAY_MESSAGE_ID = TAG + "_paramAutoPlayMessageId";
     public static final String PARAM_CHAT_ID = TAG + "_paramChatId";
 
     // UI
@@ -58,13 +55,10 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
 
         // get arguments
         long chatId = 0;
-        long autoPlayMessageId = 0;
         Intent paramIntent = getIntent();
 
         if(paramIntent != null) {
             chatId = paramIntent.getLongExtra(PARAM_CHAT_ID, 0);
-            // only auto-play the first time (not when there's an orientation change)
-            autoPlayMessageId = savedInstanceState == null ? paramIntent.getLongExtra(PARAM_AUTO_PLAY_MESSAGE_ID, 0) : 0;
         }
 
         if(chatId <= 0) {
@@ -75,7 +69,6 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
 
         mChatController = new ChatController(this, this);
         mChatController.setChat(chatId);
-        mChatController.setAutoPlayMessageId(autoPlayMessageId);
         mChatController.init(getContainerView(), mOverlayManager, this, savedInstanceState);
     }
 

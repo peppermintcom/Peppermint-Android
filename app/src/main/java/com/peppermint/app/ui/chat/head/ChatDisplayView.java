@@ -71,8 +71,6 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
     @Override
     public boolean show() {
         if(mView.getVisibility() != View.VISIBLE) {
-            mChatController.setAutoPlayMessageId(mChatController.getChat().getLastReceivedUnplayedId());
-            mChatController.doAutoPlay();
             mView.setVisibility(View.VISIBLE);
             setViewPosition(0, mTopMargin, false);
             return true;

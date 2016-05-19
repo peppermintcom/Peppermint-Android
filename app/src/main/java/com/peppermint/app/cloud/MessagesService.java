@@ -572,7 +572,6 @@ public class MessagesService extends Service {
 
     private Notification getNotification(final Message message) {
         Intent notificationIntent = new Intent(MessagesService.this, ChatActivity.class);
-        notificationIntent.putExtra(ChatActivity.PARAM_AUTO_PLAY_MESSAGE_ID, message.getId());
         notificationIntent.putExtra(ChatActivity.PARAM_CHAT_ID, message.getChatId());
         PendingIntent pendingIntent = PendingIntent.getActivity(MessagesService.this, (int) message.getId(), notificationIntent, 0);
 
