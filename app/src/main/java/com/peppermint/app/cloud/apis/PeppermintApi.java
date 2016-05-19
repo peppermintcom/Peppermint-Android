@@ -84,9 +84,15 @@ public class PeppermintApi extends BaseApi implements Serializable {
     }
 
     @Override
+    public String peekAuthenticationToken() throws Exception {
+        final AuthenticatorUtils authenticatorUtils = new AuthenticatorUtils(mContext);
+        this.mAuthToken = authenticatorUtils.peekAccessToken();
+        return this.mAuthToken;
+    }
+
+    @Override
     public String renewAuthenticationToken() throws Exception {
         final AuthenticatorUtils authenticatorUtils = new AuthenticatorUtils(mContext);
-        authenticatorUtils.refreshAccount();
 
         if(authenticatorUtils.getAccount() == null) {
             throw new PeppermintApiNoAccountException();

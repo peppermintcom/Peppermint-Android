@@ -68,7 +68,7 @@ public class AuthenticatorUtils {
      * @throws PeppermintApiNoAccountException if no Peppermint account is found
      */
     public void invalidateAccessToken() throws PeppermintApiNoAccountException {
-        mAccountManager.invalidateAuthToken(AuthenticatorConstants.FULL_TOKEN_TYPE, peekAccessToken());
+        mAccountManager.invalidateAuthToken(AuthenticatorConstants.ACCOUNT_TYPE, peekAccessToken());
     }
 
     /**
@@ -125,7 +125,7 @@ public class AuthenticatorUtils {
         }
 
         mAccountManager.setPassword(mAccount, password);
-        invalidateAccessToken();
+        /*invalidateAccessToken();*/
     }
 
     /**
