@@ -121,7 +121,7 @@ public abstract class Sender extends SenderObject {
             api = new GoogleApi(getContext());
             setParameter(GmailSender.PARAM_GOOGLE_API, api);
         }
-        if(api.getCredential() == null || api.getService() == null || api.getAccountName().compareTo(email) != 0) {
+        if(api.getCredential() == null || api.getAccountName().compareTo(email) != 0) {
             api.setAccountName(email);
         }
         return api;

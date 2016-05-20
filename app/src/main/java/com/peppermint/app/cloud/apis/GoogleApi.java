@@ -8,17 +8,11 @@ import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
-import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.ExponentialBackOff;
-import com.google.api.services.gmail.Gmail;
-import com.google.api.services.gmail.GmailScopes;
-import com.google.api.services.gmail.model.Draft;
-import com.google.api.services.gmail.model.Message;
-import com.peppermint.app.R;
 import com.peppermint.app.cloud.apis.exceptions.GoogleApiInvalidAccessTokenException;
 import com.peppermint.app.cloud.apis.exceptions.GoogleApiNoAuthorizationException;
 import com.peppermint.app.cloud.apis.exceptions.GoogleApiResponseException;
@@ -26,7 +20,6 @@ import com.peppermint.app.cloud.rest.HttpRequest;
 import com.peppermint.app.cloud.rest.HttpResponse;
 import com.peppermint.app.cloud.senders.mail.gmail.GmailAttachmentRequest;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -34,10 +27,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Created by Nuno Luz on 22-01-2016.
@@ -47,9 +38,13 @@ import java.util.List;
  */
 public class GoogleApi extends BaseApi implements Serializable {
 
-    protected static final String[] SCOPES = { GmailScopes.GMAIL_COMPOSE, GmailScopes.GMAIL_MODIFY,
+    protected static final String[] SCOPES = {
+            "https://www.googleapis.com/auth/gmail.compose", "https://www.googleapis.com/auth/gmail.modify",
             "https://www.googleapis.com/auth/userinfo.profile",
             "https://www.googleapis.com/auth/plus.profile.emails.read" };
+
+    private static final String SEND_DRAFT_ENDPOINT = "https://www.googleapis.com/gmail/v1/users/me/drafts/send";
+    private static final String DELETE_DRAFT_ENDPOINT = "https://www.googleapis.com/gmail/v1/users/me/drafts/{draftId}";
 
     // HttpResponse that parses Google endpoint JSON and returns a {@link Draft} instance
     public class DraftResponse extends HttpResponse {
@@ -69,21 +64,7 @@ public class GoogleApi extends BaseApi implements Serializable {
                 throw new JSONException("Google API Error for " + getBody());
             }
 
-            JSONObject jsonMessage = jsonResponse.getJSONObject("message");
-            Message responseMessage = new Message();
-            responseMessage.setId(jsonMessage.getString("id"));
-            responseMessage.setThreadId(jsonMessage.getString("threadId"));
-            JSONArray jsonLabels = jsonMessage.getJSONArray("labelIds");
-            List<String> labels = new ArrayList<>();
-            for(int i=0; i<jsonLabels.length(); i++) {
-                labels.add(jsonLabels.getString(i));
-            }
-            responseMessage.setLabelIds(labels);
-            Draft responseDraft = new Draft();
-            responseDraft.setId(jsonResponse.getString("id"));
-            responseDraft.setMessage(responseMessage);
-
-            setBody(responseDraft);
+            setBody(jsonResponse.getString("id"));
         }
         public final Creator<DraftResponse> CREATOR = new Creator<DraftResponse>() {
             public DraftResponse createFromParcel(Parcel in) {
@@ -144,13 +125,42 @@ public class GoogleApi extends BaseApi implements Serializable {
         }
     }
 
+    public class SendDraftResponse extends HttpResponse {
+        public SendDraftResponse() {
+            super();
+        }
+        @Override
+        public void readBody(InputStream inStream, HttpRequest request) throws Throwable {
+            super.readBody(inStream, request);
+
+            JSONObject jsonResponse = new JSONObject(String.valueOf(getBody()));
+            if(!jsonResponse.isNull("error")) {
+                JSONObject jsonError = jsonResponse.getJSONObject("error");
+                if(!jsonError.isNull("code") && jsonError.getInt("code") == 401) {
+                    throw new GoogleApiInvalidAccessTokenException(String.valueOf(getBody()));
+                }
+                throw new JSONException("Google API Error for " + getBody());
+            }
+        }
+        public final Creator<SendDraftResponse> CREATOR = new Creator<SendDraftResponse>() {
+            public SendDraftResponse createFromParcel(Parcel in) {
+                return new SendDraftResponse(in);
+            }
+            public SendDraftResponse[] newArray(int size) {
+                return new SendDraftResponse[size];
+            }
+        };
+        protected SendDraftResponse(Parcel in) {
+            super(in);
+        }
+    }
+
     private final HttpTransport mTransport = AndroidHttp.newCompatibleTransport();
     private final JsonFactory mJsonFactory = GsonFactory.getDefaultInstance();
 
     private String mAccountName, mDisplayName;
 
     private GoogleAccountCredential mCredential;
-    private Gmail mService;
 
     public GoogleApi(final Context mContext) {
         super(mContext);
@@ -196,7 +206,6 @@ public class GoogleApi extends BaseApi implements Serializable {
      */
     public synchronized void setAccountName(final String accountName) {
         this.mCredential = null;
-        this.mService = null;
         this.mAccountName = accountName;
 
         if(accountName != null) {
@@ -204,11 +213,6 @@ public class GoogleApi extends BaseApi implements Serializable {
                     mContext, Arrays.asList(SCOPES))
                     .setBackOff(new ExponentialBackOff())
                     .setSelectedAccountName(mAccountName);
-
-            this.mService = new Gmail.Builder(
-                    mTransport, mJsonFactory, mCredential)
-                    .setApplicationName(mContext.getString(R.string.app_name))
-                    .build();
         }
 
         // force refresh access token on next iteration
@@ -275,58 +279,35 @@ public class GoogleApi extends BaseApi implements Serializable {
 
     /**
      * Sends a previously created Gmail draft.
-     * @param draft the Draft instance
+     * @param requesterId the requester Id
+     * @param draftId the Draft instance
      * @throws GoogleApiNoAuthorizationException if authorization for one of the scopes fails
      * @throws GoogleApiInvalidAccessTokenException if credentials are invalid
      * @throws IOException
      */
-    public synchronized void sendGmailDraft(Draft draft) throws GoogleApiNoAuthorizationException, GoogleApiInvalidAccessTokenException, IOException, GoogleAuthException {
-        try {
-            mService.users().drafts().send("me", draft).execute();
-        } catch(GoogleJsonResponseException e) {
-            renewAuthenticationToken();
-            try {
-                mService.users().drafts().send("me", draft).execute();
-            } catch(GoogleJsonResponseException ex) {
-                if(ex.getDetails().getCode() == 401) {
-                    throw new GoogleApiInvalidAccessTokenException(ex);
-                } else {
-                    throw ex;
-                }
-            } catch (UserRecoverableAuthIOException ex) {
-                throw new GoogleApiNoAuthorizationException(ex);
-            }
-        } catch (UserRecoverableAuthIOException e) {
-            throw new GoogleApiNoAuthorizationException(e);
-        }
+    public synchronized void sendGmailDraft(String requesterId, String draftId) throws Exception {
+        HttpRequest request = new HttpRequest(SEND_DRAFT_ENDPOINT, HttpRequest.METHOD_POST, false);
+        request.setHeaderParam("Content-Type", "application/json; charset=UTF-8");
+        request.setBody("{\"id\":\"" + draftId + "\"}");
+
+        SendDraftResponse response = executeRequest(requesterId, request, new SendDraftResponse(), true);
+        processGenericExceptions(request, response);
     }
 
     /**
      * Deletes a previously created Gmail draft.
-     * @param draft the Draft instance
+     * @param requesterId the requester Id
+     * @param draftId the Draft instance
      * @throws GoogleApiNoAuthorizationException if authorization for one of the scopes fails
      * @throws GoogleApiInvalidAccessTokenException if credentials are invalid
      * @throws IOException
      */
-    public synchronized void deleteGmailDraft(Draft draft) throws GoogleApiNoAuthorizationException, GoogleApiInvalidAccessTokenException, IOException, GoogleAuthException {
-        try {
-            mService.users().drafts().delete("me", draft.getId()).execute();
-        } catch(GoogleJsonResponseException e) {
-            renewAuthenticationToken();
-            try {
-                mService.users().drafts().delete("me", draft.getId()).execute();
-            } catch(GoogleJsonResponseException ex) {
-                if(ex.getDetails().getCode() == 401) {
-                    throw new GoogleApiInvalidAccessTokenException(ex);
-                } else {
-                    throw ex;
-                }
-            } catch (UserRecoverableAuthIOException ex) {
-                throw new GoogleApiNoAuthorizationException(ex);
-            }
-        } catch (UserRecoverableAuthIOException e) {
-            throw new GoogleApiNoAuthorizationException(e);
-        }
+    public synchronized void deleteGmailDraft(String requesterId, String draftId) throws Exception {
+        HttpRequest request = new HttpRequest(DELETE_DRAFT_ENDPOINT.replace("{draftId}", draftId), HttpRequest.METHOD_DELETE, false);
+        request.removeHeaderParam("Content-Type");
+
+        HttpResponse response = executeRequest(requesterId, request, new HttpResponse(), true);
+        processGenericExceptions(request, response);
     }
 
     public String getDisplayName() {
@@ -339,9 +320,5 @@ public class GoogleApi extends BaseApi implements Serializable {
 
     public GoogleAccountCredential getCredential() {
         return mCredential;
-    }
-
-    public Gmail getService() {
-        return mService;
     }
 }

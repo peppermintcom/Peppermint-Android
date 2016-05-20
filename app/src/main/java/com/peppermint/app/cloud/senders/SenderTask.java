@@ -3,7 +3,6 @@ package com.peppermint.app.cloud.senders;
 import android.content.Context;
 import android.os.AsyncTask;
 
-import com.google.android.gms.auth.GoogleAuthException;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.authenticator.AuthenticatorUtils;
 import com.peppermint.app.cloud.apis.GoogleApi;
@@ -161,7 +160,7 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
             api = new GoogleApi(getContext());
             setParameter(GmailSender.PARAM_GOOGLE_API, api);
         }
-        if(api.getCredential() == null || api.getService() == null || api.getAccountName().compareTo(email) != 0) {
+        if(api.getCredential() == null || api.getAccountName().compareTo(email) != 0) {
             api.setAccountName(email);
         }
         return api;
@@ -209,7 +208,6 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
      * @throws PeppermintApiInvalidAccessTokenException
      * @throws IOException
      * @throws GoogleApiNoAuthorizationException
-     * @throws GoogleAuthException
      */
     protected AuthenticationData setupPeppermintAuthentication(final boolean invalidateToken) throws Exception {
         checkInternetConnection();

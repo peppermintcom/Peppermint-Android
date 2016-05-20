@@ -5,8 +5,6 @@ import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.services.gmail.model.Draft;
-import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.cloud.apis.GoogleApi;
 import com.peppermint.app.cloud.apis.SparkPostApi;
@@ -73,7 +71,7 @@ public class GmailSenderTask extends SenderUploadTask {
 
         try {
             // send gmail
-            Draft draft = null;
+            String draftId = null;
             Date emailDate = new Date();
             try {
                 emailDate = DateContainer.parseUTCTimestamp(getMessage().getRegistrationTimestamp()).getTime();
@@ -92,7 +90,7 @@ public class GmailSenderTask extends SenderUploadTask {
                 GoogleApi.DraftResponse response = googleApi.createGmailDraft(getId().toString(), getMessage().getEmailSubject(),
                         bodyPlain, bodyHtml, recipientEmails, getMessage().getRecordingParameter().getContentType(),
                         emailDate, file);
-                draft = (Draft) response.getBody();
+                draftId = (String) response.getBody();
 
                 getTrackerManager().log("Gmail # Created Draft at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
             } catch (InterruptedIOException e) {
@@ -104,18 +102,18 @@ public class GmailSenderTask extends SenderUploadTask {
             if(!isCancelled()) {
                 try {
                     // send the draft
-                    googleApi.sendGmailDraft(draft);
+                    googleApi.sendGmailDraft(getId().toString(), draftId);
                     getTrackerManager().log("Gmail # Sent Draft at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
                 } catch (InterruptedIOException e) {
                     // try to delete the draft if something goes wrong
-                    googleApi.deleteGmailDraft(draft);
+                    googleApi.deleteGmailDraft(getId().toString(), draftId);
                     throw e;
                 }
             }
 
-            if(isCancelled() && draft != null) {
+            if(isCancelled() && draftId != null) {
                 // just delete the draft if cancelled
-                googleApi.deleteGmailDraft(draft);
+                googleApi.deleteGmailDraft(getId().toString(), draftId);
                 getTrackerManager().log("Gmail # Delete draft after cancel.");
             }
 
