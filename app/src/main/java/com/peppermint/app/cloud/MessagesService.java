@@ -518,7 +518,7 @@ public class MessagesService extends Service {
         }
 
         message = MessageManager.getMessageByIdOrServerId(DatabaseHelper.getInstance(this).getReadableDatabase(),
-                message.getId(), message.getServerId());
+                message.getId(), message.getServerId(), false);
 
         mSenderManager.send(message);
         return true;

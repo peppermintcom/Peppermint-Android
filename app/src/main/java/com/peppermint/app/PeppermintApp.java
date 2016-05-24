@@ -1,11 +1,15 @@
 package com.peppermint.app;
 
-import android.app.Application;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
+import android.support.multidex.MultiDexApplication;
+import android.util.Log;
 
+import com.google.android.gms.security.ProviderInstaller;
 import com.peppermint.app.cloud.MessagesServiceManager;
+import com.peppermint.app.cloud.apis.PeppermintApi;
 import com.peppermint.app.cloud.senders.SenderObject;
 import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.cloud.senders.mail.gmail.GmailSender;
@@ -18,7 +22,9 @@ import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
  *
  * Application class; entry point.
  */
-public class PeppermintApp extends Application {
+public class PeppermintApp extends MultiDexApplication {
+
+    private static final String TAG = PeppermintApi.class.getSimpleName();
 
     public static final boolean DEBUG = false;
 
@@ -27,6 +33,18 @@ public class PeppermintApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        // try to keep SSL up to date
+        ProviderInstaller.installIfNeededAsync(this, new ProviderInstaller.ProviderInstallListener() {
+            @Override
+            public void onProviderInstalled() {
+                Log.i(TAG, "Security Provider Installed");
+            }
+            @Override
+            public void onProviderInstallFailed(int i, Intent intent) {
+                Log.e(TAG, "Security Provider Install Failed!");
+            }
+        });
 
         // init tracker apis
         TrackerManager.getInstance(this);

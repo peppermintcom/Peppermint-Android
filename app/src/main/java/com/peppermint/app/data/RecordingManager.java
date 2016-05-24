@@ -29,6 +29,11 @@ public class RecordingManager {
         recording.setSizeKb(cursor.getFloat(cursor.getColumnIndex("size_kb")));
         recording.setHasVideo(cursor.getInt(cursor.getColumnIndex("has_video")) > 0);
         recording.setRecordedTimestamp(cursor.getString(cursor.getColumnIndex("recorded_ts")));
+        recording.setTranscription(cursor.getString(cursor.getColumnIndex("transcription")));
+        recording.setTranscriptionLanguage(cursor.getString(cursor.getColumnIndex("transcription_lang")));
+        recording.setTranscriptionUrl(cursor.getString(cursor.getColumnIndex("transcription_url")));
+        final Float confidence = cursor.getFloat(cursor.getColumnIndex("transcription_confidence"));
+        recording.setTranscriptionConfidence(confidence == null ? -1 : confidence);
         return recording;
     }
 
@@ -52,6 +57,14 @@ public class RecordingManager {
         cv.put("has_video", recording.hasVideo() ? 1 : 0);
         cv.put("recorded_ts", recording.getRecordedTimestamp());
         cv.put("content_type", recording.getContentType());
+        cv.put("transcription", recording.getTranscription());
+        cv.put("transcription_lang", recording.getTranscriptionLanguage());
+        cv.put("transcription_url", recording.getTranscriptionUrl());
+        if(recording.getTranscriptionConfidence() >= 0) {
+            cv.put("transcription_confidence", recording.getTranscriptionConfidence());
+        } else {
+            cv.putNull("transcription_confidence");
+        }
 
         long id = db.insert("tbl_recording", null, cv);
         if(id < 0) {
@@ -74,6 +87,20 @@ public class RecordingManager {
         cv.put("has_video", recording.hasVideo() ? 1 : 0);
         cv.put("recorded_ts", recording.getRecordedTimestamp());
         cv.put("content_type", recording.getContentType());
+        if(recording.getTranscriptionConfidence() >= 0) {
+            cv.put("transcription_confidence", recording.getTranscriptionConfidence());
+        } else {
+            cv.putNull("transcription_confidence");
+        }
+        if(recording.getTranscription() != null) {
+            cv.put("transcription", recording.getTranscription());
+        }
+        if(recording.getTranscriptionLanguage() != null) {
+            cv.put("transcription_lang", recording.getTranscriptionLanguage());
+        }
+        if(recording.getTranscriptionUrl() != null) {
+            cv.put("transcription_url", recording.getTranscriptionUrl());
+        }
 
         long id = db.update("tbl_recording", cv, "recording_id = " + recording.getId(), null);
         if(id < 0) {

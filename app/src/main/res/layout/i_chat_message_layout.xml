@@ -23,11 +23,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <FrameLayout
+        <LinearLayout
             android:id="@+id/lytBalloon"
             android:layout_toLeftOf="@+id/btnExclamation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="vertical"
             android:background="@drawable/img_message_base_sent">
 
             <RelativeLayout
@@ -121,7 +122,46 @@
 
             </RelativeLayout>
 
-        </FrameLayout>
+            <FrameLayout
+                android:id="@+id/lytTranscriptionBorder"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="7dp"
+                android:background="@color/divider_grey"
+                android:visibility="gone"
+                android:animateLayoutChanges="true"/>
+
+            <com.peppermint.app.ui.base.views.CustomFontTextView
+                android:id="@+id/txtAutomaticTranscriptionTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:gravity="left"
+                custom:textFont="@string/font_regular"
+                android:textAllCaps="true"
+                android:textSize="12dp"
+                android:textColor="@color/dark_grey_text"
+                android:text="@string/automatic_transcription"
+                android:visibility="gone"
+                android:animateLayoutChanges="true"/>
+
+            <com.peppermint.app.ui.base.views.CustomFontTextView
+                android:id="@+id/txtTranscription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginBottom="5dp"
+                android:gravity="left"
+                custom:textFont="@string/font_regular"
+                android:textSize="12dp"
+                android:textColor="@color/black"
+                android:visibility="gone"
+                android:animateLayoutChanges="true"/>
+
+        </LinearLayout>
 
         <ImageButton
             android:id="@+id/btnExclamation"

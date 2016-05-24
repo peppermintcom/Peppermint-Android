@@ -44,7 +44,7 @@ public class MessageManager {
         message.setServerId(cursor.getString(cursor.getColumnIndex("server_message_id")));
         message.setServerShortUrl(cursor.getString(cursor.getColumnIndex("server_short_url")));
         message.setServerCanonicalUrl(cursor.getString(cursor.getColumnIndex("server_canonical_url")));
-        message.setTranscription(cursor.getString(cursor.getColumnIndex("transcription")));
+
 
         message.setRegistrationTimestamp(cursor.getString(cursor.getColumnIndex("registration_ts")));
         message.setSent(cursor.getInt(cursor.getColumnIndex("sent")) > 0);
@@ -88,10 +88,11 @@ public class MessageManager {
         return list;
     }
 
-    public static Message getMessageByIdOrServerId(SQLiteDatabase db, long messageId, String serverId) {
+    public static Message getMessageByIdOrServerId(SQLiteDatabase db, long messageId, String serverId, Boolean isReceived) {
         Message message = null;
 
         String where = Utils.joinString(" OR ", messageId > 0 ? "message_id = " + messageId : null, serverId != null ? "server_message_id = ?" : null);
+        where = Utils.joinString(" AND ", where, isReceived != null ? "received = " + (isReceived ? 1 : 0) : null);
         Cursor cursor = db.rawQuery("SELECT * FROM tbl_message WHERE " + where + ";", serverId != null ? new String[]{serverId} : null);
         if(cursor.moveToFirst()) {
             message = getFromCursor(db, cursor);
@@ -194,7 +195,6 @@ public class MessageManager {
         cv.put("server_message_id", message.getServerId());
         cv.put("server_short_url", message.getServerShortUrl());
         cv.put("server_canonical_url", message.getServerCanonicalUrl());
-        cv.put("transcription", message.getTranscription());
         cv.put("registration_ts", message.getRegistrationTimestamp());
 
         cv.put("sent", message.isSent() ? 1 : 0);
@@ -248,7 +248,6 @@ public class MessageManager {
         cv.put("server_message_id", message.getServerId());
         cv.put("server_short_url", message.getServerShortUrl());
         cv.put("server_canonical_url", message.getServerCanonicalUrl());
-        cv.put("transcription", message.getTranscription());
         cv.put("registration_ts", message.getRegistrationTimestamp());
 
         cv.put("sent", message.isSent() ? 1 : 0);

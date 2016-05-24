@@ -19,6 +19,8 @@ public class RecorderEvent implements Serializable {
     public static final int EVENT_LOUDNESS = 5;
     public static final int EVENT_ERROR = 6;
 
+    public static final int EVENT_TRANSCRIPTION = 7;
+
     // intermediate process data
     private float mLoudness;
 

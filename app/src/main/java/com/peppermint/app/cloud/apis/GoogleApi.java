@@ -6,12 +6,8 @@ import android.os.Parcel;
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.auth.UserRecoverableAuthException;
-import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.ExponentialBackOff;
 import com.peppermint.app.cloud.apis.exceptions.GoogleApiInvalidAccessTokenException;
 import com.peppermint.app.cloud.apis.exceptions.GoogleApiNoAuthorizationException;
@@ -154,9 +150,6 @@ public class GoogleApi extends BaseApi implements Serializable {
             super(in);
         }
     }
-
-    private final HttpTransport mTransport = AndroidHttp.newCompatibleTransport();
-    private final JsonFactory mJsonFactory = GsonFactory.getDefaultInstance();
 
     private String mAccountName, mDisplayName;
 

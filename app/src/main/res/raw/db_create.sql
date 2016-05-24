@@ -7,11 +7,11 @@ CREATE TABLE IF NOT EXISTS tbl_recipient (recipient_id INTEGER PRIMARY KEY AUTOI
 
 CREATE TABLE IF NOT EXISTS tbl_chat_recipient (recipient_id bigint NOT NULL, chat_id bigint NOT NULL, registration_ts varchar(19) NOT NULL, PRIMARY KEY (recipient_id, chat_id));
 
-CREATE TABLE IF NOT EXISTS tbl_message (message_id INTEGER PRIMARY KEY AUTOINCREMENT, server_message_id varchar(255), transcription text, server_canonical_url varchar(255), server_short_url varchar(255), email_subject varchar(255), email_body varchar(255), chat_id bigint, author_id bigint, recording_id bigint, sent int default 0, received int default 0, played int default 0, registration_ts varchar(19) NOT NULL);
+CREATE TABLE IF NOT EXISTS tbl_message (message_id INTEGER PRIMARY KEY AUTOINCREMENT, server_message_id varchar(255), server_canonical_url varchar(255), server_short_url varchar(255), email_subject varchar(255), email_body varchar(255), chat_id bigint, author_id bigint, recording_id bigint, sent int default 0, received int default 0, played int default 0, registration_ts varchar(19) NOT NULL);
 
 CREATE TABLE IF NOT EXISTS tbl_message_recipient (message_id bigint NOT NULL, recipient_id bigint NOT NULL, sent int default 0, PRIMARY KEY (message_id, recipient_id));
 
-CREATE TABLE IF NOT EXISTS tbl_recording (recording_id INTEGER PRIMARY KEY AUTOINCREMENT, file_path varchar(255), duration_millis bigint, size_kb float, has_video int, recorded_ts varchar(19), content_type varchar(150));
+CREATE TABLE IF NOT EXISTS tbl_recording (recording_id INTEGER PRIMARY KEY AUTOINCREMENT, file_path varchar(255), transcription text, transcription_confidence decimal(10,5), transcription_lang varchar(128), transcription_url varchar(255), duration_millis bigint, size_kb float, has_video int, recorded_ts varchar(19), content_type varchar(150));
 
 -- Views
 CREATE VIEW IF NOT EXISTS v_chat_peppermint AS SELECT tbl_chat.*, tmp.droid_contact_ids, (SELECT MAX(is_peppermint) FROM tbl_recipient INNER JOIN tbl_chat_recipient ON tbl_recipient.recipient_id = tbl_chat_recipient.recipient_id WHERE tbl_chat_recipient.chat_id = tbl_chat.chat_id GROUP BY tbl_chat_recipient.chat_id) AS is_peppermint FROM tbl_chat, (SELECT chat_id, GROUP_CONCAT(droid_contact_id, ',') as droid_contact_ids FROM (SELECT DISTINCT chat_id, droid_contact_id FROM tbl_chat_recipient, tbl_recipient WHERE tbl_recipient.recipient_id = tbl_chat_recipient.recipient_id ORDER BY chat_id ASC, droid_contact_id ASC) GROUP BY chat_id)tmp WHERE tbl_chat.chat_id = tmp.chat_id;

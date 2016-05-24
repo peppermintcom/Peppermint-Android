@@ -162,6 +162,7 @@
     <string name="delete">Delete</string>
     <string name="unable_to_send_message">Unable to Send Message</string>
     <string name="msg_unable_to_play">An error occurred while trying to play the message.</string>
+    <string name="automatic_transcription">Automatic Transcription</string>
 
 
     <!-- ABOUT LAYOUT -->

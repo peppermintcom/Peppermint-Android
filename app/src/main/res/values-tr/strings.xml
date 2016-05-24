@@ -148,6 +148,7 @@
     <string name="delete">Sil</string>
     <string name="unable_to_send_message">Mesaj gönderilemiyor</string>
     <string name="msg_unable_to_play">Mesaj açılmaya çalışılırken bir sorun oluştu.</string>
+    <string name="automatic_transcription">Otomatik Transkripsiyon</string>
 
 
     <!-- ABOUT LAYOUT -->

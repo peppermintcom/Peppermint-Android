@@ -1,8 +1,12 @@
 package com.peppermint.app.cloud.senders;
 
+import android.content.Intent;
+
+import com.peppermint.app.RecordService;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.cloud.apis.PeppermintApi;
 import com.peppermint.app.cloud.apis.data.MessagesResponse;
+import com.peppermint.app.cloud.apis.data.TranscriptionResponse;
 import com.peppermint.app.cloud.apis.data.UploadsResponse;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiRecipientNoAppException;
 import com.peppermint.app.data.DatabaseHelper;
@@ -10,6 +14,10 @@ import com.peppermint.app.data.GlobalManager;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.MessageManager;
 import com.peppermint.app.data.Recipient;
+import com.peppermint.app.data.Recording;
+import com.peppermint.app.data.RecordingManager;
+import com.peppermint.app.events.PeppermintEventBus;
+import com.peppermint.app.events.RecorderEvent;
 
 import java.io.File;
 import java.sql.SQLException;
@@ -29,6 +37,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
     private SenderUploadListener mSenderUploadListener;
     private boolean mRecovering = false;
     private boolean mNonCancellable = false;
+    private boolean mMoveOnTranscription = false;
 
     public SenderUploadTask(final SenderUploadTask uploadTask) {
         super(uploadTask);
@@ -94,8 +103,9 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         final PeppermintApi peppermintApi = getPeppermintApi();
 
         try {
-            final MessagesResponse response = peppermintApi.sendMessage(getId().toString(), null, canonicalUrl,
-                    data.getEmail(), recipientVia, (int) (message.getRecordingParameter().getDurationMillis() / 1000));
+            final MessagesResponse response = peppermintApi.sendMessage(getId().toString(),
+                    message.getRecordingParameter().getTranscriptionUrl(), canonicalUrl,
+                    data.getEmail(), recipientVia);
             message.setServerId(response.getMessageId());
             try {
                 GlobalManager.markAsPeppermint(getContext(), recipient, data.getEmail());
@@ -128,12 +138,79 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         return sentInApp;
     }
 
+    protected String waitTranscription() {
+        final Recording recording = getMessage().getRecordingParameter();
+
+        int waitCount = 20; // 30 secs tops
+
+        if(recording.getTranscriptionConfidence() < 0) {
+            Intent popTranscriptionIntent = new Intent(getContext(), RecordService.class);
+            popTranscriptionIntent.setAction(RecordService.ACTION_POP_TRANSCRIPTION);
+            popTranscriptionIntent.putExtra(RecordService.INTENT_DATA_TRANSCRIPTION_FILEPATH, recording.getFilePath());
+            getContext().startService(popTranscriptionIntent);
+
+            do {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    /* nothing to do here */
+                }
+                waitCount--;
+            } while(waitCount > 0 && !mMoveOnTranscription);
+        }
+
+        return recording.getTranscription();
+    }
+
+    protected String sendPeppermintTranscription() throws Exception {
+        final Message message = getMessage();
+        final Recording recording = message.getRecordingParameter();
+
+        if(recording.getTranscriptionUrl() != null) {
+            return recording.getTranscriptionUrl();
+        }
+
+        waitTranscription();
+
+        if(recording.getTranscription() != null) {
+            final PeppermintApi peppermintApi = getPeppermintApi();
+
+            TranscriptionResponse response = peppermintApi.sendTranscription(getId().toString(), message.getServerCanonicalUrl(),
+                    recording.getTranscriptionLanguage(), recording.getTranscriptionConfidence(), recording.getTranscription());
+            recording.setTranscriptionUrl(response.getTranscriptionUrl());
+
+            // immediately update recording with transcription data
+            final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getContext());
+            databaseHelper.lock();
+            try {
+                RecordingManager.update(databaseHelper.getWritableDatabase(), recording);
+            } catch (SQLException e) {
+                getTrackerManager().logException(e);
+            }
+            databaseHelper.unlock();
+
+            return response.getTranscriptionUrl();
+        }
+
+        return null;
+    }
+
+    public void onEventMainThread(RecorderEvent event) {
+        final Recording recording = getMessage() != null ? getMessage().getRecordingParameter() : null;
+        if(recording != null && recording.getFilePath().compareTo(event.getRecording().getFilePath()) == 0) {
+            recording.setTranscription(event.getRecording().getTranscription());
+            recording.setTranscriptionConfidence(event.getRecording().getTranscriptionConfidence());
+            mMoveOnTranscription = true;
+        }
+    }
+
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
         if(mSenderUploadListener != null && !mRecovering) {
             mSenderUploadListener.onSendingUploadStarted(this);
         }
+        PeppermintEventBus.registerAudio(this);
     }
 
     @Override
@@ -146,6 +223,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
 
     @Override
     protected void onCancelled(Void aVoid) {
+        PeppermintEventBus.unregisterAudio(this);
         if(mSenderUploadListener != null) {
             mSenderUploadListener.onSendingUploadCancelled(this);
         }
@@ -153,6 +231,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
 
     @Override
     protected void onPostExecute(Void aVoid) {
+        PeppermintEventBus.unregisterAudio(this);
         if(getError() == null) {
             if(mSenderUploadListener != null) {
                 mSenderUploadListener.onSendingUploadFinished(this);

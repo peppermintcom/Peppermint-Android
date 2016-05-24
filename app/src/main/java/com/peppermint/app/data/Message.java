@@ -34,7 +34,7 @@ public class Message implements Serializable {
     private boolean mPlayed = false;
 
     private String mServerId;
-    private String mServerCanonicalUrl, mServerShortUrl, mTranscription;
+    private String mServerCanonicalUrl, mServerShortUrl;
 
     private List<Long> mConfirmedSentRecipientIds = new ArrayList<>();
     private List<Long> mRecipientIds = new ArrayList<>();
@@ -59,7 +59,6 @@ public class Message implements Serializable {
         mServerId = message.mServerId;
         mServerCanonicalUrl = message.mServerCanonicalUrl;
         mServerShortUrl = message.mServerShortUrl;
-        mTranscription = message.mTranscription;
         mParameters.putAll(message.mParameters);
         mConfirmedSentRecipientIds.addAll(message.mConfirmedSentRecipientIds);
     }
@@ -76,7 +75,7 @@ public class Message implements Serializable {
         this.mEmailBody = mEmailBody;
     }
 
-    public Message(long mId, long mChatId, long mRecordingId, long mAuthorId, String mEmailSubject, String mEmailBody, String mRegistrationTimestamp, boolean mReceived, boolean mSent, boolean mPlayed, String mServerId, String mServerCanonicalUrl, String mServerShortUrl, String mTranscription) {
+    public Message(long mId, long mChatId, long mRecordingId, long mAuthorId, String mEmailSubject, String mEmailBody, String mRegistrationTimestamp, boolean mReceived, boolean mSent, boolean mPlayed, String mServerId, String mServerCanonicalUrl, String mServerShortUrl) {
         setId(mId);
         this.mChatId = mChatId;
         this.mRecordingId = mRecordingId;
@@ -90,7 +89,6 @@ public class Message implements Serializable {
         this.mServerId = mServerId;
         this.mServerCanonicalUrl = mServerCanonicalUrl;
         this.mServerShortUrl = mServerShortUrl;
-        this.mTranscription = mTranscription;
     }
 
     public boolean isPlayed() {
@@ -172,14 +170,6 @@ public class Message implements Serializable {
 
     public void setSent(boolean mSent) {
         this.mSent = mSent;
-    }
-
-    public String getTranscription() {
-        return mTranscription;
-    }
-
-    public void setTranscription(String mTranscription) {
-        this.mTranscription = mTranscription;
     }
 
     public String getServerId() {
@@ -309,7 +299,6 @@ public class Message implements Serializable {
                 ", mServerId='" + mServerId + '\'' +
                 ", mServerCanonicalUrl='" + mServerCanonicalUrl + '\'' +
                 ", mServerShortUrl='" + mServerShortUrl + '\'' +
-                ", mTranscription='" + mTranscription + '\'' +
                 ", mParameters=" + mParameters +
                 '}';
     }

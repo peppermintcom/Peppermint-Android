@@ -2,50 +2,67 @@ buildscript {
     repositories {
         maven { url 'https://maven.fabric.io/public' }
     }
-
     dependencies {
         classpath 'io.fabric.tools:gradle:1.+'
     }
 }
+
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.protobuf'
 apply plugin: 'io.fabric'
 apply plugin: 'com.getkeepsafe.dexcount'
 
-repositories {
-    maven { url 'https://maven.fabric.io/public' }
-}
-
 sourceSets {
-    test {
-        java.srcDir file('src/test/java/')
-    }
+    test { java.srcDir file('src/test/java/') }
 }
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "23.0.1"
-
+    buildToolsVersion "23.0.2"
     defaultConfig {
         applicationId "com.peppermint.app"
         minSdkVersion 15
         targetSdkVersion 23
-        versionCode 20
-        versionName "1.1.18"
+        versionCode 21
+        versionName "1.1.19"
+        multiDexEnabled true
     }
-
     buildTypes {
         release {
+            shrinkResources true
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-
     sourceSets {
-        main {
-            jniLibs.srcDir file('native-libs/')
+        main { jniLibs.srcDir file('native-libs/') }
+        test { java.srcDir file('src/test/java/') }
+    }
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.0.0-beta-2'
+    }
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:0.14.0'
         }
-        test {
-            java.srcDir file('src/test/java/')
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                remove java
+                javanano {
+                    option 'ignore_services=true'
+                    option 'store_unknown_fields=true'
+                }
+            }
+            task.plugins {
+                grpc {
+                    option 'nano'
+                }
+            }
         }
     }
 }
@@ -58,8 +75,16 @@ crashlytics {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-
     compile 'com.android.support:appcompat-v7:23.3.0'
+    compile 'com.android.support:multidex:1.0.0'
+
+    // TRANSCRIPTION
+    compile('io.grpc:grpc-okhttp:0.14.0')
+    compile('io.grpc:grpc-protobuf-nano:0.14.0') {
+        exclude module: 'guava-jdk5'
+    }
+    compile('io.grpc:grpc-stub:0.14.0')
+    compile('io.grpc:grpc-auth:0.14.0')
 
     // Shortcut Badge
     compile 'me.leolin:ShortcutBadger:1.1.4@aar'
@@ -69,14 +94,13 @@ dependencies {
 
     // GA
     compile 'com.google.android.gms:play-services-analytics:8.4.0'
-
     // GCM
     compile 'com.google.android.gms:play-services-gcm:8.4.0'
 
     // GMAIL
-    compile 'com.google.apis:google-api-services-gmail:v1-rev29-1.20.0'
-    compile 'com.google.api-client:google-api-client-android:1.20.0'
-    compile 'com.google.api-client:google-api-client-gson:1.20.0'
+    compile ('com.google.api-client:google-api-client-android:1.20.0') {
+        exclude module: 'guava-jdk5'
+    }
 
     compile 'de.greenrobot:eventbus:2.4.0'
     compile 'com.facebook.rebound:rebound:0.3.8'
@@ -85,7 +109,10 @@ dependencies {
     compile('com.crashlytics.sdk.android:crashlytics:2.5.5@aar') { transitive = true; }
     compile('com.crashlytics.sdk.android:crashlytics-ndk:1.1.2@aar') { transitive = true }
 
+    compile 'javax.annotation:javax.annotation-api:1.2'
+
     // TEST
+    testCompile 'com.google.guava:guava:19.0'
     testCompile 'org.robolectric:robolectric:3.1-SNAPSHOT'
     testCompile 'junit:junit:4.12'
 }

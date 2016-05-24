@@ -148,6 +148,7 @@
     <string name="delete">Apagar</string>
     <string name="unable_to_send_message">Erro no Envio</string>
     <string name="msg_unable_to_play">Ocorreu um erro ao reproduzir a mensagem.</string>
+    <string name="automatic_transcription">Transcrição Automática</string>
 
 
     <!-- ABOUT LAYOUT -->

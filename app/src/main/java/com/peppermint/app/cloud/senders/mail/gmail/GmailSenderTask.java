@@ -44,6 +44,7 @@ public class GmailSenderTask extends SenderUploadTask {
 
         AuthenticationData data = setupPeppermintAuthentication();
         uploadPeppermintMessage();
+        sendPeppermintTranscription();
         if(sendPeppermintMessage()) {
             return;
         }

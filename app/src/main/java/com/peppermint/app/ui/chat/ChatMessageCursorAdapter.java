@@ -7,7 +7,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -20,6 +19,7 @@ import com.peppermint.app.R;
 import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.MessageManager;
+import com.peppermint.app.data.Recording;
 import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.events.PlayerEvent;
 import com.peppermint.app.events.SenderEvent;
@@ -127,6 +127,8 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
         }
 
         public void setRootView(View mRootView, Message message, Message prevMessage) {
+            mMessage = message;
+
             if(mRootView == null && this.mRootView != null) {
                 ImageButton btnPlay = (ImageButton) this.mRootView.findViewById(R.id.btnPlay);
                 ImageButton btnPause = (ImageButton) this.mRootView.findViewById(R.id.btnPause);
@@ -147,7 +149,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
             this.mRootView = mRootView;
 
             if(mRootView != null) {
-                FrameLayout lytBalloon = (FrameLayout) mRootView.findViewById(R.id.lytBalloon);
+                ViewGroup lytBalloon = (ViewGroup) mRootView.findViewById(R.id.lytBalloon);
 
                 ImageButton btnPlay = (ImageButton) mRootView.findViewById(R.id.btnPlay);
                 ImageButton btnPause = (ImageButton) mRootView.findViewById(R.id.btnPause);
@@ -156,14 +158,32 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
                 CustomFontTextView txtDay = (CustomFontTextView) mRootView.findViewById(R.id.txtDay);
                 SeekBar seekBar = (SeekBar) mRootView.findViewById(R.id.seekBar);
 
+                View lytTranscriptionBorder = mRootView.findViewById(R.id.lytTranscriptionBorder);
+                CustomFontTextView txtAutomaticTranscriptionTitle = (CustomFontTextView) mRootView.findViewById(R.id.txtAutomaticTranscriptionTitle);
+                CustomFontTextView txtTranscription = (CustomFontTextView) mRootView.findViewById(R.id.txtTranscription);
+
                 CustomFontButton btnCancel = (CustomFontButton) mRootView.findViewById(R.id.btnCancel);
                 ImageView btnExclamation = (ImageView) mRootView.findViewById(R.id.btnExclamation);
 
+                final Recording recording = message.getRecordingParameter();
+
+                // transcription
+                if(recording != null && recording.getTranscription() != null) {
+                    lytTranscriptionBorder.setVisibility(View.VISIBLE);
+                    txtAutomaticTranscriptionTitle.setVisibility(View.VISIBLE);
+                    txtTranscription.setVisibility(View.VISIBLE);
+                    txtTranscription.setText(recording.getTranscription());
+                } else {
+                    lytTranscriptionBorder.setVisibility(View.GONE);
+                    txtAutomaticTranscriptionTitle.setVisibility(View.GONE);
+                    txtTranscription.setVisibility(View.GONE);
+                }
+
                 // play/pause buttons
-                if(mPlayerServiceManager.isPlaying(mMessage)) {
+                if(mPlayerServiceManager.isPlaying(message)) {
                     mPlayingController = this;
                     setVisibility(View.GONE, View.VISIBLE, View.GONE);
-                } else if(mPlayerServiceManager.isLoading(mMessage)) {
+                } else if(mPlayerServiceManager.isLoading(message)) {
                     setVisibility(View.GONE, View.GONE, View.VISIBLE);
                 } else {
                     setVisibility(View.VISIBLE, View.GONE, View.GONE);
@@ -179,8 +199,8 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
                 }
 
                 // total duration of the message / current position of the playing message
-                if(message.getRecordingParameter() != null) {
-                    txtDuration.setText(Utils.getFriendlyDuration(message.getRecordingParameter().getDurationMillis()));
+                if(recording != null) {
+                    txtDuration.setText(Utils.getFriendlyDuration(recording.getDurationMillis()));
                 } else {
                     txtDuration.setText("");
                 }
@@ -266,7 +286,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
 
         public void setStatusSending(boolean isCancellable) {
             if(mRootView != null) {
-                FrameLayout lytBalloon = (FrameLayout) mRootView.findViewById(R.id.lytBalloon);
+                ViewGroup lytBalloon = (ViewGroup) mRootView.findViewById(R.id.lytBalloon);
                 ((RelativeLayout.LayoutParams) lytBalloon.getLayoutParams()).setMargins(mBalloonMargin, 0, 0, 0);
 
                 CustomFontButton btnCancel = (CustomFontButton) mRootView.findViewById(R.id.btnCancel);
@@ -285,7 +305,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
 
         public void setStatusNormal() {
             if(mRootView != null) {
-                FrameLayout lytBalloon = (FrameLayout) mRootView.findViewById(R.id.lytBalloon);
+                ViewGroup lytBalloon = (ViewGroup) mRootView.findViewById(R.id.lytBalloon);
                 ((RelativeLayout.LayoutParams) lytBalloon.getLayoutParams()).setMargins(mBalloonMargin, 0, 0, 0);
 
                 CustomFontButton btnCancel = (CustomFontButton) mRootView.findViewById(R.id.btnCancel);
@@ -297,7 +317,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
 
         public void setStatusError() {
            if(mRootView != null) {
-                FrameLayout lytBalloon = (FrameLayout) mRootView.findViewById(R.id.lytBalloon);
+               ViewGroup lytBalloon = (ViewGroup) mRootView.findViewById(R.id.lytBalloon);
                 ((RelativeLayout.LayoutParams) lytBalloon.getLayoutParams()).setMargins(mBalloonMarginWithExclamation, 0, 0, 0);
 
                 CustomFontButton btnCancel = (CustomFontButton) mRootView.findViewById(R.id.btnCancel);

@@ -10,12 +10,14 @@ import com.peppermint.app.cloud.apis.data.JWTsResponse;
 import com.peppermint.app.cloud.apis.data.MessageListResponse;
 import com.peppermint.app.cloud.apis.data.MessagesResponse;
 import com.peppermint.app.cloud.apis.data.RecorderResponse;
+import com.peppermint.app.cloud.apis.data.TranscriptionResponse;
 import com.peppermint.app.cloud.apis.data.UploadsResponse;
 import com.peppermint.app.cloud.apis.data.parsers.AccountsResponseParser;
 import com.peppermint.app.cloud.apis.data.parsers.JWTsResponseParser;
 import com.peppermint.app.cloud.apis.data.parsers.MessageListResponseParser;
 import com.peppermint.app.cloud.apis.data.parsers.MessagesResponseParser;
 import com.peppermint.app.cloud.apis.data.parsers.RecorderResponseParser;
+import com.peppermint.app.cloud.apis.data.parsers.TranscriptionResponseParser;
 import com.peppermint.app.cloud.apis.data.parsers.UploadsResponseParser;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiAlreadyRegisteredException;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiInvalidAccessTokenException;
@@ -45,6 +47,7 @@ public class PeppermintApi extends BaseApi implements Serializable {
 
     // payload content type
     private static final String CONTENT_TYPE_JSON = "application/vnd.api+json";
+    private static final String CONTENT_TYPE_PURE_JSON = "application/json";
 
     // supported account types
     public static final int ACCOUNT_TYPE_REGULAR = 1;
@@ -70,6 +73,8 @@ public class PeppermintApi extends BaseApi implements Serializable {
     protected static final String RECORDERS_ENDPOINT = BASE_ENDPOINT_URL + "recorders/{recorder_id}";
     protected static final String UPLOADS_ENDPOINT = BASE_ENDPOINT_URL + "uploads";
 
+    protected static final String TRANSCRIPTION_ENDPOINT = BASE_ENDPOINT_URL + "transcriptions";
+
     // response parsers
     private final AccountsResponseParser mAccountsResponseParser = new AccountsResponseParser();
     private final RecorderResponseParser mRecorderResponseParser = new RecorderResponseParser();
@@ -77,6 +82,7 @@ public class PeppermintApi extends BaseApi implements Serializable {
     private final JWTsResponseParser mJWTsResponseParser = new JWTsResponseParser();
     private final MessagesResponseParser mMessagesResponseParser = new MessagesResponseParser();
     private final MessageListResponseParser mMessageListResponseParser = new MessageListResponseParser();
+    private final TranscriptionResponseParser mTranscriptionResponseParser = new TranscriptionResponseParser();
 
     public PeppermintApi(final Context mContext) {
         super(mContext);
@@ -165,15 +171,26 @@ public class PeppermintApi extends BaseApi implements Serializable {
      * @throws PeppermintApiTooManyRequestsException
      * @throws PeppermintApiRecipientNoAppException if the recipient doesn't have Peppermint installed
      */
-    public MessagesResponse sendMessage(final String requesterId, final String transcriptionUrl, final String audioUrl, final String senderEmail, final String recipientEmail, final int durationInSeconds) throws Exception {
+    public MessagesResponse sendMessage(final String requesterId, final String transcriptionUrl, final String audioUrl, final String senderEmail, final String recipientEmail) throws Exception {
         final HttpRequest request = new HttpRequest(MESSAGES_ENDPOINT, HttpRequest.METHOD_POST);
         request.setHeaderParam("Content-Type", CONTENT_TYPE_JSON);
-        request.setBody("{ \"data\": { \"attributes\": { \"audio_url\": \"" + audioUrl + "\", \"sender_email\": \"" + senderEmail + "\", \"recipient_email\": \"" + recipientEmail + "\" }, \"type\":\"messages\" } }");
+        request.setBody("{ \"data\": { \"attributes\": { \"audio_url\": \"" + audioUrl + "\", \"sender_email\": \"" + senderEmail + "\", \"recipient_email\": \"" + recipientEmail + "\"" + (transcriptionUrl == null ? "" : ", \"transcription_url\":\"" + transcriptionUrl + "\" ") + "}, \"type\":\"messages\" } }");
 
         final HttpJSONResponse<MessagesResponse> response = executeRequest(requesterId, request, new HttpJSONResponse<>(mMessagesResponseParser), true);
         if(response.getCode() == 404) {
             throw new PeppermintApiRecipientNoAppException(response.getCode());
         }
+        processGenericExceptions(request, response);
+
+        return response.getJsonBody();
+    }
+
+    public TranscriptionResponse sendTranscription(final String requesterId, final String audioUrl, final String languageTag, final float confidence, final String transcription) throws Exception {
+        final HttpRequest request = new HttpRequest(TRANSCRIPTION_ENDPOINT, HttpRequest.METHOD_POST);
+        request.setHeaderParam("Content-Type", CONTENT_TYPE_PURE_JSON);
+        request.setBody("{ \"audio_url\": \"" + audioUrl + "\", \"language\": \"" + languageTag + "\", \"text\": \"" + transcription + "\", \"confidence\": " + confidence + " }");
+
+        final HttpJSONResponse<TranscriptionResponse> response = executeRequest(requesterId, request, new HttpJSONResponse<>(mTranscriptionResponseParser), true);
         processGenericExceptions(request, response);
 
         return response.getJsonBody();

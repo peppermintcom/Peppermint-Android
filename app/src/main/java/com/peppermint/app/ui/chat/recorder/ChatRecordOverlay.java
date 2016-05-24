@@ -2,6 +2,7 @@ package com.peppermint.app.ui.chat.recorder;
 
 import android.graphics.Rect;
 import android.media.MediaPlayer;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -26,6 +27,8 @@ import com.peppermint.app.utils.Utils;
  * Created by Nuno Luz on 06-02-2016.
  */
 public class ChatRecordOverlay extends Overlay implements RecordServiceManager.RecordServiceListener, View.OnTouchListener, OverlayManager.OverlayVisibilityChangeListener {
+
+    private static final String TAG = ChatRecordOverlay.class.getSimpleName();
 
     public interface OnRecordingFinishedCallback {
         void onRecordingFinished(RecorderEvent event);
@@ -109,6 +112,13 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.R
         mRecordServiceManager.start(false);
 
         mRecordSoundPlayer = MediaPlayer.create(getContext(), R.raw.s_record);
+        mRecordSoundPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                Log.e(TAG, "Player error " + what + " # " + extra);
+                return true;
+            }
+        });
         mMinSwipeDistance = Utils.dpToPx(getContext(), MIN_SWIPE_DISTANCE_DP);
 
         getOverlayManager().addOverlayVisibilityChangeListener(this);

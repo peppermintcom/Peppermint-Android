@@ -47,7 +47,7 @@ public class GlobalManager {
             return null;
         }
 
-        Message message = MessageManager.getMessageByIdOrServerId(db, 0, serverId);
+        Message message = MessageManager.getMessageByIdOrServerId(db, 0, serverId, true);
         if(message != null) {
             return message;
         }
@@ -68,6 +68,7 @@ public class GlobalManager {
 
             // insert recording
             Recording recording = new Recording(null, durationSeconds * 1000L, 0, false, Recording.CONTENT_TYPE_AUDIO);
+            recording.setTranscription(transcription);
             recording.setRecordedTimestamp(createdTs);
             RecordingManager.insert(db, recording);
 
@@ -82,7 +83,7 @@ public class GlobalManager {
             }
 
             message = new Message(0, chat.getId(), recording.getId(), recipient.getId(), null, null,
-                    createdTs, true, false, readTimestamp != null, serverId, audioUrl, null, transcription);
+                    createdTs, true, false, readTimestamp != null, serverId, audioUrl, null);
             message.setChatParameter(chat);
             message.setRecordingParameter(recording);
             MessageManager.insert(db, message);
@@ -104,7 +105,7 @@ public class GlobalManager {
             return null;
         }
 
-        Message message = MessageManager.getMessageByIdOrServerId(db, 0, serverId);
+        Message message = MessageManager.getMessageByIdOrServerId(db, 0, serverId, false);
         if(message != null) {
             return message;
         }
@@ -125,6 +126,7 @@ public class GlobalManager {
 
             // insert recording
             Recording recording = new Recording(null, durationSeconds * 1000L, 0, false, Recording.CONTENT_TYPE_AUDIO);
+            recording.setTranscription(transcription);
             recording.setRecordedTimestamp(createdTs);
             RecordingManager.insert(db, recording);
 
@@ -136,7 +138,7 @@ public class GlobalManager {
             }
 
             message = new Message(0, chat.getId(), recording.getId(), 0, null, null,
-                    createdTs, false, true, false, serverId, audioUrl, null, transcription);
+                    createdTs, false, true, false, serverId, audioUrl, null);
             message.setRecipientIds(recipientIds);
             message.setConfirmedSentRecipientIds(recipientIds);
             message.setChatParameter(chat);
@@ -181,7 +183,7 @@ public class GlobalManager {
                     sendingToPeppermintSupport ? context.getString(R.string.support_audio_subject) : context.getString(R.string.sender_default_mail_subject),
                     context.getString(R.string.sender_default_message),
                     DateContainer.getCurrentUTCTimestamp(),
-                    false, false, false, null, null, null, null);
+                    false, false, false, null, null, null);
             message.setRecipientIds(chat.getRecipientListIds());
             message.setChatParameter(chat);
             message.setRecordingParameter(recording);

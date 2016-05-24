@@ -19,6 +19,10 @@ public class Recording implements Serializable {
     private float mSizeKb;
     private String mRecordedTimestamp;
     private boolean mHasVideo = false;
+    private String mTranscription;
+    private float mTranscriptionConfidence = -1;
+    private String mTranscriptionLanguage;
+    private String mTranscriptionUrl;
 
     public Recording() {
     }
@@ -121,11 +125,47 @@ public class Recording implements Serializable {
         this.mRecordedTimestamp = mRecordedTimestamp;
     }
 
+    public String getTranscription() {
+        return mTranscription;
+    }
+
+    public void setTranscription(String mTranscription) {
+        this.mTranscription = mTranscription;
+    }
+
+    public float getTranscriptionConfidence() {
+        return mTranscriptionConfidence;
+    }
+
+    public void setTranscriptionConfidence(float mTranscriptionConfidence) {
+        this.mTranscriptionConfidence = mTranscriptionConfidence;
+    }
+
+    public String getTranscriptionLanguage() {
+        return mTranscriptionLanguage;
+    }
+
+    public void setTranscriptionLanguage(String mTranscriptionLanguage) {
+        this.mTranscriptionLanguage = mTranscriptionLanguage;
+    }
+
+    public String getTranscriptionUrl() {
+        return mTranscriptionUrl;
+    }
+
+    public void setTranscriptionUrl(String mTranscriptionUrl) {
+        this.mTranscriptionUrl = mTranscriptionUrl;
+    }
+
     @Override
     public String toString() {
         return "Recording{" +
                 "mId=" + mId +
                 ", mFilePath='" + mFilePath + '\'' +
+                ", mTranscription='" + mTranscription + '\'' +
+                ", mTranscriptionLanguage='" + mTranscriptionLanguage + '\'' +
+                ", mTranscriptionConfidence=" + mTranscriptionConfidence +
+                ", mTranscriptionUrl='" + mTranscriptionUrl + '\'' +
                 ", mContentType='" + mContentType + '\'' +
                 ", mDurationMillis=" + mDurationMillis +
                 ", mSizeKb=" + mSizeKb +

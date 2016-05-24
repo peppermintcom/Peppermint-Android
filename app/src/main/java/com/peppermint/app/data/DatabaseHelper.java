@@ -45,7 +45,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 	private static final String TAG = DatabaseHelper.class.getSimpleName();
 	private static final String DATABASE_NAME = "peppermint.db";        // database filename
-	private static final int DATABASE_VERSION = 18;                     // database version
+	private static final int DATABASE_VERSION = 20;                     // database version
 
 	private Context mContext;
     private ReentrantLock mLock = new ReentrantLock();
@@ -245,6 +245,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 			try {
 				execSQLScript(R.raw.db_19_pending_logout, _db);
+			} catch (Exception e) {
+				TrackerManager.getInstance(mContext).logException(e);
+			}
+		}
+
+		if(_oldVersion < 19) {
+			Log.d(TAG, "Updating Database: v20 Transcription...");
+
+			try {
+				execSQLScript(R.raw.db_20_transcription, _db);
 			} catch (Exception e) {
 				TrackerManager.getInstance(mContext).logException(e);
 			}

@@ -9,9 +9,14 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.util.ArrayMap;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.cloud.speech.v1.nano.InitialRecognizeRequest;
+import com.google.cloud.speech.v1.nano.RecognizeResponse;
+import com.google.cloud.speech.v1.nano.SpeechRecognitionResult;
+import com.peppermint.app.cloud.apis.speech.GoogleSpeechRecognizeClient;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.data.Recording;
@@ -21,6 +26,13 @@ import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.base.views.CustomToast;
 import com.peppermint.app.utils.ExtendedAudioRecorder;
 import com.peppermint.app.utils.NoAccessToExternalStorageException;
+import com.peppermint.app.utils.Utils;
+
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import io.grpc.Status;
 
 /**
  * Service that records audio messages.
@@ -29,35 +41,43 @@ public class RecordService extends Service {
 
     private static final String TAG = RecordService.class.getSimpleName();
 
+    /** Intent action to pop recording transcription. **/
+    public static final String ACTION_POP_TRANSCRIPTION = "com.peppermint.app.RecordService.POP_TRANSCRIPTION";
+
+    /** Intent action to start recording. **/
+    public static final String ACTION_START_RECORDING = "com.peppermint.app.RecordService.START_RECORDING";
+
     /**
-        Intent extra key for a boolean flag indicating if the service should start
-        recording right after starting.
+        Intent extra key for a string with the file path for the transcribed file.
+        This should be supplied for the POP_TRANSCRIPTION action.
      **/
-    public static final String INTENT_DATA_DOSTART = "RecordService_DoStart";
+    public static final String INTENT_DATA_TRANSCRIPTION_FILEPATH = TAG + "_TranscriptionFilePath";
 
     /**
         Intent extra key for a string with the filename prefix for the recorded file.
-        This should be supplied if the DOSTART flag is true.
+        This should be supplied for the START_RECORDING action.
      **/
-    public static final String INTENT_DATA_FILEPREFIX = "RecordService_FilePrefix";
+    public static final String INTENT_DATA_FILEPREFIX = TAG + "_FilePrefix";
 
     /**
         Intent extra key for the {@link ContactRaw} of the recorded file.
         This service doesn't handle the sending of files but the recipient is required to
         keep track of the sending process in case the interface (activity) gets closed.
-        This <b>must</b> be supplied if the DOSTART flag is true.
+        This <b>must</b> be supplied for the START_RECORDING action.
      **/
-    public static final String INTENT_DATA_CHAT = "RecordService_Chat";
+    public static final String INTENT_DATA_CHAT = TAG + "_Chat";
 
     /**
-     Intent extra key for a long with the max duration for the recorded file in millis.
-     This should be supplied if the DOSTART flag is true.
+        Intent extra key for a long with the max duration for the recorded file in millis.
+        This should be supplied for the START_RECORDING action.
      **/
-    public static final String INTENT_DATA_MAXDURATION = "RecordService_MaxDuration";
+    public static final String INTENT_DATA_MAXDURATION = TAG + "_MaxDuration";
 
     protected RecordServiceBinder mBinder = new RecordServiceBinder();
 
     private float mMaxAmplitude;
+    private Map<String, GoogleSpeechRecognizeClient> mSpeechRecognizers = new ArrayMap<>();
+    private Map<String, RecognizeResponse> mTranscriptionResults = new ConcurrentHashMap<>();
 
     /**
      * The service binder used by external components to interact with the service.
@@ -166,8 +186,12 @@ public class RecordService extends Service {
         return Math.min(1, amplitude / mMaxAmplitude);
     }
 
-    private static Recording newRecording(ExtendedAudioRecorder recorder) {
-        Recording recording = new Recording(recorder.getFilePath(), recorder.getFullDuration(), recorder.getFullSize(), false);
+    private Recording newRecording(ExtendedAudioRecorder recorder) {
+        final Object[] transcriptionData = getTranscription(recorder.getFilePath());
+        final Recording recording = new Recording(recorder.getFilePath(), recorder.getFullDuration(), recorder.getFullSize(), false);
+        recording.setTranscription((String) transcriptionData[0]);
+        recording.setTranscriptionConfidence((float) transcriptionData[1]);
+        recording.setTranscriptionLanguage(Utils.toBcp47LanguageTag(Locale.getDefault()));
         recording.setRecordedTimestamp(recorder.getStartTimestamp());
         return recording;
     }
@@ -191,7 +215,7 @@ public class RecordService extends Service {
         @Override
         public void onPause(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp) {
             updateNotification();
-            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_PAUSE, newRecording(mRecorder), mChat, amplitude, null);;
+            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_PAUSE, newRecording(mRecorder), mChat, amplitude, null);
         }
 
         @Override
@@ -208,6 +232,8 @@ public class RecordService extends Service {
                 mIsInForegroundMode = false;
             }
 
+            finishSpeechToText(filePath);
+
             PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_STOP, newRecording(mRecorder), mChat, amplitude, null);
         }
 
@@ -218,7 +244,70 @@ public class RecordService extends Service {
                 mIsInForegroundMode = false;
             }
 
+            finishSpeechToText(filePath);
+
             PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_ERROR, newRecording(mRecorder), mChat, 0, t);
+        }
+
+        @Override
+        public void onAudioRecordFound(String filePath, int sampleRate) {
+            try {
+                final GoogleSpeechRecognizeClient client = new GoogleSpeechRecognizeClient(RecordService.this, filePath);
+                client.setRecognitionListener(mSpeechRecognitionListener);
+                client.startSending(InitialRecognizeRequest.LINEAR16, sampleRate);
+                mSpeechRecognizers.put(filePath, client);
+            } catch (Exception e) {
+                TrackerManager.getInstance(RecordService.this).logException(e);
+            }
+        }
+
+        @Override
+        public void onRecorderData(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp, byte[] bytes) {
+            final GoogleSpeechRecognizeClient client = mSpeechRecognizers.get(filePath);
+            if(client == null) {
+                Log.w(TAG, "No SpeechRecognizeClient found for " + filePath);
+                return;
+            }
+
+            try {
+                client.recognize(bytes);
+            } catch (Throwable e) {
+                TrackerManager.getInstance(RecordService.this).logException(e);
+            }
+        }
+
+        private void finishSpeechToText(String filePath) {
+            final GoogleSpeechRecognizeClient client = mSpeechRecognizers.get(filePath);
+            if(client == null) {
+                Log.w(TAG, "No SpeechRecognizeClient found for " + filePath);
+                return;
+            }
+
+            client.finishSending();
+        }
+    };
+
+    private final GoogleSpeechRecognizeClient.RecognitionListener mSpeechRecognitionListener = new GoogleSpeechRecognizeClient.RecognitionListener() {
+        @Override
+        public void onRecognitionStarted(GoogleSpeechRecognizeClient client) {
+        }
+
+        @Override
+        public void onRecognitionFinished(GoogleSpeechRecognizeClient client, RecognizeResponse lastResponse) {
+            mSpeechRecognizers.remove(client.getId());
+            if(lastResponse != null) {
+                mTranscriptionResults.put(client.getId(), lastResponse);
+            }
+            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_TRANSCRIPTION, newRecording(mRecorder), mChat, 0, null);
+        }
+
+        @Override
+        public void onRecognitionError(GoogleSpeechRecognizeClient client, Status status, RecognizeResponse lastResponse) {
+            mSpeechRecognizers.remove(client.getId());
+            if(lastResponse != null) {
+                mTranscriptionResults.put(client.getId(), lastResponse);
+            }
+            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_TRANSCRIPTION, newRecording(mRecorder), mChat, 0, null);
         }
     };
 
@@ -239,8 +328,8 @@ public class RecordService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(intent != null && intent.hasExtra(INTENT_DATA_DOSTART) && intent.hasExtra(INTENT_DATA_CHAT)) {
-            if(intent.getBooleanExtra(INTENT_DATA_DOSTART, false)) {
+        if(intent != null && intent.getAction() != null) {
+            if(intent.getAction().compareTo(ACTION_START_RECORDING) == 0 && intent.hasExtra(INTENT_DATA_CHAT)) {
                 try {
                     if (intent.hasExtra(INTENT_DATA_FILEPREFIX)) {
                         start(intent.getStringExtra(INTENT_DATA_FILEPREFIX), (Chat) intent.getSerializableExtra(INTENT_DATA_CHAT), intent.getLongExtra(INTENT_DATA_MAXDURATION, -1));
@@ -251,6 +340,11 @@ public class RecordService extends Service {
                     CustomToast.makeText(RecordService.this, R.string.msg_no_external_storage, Toast.LENGTH_LONG).show();
                     Log.e(TAG, e.getMessage(), e);
                     TrackerManager.getInstance(getApplicationContext()).logException(e);
+                }
+            } else if(intent.getAction().compareTo(ACTION_POP_TRANSCRIPTION) == 0 && intent.hasExtra(INTENT_DATA_TRANSCRIPTION_FILEPATH)) {
+                String filePath = intent.getStringExtra(INTENT_DATA_TRANSCRIPTION_FILEPATH);
+                if(!mSpeechRecognizers.containsKey(filePath)) {
+                    popTranscription(filePath, 0, true);
                 }
             }
         }
@@ -279,6 +373,60 @@ public class RecordService extends Service {
         }
         super.onDestroy();
     }
+
+    private Object[] getTranscription(String filePath) {
+        String transcription = null;
+        float transcriptionConfidence = -1;
+        final RecognizeResponse recognizeResponse = mTranscriptionResults.get(filePath);
+        if(recognizeResponse != null && recognizeResponse.error == null) {
+            final SpeechRecognitionResult speechRecognitionResult = recognizeResponse.results[recognizeResponse.resultIndex];
+            if(!speechRecognitionResult.isFinal) {
+                transcriptionConfidence = speechRecognitionResult.stability;
+                transcription = speechRecognitionResult.alternatives[0].transcript;
+            } else {
+                transcription = speechRecognitionResult.alternatives[0].transcript;
+                transcriptionConfidence = speechRecognitionResult.alternatives[0].confidence;
+                for(int i=1; i<speechRecognitionResult.alternatives.length; i++) {
+                    if(transcriptionConfidence < speechRecognitionResult.alternatives[i].confidence) {
+                        transcription = speechRecognitionResult.alternatives[i].transcript;
+                        transcriptionConfidence = speechRecognitionResult.alternatives[i].confidence;
+                    }
+                }
+            }
+        }
+        return new Object[] {transcription, transcriptionConfidence};
+    }
+
+    String popTranscription(String filePath, float minConfidence, boolean sendEvent) {
+        if(!mTranscriptionResults.containsKey(filePath)) {
+            if(sendEvent) {
+                PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_TRANSCRIPTION, new Recording(filePath), null, 0, null);
+            }
+            return null;
+        }
+
+        final Object[] transcriptionData = getTranscription(filePath);
+        mTranscriptionResults.remove(filePath);
+
+        if(sendEvent) {
+            Recording recording = new Recording(filePath);
+            recording.setTranscription((String) transcriptionData[0]);
+            recording.setTranscriptionConfidence((float) transcriptionData[1]);
+            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_TRANSCRIPTION, recording, null, 0, null);
+        }
+
+        if((float) transcriptionData[1] >= minConfidence) {
+            return (String) transcriptionData[0];
+        }
+
+        return null;
+    }
+
+    boolean isTranscribing(String filePath) {
+        return mSpeechRecognizers.containsKey(filePath);
+    }
+
+    boolean isTranscribing() { return mSpeechRecognizers.size() > 0; }
 
     boolean isRecording() {
         return mRecorder != null && mRecorder.isRecording();

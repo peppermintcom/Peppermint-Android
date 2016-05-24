@@ -13,6 +13,7 @@ import com.googlecode.mp4parser.FileDataSourceImpl;
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
 import com.googlecode.mp4parser.authoring.tracks.AACTrackImpl;
+import com.peppermint.app.cloud.apis.speech.GoogleSpeechRecognizeClient;
 import com.peppermint.app.tracking.TrackerManager;
 import com.todoroo.aacenc.AACEncoder;
 
@@ -35,10 +36,12 @@ public class ExtendedAudioRecorder {
 
     public interface Listener {
         void onStart(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp);
+        void onAudioRecordFound(String filePath, int sampleRate);
         void onPause(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp);
         void onResume(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp);
         void onStop(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp);
         void onError(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp, Throwable t);
+        void onRecorderData(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp, byte[] bytes);
     }
 
     private static final String TAG = ExtendedAudioRecorder.class.getSimpleName();
@@ -139,6 +142,10 @@ public class ExtendedAudioRecorder {
                     Object[] data = findAudioRecord();
                     recorder = (AudioRecord) data[0];
                     recorder.startRecording();
+
+                    if(mListener != null) {
+                        mListener.onAudioRecordFound(mFilePath, (int) data[1]);
+                    }
 
                     writeAudioDataToFile(recorder, (int) data[1]);
                 } catch (Throwable t) {
@@ -388,6 +395,8 @@ public class ExtendedAudioRecorder {
             mFullDuration += cicleNow - now;
             mFullSize = bitrate / 8f * (mFullDuration / 1000f);
             now = cicleNow;
+
+            mListener.onRecorderData(mFilePath, mFullDuration, mFullSize, mAmplitude, mStartTimestamp, bData);
 
             // exit if max duration has been exceeded
             if(mMaxDuration > 0 && mFullDuration > mMaxDuration) {

@@ -240,9 +240,15 @@ public class ChatController extends ChatRecordOverlayController implements View.
     @Override
     public void onEventMainThread(SenderEvent event) {
         super.onEventMainThread(event);
-        if(event.getType() == SenderEvent.EVENT_STARTED || event.getType() == SenderEvent.EVENT_CANCELLED) {
+        if(event.getType() == SenderEvent.EVENT_STARTED ||
+                event.getType() == SenderEvent.EVENT_CANCELLED) {
             // add to UI
             refreshList();
+        } else if(event.getType() == SenderEvent.EVENT_NON_CANCELLABLE) {
+            // will include transcription
+            if(mAdapter != null) {
+                mAdapter.notifyDataSetChanged();
+            }
         }
     }
 
