@@ -18,11 +18,15 @@ import android.widget.Toast;
 import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticatorUtils;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
+import com.peppermint.app.cloud.apis.speech.GoogleSpeechRecognizeClient;
 import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
 import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
 import com.peppermint.app.utils.Utils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -31,11 +35,13 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     private static final String PREF_SIGN_OUT_KEY = "signOut";
     private static final String PREF_DISPLAY_NAME_KEY = "displayName";
     private static final String PREF_CHAT_HEADS_ENABLED_KEY = "chatHeads";
+    private static final String PREF_TRANSCRIPTION_LANGUAGE_CODE = "transcriptionLanguageCode";
 
     private static final int OVERLAY_PERMISSION_REQUEST_CODE = 122;
 
     private CustomActionBarActivity mActivity;
     private SenderPreferences mPreferences;
+    private List<CustomListViewPreference.ListItem> mListItems;
 
     public SettingsFragment() {
     }
@@ -87,8 +93,6 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
             }
         });
 
-        mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
-
         findPreference(PREF_SIGN_OUT_KEY).setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
@@ -102,6 +106,28 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                 return false;
             }
         });
+
+        /*// TRANSCRIPTION PREFS
+        final String selectedLanguageCode = mPreferences.getTranscriptionLanguageCode();
+        String selectedLanguage = getString(R.string.pref_default_transcription_language_code);
+        mListItems = new ArrayList<>();
+        mListItems.add(new CustomListViewPreference.ListItem(null, getString(R.string.pref_default_transcription_language_code)));
+        final String packageName = mActivity.getPackageName();
+        for(int i=0; i< GoogleSpeechRecognizeClient.SUPPORTED_LANGUAGE_CODES.length; i++) {
+            final String key = GoogleSpeechRecognizeClient.SUPPORTED_LANGUAGE_CODES[i];
+            final int resId = getResources().getIdentifier("lang_" + key.replace("-", "_"), "string", packageName);
+            CustomListViewPreference.ListItem listItem = new CustomListViewPreference.ListItem(key, getString(resId));
+            mListItems.add(listItem);
+            if(selectedLanguageCode != null && selectedLanguageCode.equals(key)) {
+                selectedLanguage = listItem.value;
+            }
+        }
+
+        final CustomListViewPreference prefTranscriptionLanguageCode = (CustomListViewPreference) findPreference(PREF_TRANSCRIPTION_LANGUAGE_CODE);
+        prefTranscriptionLanguageCode.setItems(mListItems);
+        prefTranscriptionLanguageCode.setTitle(selectedLanguage);*/
+
+        mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
@@ -161,7 +187,22 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                 } else {
                     ChatHeadServiceManager.startAndDisable(mActivity);
                 }
-            }
+            } /*else if(key.compareTo(PREF_TRANSCRIPTION_LANGUAGE_CODE) == 0) {
+                final String selectedKey = mPreferences.getTranscriptionLanguageCode();
+                if(selectedKey == null) {
+                    pref.setTitle(getString(R.string.pref_default_transcription_language_code));
+                } else {
+                    boolean done = false;
+                    final int listItemAmount = mListItems.size();
+                    for(int i=0; i< listItemAmount && !done; i++) {
+                        final CustomListViewPreference.ListItem listItem = mListItems.get(i);
+                        if(selectedKey.equals(listItem.key)) {
+                            pref.setTitle(listItem.value);
+                            done = true;
+                        }
+                    }
+                }
+            }*/
             mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
         }
     }

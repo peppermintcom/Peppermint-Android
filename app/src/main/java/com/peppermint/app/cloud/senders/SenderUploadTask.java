@@ -200,6 +200,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         if(recording != null && recording.getFilePath().compareTo(event.getRecording().getFilePath()) == 0) {
             recording.setTranscription(event.getRecording().getTranscription());
             recording.setTranscriptionConfidence(event.getRecording().getTranscriptionConfidence());
+            recording.setTranscriptionLanguage(event.getRecording().getTranscriptionLanguage());
             mMoveOnTranscription = true;
         }
     }

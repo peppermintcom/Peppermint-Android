@@ -18,4 +18,19 @@
         android:key="signOut"
         android:title="@string/pref_sign_out_displayname"
         android:summary="@string/pref_sign_out_summary" />
+
+<!--    <PreferenceCategory android:title="@string/pref_separator_transcription">
+        <com.peppermint.app.ui.settings.CustomCheckBoxPreference
+            android:key="automaticTranscription"
+            android:title="@string/pref_title_automatic_transcription"
+            android:summary="@string/pref_summary_automatic_transcription"
+            android:defaultValue="true"/>
+
+        <com.peppermint.app.ui.settings.CustomListViewPreference
+            android:key="transcriptionLanguageCode"
+            android:title="@string/pref_title_transcription_language"
+            android:summary="@string/pref_summary_transcription_language"
+            android:dependency="automaticTranscription" />
+    </PreferenceCategory>-->
+
 </PreferenceScreen>

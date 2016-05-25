@@ -7,6 +7,7 @@ import android.preference.PreferenceManager;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 /**
  * Created by Nuno Luz on 02-10-2015.
@@ -29,6 +30,9 @@ public class SenderPreferences {
     public static final String LAST_NAME_KEY = "lastName";
 
     public static final String ARE_CHATHEADS_ENABLED_KEY = "chatHeads";
+
+    public static final String AUTOMATIC_TRANSCRIPTION = "automaticTranscription";
+    public static final String TRANSCRIPTION_LANGUAGE_CODE = "transcriptionLanguageCode";
 
     public static final String LAST_SYNC_TIMESTAMP_KEY = "lastSyncTimestmap";
 
@@ -147,6 +151,26 @@ public class SenderPreferences {
     public void setChatHeadsEnabled(boolean val) {
         SharedPreferences.Editor editor = getSharedPreferences().edit();
         editor.putBoolean(ARE_CHATHEADS_ENABLED_KEY, val);
+        editor.commit();
+    }
+
+    public void setTranscriptionLanguageCode(String languageCode) {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putString(TRANSCRIPTION_LANGUAGE_CODE, languageCode);
+        editor.commit();
+    }
+
+    public String getTranscriptionLanguageCode() {
+        return getSharedPreferences().getString(TRANSCRIPTION_LANGUAGE_CODE, Utils.toBcp47LanguageTag(Locale.getDefault()));
+    }
+
+    public boolean isAutomaticTranscription() {
+        return getSharedPreferences().getBoolean(AUTOMATIC_TRANSCRIPTION, true);
+    }
+
+    public void setAutomaticTranscription(boolean val) {
+        SharedPreferences.Editor editor = getSharedPreferences().edit();
+        editor.putBoolean(AUTOMATIC_TRANSCRIPTION, val);
         editor.commit();
     }
 

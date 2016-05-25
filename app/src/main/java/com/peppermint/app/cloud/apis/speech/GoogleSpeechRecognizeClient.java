@@ -14,7 +14,6 @@ import com.peppermint.app.utils.Utils;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -57,6 +56,7 @@ public class GoogleSpeechRecognizeClient {
 
     private BlockingQueue<byte[]> mAudioDataQueue;
     private int mEncoding, mSampleRate;
+    private String mLanguageCode;
     private Future<?> mSenderFuture;
     private ThreadPoolExecutor mThreadPoolExecutor;
     private Runnable mSenderRunnable = new Runnable() {
@@ -82,7 +82,7 @@ public class GoogleSpeechRecognizeClient {
                 initial.encoding = mEncoding; // InitialRecognizeRequest.LINEAR16;
                 initial.sampleRate = mSampleRate;
                 initial.interimResults = true;
-                initial.languageCode = Utils.toBcp47LanguageTag(Locale.getDefault());
+                initial.languageCode = mLanguageCode;
 
                 RecognizeRequest firstRequest = new RecognizeRequest();
                 firstRequest.initialRequest = initial;
@@ -153,7 +153,7 @@ public class GoogleSpeechRecognizeClient {
                 new LinkedBlockingQueue<Runnable>());
     }
 
-    public void startSending(int encoding, int sampleRate) throws NoInternetConnectionException {
+    public void startSending(int encoding, int sampleRate, String languageCode) throws NoInternetConnectionException {
         if(!Utils.isInternetAvailable(mContext)) {
             throw new NoInternetConnectionException();
         }
@@ -166,6 +166,7 @@ public class GoogleSpeechRecognizeClient {
 
         mEncoding = encoding;
         mSampleRate = sampleRate;
+        mLanguageCode = getAppropriateLanguage(languageCode);
 
         mSenderFuture = mThreadPoolExecutor.submit(mSenderRunnable);
     }
@@ -211,4 +212,89 @@ public class GoogleSpeechRecognizeClient {
     public void setId(String mId) {
         this.mId = mId;
     }
+
+    public String getLanguageCode() {
+        return mLanguageCode;
+    }
+
+    public String getAppropriateLanguage(String languageCode) {
+        int separatorIndex = languageCode.indexOf("-");
+        if(languageCode == null || separatorIndex < 0) {
+            return DEFAULT_LANGUAGE_CODE;
+        }
+
+        if(supportsLanguageCode(languageCode)) {
+            return languageCode;
+        }
+
+        String pureLanguageCode = languageCode.substring(0, separatorIndex);
+        for(int i=0; i<SUPPORTED_LANGUAGE_CODES.length; i++) {
+            if(SUPPORTED_LANGUAGE_CODES[i].startsWith(pureLanguageCode)) {
+                return SUPPORTED_LANGUAGE_CODES[i];
+            }
+        }
+
+        return DEFAULT_LANGUAGE_CODE;
+    }
+
+    public boolean supportsLanguageCode(String languageCode) {
+        for(int i=0; i<SUPPORTED_LANGUAGE_CODES.length; i++) {
+            if(SUPPORTED_LANGUAGE_CODES[i].compareTo(languageCode) == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static final String DEFAULT_LANGUAGE_CODE = "en-US";
+    public static final String[] SUPPORTED_LANGUAGE_CODES = {
+            "af-ZA",
+            "id-ID",
+            "ms-MY",
+            "ca-ES",
+            "cs-CZ",
+            "da-DK",
+            "de-DE",
+            "en-US", "en-GB", "en-AU", "en-CA", "en-IN", "en-IE", "en-NZ", "en-PH", "en-ZA",
+            "es-AR", "es-BO", "es-CL", "es-CO", "es-CR", "es-EC", "es-SV", "es-ES", "es-US",
+            "es-GT", "es-HN", "es-MX", "es-NI", "es-PA", "es-PY", "es-PE", "es-PR", "es-DO",
+            "es-UY", "es-VE", "eu-ES",
+            "fil-PH",
+            "fr-FR",
+            "gl-ES",
+            "hr-HR",
+            "zu-ZA",
+            "is-IS",
+            "it-IT",
+            "lt-LT",
+            "hu-HU",
+            "nl-NL",
+            "nb-NO",
+            "pl-PL",
+            "pt-BR", "pt-PT",
+            "ro-RO",
+            "sk-SK",
+            "sl-SI",
+            "fi-FI",
+            "sv-SE",
+            "vi-VN",
+            "tr-TR",
+            "el-GR",
+            "bg-BG",
+            "ru-RU",
+            "sr-RS",
+            "uk-UA",
+            "he-IL",
+            "ar-AE", "ar-IL", "ar-JO", "ar-BH", "ar-DZ", "ar-SA", "ar-IQ", "ar-KW", "ar-MA",
+            "ar-TN", "ar-OM", "ar-PS", "ar-QA", "ar-LB", "ar-EG",
+            "fa-IR",
+            "hi-IN",
+            "th-TH",
+            "ko-KR",
+            "cmn-Hant-TW",
+            "yue-Hant-HK",
+            "ja-JP",
+            "cmn-Hans-HK",
+            "cmn-Hans-CN"
+    };
 }

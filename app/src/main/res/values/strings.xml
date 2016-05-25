@@ -136,6 +136,15 @@
 
 
     <!-- SETTINGS -->
+    <string name="pref_default_transcription_language_code">System Language</string>
+    <string name="pref_separator_transcription">Transcription</string>
+
+    <string name="pref_title_automatic_transcription">Automatic Transcription</string>
+    <string name="pref_summary_automatic_transcription">Enable or disable the automatic transcription of audio messages</string>
+
+    <string name="pref_title_transcription_language">Transcription Language</string>
+    <string name="pref_summary_transcription_language">Select the language for automatic transcription of audio messages</string>
+
     <string name="pref_title_displayname">Your name</string>
     <string name="pref_summary_displayname">The receiver will see your name when receiving a message so you need to make sure it\'s your real name</string>
 
@@ -184,4 +193,93 @@
         <string name="support_text_body" translatable="false">\n\n\n\nNote regarding this feedback. Was provided by %1$s running %2$s with Peppermint v%3$s</string>
     <!-- EO: Keep English Only -->
 
+    <!-- GOOGLE SPEECH SERVICE LOCALES -->
+    <string name="lang_af_ZA" translatable="false">Afrikaans (Suid-Afrika)</string>
+    <string name="lang_id_ID" translatable="false">Bahasa Indonesia (Indonesia)</string>
+    <string name="lang_ms_MY" translatable="false">Bahasa Melayu (Malaysia)</string>
+    <string name="lang_ca_ES" translatable="false">Català (Espanya)</string>
+    <string name="lang_cs_CZ" translatable="false">Čeština (Česká republika)</string>
+    <string name="lang_da_DK" translatable="false">Dansk (Danmark)</string>
+    <string name="lang_de_DE" translatable="false">Deutsch (Deutschland)</string>
+    <string name="lang_en_AU" translatable="false">English (Australia)</string>
+    <string name="lang_en_CA" translatable="false">English (Canada)</string>
+    <string name="lang_en_GB" translatable="false">English (Great Britain)</string>
+    <string name="lang_en_IN" translatable="false">English (India)</string>
+    <string name="lang_en_IE" translatable="false">English (Ireland)</string>
+    <string name="lang_en_NZ" translatable="false">English (New Zealand)</string>
+    <string name="lang_en_PH" translatable="false">English (Philippines)</string>
+    <string name="lang_en_ZA" translatable="false">English (South Africa)</string>
+    <string name="lang_en_US" translatable="false">English (United States)</string>
+    <string name="lang_es_AR" translatable="false">Español (Argentina)</string>
+    <string name="lang_es_BO" translatable="false">Español (Bolivia)</string>
+    <string name="lang_es_CL" translatable="false">Español (Chile)</string>
+    <string name="lang_es_CO" translatable="false">Español (Colombia)</string>
+    <string name="lang_es_CR" translatable="false">Español (Costa Rica)</string>
+    <string name="lang_es_EC" translatable="false">Español (Ecuador)</string>
+    <string name="lang_es_SV" translatable="false">Español (El Salvador)</string>
+    <string name="lang_es_ES" translatable="false">Español (España)</string>
+    <string name="lang_es_US" translatable="false">Español (Estados Unidos)</string>
+    <string name="lang_es_GT" translatable="false">Español (Guatemala)</string>
+    <string name="lang_es_HN" translatable="false">Español (Honduras)</string>
+    <string name="lang_es_MX" translatable="false">Español (México)</string>
+    <string name="lang_es_NI" translatable="false">Español (Nicaragua)</string>
+    <string name="lang_es_PA" translatable="false">Español (Panamá)</string>
+    <string name="lang_es_PY" translatable="false">Español (Paraguay)</string>
+    <string name="lang_es_PE" translatable="false">Español (Perú)</string>
+    <string name="lang_es_PR" translatable="false">Español (Puerto Rico)</string>
+    <string name="lang_es_DO" translatable="false">Español (República Dominicana)</string>
+    <string name="lang_es_UY" translatable="false">Español (Uruguay)</string>
+    <string name="lang_es_VE" translatable="false">Español (Venezuela)</string>
+    <string name="lang_eu_ES" translatable="false">Euskara (Espainia)</string>
+    <string name="lang_fil_PH" translatable="false">Filipino (Pilipinas)</string>
+    <string name="lang_fr_FR" translatable="false">Français (France)</string>
+    <string name="lang_gl_ES" translatable="false">Galego (España)</string>
+    <string name="lang_hr_HR" translatable="false">Hrvatski (Hrvatska)</string>
+    <string name="lang_zu_ZA" translatable="false">IsiZulu (Ningizimu Afrika)</string>
+    <string name="lang_is_IS" translatable="false">Íslenska (Ísland)</string>
+    <string name="lang_it_IT" translatable="false">Italiano (Italia)</string>
+    <string name="lang_lt_LT" translatable="false">Lietuvių (Lietuva)</string>
+    <string name="lang_hu_HU" translatable="false">Magyar (Magyarország)</string>
+    <string name="lang_nl_NL" translatable="false">Nederlands (Nederland)</string>
+    <string name="lang_nb_NO" translatable="false">Norsk bokmål (Norge)</string>
+    <string name="lang_pl_PL" translatable="false">Polski (Polska)</string>
+    <string name="lang_pt_BR" translatable="false">Português (Brasil)</string>
+    <string name="lang_pt_PT" translatable="false">Português (Portugal)</string>
+    <string name="lang_ro_RO" translatable="false">Română (România)</string>
+    <string name="lang_sk_SK" translatable="false">Slovenčina (Slovensko)</string>
+    <string name="lang_sl_SI" translatable="false">Slovenščina (Slovenija)</string>
+    <string name="lang_fi_FI" translatable="false">Suomi (Suomi)</string>
+    <string name="lang_sv_SE" translatable="false">Svenska (Sverige)</string>
+    <string name="lang_vi_VN" translatable="false">Tiếng Việt (Việt Nam)</string>
+    <string name="lang_tr_TR" translatable="false">Türkçe (Türkiye)</string>
+    <string name="lang_el_GR" translatable="false">Ελληνικά (Ελλάδα)</string>
+    <string name="lang_bg_BG" translatable="false">Български (България)</string>
+    <string name="lang_ru_RU" translatable="false">Русский (Россия)</string>
+    <string name="lang_sr_RS" translatable="false">Српски (Србија)</string>
+    <string name="lang_uk_UA" translatable="false">Українська (Україна)</string>
+    <string name="lang_he_IL" translatable="false">עברית (ישראל)</string>
+    <string name="lang_ar_IL" translatable="false">&#x200f;العربية (إسرائيل)</string>
+    <string name="lang_ar_JO" translatable="false">&#x200f;العربية (الأردن)</string>
+    <string name="lang_ar_AE" translatable="false">&#x200f;العربية (الإمارات)</string>
+    <string name="lang_ar_BH" translatable="false">&#x200f;العربية (البحرين)</string>
+    <string name="lang_ar_DZ" translatable="false">&#x200f;العربية (الجزائر)</string>
+    <string name="lang_ar_SA" translatable="false">&#x200f;العربية (السعودية)</string>
+    <string name="lang_ar_IQ" translatable="false">&#x200f;العربية (العراق)</string>
+    <string name="lang_ar_KW" translatable="false">&#x200f;العربية (الكويت)</string>
+    <string name="lang_ar_MA" translatable="false">&#x200f;العربية (المغرب)</string>
+    <string name="lang_ar_TN" translatable="false">&#x200f;العربية (تونس)</string>
+    <string name="lang_ar_OM" translatable="false">&#x200f;العربية (عُمان)</string>
+    <string name="lang_ar_PS" translatable="false">&#x200f;العربية (فلسطين)</string>
+    <string name="lang_ar_QA" translatable="false">&#x200f;العربية (قطر)</string>
+    <string name="lang_ar_LB" translatable="false">&#x200f;العربية (لبنان)</string>
+    <string name="lang_ar_EG" translatable="false">&#x200f;العربية (مصر)</string>
+    <string name="lang_fa_IR" translatable="false">&#x200f;فارسی (ایران)</string>
+    <string name="lang_hi_IN" translatable="false">&#x200f;हिन्दी (भारत)</string>
+    <string name="lang_th_TH" translatable="false">ไทย (ประเทศไทย)</string>
+    <string name="lang_ko_KR" translatable="false">한국어 (대한민국)</string>
+    <string name="lang_cmn_Hant_TW" translatable="false">國語 (台灣)</string>
+    <string name="lang_yue_Hant_HK" translatable="false">廣東話 (香港)</string>
+    <string name="lang_ja_JP" translatable="false">日本語（日本）</string>
+    <string name="lang_cmn_Hans_HK" translatable="false">普通話 (香港)</string>
+    <string name="lang_cmn_Hans_CN" translatable="false">普通话 (中国大陆)</string>
 </resources>

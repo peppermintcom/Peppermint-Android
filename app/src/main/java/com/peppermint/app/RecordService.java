@@ -17,6 +17,7 @@ import com.google.cloud.speech.v1.nano.InitialRecognizeRequest;
 import com.google.cloud.speech.v1.nano.RecognizeResponse;
 import com.google.cloud.speech.v1.nano.SpeechRecognitionResult;
 import com.peppermint.app.cloud.apis.speech.GoogleSpeechRecognizeClient;
+import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.data.Chat;
 import com.peppermint.app.data.ContactRaw;
 import com.peppermint.app.data.Recording;
@@ -26,9 +27,7 @@ import com.peppermint.app.tracking.TrackerManager;
 import com.peppermint.app.ui.base.views.CustomToast;
 import com.peppermint.app.utils.ExtendedAudioRecorder;
 import com.peppermint.app.utils.NoAccessToExternalStorageException;
-import com.peppermint.app.utils.Utils;
 
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -77,7 +76,16 @@ public class RecordService extends Service {
 
     private float mMaxAmplitude;
     private Map<String, GoogleSpeechRecognizeClient> mSpeechRecognizers = new ArrayMap<>();
-    private Map<String, RecognizeResponse> mTranscriptionResults = new ConcurrentHashMap<>();
+    private Map<String, RecognizeResponseWrapper> mTranscriptionResults = new ConcurrentHashMap<>();
+
+    private class RecognizeResponseWrapper {
+        RecognizeResponseWrapper(RecognizeResponse recognizeResponse, String languageCode) {
+            this.recognizeResponse = recognizeResponse;
+            this.languageCode = languageCode;
+        }
+        RecognizeResponse recognizeResponse;
+        String languageCode;
+    }
 
     /**
      * The service binder used by external components to interact with the service.
@@ -191,7 +199,7 @@ public class RecordService extends Service {
         final Recording recording = new Recording(recorder.getFilePath(), recorder.getFullDuration(), recorder.getFullSize(), false);
         recording.setTranscription((String) transcriptionData[0]);
         recording.setTranscriptionConfidence((float) transcriptionData[1]);
-        recording.setTranscriptionLanguage(Utils.toBcp47LanguageTag(Locale.getDefault()));
+        recording.setTranscriptionLanguage((String) transcriptionData[2]);
         recording.setRecordedTimestamp(recorder.getStartTimestamp());
         return recording;
     }
@@ -252,9 +260,10 @@ public class RecordService extends Service {
         @Override
         public void onAudioRecordFound(String filePath, int sampleRate) {
             try {
+                final SenderPreferences preferences = new SenderPreferences(RecordService.this);
                 final GoogleSpeechRecognizeClient client = new GoogleSpeechRecognizeClient(RecordService.this, filePath);
                 client.setRecognitionListener(mSpeechRecognitionListener);
-                client.startSending(InitialRecognizeRequest.LINEAR16, sampleRate);
+                client.startSending(InitialRecognizeRequest.LINEAR16, sampleRate, preferences.getTranscriptionLanguageCode());
                 mSpeechRecognizers.put(filePath, client);
             } catch (Exception e) {
                 TrackerManager.getInstance(RecordService.this).logException(e);
@@ -296,7 +305,7 @@ public class RecordService extends Service {
         public void onRecognitionFinished(GoogleSpeechRecognizeClient client, RecognizeResponse lastResponse) {
             mSpeechRecognizers.remove(client.getId());
             if(lastResponse != null) {
-                mTranscriptionResults.put(client.getId(), lastResponse);
+                mTranscriptionResults.put(client.getId(), new RecognizeResponseWrapper(lastResponse, client.getLanguageCode()));
             }
             PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_TRANSCRIPTION, newRecording(mRecorder), mChat, 0, null);
         }
@@ -305,7 +314,7 @@ public class RecordService extends Service {
         public void onRecognitionError(GoogleSpeechRecognizeClient client, Status status, RecognizeResponse lastResponse) {
             mSpeechRecognizers.remove(client.getId());
             if(lastResponse != null) {
-                mTranscriptionResults.put(client.getId(), lastResponse);
+                mTranscriptionResults.put(client.getId(), new RecognizeResponseWrapper(lastResponse, client.getLanguageCode()));
             }
             PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_TRANSCRIPTION, newRecording(mRecorder), mChat, 0, null);
         }
@@ -377,9 +386,11 @@ public class RecordService extends Service {
     private Object[] getTranscription(String filePath) {
         String transcription = null;
         float transcriptionConfidence = -1;
-        final RecognizeResponse recognizeResponse = mTranscriptionResults.get(filePath);
-        if(recognizeResponse != null && recognizeResponse.error == null) {
-            final SpeechRecognitionResult speechRecognitionResult = recognizeResponse.results[recognizeResponse.resultIndex];
+        String transcriptionLanguage = null;
+        final RecognizeResponseWrapper recognizeResponseWrapper = mTranscriptionResults.get(filePath);
+        if(recognizeResponseWrapper != null && recognizeResponseWrapper.recognizeResponse != null && recognizeResponseWrapper.recognizeResponse.error == null) {
+            transcriptionLanguage = recognizeResponseWrapper.languageCode;
+            final SpeechRecognitionResult speechRecognitionResult = recognizeResponseWrapper.recognizeResponse.results[recognizeResponseWrapper.recognizeResponse.resultIndex];
             if(!speechRecognitionResult.isFinal) {
                 transcriptionConfidence = speechRecognitionResult.stability;
                 transcription = speechRecognitionResult.alternatives[0].transcript;
@@ -394,7 +405,7 @@ public class RecordService extends Service {
                 }
             }
         }
-        return new Object[] {transcription, transcriptionConfidence};
+        return new Object[] {transcription, transcriptionConfidence, transcriptionLanguage};
     }
 
     String popTranscription(String filePath, float minConfidence, boolean sendEvent) {
@@ -412,6 +423,7 @@ public class RecordService extends Service {
             Recording recording = new Recording(filePath);
             recording.setTranscription((String) transcriptionData[0]);
             recording.setTranscriptionConfidence((float) transcriptionData[1]);
+            recording.setTranscriptionLanguage((String) transcriptionData[2]);
             PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_TRANSCRIPTION, recording, null, 0, null);
         }
 

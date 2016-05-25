@@ -231,6 +231,10 @@ public class ChatController extends ChatRecordOverlayController implements View.
     @Override
     public void onEventMainThread(SyncEvent event) {
         super.onEventMainThread(event);
+        if(mChat == null) {
+            return;
+        }
+
         if(event.getType() == SyncEvent.EVENT_FINISHED) {
             if(hasChatMessage(event.getReceivedMessageList(), mChat.getId()) || hasChatMessage(event.getSentMessageList(), mChat.getId())) {
                 refreshList();
@@ -254,6 +258,10 @@ public class ChatController extends ChatRecordOverlayController implements View.
     @Override
     public void onEventMainThread(SenderEvent event) {
         super.onEventMainThread(event);
+        if(mChat == null) {
+            return;
+        }
+
         if(event.getType() == SenderEvent.EVENT_STARTED ||
                 event.getType() == SenderEvent.EVENT_CANCELLED) {
             // add to UI

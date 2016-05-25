@@ -67,8 +67,12 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
     public void deinit() {
         super.hide();
         stop();
-        mChatController.deinit();
-        mOverlayManager.destroyAllOverlays();
+        if(mChatController != null) {
+            mChatController.deinit();
+        }
+        if(mOverlayManager != null) {
+            mOverlayManager.destroyAllOverlays();
+        }
         super.deinit();
     }
 
@@ -84,7 +88,7 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
 
     @Override
     public boolean hide() {
-        if(mView.getVisibility() != View.INVISIBLE) {
+        if(mView != null && mView.getVisibility() != View.INVISIBLE) {
             mView.setVisibility(View.INVISIBLE);
             return true;
         }
@@ -98,7 +102,7 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
     }
 
     public void stop() {
-        if(mChatController.isStarted()) {
+        if(mChatController != null && mChatController.isStarted()) {
             mChatController.stop();
         }
     }
