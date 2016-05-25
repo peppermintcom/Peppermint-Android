@@ -16,6 +16,9 @@ import com.peppermint.app.ui.base.views.TouchInterceptorView;
 import com.peppermint.app.ui.chat.ChatController;
 import com.peppermint.app.ui.chat.RecipientDataGUI;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Nuno Luz on 20-03-2016.
  *
@@ -27,22 +30,11 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
     private ChatController mChatController;
     private OverlayManager mOverlayManager;
 
+    private List<View.OnKeyListener> mKeyListeners = new ArrayList<>();
     private int mTopMargin = 0;
 
     public ChatDisplayView(Context mContext, Display mDisplay) {
         super(mContext, mDisplay);
-
-        setView((TouchInterceptorView) LayoutInflater.from(mContext).inflate(R.layout.a_chat_head_layout, null),
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, 0);
-        // allow focus for back button
-        mViewLayoutParams.flags = mViewOriginalLayoutParams.flags = WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED |
-                WindowManager.LayoutParams.FLAG_LAYOUT_ATTACHED_IN_DECOR;
-        mView.setVisibility(View.INVISIBLE);
-
-        this.mOverlayManager = new OverlayManager(mContext, null, (FrameLayout) mView.findViewById(R.id.lytOverlay));
-
-        this.mChatController = new ChatController(mContext, this);
-        this.mChatController.init(mView, mOverlayManager, mView, null);
     }
 
     @Override
@@ -54,16 +46,28 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
     }
 
     public void init() {
+        final TouchInterceptorView v = (TouchInterceptorView) LayoutInflater.from(mContext).inflate(R.layout.a_chat_head_layout, null);
+        setView(v, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, 0);
+
+        // allow focus for back button
+        mViewLayoutParams.flags = mViewOriginalLayoutParams.flags = WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED |
+                WindowManager.LayoutParams.FLAG_LAYOUT_ATTACHED_IN_DECOR;
+        mView.setVisibility(View.INVISIBLE);
+        mView.setKeyEventInterceptors(mKeyListeners);
+
+        this.mOverlayManager = new OverlayManager(mContext, null, (FrameLayout) mView.findViewById(R.id.lytOverlay));
+
+        this.mChatController = new ChatController(mContext, this);
+        this.mChatController.init(mView, mOverlayManager, mView, null);
+
         super.init();
         super.show();
     }
 
     public void deinit() {
         super.hide();
-        mView.removeAllKeyEventInterceptors();
         stop();
         mChatController.deinit();
-        mChatController.setContext(null);
         mOverlayManager.destroyAllOverlays();
         super.deinit();
     }
@@ -121,16 +125,51 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
 
     @Override
     public void addKeyEventInterceptor(View.OnKeyListener listener) {
-        mView.addKeyEventInterceptor(listener);
+        mKeyListeners.add(listener);
     }
 
     @Override
     public boolean removeKeyEventInterceptor(View.OnKeyListener listener) {
-        return mView.removeKeyEventInterceptor(listener);
+        return mKeyListeners.remove(listener);
     }
 
     @Override
     public void removeAllKeyEventInterceptors() {
         mView.removeAllKeyEventInterceptors();
+    }
+
+    @Override
+    public void onLocaleChanged() {
+        boolean wasStarted;
+        if((wasStarted = mChatController.isStarted())) {
+            mChatController.stop();
+        }
+
+        final Chat chat = mChatController.getChat();
+
+        mChatController.deinit();
+        mOverlayManager.destroyAllOverlays();
+
+        // do not reattach the whole view to avoid it being drawn on top of other views
+        // just keep the root view and refresh the children
+        final TouchInterceptorView v = (TouchInterceptorView) LayoutInflater.from(mContext).inflate(R.layout.a_chat_head_layout, null);
+        mView.removeAllViews();
+        while(v.getChildCount() > 0) {
+            View childView = v.getChildAt(0);
+            final ViewGroup.LayoutParams layoutParams = childView.getLayoutParams();
+            v.removeViewAt(0);
+            mView.addView(childView, layoutParams);
+        }
+
+        this.mOverlayManager = new OverlayManager(mContext, null, (FrameLayout) mView.findViewById(R.id.lytOverlay));
+
+        this.mChatController = new ChatController(mContext, this);
+        this.mChatController.init(mView, mOverlayManager, mView, null);
+
+        if(wasStarted) {
+            mChatController.start();
+        }
+
+        setChat(chat);
     }
 }

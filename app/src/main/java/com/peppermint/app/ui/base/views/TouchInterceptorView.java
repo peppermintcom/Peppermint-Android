@@ -87,4 +87,12 @@ public class TouchInterceptorView extends RelativeLayout implements TouchInterce
     public void removeAllKeyEventInterceptors() {
         mKeyListeners.clear();
     }
+
+    public List<OnKeyListener> getKeyEventInterceptors() {
+        return mKeyListeners;
+    }
+
+    public void setKeyEventInterceptors(List<OnKeyListener> mKeyListeners) {
+        this.mKeyListeners = mKeyListeners;
+    }
 }

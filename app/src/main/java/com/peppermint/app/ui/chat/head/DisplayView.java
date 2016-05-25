@@ -253,15 +253,21 @@ public class DisplayView<T extends View> implements Display.OnDisplaySizeObtaine
         }
     }
 
+    public void requestLayout() {
+        if(mView != null) {
+            mView.requestLayout();
+        }
+    }
+
     public boolean show() {
         if (mVisible) {
             return false;
         }
 
-        if (mView.getWindowToken() != null) {
-            mView.invalidate();
-        } else {
+        try {
             mWindowManager.addView(mView, mViewLayoutParams);
+        } catch(IllegalStateException e) {
+            TrackerManager.getInstance(mContext).log(e.getMessage());
         }
 
         mVisible = true;
@@ -420,5 +426,9 @@ public class DisplayView<T extends View> implements Display.OnDisplaySizeObtaine
 
     public boolean isReboundAtRest() {
         return mSpringX.isAtRest() && mSpringY.isAtRest();
+    }
+
+    public void onLocaleChanged() {
+        /* nothing to do here */
     }
 }

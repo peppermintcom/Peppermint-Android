@@ -191,7 +191,6 @@ public class ChatController extends ChatRecordOverlayController implements View.
         if(mAdapter != null) {
             mAdapter.changeCursor(null);
         }
-
         super.stop();
     }
 
@@ -199,6 +198,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
     public void deinit() {
         if(mAdapter != null) {
             mAdapter.destroy(!mSavedInstanceState);
+            mAdapter = null;
         }
         dismissErrorDialog();
         mSavedInstanceState = false;
@@ -218,11 +218,23 @@ public class ChatController extends ChatRecordOverlayController implements View.
         return true;
     }
 
+    private boolean hasChatMessage(List<Message> messages, long chatId) {
+        final int messageAmount = messages.size();
+        for(int i=0; i<messageAmount; i++) {
+            if(messages.get(i).getChatId() == chatId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public void onEventMainThread(SyncEvent event) {
         super.onEventMainThread(event);
         if(event.getType() == SyncEvent.EVENT_FINISHED) {
-            refreshList();
+            if(hasChatMessage(event.getReceivedMessageList(), mChat.getId()) || hasChatMessage(event.getSentMessageList(), mChat.getId())) {
+                refreshList();
+            }
         }
     }
 
@@ -230,9 +242,11 @@ public class ChatController extends ChatRecordOverlayController implements View.
     public void onEventMainThread(ReceiverEvent event) {
         super.onEventMainThread(event);
         if(mChat != null && event.getType() == ReceiverEvent.EVENT_RECEIVED) {
-            refreshList();
-            if(event.getMessage().getChatId() == mChat.getId() && Utils.isScreenOnAndUnlocked(getContext())) {
-                event.setDoNotShowNotification(true);
+            if(event.getMessage().getChatId() == mChat.getId()) {
+                refreshList();
+                if (Utils.isScreenOnAndUnlocked(getContext())) {
+                    event.setDoNotShowNotification(true);
+                }
             }
         }
     }
@@ -243,10 +257,12 @@ public class ChatController extends ChatRecordOverlayController implements View.
         if(event.getType() == SenderEvent.EVENT_STARTED ||
                 event.getType() == SenderEvent.EVENT_CANCELLED) {
             // add to UI
-            refreshList();
+            if(event.getSenderTask().getMessage().getChatId() == mChat.getId()) {
+                refreshList();
+            }
         } else if(event.getType() == SenderEvent.EVENT_NON_CANCELLABLE) {
             // will include transcription
-            if(mAdapter != null) {
+            if(mAdapter != null && event.getSenderTask().getMessage().getChatId() == mChat.getId()) {
                 mAdapter.notifyDataSetChanged();
             }
         }

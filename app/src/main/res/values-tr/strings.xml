@@ -50,7 +50,7 @@
     <string name="via">kanal</string>
 
     <!-- CONTACTS LAYOUT: RECORDING OVERLAY -->
-    <string name="swipe_to_cancel">İptal etmek için\nherhangi bir yere kaydırın.</string>
+    <string name="swipe_to_cancel">İptal etmek için\nhızlıca kaydırın.</string>
     <string name="recording_for">%1$s için kaydediliyor</string>
 
     <!-- CONTACTS LAYOUT: ADD EMAIL DIALOG -->

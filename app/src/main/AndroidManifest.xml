@@ -168,7 +168,8 @@
         <service
             android:name=".ui.chat.head.ChatHeadService"
             android:enabled="true"
-            android:exported="false">
+            android:exported="false"
+            android:configChanges="locale">
             <intent-filter>
                 <action android:name="com.peppermint.app.ChatHeadService.ENABLE" />
                 <action android:name="com.peppermint.app.ChatHeadService.DISABLE" />

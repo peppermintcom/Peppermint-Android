@@ -56,16 +56,16 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
 
         // services
         mMessagesServiceManager = new MessagesServiceManager(mContext);
-        mMessagesServiceManager.addServiceListener(this);
-        PeppermintEventBus.registerMessages(this);
-
         mPlayerServiceManager = new PlayerServiceManager(mContext);
-        mPlayerServiceManager.addServiceListener(this);
     }
 
     public void init(View rootView, OverlayManager overlayManager, TouchInterceptable touchInterceptable, Bundle savedInstanceState) {
         mOverlayManager = overlayManager;
         mTouchInterceptable = touchInterceptable;
+
+        mMessagesServiceManager.addServiceListener(this);
+        mPlayerServiceManager.addServiceListener(this);
+        PeppermintEventBus.registerMessages(this);
 
         // start services
         mMessagesServiceManager.start();

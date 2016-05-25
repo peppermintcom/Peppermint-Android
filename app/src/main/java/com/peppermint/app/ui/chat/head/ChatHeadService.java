@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Binder;
@@ -297,5 +299,23 @@ public class ChatHeadService extends Service {
         final SharedPreferences.Editor editor = mPreferences.getSharedPreferences().edit();
         editor.putBoolean(PREF_VISIBLE, wasVisible);
         editor.commit();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        // update resource info
+        final Resources res = getResources();
+        final Configuration conf = res.getConfiguration();
+        if (newConfig != null && newConfig.locale != null) {
+            conf.locale = newConfig.locale;
+        }
+        res.updateConfiguration(conf, null);
+
+        mChatHeadView.onLocaleChanged();
+        mChatView.onLocaleChanged();
+
+        refreshChatHeadController();
     }
 }
