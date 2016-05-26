@@ -122,6 +122,15 @@
 
 
     <!-- SETTINGS -->
+    <string name="pref_default_transcription_language_code">System Language</string>
+    <string name="pref_separator_transcription">Transcription</string>
+
+    <string name="pref_title_automatic_transcription">Automatic Transcription</string>
+    <string name="pref_summary_automatic_transcription">Enable or disable the automatic transcription of audio messages</string>
+
+    <string name="pref_title_transcription_language">Transcription Language</string>
+    <string name="pref_summary_transcription_language">The language used for the automatic transcription of audio messages</string>
+
     <string name="pref_title_displayname">Adınız</string>
     <string name="pref_summary_displayname">Alıcı mesajlarınız ile birlikte adınızı görecek. Lütfen bilinen adınızı girdiğinizden emin olun</string>
 

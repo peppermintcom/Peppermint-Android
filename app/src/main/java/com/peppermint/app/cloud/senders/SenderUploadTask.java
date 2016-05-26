@@ -141,6 +141,10 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
     protected String waitTranscription() {
         final Recording recording = getMessage().getRecordingParameter();
 
+        if(!getSenderPreferences().isAutomaticTranscription()) {
+            return recording.getTranscription();
+        }
+
         int waitCount = 20; // 30 secs tops
 
         if(recording.getTranscriptionConfidence() < 0) {

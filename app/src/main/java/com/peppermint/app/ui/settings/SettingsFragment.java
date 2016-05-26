@@ -107,7 +107,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
             }
         });
 
-        /*// TRANSCRIPTION PREFS
+        // TRANSCRIPTION PREFS
         final String selectedLanguageCode = mPreferences.getTranscriptionLanguageCode();
         String selectedLanguage = getString(R.string.pref_default_transcription_language_code);
         mListItems = new ArrayList<>();
@@ -125,7 +125,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
         final CustomListViewPreference prefTranscriptionLanguageCode = (CustomListViewPreference) findPreference(PREF_TRANSCRIPTION_LANGUAGE_CODE);
         prefTranscriptionLanguageCode.setItems(mListItems);
-        prefTranscriptionLanguageCode.setTitle(selectedLanguage);*/
+        prefTranscriptionLanguageCode.setTitle(selectedLanguage);
 
         mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
     }
@@ -187,7 +187,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                 } else {
                     ChatHeadServiceManager.startAndDisable(mActivity);
                 }
-            } /*else if(key.compareTo(PREF_TRANSCRIPTION_LANGUAGE_CODE) == 0) {
+            } else if(key.compareTo(PREF_TRANSCRIPTION_LANGUAGE_CODE) == 0) {
                 final String selectedKey = mPreferences.getTranscriptionLanguageCode();
                 if(selectedKey == null) {
                     pref.setTitle(getString(R.string.pref_default_transcription_language_code));
@@ -202,7 +202,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
                         }
                     }
                 }
-            }*/
+            }
             mPreferences.getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
         }
     }

@@ -259,11 +259,14 @@ public class RecordService extends Service {
 
         @Override
         public void onAudioRecordFound(String filePath, int sampleRate) {
+            if(!mPreferences.isAutomaticTranscription()) {
+                return;
+            }
+
             try {
-                final SenderPreferences preferences = new SenderPreferences(RecordService.this);
                 final GoogleSpeechRecognizeClient client = new GoogleSpeechRecognizeClient(RecordService.this, filePath);
                 client.setRecognitionListener(mSpeechRecognitionListener);
-                client.startSending(InitialRecognizeRequest.LINEAR16, sampleRate, preferences.getTranscriptionLanguageCode());
+                client.startSending(InitialRecognizeRequest.LINEAR16, sampleRate, mPreferences.getTranscriptionLanguageCode());
                 mSpeechRecognizers.put(filePath, client);
             } catch (Exception e) {
                 TrackerManager.getInstance(RecordService.this).logException(e);
@@ -272,6 +275,10 @@ public class RecordService extends Service {
 
         @Override
         public void onRecorderData(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp, byte[] bytes) {
+            if(!mPreferences.isAutomaticTranscription()) {
+                return;
+            }
+
             final GoogleSpeechRecognizeClient client = mSpeechRecognizers.get(filePath);
             if(client == null) {
                 Log.w(TAG, "No SpeechRecognizeClient found for " + filePath);
@@ -334,6 +341,13 @@ public class RecordService extends Service {
     private transient ExtendedAudioRecorder mRecorder;    // the recorder
     private Chat mChat;                                   // the chat of the current recording
     private boolean mIsInForegroundMode = false;
+    private SenderPreferences mPreferences;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        mPreferences = new SenderPreferences(this);
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
