@@ -145,6 +145,10 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
 
     @Override
     public void onLocaleChanged() {
+        if(mChatController == null || mOverlayManager == null) {
+            return;
+        }
+
         boolean wasStarted;
         if((wasStarted = mChatController.isStarted())) {
             mChatController.stop();
