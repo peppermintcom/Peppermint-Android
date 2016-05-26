@@ -10,6 +10,7 @@ import android.util.Log;
 import com.google.android.gms.security.ProviderInstaller;
 import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.apis.PeppermintApi;
+import com.peppermint.app.cloud.apis.SparkPostApi;
 import com.peppermint.app.cloud.senders.SenderObject;
 import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.cloud.senders.mail.gmail.GmailSender;
@@ -61,7 +62,7 @@ public class PeppermintApp extends MultiDexApplication {
         final int lastVersion = sharedPreferences.getInt(PREF_LAST_VERSION, 0);
         if(lastVersion < BuildConfig.VERSION_CODE) {
             // important! this will be executed if the app's data is cleared
-            onUpgrade(lastVersion, BuildConfig.VERSION_CODE);
+            onUpgrade(lastVersion, BuildConfig.VERSION_CODE, sharedPreferences);
             final SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putInt(PREF_LAST_VERSION, BuildConfig.VERSION_CODE);
             editor.commit();
@@ -83,12 +84,18 @@ public class PeppermintApp extends MultiDexApplication {
         }
     }
 
-    private void onUpgrade(final int lastVersion, final int newVersion) {
+    private void onUpgrade(final int lastVersion, final int newVersion, final SharedPreferences sharedPreferences) {
         if(lastVersion < 15) {  // Upgrade to 1.1.13
             // always enabled (forced) gmail sender
             final SenderObject senderObject = new SenderObject(this, TrackerManager.getInstance(this), null, new SenderPreferences(this));
             final GmailSender gmailSender = new GmailSender(senderObject, null);
             gmailSender.setEnabled(true);
+        }
+        if(lastVersion < 22) {
+            // force refresh the email template
+            final SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.remove(SparkPostApi.PREF_LAST_TEMPLATE_UPDATE_TIMESTAMP);
+            editor.commit();
         }
     }
 }

@@ -63,8 +63,8 @@ public class GmailSenderTask extends SenderUploadTask {
 
         // build the email body
         final SparkPostApi sparkPostApi = getSparkPostApi();
-        String bodyHtml = sparkPostApi.buildEmailFromTemplate(getContext(), url, canonicalUrl, fullName, data.getEmail(), SparkPostApi.TYPE_HTML, true, getId().toString());
-        String bodyPlain = sparkPostApi.buildEmailFromTemplate(getContext(), url, canonicalUrl, fullName, data.getEmail(), SparkPostApi.TYPE_TEXT, false, getId().toString());
+        String bodyHtml = sparkPostApi.buildEmailFromTemplate(getContext(), url, canonicalUrl, fullName, data.getEmail(), SparkPostApi.TYPE_HTML, true, getId().toString(), getMessage().getRecordingParameter().getTranscription());
+        String bodyPlain = sparkPostApi.buildEmailFromTemplate(getContext(), url, canonicalUrl, fullName, data.getEmail(), SparkPostApi.TYPE_TEXT, false, getId().toString(), getMessage().getRecordingParameter().getTranscription());
 
         if(isCancelled()) { return; }
 

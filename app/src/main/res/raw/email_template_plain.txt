@@ -4,5 +4,7 @@ Play
 Reply
 {{replyLink}}
 
+{{if transcription}}{{transcription}}{{end}}
+
 
 Created with Peppermint.com(https://peppermint.com) - the easiest way to send a message.

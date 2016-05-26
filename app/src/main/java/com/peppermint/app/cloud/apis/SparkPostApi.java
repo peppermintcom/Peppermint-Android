@@ -40,7 +40,7 @@ public class SparkPostApi extends BaseApi {
 
     private static final String TAG = BaseApi.class.getSimpleName();
 
-    private static final String PREF_LAST_TEMPLATE_UPDATE_TIMESTAMP = TAG + "_lastTemplateUpdateTimestamp";
+    public static final String PREF_LAST_TEMPLATE_UPDATE_TIMESTAMP = TAG + "_lastTemplateUpdateTimestamp";
 
     private static final Pattern SUBSTITUTION_PATTERN = Pattern.compile("\\{{2,3}([^\\}]+)\\}{2,3}");
     private static final int HOURS_BEFORE_TEMPLATE_UPDATE = 24;
@@ -51,7 +51,7 @@ public class SparkPostApi extends BaseApi {
     private static final String EMAIL_TEMPLATE_LOCALFILE_HTML = ".email_template.html";
     private static final String EMAIL_TEMPLATE_LOCALFILE_TEXT = ".email_template.txt";
 
-    private static final String EMAIL_TEMPLATE_ENDPOINT = "https://api.sparkpost.com/api/v1/templates/ios-voice-message";
+    private static final String EMAIL_TEMPLATE_ENDPOINT = "https://api.sparkpost.com/api/v1/templates/audio-mail-template";
     private static final String EMAIL_TEMPLATE_API_KEY = "2e3edee129b485f914cb1f2ed5c29fd5df6d3dcf";
 
     // HttpResponse that parses SparkPost JSON and returns the email template
@@ -119,7 +119,7 @@ public class SparkPostApi extends BaseApi {
         return response;
     }
 
-    public String buildEmailFromTemplate(Context context, String shortUrl, String canonicalUrl, String replyName, String replyEmail, int type, boolean tryToRefreshTemplate, String requesterId)
+    public String buildEmailFromTemplate(Context context, String shortUrl, String canonicalUrl, String replyName, String replyEmail, int type, boolean tryToRefreshTemplate, String requesterId, String transcription)
             throws IOException, ParseException {
 
         if(tryToRefreshTemplate) {
@@ -131,6 +131,7 @@ public class SparkPostApi extends BaseApi {
             if(lastTemplateUpdateTimestamp != null) {
                 final DateContainer lastTemplateUpdateDate = new DateContainer(DateContainer.TYPE_DATETIME, lastTemplateUpdateTimestamp);
                 exceededHoursBeforeTemplateUpdate = (currentDate.getCalendar().getTimeInMillis() - lastTemplateUpdateDate.getCalendar().getTimeInMillis()) / 3600000 > HOURS_BEFORE_TEMPLATE_UPDATE;
+                Log.d(TAG, "Time since template update " + ((currentDate.getCalendar().getTimeInMillis() - lastTemplateUpdateDate.getCalendar().getTimeInMillis()) / 3600000));
             }
 
             if(lastTemplateUpdateTimestamp == null || exceededHoursBeforeTemplateUpdate) {
@@ -146,6 +147,7 @@ public class SparkPostApi extends BaseApi {
         }
 
         final Map<String, String> parameterMap = new HashMap<>();
+        parameterMap.put("transcription", transcription);
         parameterMap.put("canonical_url", canonicalUrl);
         parameterMap.put("url", shortUrl);
         parameterMap.put("replyLink", "https://peppermint.com/reply?name=" + (replyName == null ? "" : URLEncoder.encode(replyName, "UTF-8")) + "&mail=" + URLEncoder.encode(replyEmail, "UTF-8"));
@@ -160,30 +162,50 @@ public class SparkPostApi extends BaseApi {
             inputStream = context.getResources().openRawResource(type == TYPE_HTML ? R.raw.email_template_html : R.raw.email_template_plain);
         }
 
+        boolean insideIfBlock = false;
+        boolean doBlock = false;
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         try {
             String line;
             while((line = reader.readLine()) != null) {
-                if(line.contains("{{")) {
-                    final Matcher matcher = SUBSTITUTION_PATTERN.matcher(line);
-                    while (matcher.find()) {
-                        String entry = matcher.group(1).trim();
-                        Iterator<String> keyIt = parameterMap.keySet().iterator();
-                        boolean matched = false;
-                        while(keyIt.hasNext() && !matched) {
-                            String parameterKey = keyIt.next();
-                            if(entry.compareTo(parameterKey) == 0) {
-                                entry = parameterMap.get(parameterKey);
-                                matched = true;
+                if(!insideIfBlock || (insideIfBlock && doBlock)) {
+                    if (line.contains("{{")) {
+                        final Matcher matcher = SUBSTITUTION_PATTERN.matcher(line);
+                        while (matcher.find() && (!insideIfBlock || (insideIfBlock && doBlock))) {
+                            String entry = matcher.group(1).trim();
+
+                            if (!insideIfBlock && entry.startsWith("if ")) {
+                                insideIfBlock = true;
+                                final String key = entry.substring(3);
+                                doBlock = parameterMap.containsKey(key) && parameterMap.get(key) != null;
+                                entry = "";
+                            } else if (insideIfBlock && entry.compareToIgnoreCase("end") == 0) {
+                                insideIfBlock = false;
+                                doBlock = false;
+                                entry = "";
+                            } else {
+                                Iterator<String> keyIt = parameterMap.keySet().iterator();
+                                boolean matched = false;
+                                while (keyIt.hasNext() && !matched) {
+                                    String parameterKey = keyIt.next();
+                                    if (entry.compareTo(parameterKey) == 0) {
+                                        entry = parameterMap.get(parameterKey);
+                                        if(entry == null) { entry = ""; }
+                                        matched = true;
+                                    }
+                                }
                             }
+
+                            matcher.appendReplacement(bodyBuilder, entry);
                         }
-                        matcher.appendReplacement(bodyBuilder, entry);
+                        if(!insideIfBlock || (insideIfBlock && doBlock)) {
+                            matcher.appendTail(bodyBuilder);
+                        }
+                    } else {
+                        bodyBuilder.append(line);
                     }
-                    matcher.appendTail(bodyBuilder);
-                } else {
-                    bodyBuilder.append(line);
+                    bodyBuilder.append("\n");
                 }
-                bodyBuilder.append("\n");
             }
         } finally {
             reader.close();
