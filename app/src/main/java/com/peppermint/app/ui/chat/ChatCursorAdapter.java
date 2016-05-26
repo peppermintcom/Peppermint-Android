@@ -64,7 +64,9 @@ public class ChatCursorAdapter extends CursorAdapter {
         CustomFontTextView txtContact = (CustomFontTextView) view.findViewById(R.id.txtContact);
 
         if(recipient != null && recipient.getPhotoUri() != null) {
-            imgPhoto.setStaticDrawable(Uri.parse(recipient.getPhotoUri()));
+            if(!imgPhoto.setStaticDrawable(Uri.parse(recipient.getPhotoUri()))) {
+                imgPhoto.setStaticDrawable(R.drawable.ic_anonymous_green_48dp);
+            }
             imgPhoto.setShowStaticAvatar(true);
         } else {
             imgPhoto.setShowStaticAvatar(false);

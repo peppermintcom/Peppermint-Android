@@ -105,8 +105,8 @@ public class MessageManager {
     public static int getUnopenedCountByChat(SQLiteDatabase db, long chatId) {
         int count = 0;
 
-        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM v_message WHERE v_message.chat_id = " + chatId +
-            " AND played <= 0 AND received >= 1", null);
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM v_message WHERE (v_message.chat_id = " + chatId + " OR v_message.merged_chat_id = " + chatId +
+            ") AND played <= 0 AND received >= 1", null);
         if(cursor.moveToFirst()) {
             count = cursor.getInt(0);
         }

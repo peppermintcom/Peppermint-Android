@@ -238,7 +238,6 @@ public class ChatHeadService extends Service {
             while(chatCursor.moveToNext() && i < ChatHeadGroupDisplayView.MAX_CHAT_HEADS) {
                 Chat chat = ChatManager.getChatFromCursor(db, chatCursor);
                 chat.setAmountUnopened(MessageManager.getUnopenedCountByChat(db, chat.getId()));
-                chat.setLastReceivedUnplayedId(MessageManager.getLastAutoPlayMessageIdByChat(db, chat.getId()));
                 chatList.add(0, chat);
                 i++;
             }

@@ -3,6 +3,7 @@ package com.peppermint.app.ui.canvas.avatar;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -200,8 +201,13 @@ public class AnimatedAvatarView extends AnimatedView {
         int width = getMeasuredWidth();
         int height = getMeasuredHeight();
         final int fixedSize = Utils.dpToPx(getContext(), 50);
-        final BitmapDrawable bitmapDrawable = new BitmapDrawable(getContext().getResources(), ResourceUtils.getScaledBitmap(getContext(), drawableUri, width > 0 ? width : fixedSize, height > 0 ? height : fixedSize));
-        mStaticAvatar.setBitmapDrawable(bitmapDrawable);
+        final Bitmap scaledBitmap = ResourceUtils.getScaledBitmap(getContext(), drawableUri, width > 0 ? width : fixedSize, height > 0 ? height : fixedSize);
+        if(scaledBitmap != null) {
+            final BitmapDrawable bitmapDrawable = new BitmapDrawable(getContext().getResources(), scaledBitmap);
+            mStaticAvatar.setBitmapDrawable(bitmapDrawable);
+        } else {
+            mStaticAvatar.setBitmapDrawable(null);
+        }
         doDraw();
         return mStaticAvatar.getBitmapDrawable() != null;
     }
