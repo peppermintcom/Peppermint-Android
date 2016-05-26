@@ -89,6 +89,7 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
     @Override
     public boolean hide() {
         if(mView != null && mView.getVisibility() != View.INVISIBLE) {
+            mChatController.stopPlayer();
             mView.setVisibility(View.INVISIBLE);
             return true;
         }

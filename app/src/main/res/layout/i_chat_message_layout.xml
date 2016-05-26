@@ -1,201 +1,180 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:custom="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="10dp">
+    android:layout_height="wrap_content">
 
-    <com.peppermint.app.ui.base.views.CustomFontTextView
-        android:id="@+id/txtDay"
+    <LinearLayout
+        android:id="@+id/lytBalloon"
+        android:layout_toLeftOf="@+id/btnExclamation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:layout_marginBottom="10dp"
-        android:gravity="center"
-        custom:textFont="@string/font_bold"
-        android:textAllCaps="true"
-        android:textColor="@color/dark_grey_text"
-        android:textSize="16dp"
-        android:text="Today" />
+        android:orientation="vertical"
+        android:background="@drawable/img_message_base_sent">
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <LinearLayout
-            android:id="@+id/lytBalloon"
-            android:layout_toLeftOf="@+id/btnExclamation"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/img_message_base_sent">
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="5dp"
-                android:layout_marginRight="10dp"
-                android:layout_marginBottom="5dp"
-                android:layout_marginTop="0dp">
-
-                <FrameLayout
-                    android:id="@+id/lytBtnContainer"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_centerVertical="true"
-                    android:layout_alignParentLeft="true">
-
-                    <ImageButton
-                        android:id="@+id/btnPlay"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:src="@drawable/ic_play_15dp"
-                        android:background="@drawable/background_ripple"
-                        android:adjustViewBounds="true"
-                        android:scaleType="center"/>
-
-                    <ImageButton
-                        android:id="@+id/btnPause"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:src="@drawable/ic_pause_13dp"
-                        android:background="@drawable/background_ripple"
-                        android:adjustViewBounds="true"
-                        android:scaleType="center"
-                        android:visibility="gone" />
-
-                    <ProgressBar
-                        android:id="@+id/progressBar"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_gravity="center"
-                        android:indeterminate="true"
-                        android:visibility="gone"
-                        android:indeterminateDuration="1000"
-                        android:indeterminateDrawable="@drawable/progressbar_indeterminate"
-                        android:progressDrawable="@drawable/progressbar_determinate" />
-
-                </FrameLayout>
-
-                <SeekBar
-                    android:id="@+id/seekBar"
-                    android:layout_toRightOf="@id/lytBtnContainer"
-                    android:layout_centerVertical="true"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:minHeight="3dp"
-                    android:maxHeight="3dp"
-                    android:paddingLeft="15dp"
-                    android:paddingRight="15dp"
-                    android:progressDrawable="@drawable/message_seek_bar"
-                    android:thumb="@drawable/message_seek_bar_thumb"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:progress="50"
-                    />
-
-                <com.peppermint.app.ui.base.views.CustomFontTextView
-                    android:id="@+id/txtDuration"
-                    android:layout_toRightOf="@id/lytBtnContainer"
-                    android:layout_below="@id/seekBar"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:layout_marginLeft="15dp"
-                    custom:textFont="@string/font_semibold"
-                    android:textColor="@color/dark_grey_text"
-                    android:textSize="14dp"
-                    android:text="01:12"/>
-
-                <com.peppermint.app.ui.base.views.CustomFontTextView
-                    android:id="@+id/txtTime"
-                    android:layout_alignParentRight="true"
-                    android:layout_below="@id/seekBar"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:layout_marginRight="15dp"
-                    custom:textFont="@string/font_semibold"
-                    android:textColor="@color/dark_grey_text"
-                    android:textSize="14dp"
-                    android:text="7:15 pm"/>
-
-            </RelativeLayout>
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginBottom="5dp"
+            android:layout_marginTop="0dp">
 
             <FrameLayout
-                android:id="@+id/lytTranscriptionBorder"
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="5dp"
-                android:layout_marginBottom="7dp"
-                android:background="@color/divider_grey"
-                android:visibility="gone"
-                android:animateLayoutChanges="true"/>
+                android:id="@+id/lytBtnContainer"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_centerVertical="true"
+                android:layout_alignParentLeft="true">
 
-            <com.peppermint.app.ui.base.views.CustomFontTextView
-                android:id="@+id/txtAutomaticTranscriptionTitle"
+                <ImageButton
+                    android:id="@+id/btnPlay"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_play_15dp"
+                    android:background="@drawable/background_ripple"
+                    android:adjustViewBounds="true"
+                    android:scaleType="center"/>
+
+                <ImageButton
+                    android:id="@+id/btnPause"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_pause_13dp"
+                    android:background="@drawable/background_ripple"
+                    android:adjustViewBounds="true"
+                    android:scaleType="center"
+                    android:visibility="gone" />
+
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:indeterminate="true"
+                    android:visibility="gone"
+                    android:indeterminateDuration="1000"
+                    android:indeterminateDrawable="@drawable/progressbar_indeterminate"
+                    android:progressDrawable="@drawable/progressbar_determinate" />
+
+            </FrameLayout>
+
+            <SeekBar
+                android:id="@+id/seekBar"
+                android:layout_toRightOf="@id/lytBtnContainer"
+                android:layout_centerVertical="true"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
-                android:gravity="left"
-                custom:textFont="@string/font_regular"
-                android:textAllCaps="true"
-                android:textSize="12dp"
+                android:minHeight="3dp"
+                android:maxHeight="3dp"
+                android:paddingLeft="15dp"
+                android:paddingRight="15dp"
+                android:progressDrawable="@drawable/message_seek_bar"
+                android:thumb="@drawable/message_seek_bar_thumb"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:progress="50"
+                />
+
+            <com.peppermint.app.ui.base.views.CustomFontTextView
+                android:id="@+id/txtDuration"
+                android:layout_toRightOf="@id/lytBtnContainer"
+                android:layout_below="@id/seekBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:layout_marginLeft="15dp"
+                custom:textFont="@string/font_semibold"
                 android:textColor="@color/dark_grey_text"
-                android:text="@string/automatic_transcription"
-                android:visibility="gone"
-                android:animateLayoutChanges="true"/>
+                android:textSize="14dp"
+                android:text="01:12"/>
 
             <com.peppermint.app.ui.base.views.CustomFontTextView
-                android:id="@+id/txtTranscription"
-                android:layout_width="match_parent"
+                android:id="@+id/txtTime"
+                android:layout_alignParentRight="true"
+                android:layout_below="@id/seekBar"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
-                android:layout_marginBottom="5dp"
-                android:gravity="left"
-                custom:textFont="@string/font_regular"
-                android:textSize="12dp"
-                android:textColor="@color/black"
-                android:visibility="gone"
-                android:animateLayoutChanges="true"/>
+                android:layout_marginTop="20dp"
+                android:layout_marginRight="15dp"
+                custom:textFont="@string/font_semibold"
+                android:textColor="@color/dark_grey_text"
+                android:textSize="14dp"
+                android:text="7:15 pm"/>
 
-        </LinearLayout>
+        </RelativeLayout>
 
-        <ImageButton
-            android:id="@+id/btnExclamation"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:adjustViewBounds="true"
-            android:scaleType="fitCenter"
-            android:padding="15dp"
-            android:src="@drawable/ic_exclamation_36dp"
-            android:background="@drawable/background_ripple"
-            android:visibility="gone" />
+        <FrameLayout
+            android:id="@+id/lytTranscriptionBorder"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="7dp"
+            android:background="@color/divider_grey"
+            android:visibility="gone"
+            android:animateLayoutChanges="true"/>
 
-        <com.peppermint.app.ui.base.views.CustomFontButton
-            android:id="@+id/btnCancel"
-            android:layout_toLeftOf="@+id/lytBalloon"
-            android:layout_centerVertical="true"
-            android:layout_marginRight="-100dp"
-            android:layout_width="100dp"
+        <com.peppermint.app.ui.base.views.CustomFontTextView
+            android:id="@+id/txtAutomaticTranscriptionTitle"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:paddingTop="20dp"
-            android:paddingBottom="20dp"
-            android:paddingLeft="5dp"
-            android:paddingRight="10dp"
-            custom:textFont="@string/font_semibold"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:gravity="left"
+            custom:textFont="@string/font_regular"
             android:textAllCaps="true"
-            android:textColor="@color/color_darkgrey_to_white_pressed"
             android:textSize="12dp"
-            android:text="@string/cancel_sending"
-            android:background="@drawable/background_ripple"
-            android:visibility="visible" />
+            android:textColor="@color/dark_grey_text"
+            android:text="@string/automatic_transcription"
+            android:visibility="gone"
+            android:animateLayoutChanges="true"/>
 
-    </RelativeLayout>
+        <com.peppermint.app.ui.base.views.CustomFontTextView
+            android:id="@+id/txtTranscription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginBottom="5dp"
+            android:gravity="left"
+            custom:textFont="@string/font_regular"
+            android:textSize="12dp"
+            android:textColor="@color/black"
+            android:visibility="gone"
+            android:animateLayoutChanges="true"/>
 
-</LinearLayout>
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/btnExclamation"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        android:padding="15dp"
+        android:src="@drawable/ic_exclamation_36dp"
+        android:background="@drawable/background_ripple"
+        android:visibility="gone" />
+
+    <com.peppermint.app.ui.base.views.CustomFontButton
+        android:id="@+id/btnCancel"
+        android:layout_toLeftOf="@+id/lytBalloon"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="-100dp"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
+        android:paddingLeft="5dp"
+        android:paddingRight="10dp"
+        custom:textFont="@string/font_semibold"
+        android:textAllCaps="true"
+        android:textColor="@color/color_darkgrey_to_white_pressed"
+        android:textSize="12dp"
+        android:text="@string/cancel_sending"
+        android:background="@drawable/background_ripple"
+        android:visibility="visible" />
+
+</RelativeLayout>

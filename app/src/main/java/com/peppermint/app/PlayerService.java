@@ -62,6 +62,15 @@ public class PlayerService extends Service {
         }
 
         /**
+         * Stops playing the message (if it's the one playing) and resets the player.
+         * @param message the message (can be null to stop anything)
+         * @return true if the message was playing and was stopped; false otherwise
+         */
+        boolean stop(Message message) {
+            return PlayerService.this.stop(message);
+        }
+
+        /**
          * Set the current position of the player in percentage of the total duration of the message.
          * @param message the message
          * @param percent the position in percentage of the total duration
@@ -161,17 +170,8 @@ public class PlayerService extends Service {
     private MediaPlayer.OnErrorListener mOnErrorListener = new MediaPlayer.OnErrorListener() {
         @Override
         public boolean onError(MediaPlayer mp, int what, int extra) {
-            mLoading = false;
-
-            if(mMediaPlayer != null) {
-                if(mMediaPlayer.isPlaying()) {
-                    mMediaPlayer.stop();
-                }
-                mMediaPlayer.release();
-                mMediaPlayer = null;
-            }
-            Message message = mMessage;
-            mMessage = null;
+            final Message message = mMessage;
+            stop(false);
             PeppermintEventBus.postPlayerEvent(PlayerEvent.EVENT_ERROR, message, 0, 0, what);
             return false;
         }
@@ -223,7 +223,7 @@ public class PlayerService extends Service {
         super.onCreate();
 
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        Sensor proximitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+        final Sensor proximitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
 
         if(proximitySensor != null) {
             mSensorManager.registerListener(mProximitySensorEventListener, proximitySensor, SensorManager.SENSOR_DELAY_NORMAL);
@@ -268,7 +268,6 @@ public class PlayerService extends Service {
         this.mStartPercent = startPercent;
         if(mForceReset || mMessage == null || !message.equals(mMessage)) {
             mForceReset = false;
-            mMessage = message;
 
             File dataSourceFile = message.getRecordingParameter().getValidatedFile();
             String dataSourceUri = dataSourceFile != null ? dataSourceFile.getAbsolutePath() : null;
@@ -280,12 +279,9 @@ public class PlayerService extends Service {
                 dataSourceUri = message.getServerCanonicalUrl();
             }
 
-            if (mMediaPlayer != null) {
-                if (mMediaPlayer.isPlaying()) {
-                    mMediaPlayer.stop();
-                }
-                mMediaPlayer.release();
-            }
+            stop(true);
+
+            mMessage = message;
 
             mMediaPlayer = new MediaPlayer();
             mMediaPlayer.reset();
@@ -318,7 +314,7 @@ public class PlayerService extends Service {
             return false;
         }
 
-        if(mMediaPlayer != null && mMediaPlayer.isPlaying()) {
+        if(mMediaPlayer != null && (mMediaPlayer.isPlaying() || mLoading)) {
             mMediaPlayer.pause();
             if(resetProgress) {
                 mMediaPlayer.seekTo(0);
@@ -326,6 +322,33 @@ public class PlayerService extends Service {
 
             PeppermintEventBus.postPlayerEvent(PlayerEvent.EVENT_PAUSED, mMessage, 0, mMediaPlayer.getCurrentPosition(), 0);
 
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean stop(Message message) {
+        if(message != null && mMessage != null && !message.equals(mMessage)) {
+            return false;
+        }
+        return stop(true);
+    }
+
+    private boolean stop(boolean doEvent) {
+        if(mMediaPlayer != null) {
+            if(mMediaPlayer.isPlaying() || mLoading) {
+                mLoading = false;
+                mMediaPlayer.stop();
+            }
+
+            if(doEvent) {
+                PeppermintEventBus.postPlayerEvent(PlayerEvent.EVENT_STOPPED, mMessage, Math.round((float) mMediaPlayer.getCurrentPosition() / (float) mMediaPlayer.getDuration() * 100f), mMediaPlayer.getCurrentPosition(), 0);
+            }
+
+            mMediaPlayer.release();
+            mMediaPlayer = null;
+            mMessage = null;
             return true;
         }
 

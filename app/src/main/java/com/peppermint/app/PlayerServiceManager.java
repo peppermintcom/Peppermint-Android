@@ -146,6 +146,14 @@ public class PlayerServiceManager {
         return mService.pause(null, false);
     }
 
+    public boolean stop() {
+        return mService.stop(null);
+    }
+
+    public boolean stop(Message message) {
+        return mService.stop(message);
+    }
+
     public boolean setPosition(Message message, int percent) {
         return mService.setPosition(message, percent);
     }

@@ -21,6 +21,7 @@ public class PlayerEvent {
     public static final int EVENT_BUFFERING_UPDATE = 5;
     public static final int EVENT_ERROR = 6;
     public static final int EVENT_PROGRESS = 7;
+    public static final int EVENT_STOPPED = 8;
 
     private int mType;
     private Message mMessage;

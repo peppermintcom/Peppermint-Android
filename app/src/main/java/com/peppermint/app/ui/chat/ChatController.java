@@ -70,8 +70,8 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
             if(mAdapter == null) {
                 mAdapter = new ChatMessageCursorAdapter(getContext(), getMessagesServiceManager(),
-                        getPlayerServiceManager(), cursor, getDatabase(), TrackerManager.getInstance(getContext()));
-                mAdapter.setExclamationClickListener(new ChatMessageCursorAdapter.ExclamationClickListener() {
+                        getPlayerServiceManager(), cursor);
+                mAdapter.setExclamationClickListener(new MessageView.ExclamationClickListener() {
                     @Override
                     public void onClick(View v, long messageId) {
                         showErrorDialog(messageId);
@@ -178,11 +178,6 @@ public class ChatController extends ChatRecordOverlayController implements View.
     @Override
     public void start() {
         super.start();
-
-        if (mAdapter != null) {
-            mAdapter.setDatabase(getDatabase());
-        }
-
         TrackerManager.getInstance(getContext().getApplicationContext()).trackScreenView(SCREEN_ID);
     }
 
@@ -194,10 +189,19 @@ public class ChatController extends ChatRecordOverlayController implements View.
         super.stop();
     }
 
+    public void stopPlayer() {
+        if(getPlayerServiceManager() != null && getPlayerServiceManager().isBound()) {
+            getPlayerServiceManager().stop();
+        }
+    }
+
     @Override
     public void deinit() {
+        stopPlayer();
+
         if(mAdapter != null) {
-            mAdapter.destroy(!mSavedInstanceState);
+            mAdapter.changeCursor(null);
+            mAdapter.destroy(/*!mSavedInstanceState*/);
             mAdapter = null;
         }
         dismissErrorDialog();
@@ -212,7 +216,10 @@ public class ChatController extends ChatRecordOverlayController implements View.
             return false;
         }
 
-        mAdapter.stopAllPlayers();
+        if(getPlayerServiceManager() != null && getPlayerServiceManager().isBound()) {
+            getPlayerServiceManager().pause();
+        }
+
         triggerRecording(v, mChat);
 
         return true;
@@ -262,17 +269,9 @@ public class ChatController extends ChatRecordOverlayController implements View.
             return;
         }
 
-        if(event.getType() == SenderEvent.EVENT_STARTED ||
-                event.getType() == SenderEvent.EVENT_CANCELLED) {
-            // add to UI
-            if(event.getSenderTask().getMessage().getChatId() == mChat.getId()) {
-                refreshList();
-            }
-        } else if(event.getType() == SenderEvent.EVENT_NON_CANCELLABLE) {
-            // will include transcription
-            if(mAdapter != null && event.getSenderTask().getMessage().getChatId() == mChat.getId()) {
-                mAdapter.notifyDataSetChanged();
-            }
+        // add to UI
+        if(event.getSenderTask().getMessage().getChatId() == mChat.getId()) {
+            refreshList();
         }
     }
 

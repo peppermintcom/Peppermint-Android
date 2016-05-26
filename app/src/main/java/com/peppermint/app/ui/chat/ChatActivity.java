@@ -87,6 +87,7 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
 
     @Override
     public void onStop() {
+        mChatController.stopPlayer();
         mChatController.stop();
         super.onStop();
     }
