@@ -123,9 +123,9 @@
 
     <!-- SETTINGS -->
     <string name="pref_default_transcription_language_code">System Language</string>
-    <string name="pref_separator_transcription">Transcription</string>
+    <string name="pref_separator_transcription">Transkripsiyon</string>
 
-    <string name="pref_title_automatic_transcription">Automatic Transcription</string>
+    <string name="pref_title_automatic_transcription">Transkripsiyon</string>
     <string name="pref_summary_automatic_transcription">Enable or disable the automatic transcription of audio messages</string>
 
     <string name="pref_title_transcription_language">Transcription Language</string>
@@ -157,7 +157,7 @@
     <string name="delete">Sil</string>
     <string name="unable_to_send_message">Mesaj gönderilemiyor</string>
     <string name="msg_unable_to_play">Mesaj açılmaya çalışılırken bir sorun oluştu.</string>
-    <string name="automatic_transcription">Otomatik Transkripsiyon</string>
+    <string name="automatic_transcription">Transkripsiyon</string>
 
 
     <!-- ABOUT LAYOUT -->

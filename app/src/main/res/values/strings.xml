@@ -140,7 +140,7 @@
     <string name="pref_default_transcription_language_code">System Language</string>
     <string name="pref_separator_transcription">Transcription</string>
 
-    <string name="pref_title_automatic_transcription">Automatic Transcription</string>
+    <string name="pref_title_automatic_transcription">Transcription</string>
     <string name="pref_summary_automatic_transcription">Enable or disable the automatic transcription of audio messages</string>
 
     <string name="pref_title_transcription_language">Transcription Language</string>
@@ -172,7 +172,7 @@
     <string name="delete">Delete</string>
     <string name="unable_to_send_message">Unable to Send Message</string>
     <string name="msg_unable_to_play">An error occurred while trying to play the message.</string>
-    <string name="automatic_transcription">Automatic Transcription</string>
+    <string name="automatic_transcription">Transcription</string>
 
 
     <!-- ABOUT LAYOUT -->

@@ -125,7 +125,7 @@
     <string name="pref_default_transcription_language_code">Idioma de Sistema</string>
     <string name="pref_separator_transcription">Transcrição</string>
 
-    <string name="pref_title_automatic_transcription">Transcrição Automática</string>
+    <string name="pref_title_automatic_transcription">Transcrição</string>
     <string name="pref_summary_automatic_transcription">Activar ou desactivar a transcrição automática para mensagens enviadas</string>
 
     <string name="pref_title_transcription_language">Idioma de Transcrição</string>
@@ -157,7 +157,7 @@
     <string name="delete">Apagar</string>
     <string name="unable_to_send_message">Erro no Envio</string>
     <string name="msg_unable_to_play">Ocorreu um erro ao reproduzir a mensagem.</string>
-    <string name="automatic_transcription">Transcrição Automática</string>
+    <string name="automatic_transcription">Transcrição</string>
 
 
     <!-- ABOUT LAYOUT -->
