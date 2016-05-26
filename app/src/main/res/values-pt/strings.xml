@@ -122,6 +122,15 @@
 
 
     <!-- SETTINGS -->
+    <string name="pref_default_transcription_language_code">Idioma de Sistema</string>
+    <string name="pref_separator_transcription">Transcrição</string>
+
+    <string name="pref_title_automatic_transcription">Transcrição Automática</string>
+    <string name="pref_summary_automatic_transcription">Activar ou desactivar a transcrição automática para mensagens enviadas</string>
+
+    <string name="pref_title_transcription_language">Idioma de Transcrição</string>
+    <string name="pref_summary_transcription_language">O idioma utilizado para a transcrição automática</string>
+
     <string name="pref_title_displayname">O seu nome</string>
     <string name="pref_summary_displayname">O seu nome é enviado para o destinatário juntamente com a mensagem. Recomendamos que insira o seu verdadeiro nome</string>
 
