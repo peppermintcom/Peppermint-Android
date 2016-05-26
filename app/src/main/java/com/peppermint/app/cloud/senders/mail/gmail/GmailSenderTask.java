@@ -5,6 +5,7 @@ import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GooglePlayServicesAvailabilityIOException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.peppermint.app.R;
 import com.peppermint.app.authenticator.AuthenticationData;
 import com.peppermint.app.cloud.apis.GoogleApi;
 import com.peppermint.app.cloud.apis.SparkPostApi;
@@ -16,6 +17,7 @@ import com.peppermint.app.cloud.senders.exceptions.NoPlayServicesException;
 import com.peppermint.app.data.Message;
 import com.peppermint.app.data.Recipient;
 import com.peppermint.app.utils.DateContainer;
+import com.peppermint.app.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +32,8 @@ import java.util.List;
  * SenderUploadTask for emails using the Gmail API.
  */
 public class GmailSenderTask extends SenderUploadTask {
+
+    private static final int MAX_SUBJECT_TRANSCRIPTION_CHARS = 50;
 
     public GmailSenderTask(GmailSenderTask uploadTask) {
         super(uploadTask);
@@ -61,10 +65,12 @@ public class GmailSenderTask extends SenderUploadTask {
         googleApi.setDisplayName(fullName);
         File file = getMessage().getRecordingParameter().getFile();
 
+        final String transcription = getMessage().getRecordingParameter().getTranscription();
+
         // build the email body
         final SparkPostApi sparkPostApi = getSparkPostApi();
-        String bodyHtml = sparkPostApi.buildEmailFromTemplate(getContext(), url, canonicalUrl, fullName, data.getEmail(), SparkPostApi.TYPE_HTML, true, getId().toString(), getMessage().getRecordingParameter().getTranscription());
-        String bodyPlain = sparkPostApi.buildEmailFromTemplate(getContext(), url, canonicalUrl, fullName, data.getEmail(), SparkPostApi.TYPE_TEXT, false, getId().toString(), getMessage().getRecordingParameter().getTranscription());
+        String bodyHtml = sparkPostApi.buildEmailFromTemplate(getContext(), url, canonicalUrl, fullName, data.getEmail(), SparkPostApi.TYPE_HTML, true, getId().toString(), transcription);
+        String bodyPlain = sparkPostApi.buildEmailFromTemplate(getContext(), url, canonicalUrl, fullName, data.getEmail(), SparkPostApi.TYPE_TEXT, false, getId().toString(), transcription);
 
         if(isCancelled()) { return; }
 
@@ -87,8 +93,16 @@ public class GmailSenderTask extends SenderUploadTask {
                 recipientEmails[i] = chatRecipientList.get(i).getVia();
             }
 
+            String subject = getMessage().getEmailSubject();
+            if(transcription != null && transcription.length() > 0) {
+                String simplifiedTranscription = Utils.getSimplifiedString(transcription, MAX_SUBJECT_TRANSCRIPTION_CHARS);
+                if(simplifiedTranscription != null) {
+                    subject = String.format(getContext().getString(R.string.sender_transcription_mail_subject), simplifiedTranscription);
+                }
+            }
+
             try {
-                GoogleApi.DraftResponse response = googleApi.createGmailDraft(getId().toString(), getMessage().getEmailSubject(),
+                GoogleApi.DraftResponse response = googleApi.createGmailDraft(getId().toString(), subject,
                         bodyPlain, bodyHtml, recipientEmails, getMessage().getRecordingParameter().getContentType(),
                         emailDate, file);
                 draftId = (String) response.getBody();

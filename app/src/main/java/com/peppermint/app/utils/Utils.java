@@ -728,4 +728,27 @@ public class Utils {
         return bcp47Tag.toString();
     }
 
+    public static String getSimplifiedString(String original, final int maxCharacterCount) {
+        StringBuffer simplified = new StringBuffer();
+        int characterCount = 0;
+        int i = 0;
+        String[] wordSplit = original.split("\\s+");
+        while(i < wordSplit.length && characterCount + wordSplit[i].length() < maxCharacterCount) {
+            if(i > 0) {
+                simplified.append(" ");
+            }
+            simplified.append(wordSplit[i]);
+            characterCount += wordSplit[i].length();
+            i++;
+        }
+
+        String result = simplified.toString().trim();
+
+        if(result.length() <= 0) {
+            return null;
+        }
+
+        return result + (i<wordSplit.length ? "..." : "");
+    }
+
 }

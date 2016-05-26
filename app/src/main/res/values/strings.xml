@@ -105,6 +105,7 @@
     <!-- BO: Keep English Only -->
         <string name="sender_default_message" translatable="false">Here\'s my message from Peppermint.</string>
         <string name="sender_default_mail_subject" translatable="false">I sent you an audio message</string>
+        <string name="sender_transcription_mail_subject" translatable="false">Audio message: %1$s</string>
     <!-- EO: Keep English Only -->
 
     <string name="sender_msg_send_error">An error occurred while trying to send your Peppermint message to %1$s. Please try again later.</string>
