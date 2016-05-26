@@ -19,7 +19,6 @@ import com.peppermint.app.data.Recipient;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.text.ParseException;
@@ -63,7 +62,6 @@ public class GmailSenderTask extends SenderUploadTask {
 
         GoogleApi googleApi = getGoogleApi(data.getEmail());
         googleApi.setDisplayName(fullName);
-        File file = getMessage().getRecordingParameter().getFile();
 
         final String transcription = getMessage().getRecordingParameter().getTranscription();
 
@@ -104,7 +102,7 @@ public class GmailSenderTask extends SenderUploadTask {
             try {
                 GoogleApi.DraftResponse response = googleApi.createGmailDraft(getId().toString(), subject,
                         bodyPlain, bodyHtml, recipientEmails, getMessage().getRecordingParameter().getContentType(),
-                        emailDate, file);
+                        emailDate, null);
                 draftId = (String) response.getBody();
 
                 getTrackerManager().log("Gmail # Created Draft at " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
