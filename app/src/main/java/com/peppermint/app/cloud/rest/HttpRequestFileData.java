@@ -7,6 +7,7 @@ import android.os.ResultReceiver;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
@@ -48,19 +49,23 @@ public class HttpRequestFileData extends HttpRequest implements Parcelable {
         return mFile.toString();
     }
 
+    @Override
     public void writeBody(OutputStream outStream) throws IOException {
         FileInputStream reader = new FileInputStream(mFile);
-        byte[] imageData = new byte[1023];
+        writeInputStream(outStream, reader);
+        reader.close();
+    }
+
+    protected void writeInputStream(OutputStream outputStream, InputStream inputStream) throws IOException {
+        byte[] buffer = new byte[1023];
 
         int count = 0;
         long sum = 0;
         final long length = mFile.length();
 
-        //long now = android.os.SystemClock.uptimeMillis();
-
-        while((count = reader.read(imageData)) > 0 && !isCancelled()) {
-            outStream.write(imageData, 0, count);
-            outStream.flush();
+        while((count = inputStream.read(buffer)) > 0 && !isCancelled()) {
+            outputStream.write(buffer, 0, count);
+            outputStream.flush();
 
             if (mListener != null) {
                 sum += count;
@@ -68,10 +73,6 @@ public class HttpRequestFileData extends HttpRequest implements Parcelable {
                 mListener.send(percent, null);
             }
         }
-
-        //Log.d(TAG, "Finished uploading in " + (android.os.SystemClock.uptimeMillis() - now) + " ms");
-
-        reader.close();
     }
 
     public void setUploadResultReceiver(ResultReceiver listener) {

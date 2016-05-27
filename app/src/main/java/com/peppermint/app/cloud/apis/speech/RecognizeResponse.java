@@ -1,5 +1,6 @@
 package com.peppermint.app.cloud.apis.speech;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,12 +9,7 @@ import java.util.List;
  * See https://cloud.google.com/speech/reference/rest/v1/speech/recognize#InitialRecognizeRequest
  * for more info.
  */
-public class RecognizeResponse {
-    public static final int ENDPOINTER_EVENT_UNSPECIFIED = 0;
-    public static final int START_OF_SPEECH = 1;
-    public static final int END_OF_SPEECH = 2;
-    public static final int END_OF_AUDIO = 3;
-    public static final int END_OF_UTTERANCE = 4;
+public class RecognizeResponse implements Serializable {
 
     private String mEndpoint;
     private int mResultIndex;

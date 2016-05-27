@@ -1,11 +1,13 @@
 package com.peppermint.app.cloud.apis.speech;
 
+import java.io.Serializable;
+
 /**
  * Created by Nuno Luz on 18-05-2016.
  * See https://cloud.google.com/speech/reference/rest/v1/speech/recognize#SpeechRecognitionAlternative
  * for more info.
  */
-public class SpeechRecognitionAlternative {
+public class SpeechRecognitionAlternative implements Serializable {
     private String mTranscript;
     private float mConfidence;
 

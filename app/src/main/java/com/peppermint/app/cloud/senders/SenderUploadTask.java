@@ -9,6 +9,8 @@ import com.peppermint.app.cloud.apis.data.MessagesResponse;
 import com.peppermint.app.cloud.apis.data.TranscriptionResponse;
 import com.peppermint.app.cloud.apis.data.UploadsResponse;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiRecipientNoAppException;
+import com.peppermint.app.cloud.apis.speech.GoogleSpeechRecognizeClient;
+import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
 import com.peppermint.app.data.DatabaseHelper;
 import com.peppermint.app.data.GlobalManager;
 import com.peppermint.app.data.Message;
@@ -20,6 +22,7 @@ import com.peppermint.app.events.PeppermintEventBus;
 import com.peppermint.app.events.RecorderEvent;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
 
 /**
@@ -166,6 +169,19 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         return recording.getTranscription();
     }
 
+    protected Object[] getTranscription() throws IOException, NoInternetConnectionException {
+        final Message message = getMessage();
+        final Recording recording = message.getRecordingParameter();
+        final File mintFile = new File(recording.getFilePath() + ".mint");
+
+        if(!mintFile.exists()) {
+            return null;
+        }
+
+        final GoogleSpeechRecognizeClient googleSpeechRecognizeClient = new GoogleSpeechRecognizeClient(getContext(), message.getUUID().toString());
+        return googleSpeechRecognizeClient.getTranscriptionSync(mintFile.getAbsolutePath());
+    }
+
     protected String sendPeppermintTranscription() throws Exception {
         final Message message = getMessage();
         final Recording recording = message.getRecordingParameter();
@@ -174,7 +190,12 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
             return recording.getTranscriptionUrl();
         }
 
-        waitTranscription();
+        if(waitTranscription() == null) {
+            Object[] transcriptionResults = getTranscription();
+            recording.setTranscription((String) transcriptionResults[0]);
+            recording.setTranscriptionConfidence((float) transcriptionResults[1]);
+            recording.setTranscriptionLanguage((String) transcriptionResults[2]);
+        }
 
         if(recording.getTranscription() != null) {
             final PeppermintApi peppermintApi = getPeppermintApi();

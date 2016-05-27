@@ -1,5 +1,6 @@
 package com.peppermint.app.cloud.apis.speech;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,7 +9,7 @@ import java.util.List;
  * See https://cloud.google.com/speech/reference/rest/v1/speech/recognize#SpeechRecognitionResult
  * for more info.
  */
-public class SpeechRecognitionResult {
+public class SpeechRecognitionResult implements Serializable {
     private boolean mFinal;
     private float mStability;
     private List<SpeechRecognitionAlternative> mAlternatives = new ArrayList<>();

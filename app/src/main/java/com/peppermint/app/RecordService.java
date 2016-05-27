@@ -14,8 +14,6 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.google.cloud.speech.v1.nano.InitialRecognizeRequest;
-import com.google.cloud.speech.v1.nano.RecognizeResponse;
-import com.google.cloud.speech.v1.nano.SpeechRecognitionResult;
 import com.peppermint.app.cloud.apis.speech.GoogleSpeechRecognizeClient;
 import com.peppermint.app.cloud.senders.SenderPreferences;
 import com.peppermint.app.data.Chat;
@@ -28,6 +26,10 @@ import com.peppermint.app.ui.base.views.CustomToast;
 import com.peppermint.app.utils.ExtendedAudioRecorder;
 import com.peppermint.app.utils.NoAccessToExternalStorageException;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -76,16 +78,7 @@ public class RecordService extends Service {
 
     private float mMaxAmplitude;
     private Map<String, GoogleSpeechRecognizeClient> mSpeechRecognizers = new ArrayMap<>();
-    private Map<String, RecognizeResponseWrapper> mTranscriptionResults = new ConcurrentHashMap<>();
-
-    private class RecognizeResponseWrapper {
-        RecognizeResponseWrapper(RecognizeResponse recognizeResponse, String languageCode) {
-            this.recognizeResponse = recognizeResponse;
-            this.languageCode = languageCode;
-        }
-        RecognizeResponse recognizeResponse;
-        String languageCode;
-    }
+    private Map<String, GoogleSpeechRecognizeClient.RecognizeResponseWrapper> mTranscriptionResults = new ConcurrentHashMap<>();
 
     /**
      * The service binder used by external components to interact with the service.
@@ -195,7 +188,7 @@ public class RecordService extends Service {
     }
 
     private Recording newRecording(ExtendedAudioRecorder recorder) {
-        final Object[] transcriptionData = getTranscription(recorder.getFilePath());
+        final Object[] transcriptionData = GoogleSpeechRecognizeClient.getBestTranscriptionResults(mTranscriptionResults.get(recorder.getFilePath()));
         final Recording recording = new Recording(recorder.getFilePath(), recorder.getFullDuration(), recorder.getFullSize(), false);
         recording.setTranscription((String) transcriptionData[0]);
         recording.setTranscriptionConfidence((float) transcriptionData[1]);
@@ -205,6 +198,8 @@ public class RecordService extends Service {
     }
 
     private final ExtendedAudioRecorder.Listener mAudioRecorderListener = new ExtendedAudioRecorder.Listener() {
+
+        private FileOutputStream mMintOutStream;
 
         @Override
         public void onStart(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp) {
@@ -263,12 +258,25 @@ public class RecordService extends Service {
                 return;
             }
 
+            final String transcriptionLanguage = mPreferences.getTranscriptionLanguageCode();
+
             try {
                 final GoogleSpeechRecognizeClient client = new GoogleSpeechRecognizeClient(RecordService.this, filePath);
                 client.setRecognitionListener(mSpeechRecognitionListener);
-                client.startSending(InitialRecognizeRequest.LINEAR16, sampleRate, mPreferences.getTranscriptionLanguageCode());
+                client.startSending(InitialRecognizeRequest.LINEAR16, sampleRate, transcriptionLanguage);
                 mSpeechRecognizers.put(filePath, client);
             } catch (Exception e) {
+                TrackerManager.getInstance(RecordService.this).logException(e);
+            }
+
+
+            try {
+                final File mintFile = new File(filePath + ".mint");
+                mMintOutStream = new FileOutputStream(mintFile);
+                mMintOutStream.write(ByteBuffer.allocate(4).putInt(sampleRate).array());
+                mMintOutStream.write(ByteBuffer.allocate(4).putInt(transcriptionLanguage.length()).array());
+                mMintOutStream.write(transcriptionLanguage.getBytes("UTF-8"));
+            } catch (java.io.IOException e) {
                 TrackerManager.getInstance(RecordService.this).logException(e);
             }
         }
@@ -277,6 +285,14 @@ public class RecordService extends Service {
         public void onRecorderData(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp, byte[] bytes) {
             if(!mPreferences.isAutomaticTranscription()) {
                 return;
+            }
+
+            if(mMintOutStream != null) {
+                try {
+                    mMintOutStream.write(bytes);
+                } catch (IOException e) {
+                    TrackerManager.getInstance(RecordService.this).logException(e);
+                }
             }
 
             final GoogleSpeechRecognizeClient client = mSpeechRecognizers.get(filePath);
@@ -293,6 +309,16 @@ public class RecordService extends Service {
         }
 
         private void finishSpeechToText(String filePath) {
+            if(mMintOutStream != null) {
+                try {
+                    mMintOutStream.flush();
+                    mMintOutStream.close();
+                } catch (IOException e) {
+                    TrackerManager.getInstance(RecordService.this).logException(e);
+                }
+                mMintOutStream = null;
+            }
+
             final GoogleSpeechRecognizeClient client = mSpeechRecognizers.get(filePath);
             if(client == null) {
                 Log.w(TAG, "No SpeechRecognizeClient found for " + filePath);
@@ -309,19 +335,19 @@ public class RecordService extends Service {
         }
 
         @Override
-        public void onRecognitionFinished(GoogleSpeechRecognizeClient client, RecognizeResponse lastResponse) {
+        public void onRecognitionFinished(GoogleSpeechRecognizeClient client, GoogleSpeechRecognizeClient.RecognizeResponseWrapper lastResponse) {
             mSpeechRecognizers.remove(client.getId());
             if(lastResponse != null) {
-                mTranscriptionResults.put(client.getId(), new RecognizeResponseWrapper(lastResponse, client.getLanguageCode()));
+                mTranscriptionResults.put(client.getId(), lastResponse);
             }
             PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_TRANSCRIPTION, newRecording(mRecorder), mChat, 0, null);
         }
 
         @Override
-        public void onRecognitionError(GoogleSpeechRecognizeClient client, Status status, RecognizeResponse lastResponse) {
+        public void onRecognitionError(GoogleSpeechRecognizeClient client, Status status, GoogleSpeechRecognizeClient.RecognizeResponseWrapper lastResponse) {
             mSpeechRecognizers.remove(client.getId());
             if(lastResponse != null) {
-                mTranscriptionResults.put(client.getId(), new RecognizeResponseWrapper(lastResponse, client.getLanguageCode()));
+                mTranscriptionResults.put(client.getId(), lastResponse);
             }
             PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_TRANSCRIPTION, newRecording(mRecorder), mChat, 0, null);
         }
@@ -397,31 +423,6 @@ public class RecordService extends Service {
         super.onDestroy();
     }
 
-    private Object[] getTranscription(String filePath) {
-        String transcription = null;
-        float transcriptionConfidence = -1;
-        String transcriptionLanguage = null;
-        final RecognizeResponseWrapper recognizeResponseWrapper = mTranscriptionResults.get(filePath);
-        if(recognizeResponseWrapper != null && recognizeResponseWrapper.recognizeResponse != null && recognizeResponseWrapper.recognizeResponse.error == null) {
-            transcriptionLanguage = recognizeResponseWrapper.languageCode;
-            final SpeechRecognitionResult speechRecognitionResult = recognizeResponseWrapper.recognizeResponse.results[recognizeResponseWrapper.recognizeResponse.resultIndex];
-            if(!speechRecognitionResult.isFinal) {
-                transcriptionConfidence = speechRecognitionResult.stability;
-                transcription = speechRecognitionResult.alternatives[0].transcript;
-            } else {
-                transcription = speechRecognitionResult.alternatives[0].transcript;
-                transcriptionConfidence = speechRecognitionResult.alternatives[0].confidence;
-                for(int i=1; i<speechRecognitionResult.alternatives.length; i++) {
-                    if(transcriptionConfidence < speechRecognitionResult.alternatives[i].confidence) {
-                        transcription = speechRecognitionResult.alternatives[i].transcript;
-                        transcriptionConfidence = speechRecognitionResult.alternatives[i].confidence;
-                    }
-                }
-            }
-        }
-        return new Object[] {transcription, transcriptionConfidence, transcriptionLanguage};
-    }
-
     String popTranscription(String filePath, float minConfidence, boolean sendEvent) {
         if(!mTranscriptionResults.containsKey(filePath)) {
             if(sendEvent) {
@@ -430,7 +431,7 @@ public class RecordService extends Service {
             return null;
         }
 
-        final Object[] transcriptionData = getTranscription(filePath);
+        final Object[] transcriptionData = GoogleSpeechRecognizeClient.getBestTranscriptionResults(mTranscriptionResults.get(filePath));
         mTranscriptionResults.remove(filePath);
 
         if(sendEvent) {

@@ -13,7 +13,6 @@ import com.googlecode.mp4parser.FileDataSourceImpl;
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.builder.DefaultMp4Builder;
 import com.googlecode.mp4parser.authoring.tracks.AACTrackImpl;
-import com.peppermint.app.cloud.apis.speech.GoogleSpeechRecognizeClient;
 import com.peppermint.app.tracking.TrackerManager;
 import com.todoroo.aacenc.AACEncoder;
 
