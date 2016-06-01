@@ -16,6 +16,7 @@ import com.peppermint.app.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -40,20 +41,20 @@ import io.grpc.stub.StreamObserver;
 public class GoogleSpeechRecognizeClient {
 
     public static class RecognizeResponseWrapper {
-        private com.google.cloud.speech.v1.nano.RecognizeResponse mRecognizeResponse;
+        private List<com.google.cloud.speech.v1.nano.RecognizeResponse> mRecognizeResponseList;
         private String mLanguageCode;
 
-        public RecognizeResponseWrapper(com.google.cloud.speech.v1.nano.RecognizeResponse recognizeResponse, String languageCode) {
-            this.mRecognizeResponse = recognizeResponse;
+        public RecognizeResponseWrapper(List<com.google.cloud.speech.v1.nano.RecognizeResponse> recognizeResponseList, String languageCode) {
+            this.mRecognizeResponseList = recognizeResponseList;
             this.mLanguageCode = languageCode;
         }
 
-        public com.google.cloud.speech.v1.nano.RecognizeResponse getRecognizeResponse() {
-            return mRecognizeResponse;
+        public List<com.google.cloud.speech.v1.nano.RecognizeResponse> getRecognizeResponseList() {
+            return mRecognizeResponseList;
         }
 
-        public void setRecognizeResponse(RecognizeResponse mRecognizeResponse) {
-            this.mRecognizeResponse = mRecognizeResponse;
+        public void setRecognizeResponseList(List<com.google.cloud.speech.v1.nano.RecognizeResponse> mRecognizeResponse) {
+            this.mRecognizeResponseList = mRecognizeResponse;
         }
 
         public String getLanguageCode() {
@@ -76,6 +77,9 @@ public class GoogleSpeechRecognizeClient {
     private static final String SPEECH_CONFIG_FILE = "peppermint-5a6159bab682.json";
     private static final String SPEECH_HOST = "speech.googleapis.com";
     private static final int SPEECH_PORT = 443;
+
+    private static final int BUFFER_SIZE = 2048;
+    private static final float BITS_PER_SAMPLE = 16f;
 
     private static final List<String> OAUTH2_SCOPES =
             Arrays.asList("https://www.googleapis.com/auth/cloud-platform");
@@ -116,6 +120,9 @@ public class GoogleSpeechRecognizeClient {
                 initial.encoding = mEncoding; // InitialRecognizeRequest.LINEAR16;
                 initial.sampleRate = mSampleRate;
                 initial.interimResults = true;
+                initial.continuous = true;
+                initial.enableEndpointerEvents = true;
+                initial.maxAlternatives = 3;
                 initial.languageCode = mLanguageCode;
 
                 RecognizeRequest firstRequest = new RecognizeRequest();
@@ -133,6 +140,24 @@ public class GoogleSpeechRecognizeClient {
             }
 
             try {
+                // send empty byte data at first since the speech service seems to skip
+                // the first part of the audio
+                final int waitingMs = (int) ((float) BUFFER_SIZE / (((float) mSampleRate * BITS_PER_SAMPLE) / 8f) * 1000f);
+                final byte[] emptyData = new byte[BUFFER_SIZE];
+                final AudioRequest emptyAudio = new AudioRequest();
+                emptyAudio.content = emptyData;
+                final RecognizeRequest emptyRequest = new RecognizeRequest();
+                emptyRequest.audioRequest = emptyAudio;
+                try {
+                    Thread.sleep(waitingMs);
+                    mStreamObserver.onNext(emptyRequest);
+                    Thread.sleep(waitingMs);
+                    mStreamObserver.onNext(emptyRequest);
+                    Thread.sleep(waitingMs);
+                } catch (InterruptedException e) {
+                        /* nothing to do here */
+                }
+
                 while(!mFinished) {
                     try {
                         final byte[] bytes = mAudioDataQueue.take();
@@ -141,6 +166,7 @@ public class GoogleSpeechRecognizeClient {
                         RecognizeRequest request = new RecognizeRequest();
                         request.audioRequest = audio;
                         mStreamObserver.onNext(request);
+                        Thread.sleep(waitingMs);
                     } catch (InterruptedException e) {
                         /* nothing to do here */
                     }
@@ -162,21 +188,35 @@ public class GoogleSpeechRecognizeClient {
     private Thread mThreadToNotify = null;
 
     private class RecognizeStreamObserver implements StreamObserver<com.google.cloud.speech.v1.nano.RecognizeResponse> {
-        private com.google.cloud.speech.v1.nano.RecognizeResponse mLastResponse;
+        private List<com.google.cloud.speech.v1.nano.RecognizeResponse> mResponseList = new ArrayList<>();
+        private RecognizeResponse mLastResponse;
 
         @Override
         public void onNext(com.google.cloud.speech.v1.nano.RecognizeResponse response) {
             mLastResponse = response;
+            if(response != null && response.results != null && response.results.length > 0 && response.error == null) {
+                if(response.results[0].isFinal) {
+                    mResponseList.add(response);
+                    mLastResponse = null;
+                }
+            }
+            Log.d(TAG, String.valueOf(response));
         }
 
         @Override
         public void onError(Throwable error) {
-            finishReceiving(mLastResponse, error);
+            if(mLastResponse != null && mLastResponse.error == null) {
+                mResponseList.add(mLastResponse);
+            }
+            finishReceiving(mResponseList, error);
         }
 
         @Override
         public void onCompleted() {
-            finishReceiving(mLastResponse, null);
+            if(mLastResponse != null && mLastResponse.error == null) {
+                mResponseList.add(mLastResponse);
+            }
+            finishReceiving(mResponseList, null);
         }
     }
 
@@ -203,11 +243,6 @@ public class GoogleSpeechRecognizeClient {
         mSampleRate = sampleRate;
         mLanguageCode = getAppropriateLanguage(languageCode);
 
-        // send empty byte data at first since the speech service seems to skip
-        // the first part of the audio
-        byte[] emptyData = new byte[2048];
-        recognize(emptyData);
-        recognize(emptyData);
         mSenderFuture = mThreadPoolExecutor.submit(mSenderRunnable);
     }
 
@@ -220,7 +255,7 @@ public class GoogleSpeechRecognizeClient {
         mSenderFuture.cancel(true);
     }
 
-    private void finishReceiving(com.google.cloud.speech.v1.nano.RecognizeResponse lastResponse, Throwable error) {
+    private void finishReceiving(List<com.google.cloud.speech.v1.nano.RecognizeResponse> responseList, Throwable error) {
         mManagedChannel.shutdown();
         if(mThreadToNotify != null) {
             mThreadToNotify.interrupt();
@@ -228,11 +263,11 @@ public class GoogleSpeechRecognizeClient {
         if(mRecognitionListener != null) {
             if(error == null) {
                 Log.d(TAG, "Recognize Completed.");
-                mRecognitionListener.onRecognitionFinished(GoogleSpeechRecognizeClient.this, new RecognizeResponseWrapper(lastResponse, mLanguageCode));
+                mRecognitionListener.onRecognitionFinished(GoogleSpeechRecognizeClient.this, new RecognizeResponseWrapper(responseList, mLanguageCode));
             } else {
                 final Status status = Status.fromThrowable(error);
                 Log.d(TAG, "Recognize Failed: " + status);
-                mRecognitionListener.onRecognitionError(GoogleSpeechRecognizeClient.this, status, new RecognizeResponseWrapper(lastResponse, mLanguageCode));
+                mRecognitionListener.onRecognitionError(GoogleSpeechRecognizeClient.this, status, new RecognizeResponseWrapper(responseList, mLanguageCode));
             }
         }
     }
@@ -265,7 +300,7 @@ public class GoogleSpeechRecognizeClient {
             if (recognizeResponse != null && recognizeResponse.getErrorCode() == 0 && recognizeResponse.getResults().size() > 0) {
                 transcriptionLanguage = request.getDetectedTranscriptionLanguage();
                 final SpeechRecognitionResult speechRecognitionResult =
-                        recognizeResponse.getResults().get(recognizeResponse.getResultIndex());
+                        recognizeResponse.getResults().get(0);
                 if (!speechRecognitionResult.isFinal()) {
                     transcriptionConfidence = speechRecognitionResult.getStability();
                     transcription = speechRecognitionResult.getAlternatives().get(0).getTranscript();
@@ -287,28 +322,53 @@ public class GoogleSpeechRecognizeClient {
     }
 
     public static Object[] getBestTranscriptionResults(RecognizeResponseWrapper recognizeResponseWrapper) {
-        String transcription = null;
+        StringBuilder transcriptionBuilder = new StringBuilder();
         float transcriptionConfidence = -1;
+        int amount = 0;
         String transcriptionLanguage = null;
-        if(recognizeResponseWrapper != null && recognizeResponseWrapper.getRecognizeResponse() != null && recognizeResponseWrapper.getRecognizeResponse().error == null) {
+        if(recognizeResponseWrapper != null && recognizeResponseWrapper.getRecognizeResponseList() != null && recognizeResponseWrapper.getRecognizeResponseList().size() > 0) {
             transcriptionLanguage = recognizeResponseWrapper.getLanguageCode();
-            final com.google.cloud.speech.v1.nano.SpeechRecognitionResult speechRecognitionResult =
-                    recognizeResponseWrapper.getRecognizeResponse().results[recognizeResponseWrapper.getRecognizeResponse().resultIndex];
-            if(!speechRecognitionResult.isFinal) {
-                transcriptionConfidence = speechRecognitionResult.stability;
-                transcription = speechRecognitionResult.alternatives[0].transcript;
-            } else {
-                transcription = speechRecognitionResult.alternatives[0].transcript;
-                transcriptionConfidence = speechRecognitionResult.alternatives[0].confidence;
-                for(int i=1; i<speechRecognitionResult.alternatives.length; i++) {
-                    if(transcriptionConfidence < speechRecognitionResult.alternatives[i].confidence) {
-                        transcription = speechRecognitionResult.alternatives[i].transcript;
-                        transcriptionConfidence = speechRecognitionResult.alternatives[i].confidence;
+            final List<RecognizeResponse> recognizeResponseList = recognizeResponseWrapper.getRecognizeResponseList();
+            for(RecognizeResponse recognizeResponse : recognizeResponseList) {
+                if(recognizeResponse.results.length > 0) {
+                    final com.google.cloud.speech.v1.nano.SpeechRecognitionResult speechRecognitionResult =
+                            recognizeResponse.results[0];
+                    if (!speechRecognitionResult.isFinal) {
+                        transcriptionConfidence += (transcriptionConfidence < 0 ? 1 : 0) + speechRecognitionResult.stability;
+                        final String transcription = speechRecognitionResult.alternatives[0].transcript;
+                        if(transcription.length() > 0) {
+                            transcriptionBuilder.append(transcription);
+                            transcriptionBuilder.append(".");
+                        }
+                        amount++;
+                    } else {
+                        String transcription = speechRecognitionResult.alternatives[0].transcript;
+                        float localTranscriptionConfidence = speechRecognitionResult.alternatives[0].confidence;
+                        for (int i = 1; i < speechRecognitionResult.alternatives.length; i++) {
+                            if (localTranscriptionConfidence < speechRecognitionResult.alternatives[i].confidence) {
+                                transcription = speechRecognitionResult.alternatives[i].transcript;
+                                localTranscriptionConfidence = speechRecognitionResult.alternatives[i].confidence;
+                            }
+                        }
+                        if(transcription.length() > 0) {
+                            transcriptionBuilder.append(transcription);
+                            transcriptionBuilder.append(".");
+                        }
+                        transcriptionConfidence += (transcriptionConfidence < 0 ? 1 : 0) + localTranscriptionConfidence;
+                        amount++;
                     }
                 }
             }
         }
-        return new Object[] {transcription, transcriptionConfidence, transcriptionLanguage};
+
+        String finalTranscription = transcriptionBuilder.toString();
+        if(finalTranscription.trim().length() <= 0) {
+            finalTranscription = null;
+            amount = 0;
+            transcriptionConfidence = -1;
+        }
+
+        return new Object[] {finalTranscription, amount > 0 ? transcriptionConfidence / (float) amount : transcriptionConfidence, transcriptionLanguage};
     }
 
     public void setRecognitionListener(RecognitionListener mRecognitionListener) {
