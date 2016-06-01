@@ -110,6 +110,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
                     message.getRecordingParameter().getTranscriptionUrl(), canonicalUrl,
                     data.getEmail(), recipientVia);
             message.setServerId(response.getMessageId());
+            message.setRegistrationTimestamp(response.getCreatedTimestamp());
             try {
                 GlobalManager.markAsPeppermint(getContext(), recipient, data.getEmail());
             } catch (SQLException e) {
