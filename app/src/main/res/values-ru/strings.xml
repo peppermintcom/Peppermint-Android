@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="send_email">Отправить е-мейл</string>
+
+    <string name="date_today">Сегодня</string>
+    <string name="date_yesterday">Вчера</string>
+
+    <string name="cancel">Отменить</string>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
+    <string name="ok">Хорошо</string>
+
+    <string name="msg_must_authenticate_using_account">Вы должны авторизоваться при помощи учётной записи Google</string>
+    <string name="msg_database_error">Произошла ошибка при попытке обновить ваши данные. Пожалуйста, при таких случаях в дальнейшем свяжитесь со службой поддержки.</string>
+    <string name="msg_must_supply_mandatory_permissions">Одно или более требуемых разрешений отключены. Пожалуйста, включите все необходимые разрешения и попробуйте еще раз.</string>
+
+
+    <!-- MENU DRAWER -->
+    <string name="drawer_menu_recent_contacts">Недавние контакты</string>
+    <string name="drawer_menu_all_contacts">Все контакты</string>
+    <string name="drawer_menu_settings">Настройки</string>
+    <string name="drawer_menu_help_feedback">Помощь &amp; Отзывы</string>
+    <string name="drawer_menu_about">Информация</string>
+
+    <string name="drawer_open_desc">Выдвижное меню открыто!</string>
+    <string name="drawer_closed_desc">Выдвижное меню закрыто!</string>
+
+
+    <!-- CONTACTS LAYOUT -->
+    <string name="search_contacts">Найти контакт</string>
+    <string name="loading_contacts">Загружаю\nКонтакты…</string>
+    <string name="add_contact">Добавить контакт</string>
+    <string name="hold_record_release_send_p1">Удерживать</string>
+    <string name="hold_record_release_send_p2">для записи, отпустить для отправки</string>
+    <string name="enable_chat_heads">Включить Чат-фото?</string>
+    <string name="enable">Включить</string>
+    <string name="not_now">Не сейчас</string>
+
+    <string name="msg_no_contacts">Контактов не найдено</string>
+
+    <string name="msg_record_at_least">Продолжительность записи должна составлять не менее 1 минуты</string>
+    <string name="msg_record_error">Во время записи произошла ошибка. Пожалуйста, попробуйте еще раз позже. В случае повторных ошибок, пожалуйста, обратитесь в службу поддержки.</string>
+    <string name="msg_nomicdata_error">Невозможно воспроизвести аудио через микрофон. Пожалуйста, убедитесь, что он не используется другими приложениями.</string>
+    <string name="msg_exceeded_maxduration">Максимальное время записи достигнуто. Запись остановлена.</string>
+    <string name="msg_no_external_storage">Нет доступа ко внешнему хранилищу. Пожалуйста, убедитесь, что оно доступно.</string>
+
+    <string name="msg_press_back_again_exit">Нажмите \"Назад\" еще раз для выхода.</string>
+
+
+    <!-- CONTACTS LAYOUT: ITEM -->
+    <string name="via">через</string>
+
+    <!-- CONTACTS LAYOUT: RECORDING OVERLAY -->
+    <string name="swipe_to_cancel">Проведите пальцем в любом направлении\nдля отмены</string>   <!-- doesn't fit; only up to любом -->
+    <string name="recording_for">Запись для %1$s</string>
+
+    <!-- CONTACTS LAYOUT: ADD EMAIL DIALOG -->
+    <string name="sending_via_email">Отправка через е-мейл</string>
+    <string name="add_email">Добавить е-мейл</string>
+    <string name="no_email_address">Эл. адреса не найдено. Пожалуйста, добавьте эл. адрес для этого контакта.</string>
+
+    <!-- CONTACTS LAYOUT: TIPS -->
+    <string name="search_here_for_your_friend">Найдите своего друга.</string>
+    <string name="then_tap_and_hold_to_send">Тогда нажмите и удерживаейте\n, чтоб отправить аудио сообщение.</string>
+
+
+    <!-- NEW CONTACT LAYOUT -->
+    <string name="new_contact">Новый контакт</string>
+    <string name="first_name">Имя</string>
+    <string name="last_name">Фамилия</string>
+    <string name="save">Сохранить</string>
+    <string name="email">Эл.почта</string>
+    <string name="take_photo">Сделать фото</string>
+    <string name="choose_photo">Выбрать фото</string>
+    <string name="select_photo">Выбрать фото</string>
+    <string name="you_can_add_phone_contact_or_email">Пожалуйста, добавьте е-мейл контакт</string>
+
+    <string name="msg_invalid_contactname">Пожалуйста, введите имя контакта</string>
+    <string name="msg_insert_mail">Пожалуйста, введите правильный эл.адрес</string>
+    <string name="msg_insert_phone">Пожалуйста, введите правильный номер телефона</string>
+    <string name="msg_unable_addcontact">Невозможно добавить контакт. Пожалуйста, повторите попытку позже</string>
+    <string name="msg_no_camera_app">На вашем устройстве не установлена камера</string>
+    <string name="msg_external_storage_error">Невозможно создать фото файл во внешнем накопителе</string>
+    <string name="msg_contact_added">Контакт создан успешно!</string>
+
+
+    <!-- NOTIFICATIONS -->
+    <string name="recording">Запись…</string>
+    <string name="paused">Приостановлено</string>
+    <string name="you_have_installed_peppermint">Вы установили Peppermint</string>
+    <string name="now_send_your_first_audio_message">Теперь отправьте ваше первое аудио сообщение!</string>
+    <string name="new_message">Новое сообщение в Peppermint</string>
+    <string name="sent_you_a_message">вам отправлено сообщение</string>
+
+
+    <!-- SENDER MESSAGES -->
+    <string name="sender_msg_send_error">Во время попытки отправить ваше сообщение %1$s произошла ошибка. Пожалуйста, повторите попытку позже.</string>
+    <string name="sender_msg_no_internet">Соединение с Интренетом отсутствует. Peppermint отправит ваше сообщение как только появится соединение.</string>
+    <string name="sender_msg_no_gplay">Google play сервисы не доступны. Отправка вашей записи находится в очереди. Пожалуйста, убедитесь, что используется новейшая версия Google play сервисов.</string>
+    <string name="sender_msg_secure_connection">Не удалось установить безопасное соединение с Peppermint сервером. Отправка вашей записи находится в очереди.</string>
+    <string name="sender_msg_unable_to_send_permissions">Невозможно отправить ваше е-мейл сообщение через Gmail. Пожалуйста, повторите попытку и включите необходимые разрешения.</string>
+
+
+    <!-- AUTHENTICATION LAYOUT -->
+    <string name="peppermint_sign_in">Войдите в Peppermint</string>
+    <string name="pick_account">Выберете учётную запись Google</string>
+    <string name="this_account_will_be_used">Эта уч.запись будет использоваться для авторизации и отправки е-мейл сообщений</string>
+    <string name="no_google_accounts_found">Учётных записей Google не найдено!</string>
+    <string name="add_account_to_start"><u>Войдите через новую уч.запись Google, чтоб начать пользоваться Peppermint</u></string>
+    <string name="only_one_peppermint_account_supported">Поддерживается только одна учётная запись Peppermint.</string>
+    <string name="authenticating_">Авторизация…</string>
+    <string name="syncing_messages_">Синхронизация сообщений…</string>
+    <string name="msg_secure_connection">Не удалось установить безопасное соединение с Peppermint сервером. Пожалуйста, повторите попытку позже.</string>
+    <string name="msg_authentication_error">Не удалось войти в систему. Пожалуйста, повторите попытку позже.</string>
+    <string name="msg_google_api_denied">Необходимо войти в Google, чтобы продолжить.</string>
+    <string name="msg_invalid_credentials">Недействительное имя пользователя.</string>
+    <string name="msg_no_internet_try_again">Соединение с Интернетом отсутствует. Пожалуйста, проверьте ваши настройки соединений и повторите попытку.</string>
+    <string name="dont_want_to_use_account">Не хотите использовать существующие учётные записи?</string>
+    <string name="sign_up_new_google_account"><u>Войдите с помощью новой учётной записи Google</u></string>
+    <string name="sign_in">Войдите</string>
+    <string name="cant_sign_in">Невозможно войти?</string>
+    <string name="contact_us_for_questions"><u>Свяжитесь с нами по поводу вопросов</u></string>
+
+
+    <!-- SETTINGS -->
+    <string name="pref_default_transcription_language_code">Язык системы</string>
+    <string name="pref_separator_transcription">Транскрипция</string>
+
+    <string name="pref_title_automatic_transcription">транскрипция</string>
+    <string name="pref_summary_automatic_transcription">Включите или выключите автоматическую транскрипцию аудио сообщений</string>
+
+    <string name="pref_title_transcription_language">Язык транскрипции</string>
+    <string name="pref_summary_transcription_language">Выберете язык для автоматической транскрипции аудио сообщений</string>
+
+    <string name="pref_title_displayname">Ваше имя</string>
+    <string name="pref_summary_displayname">Получатель увидит ваше имя в сообщении, поэтому вам стоит регистрироваться под настоящим именем</string>
+
+    <string name="pref_sign_out_displayname">Выйдите</string>
+    <string name="pref_sign_out_summary">Выйдите из Peppermint</string>
+
+    <string name="pref_chat_heads_displayname">Чат-фото</string>
+    <string name="pref_chat_heads_summary">Чат-фото будут выводиться поверх запущенных приложений и позволять быстрый доступ к вашим недавним контактам и полученным сообщениям</string>
+
+    <string name="msg_insert_name">Пожалуйста, введите настоящее имя</string>
+
+    <!-- SETTINGS: ACCOUNT AUTHENTICATOR -->
+    <string name="account_general_settings">Общие настройки</string>
+    <string name="account_settings">Настройки учётной записи</string>
+    <string name="account_settings_desc">Ваше имя, чат-фото, остальное</string>
+
+
+    <!-- CHAT -->
+    <string name="sending">Отправка</string>
+    <string name="cancel_sending">Отменить\nотправку</string>
+    <string name="cancelling">Отмена</string>
+    <string name="hold_to_record">Удерживайте для записи</string>
+    <string name="retry">Попробуйте еще раз</string>
+    <string name="delete">Удалите</string>
+    <string name="unable_to_send_message">Невозможно отправить сообщение</string>
+    <string name="msg_unable_to_play">Произошла ошибка во время попытки воспроизвести сообщение.</string>
+    <string name="automatic_transcription">Автоматическая транскрипция</string>
+
+
+    <!-- ABOUT LAYOUT -->
+    <string name="about">Информация</string>
+    <string name="privacy_policy_terms_of_use">Политика конфиденциальности\n&amp; Условия использования</string>
+    <string name="privacy_policy_terms_of_use_singleline">Политика конфиденциальности &amp; Условия использования</string>
+    <string name="version">Версия</string>
+
+
+    <!-- FEEDBACK SCREEN -->
+    <string name="send_us_audio_feedback_on_the_app">Отправить аудио отзыв о приложении</string>
+    <string name="or_email_us_for_support">или напишите е-мейл в службу поддержки</string>
+
+</resources>

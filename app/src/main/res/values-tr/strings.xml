@@ -122,14 +122,14 @@
 
 
     <!-- SETTINGS -->
-    <string name="pref_default_transcription_language_code">System Language</string>
+    <string name="pref_default_transcription_language_code">Sistem dili</string>
     <string name="pref_separator_transcription">Transkripsiyon</string>
 
     <string name="pref_title_automatic_transcription">Transkripsiyon</string>
-    <string name="pref_summary_automatic_transcription">Enable or disable the automatic transcription of audio messages</string>
+    <string name="pref_summary_automatic_transcription">Sesli mesajlarınız için transkripsiyon fonksiyon ayarı</string>
 
-    <string name="pref_title_transcription_language">Transcription Language</string>
-    <string name="pref_summary_transcription_language">The language used for the automatic transcription of audio messages</string>
+    <string name="pref_title_transcription_language">Transkripsiyon Dili</string>
+    <string name="pref_summary_transcription_language">Sesli mesajların oto-transkripsiyonu için kullanılacak dil</string>
 
     <string name="pref_title_displayname">Adınız</string>
     <string name="pref_summary_displayname">Alıcı mesajlarınız ile birlikte adınızı görecek. Lütfen bilinen adınızı girdiğinizden emin olun</string>

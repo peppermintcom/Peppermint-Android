@@ -13,7 +13,7 @@
         android:padding="0dp"
         custom:textFont="@string/font_semibold"
         android:text="@string/save"
-        android:textSize="20dp"
+        android:textSize="19dp"
         android:textAllCaps="false"
         android:textColor="@color/color_white_to_50trans_disabled"
         android:background="@drawable/background_ripple"
@@ -28,7 +28,7 @@
         android:layout_marginRight="10dp"
         android:gravity="center"
         custom:textFont="@string/font_semibold"
-        android:textSize="20dp"
+        android:textSize="19dp"
         android:textColor="@color/white"
         android:text="@string/new_contact">
     </com.peppermint.app.ui.base.views.CustomFontTextView>
