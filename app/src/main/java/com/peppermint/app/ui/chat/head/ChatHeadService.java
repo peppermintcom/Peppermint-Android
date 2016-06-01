@@ -247,7 +247,7 @@ public class ChatHeadService extends Service {
             mChatHeadView.setChats(chatList);
 
             // pre-select the main chat
-            mChatHeadView.setSelected(mChatHeadView.getMainChatHeadDisplayView());
+            /*mChatHeadView.setSelected(mChatHeadView.getMainChatHeadDisplayView());*/
             mChatHeadView.show();
             mChatView.start();
         } else {

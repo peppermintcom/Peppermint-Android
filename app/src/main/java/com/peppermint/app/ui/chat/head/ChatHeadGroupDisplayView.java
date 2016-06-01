@@ -409,13 +409,34 @@ public class ChatHeadGroupDisplayView extends DisplayView {
     }
 
     public void setChats(List<Chat> chatList) {
+        int selectedViewIndex = getSelectedViewIndex();
+        Chat selectedChat = null;
+        if(selectedViewIndex >= 0) {
+            selectedChat = mChatHeadDisplayViews.get(selectedViewIndex).getView().getChat();
+        }
+
         mChats.clear();
         for(final Chat chat : chatList) {
-            addChat(chat);
+            addChat(chat, true);
         }
+
+        if(selectedChat != null) {
+            if(!mChats.contains(selectedChat)) {
+                addChat(selectedChat, true);
+                selectedViewIndex = MAIN_CHAT_HEAD_INDEX;
+            }
+        }
+
+        doLayout();
+
+        setSelected(mChatHeadDisplayViews.get(selectedViewIndex >= 0 ? selectedViewIndex : MAIN_CHAT_HEAD_INDEX));
     }
 
     public void addChat(Chat chat) {
+        addChat(chat, false);
+    }
+
+    public void addChat(Chat chat, boolean dontLayout) {
         int foundChatHeadIndex = getViewIndexForChat(chat);
         if(foundChatHeadIndex >= 0) {
             mChats.remove(chat);
@@ -441,7 +462,9 @@ public class ChatHeadGroupDisplayView extends DisplayView {
 
         Log.d(TAG, "addChat() # " + mChats.size() + " . " + chat.toString());
 
-        scheduleDoLayout();
+        if(!dontLayout) {
+            scheduleDoLayout();
+        }
     }
 
     @Override
