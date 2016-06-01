@@ -160,13 +160,17 @@ public class GoogleSpeechRecognizeClient {
 
                 while(!mFinished) {
                     try {
+                        long ms = System.currentTimeMillis();
                         final byte[] bytes = mAudioDataQueue.take();
                         AudioRequest audio = new AudioRequest();
                         audio.content = bytes;
                         RecognizeRequest request = new RecognizeRequest();
                         request.audioRequest = audio;
                         mStreamObserver.onNext(request);
-                        Thread.sleep(waitingMs);
+                        long realWait = waitingMs - (System.currentTimeMillis() - ms);
+                        if(realWait > 0) {
+                            Thread.sleep(realWait);
+                        }
                     } catch (InterruptedException e) {
                         /* nothing to do here */
                     }
