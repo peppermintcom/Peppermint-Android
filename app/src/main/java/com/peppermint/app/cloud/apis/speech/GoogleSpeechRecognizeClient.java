@@ -203,6 +203,11 @@ public class GoogleSpeechRecognizeClient {
         mSampleRate = sampleRate;
         mLanguageCode = getAppropriateLanguage(languageCode);
 
+        // send empty byte data at first since the speech service seems to skip
+        // the first part of the audio
+        byte[] emptyData = new byte[2048];
+        recognize(emptyData);
+        recognize(emptyData);
         mSenderFuture = mThreadPoolExecutor.submit(mSenderRunnable);
     }
 
