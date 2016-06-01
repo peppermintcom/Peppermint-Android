@@ -41,19 +41,19 @@ import io.grpc.stub.StreamObserver;
 public class GoogleSpeechRecognizeClient {
 
     public static class RecognizeResponseWrapper {
-        private List<com.google.cloud.speech.v1.nano.RecognizeResponse> mRecognizeResponseList;
+        private List<RecognizeResponse> mRecognizeResponseList;
         private String mLanguageCode;
 
-        public RecognizeResponseWrapper(List<com.google.cloud.speech.v1.nano.RecognizeResponse> recognizeResponseList, String languageCode) {
+        public RecognizeResponseWrapper(List<RecognizeResponse> recognizeResponseList, String languageCode) {
             this.mRecognizeResponseList = recognizeResponseList;
             this.mLanguageCode = languageCode;
         }
 
-        public List<com.google.cloud.speech.v1.nano.RecognizeResponse> getRecognizeResponseList() {
+        public List<RecognizeResponse> getRecognizeResponseList() {
             return mRecognizeResponseList;
         }
 
-        public void setRecognizeResponseList(List<com.google.cloud.speech.v1.nano.RecognizeResponse> mRecognizeResponse) {
+        public void setRecognizeResponseList(List<RecognizeResponse> mRecognizeResponse) {
             this.mRecognizeResponseList = mRecognizeResponse;
         }
 
@@ -191,12 +191,12 @@ public class GoogleSpeechRecognizeClient {
     private boolean mFinished = true;
     private Thread mThreadToNotify = null;
 
-    private class RecognizeStreamObserver implements StreamObserver<com.google.cloud.speech.v1.nano.RecognizeResponse> {
-        private List<com.google.cloud.speech.v1.nano.RecognizeResponse> mResponseList = new ArrayList<>();
+    private class RecognizeStreamObserver implements StreamObserver<RecognizeResponse> {
+        private List<RecognizeResponse> mResponseList = new ArrayList<>();
         private RecognizeResponse mLastResponse;
 
         @Override
-        public void onNext(com.google.cloud.speech.v1.nano.RecognizeResponse response) {
+        public void onNext(RecognizeResponse response) {
             mLastResponse = response;
             if(response != null && response.results != null && response.results.length > 0 && response.error == null) {
                 if(response.results[0].isFinal) {
@@ -204,7 +204,6 @@ public class GoogleSpeechRecognizeClient {
                     mLastResponse = null;
                 }
             }
-            Log.d(TAG, String.valueOf(response));
         }
 
         @Override
@@ -259,7 +258,7 @@ public class GoogleSpeechRecognizeClient {
         mSenderFuture.cancel(true);
     }
 
-    private void finishReceiving(List<com.google.cloud.speech.v1.nano.RecognizeResponse> responseList, Throwable error) {
+    private void finishReceiving(List<RecognizeResponse> responseList, Throwable error) {
         mManagedChannel.shutdown();
         if(mThreadToNotify != null) {
             mThreadToNotify.interrupt();
