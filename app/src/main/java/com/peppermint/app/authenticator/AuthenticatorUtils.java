@@ -6,8 +6,10 @@ import android.accounts.OperationCanceledException;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
 
 import com.peppermint.app.cloud.MessagesServiceManager;
 import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
@@ -142,9 +144,15 @@ public class AuthenticatorUtils {
         messagesServiceManager.cancel();
 
         // remove all peppermint contacts
-        Map<Long, ContactData> peppermintContacts = ContactManager.getPeppermintContacts(mContext);
-        for(ContactData contactData : peppermintContacts.values()) {
-            ContactManager.deletePeppermint(mContext, contactData.getRawId(), null);
+        int permissionCheck = ContextCompat.checkSelfPermission(mContext,
+                android.Manifest.permission.WRITE_CONTACTS);
+
+        if(permissionCheck == PackageManager.PERMISSION_GRANTED) {
+            Map<Long, ContactData> peppermintContacts = ContactManager.getPeppermintContacts(mContext);
+            for (ContactData contactData : peppermintContacts.values()) {
+                ContactManager.deletePeppermint(mContext, contactData.getRawId(), null);
+            }
+            TrackerManager.getInstance(mContext).log("Unable to reset Peppermint contacts");
         }
 
         // clear app data and preferences

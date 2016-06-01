@@ -21,6 +21,7 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -239,8 +240,12 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
 
         if(error instanceof GoogleApiNoAuthorizationException) {
             Intent intent = ((GoogleApiNoAuthorizationException) error).getHandleIntent();
-            startActivityForResult(intent, AUTHORIZATION_CODE);
-            return;
+            try {
+                startActivityForResult(intent, AUTHORIZATION_CODE);
+                return;
+            } catch(ActivityNotFoundException e) {
+                Toast.makeText(this, R.string.msg_no_gplay, Toast.LENGTH_LONG).show();
+            }
         }
 
         hideProgress();

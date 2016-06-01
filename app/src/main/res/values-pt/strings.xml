@@ -119,6 +119,7 @@
     <string name="sign_in">Iniciar Sessão</string>
     <string name="cant_sign_in">Não consegue autenticar-se?</string>
     <string name="contact_us_for_questions"><u>Contacte-nos se tiver mais questões</u></string>
+    <string name="msg_no_gplay">Os serviços Google Play não estão disponíveis.</string>
 
 
     <!-- SETTINGS -->

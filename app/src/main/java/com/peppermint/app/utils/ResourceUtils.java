@@ -56,7 +56,7 @@ public class ResourceUtils {
 
             privateFlags.setInt(layoutParams, privateFlagsValue);
         } catch (Exception e) {
-            TrackerManager.getInstance(context).logException(e);
+            TrackerManager.getInstance(context).log("Not supported!", e);
         }
     }
 

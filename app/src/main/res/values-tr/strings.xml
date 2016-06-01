@@ -119,6 +119,7 @@
     <string name="sign_in">Oturum aç</string>
     <string name="cant_sign_in">Oturum açamıyor musunuz?</string>
     <string name="contact_us_for_questions"><u> Sorularınız için bize ulaşın</u></string>
+    <string name="msg_no_gplay">Google Play Servisleri mevcut değil.</string>
 
 
     <!-- SETTINGS -->

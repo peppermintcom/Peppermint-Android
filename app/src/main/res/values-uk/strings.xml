@@ -118,6 +118,7 @@
     <string name="sign_in">Увійдіть</string>
     <string name="cant_sign_in">Неможливо увійти?</string>
     <string name="contact_us_for_questions"><u>Зв\'яжіться з нами з приводу запитань</u></string>
+    <string name="msg_no_gplay">Google play сервиси не доступні.</string>
 
 
     <!-- SETTINGS -->
