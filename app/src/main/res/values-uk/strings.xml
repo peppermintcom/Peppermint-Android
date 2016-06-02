@@ -49,7 +49,7 @@
     <string name="via">через</string>
 
     <!-- CONTACTS LAYOUT: RECORDING OVERLAY -->
-    <string name="swipe_to_cancel">Проведіть пальцем у будь-якому напрямку\n, щоб скасувати</string>    <!-- not fitting; only fits up to будь-якому -->
+    <string name="swipe_to_cancel">Проведіть пальцем, щоб скасувати</string>
     <string name="recording_for">Запис для %1$s</string>
 
     <!-- CONTACTS LAYOUT: ADD EMAIL DIALOG -->
@@ -59,7 +59,7 @@
 
     <!-- CONTACTS LAYOUT: TIPS -->
     <string name="search_here_for_your_friend">Знайдіть свого друга.</string>
-    <string name="then_tap_and_hold_to_send">Тоді натисніть і утримуйте\n, щоб відправити аудіо повідомлення.</string>
+    <string name="then_tap_and_hold_to_send">Тоді натисніть і утримуйте,\n щоб відправити аудіо повідомлення.</string>
 
 
     <!-- NEW CONTACT LAYOUT -->
@@ -92,7 +92,7 @@
 
 
     <!-- SENDER MESSAGES -->
-    <string name="sender_msg_send_error">Під час спроби надіслати ваше повідомлення %1$s виникла помилка. Будь ласка, повторіть спробу пізніше.</string>
+    <string name="sender_msg_send_error">Під час спроби надіслати ваше повідомлення для %1$s виникла помилка. Будь ласка, повторіть спробу пізніше.</string>
     <string name="sender_msg_no_internet">З\'єднання з Інтернетом відсутнє. Peppermint надішле ваше повідомлення як тільки з\'явиться з\'єднання.</string>
     <string name="sender_msg_no_gplay">Google play сервиси не доступні. Відпралення вашого запису знаходиться в черзі. Будь ласка, переконайтесь, що використовується найновіша версія Google play сервісів.</string>
     <string name="sender_msg_secure_connection">Не вдалось встановити безпечне з\'єднання з Peppermint сервером. Відправлення вашого запису знаходиться в черзі.</string>

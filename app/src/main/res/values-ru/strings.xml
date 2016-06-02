@@ -51,7 +51,7 @@
     <string name="via">через</string>
 
     <!-- CONTACTS LAYOUT: RECORDING OVERLAY -->
-    <string name="swipe_to_cancel">Проведите пальцем в любом направлении\nдля отмены</string>   <!-- doesn't fit; only up to любом -->
+    <string name="swipe_to_cancel">Проведите пальцем для отмены</string>
     <string name="recording_for">Запись для %1$s</string>
 
     <!-- CONTACTS LAYOUT: ADD EMAIL DIALOG -->
@@ -61,7 +61,7 @@
 
     <!-- CONTACTS LAYOUT: TIPS -->
     <string name="search_here_for_your_friend">Найдите своего друга.</string>
-    <string name="then_tap_and_hold_to_send">Тогда нажмите и удерживаейте\n, чтоб отправить аудио сообщение.</string>
+    <string name="then_tap_and_hold_to_send">Тогда нажмите и удерживаейте,\n чтоб отправить аудио сообщение.</string>
 
 
     <!-- NEW CONTACT LAYOUT -->
@@ -94,7 +94,7 @@
 
 
     <!-- SENDER MESSAGES -->
-    <string name="sender_msg_send_error">Во время попытки отправить ваше сообщение %1$s произошла ошибка. Пожалуйста, повторите попытку позже.</string>
+    <string name="sender_msg_send_error">Во время попытки отправить ваше сообщение для %1$s произошла ошибка. Пожалуйста, повторите попытку позже.</string>
     <string name="sender_msg_no_internet">Соединение с Интренетом отсутствует. Peppermint отправит ваше сообщение как только появится соединение.</string>
     <string name="sender_msg_no_gplay">Google play сервисы не доступны. Отправка вашей записи находится в очереди. Пожалуйста, убедитесь, что используется новейшая версия Google play сервисов.</string>
     <string name="sender_msg_secure_connection">Не удалось установить безопасное соединение с Peppermint сервером. Отправка вашей записи находится в очереди.</string>
@@ -127,7 +127,7 @@
     <string name="pref_default_transcription_language_code">Язык системы</string>
     <string name="pref_separator_transcription">Транскрипция</string>
 
-    <string name="pref_title_automatic_transcription">транскрипция</string>
+    <string name="pref_title_automatic_transcription">Транскрипция</string>
     <string name="pref_summary_automatic_transcription">Включите или выключите автоматическую транскрипцию аудио сообщений</string>
 
     <string name="pref_title_transcription_language">Язык транскрипции</string>
@@ -172,5 +172,4 @@
     <!-- FEEDBACK SCREEN -->
     <string name="send_us_audio_feedback_on_the_app">Отправить аудио отзыв о приложении</string>
     <string name="or_email_us_for_support">или напишите е-мейл в службу поддержки</string>
-
 </resources>
