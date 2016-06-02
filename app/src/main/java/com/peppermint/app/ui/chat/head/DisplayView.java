@@ -45,6 +45,7 @@ public class DisplayView<T extends View> implements Display.OnDisplaySizeObtaine
     protected boolean mTouchable = false;
     protected boolean mVisible = false;
     protected boolean mInitialized = false;
+
     protected T mView;
     protected WindowManager.LayoutParams mViewLayoutParams, mViewOriginalLayoutParams;
 
@@ -253,12 +254,6 @@ public class DisplayView<T extends View> implements Display.OnDisplaySizeObtaine
         }
     }
 
-    public void requestLayout() {
-        if(mView != null) {
-            mView.requestLayout();
-        }
-    }
-
     public boolean show() {
         if (mVisible) {
             return false;
@@ -296,14 +291,6 @@ public class DisplayView<T extends View> implements Display.OnDisplaySizeObtaine
 
     public int getViewPositionY() {
         return mViewLayoutParams.y;
-    }
-
-    public void setViewPositionX(int x) {
-        setViewPosition(x, mViewLayoutParams.y);
-    }
-
-    public void setViewPositionY(int y) {
-        setViewPosition(mViewLayoutParams.x, y);
     }
 
     protected boolean setViewPositionNoUpdateUI(int x, int y, boolean isRebounding) {
@@ -379,14 +366,6 @@ public class DisplayView<T extends View> implements Display.OnDisplaySizeObtaine
         }
     }
 
-    public void setViewAlpha(float alpha) {
-        mViewLayoutParams.alpha = alpha;
-
-        if (mVisible && mView.getWindowToken() != null) {
-            mWindowManager.updateViewLayout(mView, mViewLayoutParams);
-        }
-    }
-
     public boolean removeOnInteractionListener(OnInteractionListener<T> onInteractionListener) {
         return mOnInteractionListeners.remove(onInteractionListener);
     }
@@ -422,10 +401,6 @@ public class DisplayView<T extends View> implements Display.OnDisplaySizeObtaine
 
     public Display getDisplay() {
         return mDisplay;
-    }
-
-    public boolean isReboundAtRest() {
-        return mSpringX.isAtRest() && mSpringY.isAtRest();
     }
 
     public void onLocaleChanged() {

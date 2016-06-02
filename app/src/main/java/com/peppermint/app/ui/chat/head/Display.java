@@ -109,11 +109,6 @@ public class Display {
             return;
         }
 
-        /*// get full screen size as initial values
-        final Point point = Utils.getScreenSize(mContext);
-        mDisplayWidth = point.x;
-        mDisplayHeight = point.y;*/
-
         mGettingSize = true;
         mWindowManager.addView(mDummyView, mDummyViewLayoutParams);
 

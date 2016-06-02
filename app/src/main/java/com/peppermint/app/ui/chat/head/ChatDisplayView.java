@@ -120,10 +120,6 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
         }
     }
 
-    public int getTopMargin() {
-        return mTopMargin;
-    }
-
     public void setTopMargin(int mTopMargin) {
         this.mTopMargin = mTopMargin;
     }

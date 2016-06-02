@@ -158,10 +158,6 @@ public class CustomGestureDetector implements View.OnTouchListener {
         return ret;
     }
 
-    public void resetDragOffset() {
-
-    }
-
     private GestureDetector.SimpleOnGestureListener mOnTapGestureListener = new GestureDetector.SimpleOnGestureListener() {
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
