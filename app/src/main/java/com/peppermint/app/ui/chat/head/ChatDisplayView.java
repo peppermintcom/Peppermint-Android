@@ -52,7 +52,7 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
         // allow focus for back button
         mViewLayoutParams.flags = mViewOriginalLayoutParams.flags = WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED |
                 WindowManager.LayoutParams.FLAG_LAYOUT_ATTACHED_IN_DECOR;
-        mView.setVisibility(View.INVISIBLE);
+        mView.setVisibility(View.GONE);
         mView.setKeyEventInterceptors(mKeyListeners);
 
         this.mOverlayManager = new OverlayManager(mContext, null, (FrameLayout) mView.findViewById(R.id.lytOverlay));
@@ -88,9 +88,9 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
 
     @Override
     public boolean hide() {
-        if(mView != null && mView.getVisibility() != View.INVISIBLE) {
+        if(mView != null && mView.getVisibility() != View.GONE) {
             mChatController.stopPlayer();
-            mView.setVisibility(View.INVISIBLE);
+            mView.setVisibility(View.GONE);
             return true;
         }
         return false;
