@@ -172,7 +172,7 @@
         custom:textFont="@string/font_semibold"
         android:textAllCaps="true"
         android:textColor="@color/color_darkgrey_to_white_pressed"
-        android:textSize="12dp"
+        android:textSize="11dp"
         android:text="@string/cancel_sending"
         android:background="@drawable/background_ripple"
         android:visibility="visible" />

@@ -11,8 +11,8 @@
         android:gravity="center"
         android:paddingTop="22dp"
         android:paddingBottom="22dp"
-        android:paddingLeft="45dp"
-        android:paddingRight="45dp"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
         android:orientation="horizontal"
         android:layout_alignParentBottom="true"
         android:background="@drawable/background_border_top">
@@ -24,7 +24,7 @@
             android:layout_gravity="center"
             custom:textFont="@string/font_semibold"
             android:textColor="@color/dark_grey_text"
-            android:textSize="18dp"
+            android:textSize="17dp"
             android:text="@string/hold_to_record" />
 
         <ImageView
