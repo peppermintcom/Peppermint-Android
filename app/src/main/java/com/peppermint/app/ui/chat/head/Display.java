@@ -138,6 +138,14 @@ public class Display {
         mInitDone = false;
     }
 
+    public void disableDim() {
+        mDummyView.setVisibility(View.GONE);
+    }
+
+    public void enableDim() {
+        mDummyView.setVisibility(View.VISIBLE);
+    }
+
     public void getDisplaySizeAsync() {
         if(mGettingSize) {
             return;
@@ -177,8 +185,10 @@ public class Display {
 
         mDummyViewLayoutParams.dimAmount = dimAmount;
         if(dimAmount > 0) {
+            enableDim();
             mDummyViewLayoutParams.flags |= WindowManager.LayoutParams.FLAG_DIM_BEHIND;
         } else {
+            disableDim();
             mDummyViewLayoutParams.flags = DUMMY_WINDOW_FLAGS | DEFAULT_WINDOW_FLAGS;
         }
 

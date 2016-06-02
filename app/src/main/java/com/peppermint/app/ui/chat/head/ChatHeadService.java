@@ -250,10 +250,12 @@ public class ChatHeadService extends Service {
             /*mChatHeadView.setSelected(mChatHeadView.getMainChatHeadDisplayView());*/
             mChatHeadView.show();
             mChatView.start();
+            mDisplay.enableDim();
         } else {
             mChatView.stop();
             mChatView.hide();
             mChatHeadView.hide();
+            mDisplay.disableDim();
         }
 
         return true;
