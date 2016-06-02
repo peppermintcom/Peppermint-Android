@@ -1,6 +1,7 @@
 package com.peppermint.app.ui.chat.head;
 
 import android.content.Context;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,7 +25,7 @@ import java.util.List;
  *
  * The chat/message list UI overlay component.
  */
-public class ChatDisplayView extends DisplayView<TouchInterceptorView> implements RecipientDataGUI, KeyInterceptable {
+public class ChatDisplayView extends DisplayView<TouchInterceptorView> implements RecipientDataGUI, KeyInterceptable, View.OnClickListener {
 
     // chat controller
     private ChatController mChatController;
@@ -39,14 +40,16 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
 
     @Override
     public void onDisplaySizeObtained(int prevDisplayWidth, int prevDisplayHeight, int displayWidth, int displayHeight) {
-        mViewLayoutParams.height = mViewOriginalLayoutParams.height = displayHeight - mTopMargin;
-        mViewLayoutParams.y = mViewOriginalLayoutParams.y = mTopMargin;
+        mViewLayoutParams.height = mViewOriginalLayoutParams.height = displayHeight;/*- mTopMargin;*/
+        /*mViewLayoutParams.y = mViewOriginalLayoutParams.y = mTopMargin;*/
         // dont recalculate position (pass 0 as previous measurements)
         super.onDisplaySizeObtained(0, 0, displayWidth, displayHeight);
     }
 
     public void init() {
         final TouchInterceptorView v = (TouchInterceptorView) LayoutInflater.from(mContext).inflate(R.layout.a_chat_head_layout, null);
+        v.setOnClickListener(this);
+        ((ViewGroup.MarginLayoutParams) v.findViewById(R.id.lytBox).getLayoutParams()).topMargin = mTopMargin;
         setView(v, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, 0);
 
         // allow focus for back button
@@ -80,7 +83,7 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
     public boolean show() {
         if(mView.getVisibility() != View.VISIBLE) {
             mView.setVisibility(View.VISIBLE);
-            setViewPosition(0, mTopMargin, false);
+            /*setViewPosition(0, mTopMargin, false);*/
             return true;
         }
         return false;
@@ -122,6 +125,9 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
 
     public void setTopMargin(int mTopMargin) {
         this.mTopMargin = mTopMargin;
+        if(mView != null) {
+            ((ViewGroup.MarginLayoutParams) mView.findViewById(R.id.lytBox).getLayoutParams()).topMargin = mTopMargin;
+        }
     }
 
     @Override
@@ -176,5 +182,13 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
         }
 
         setChat(chat);
+    }
+
+    @Override
+    public void onClick(View v) {
+        final KeyEvent dummyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK);
+        for(View.OnKeyListener keyListener : mKeyListeners) {
+            keyListener.onKey(mView, KeyEvent.KEYCODE_BACK, dummyEvent);
+        }
     }
 }
