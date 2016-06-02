@@ -692,11 +692,6 @@ public class ChatHeadGroupDisplayView extends DisplayView {
     }
 
     @Override
-    public void setViewAlpha(float alpha) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public boolean isVisible() {
         return mChatHeadDisplayViews.get(MAIN_CHAT_HEAD_INDEX).isVisible();
     }
