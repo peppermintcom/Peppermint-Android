@@ -46,6 +46,8 @@ public class GmailSenderTask extends SenderUploadTask {
     public void execute() throws Throwable {
 
         AuthenticationData data = setupPeppermintAuthentication();
+        getTranscription();
+
         uploadPeppermintMessage();
         sendPeppermintTranscription();
         if(sendPeppermintMessage()) {
