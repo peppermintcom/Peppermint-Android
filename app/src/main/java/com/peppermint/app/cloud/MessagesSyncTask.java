@@ -2,7 +2,6 @@ package com.peppermint.app.cloud;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
-import android.net.Uri;
 import android.util.Log;
 
 import com.peppermint.app.cloud.apis.data.MessageListResponse;
@@ -39,6 +38,9 @@ public class MessagesSyncTask extends SenderSupportTask {
     private List<Message> _sentMessages = new ArrayList<>();
     private String mLocalEmailAddress;
 
+    private String mLastMessageTimestamp;
+    private boolean mLocalError = false;
+
     public MessagesSyncTask(Context context, SenderSupportListener senderSupportListener) {
         super(null, null, senderSupportListener);
         getIdentity().setContext(context);
@@ -61,15 +63,16 @@ public class MessagesSyncTask extends SenderSupportTask {
         if(originalSyncTimestamp == null) {
             mNeverSyncedBefore = true;
             DateContainer weekAgo = new DateContainer(DateContainer.TYPE_DATETIME);
-            weekAgo.getCalendar().add(Calendar.DAY_OF_YEAR, -7);
+            weekAgo.getCalendar().add(Calendar.DAY_OF_YEAR, -15);
             originalSyncTimestamp = weekAgo.toString();
         }
 
-        String syncTimestamp = originalSyncTimestamp;
-        String nextUrl;
+        String nextUrl = null;
 
         do {
-            MessageListResponse receivedResponse = getPeppermintApi().getMessages(getId().toString(), serverAccountId, syncTimestamp, true);
+            MessageListResponse receivedResponse = nextUrl == null ?
+                    getPeppermintApi().getMessages(getId().toString(), serverAccountId, originalSyncTimestamp, true) :
+                    getPeppermintApi().getMessages(getId().toString(), nextUrl);
 
             int receivedAmount = receivedResponse.getMessages().size();
             for (int i=0; i<receivedAmount && !isCancelled(); i++) {
@@ -95,8 +98,12 @@ public class MessagesSyncTask extends SenderSupportTask {
                             }
                         }
                         db.setTransactionSuccessful();
+                        if(mLastMessageTimestamp == null || mLastMessageTimestamp.compareTo(message.getRegistrationTimestamp()) < 0) {
+                            mLastMessageTimestamp = message.getRegistrationTimestamp();
+                        }
                     } catch (Exception e) {
                         getTrackerManager().logException(e);
+                        mLocalError = true;
                     } finally {
                         db.endTransaction();
                         mDatabaseHelper.unlock();
@@ -105,17 +112,14 @@ public class MessagesSyncTask extends SenderSupportTask {
             }
 
             nextUrl = receivedResponse.getNextUrl();
-            if (nextUrl != null) {
-                Uri uri = Uri.parse(nextUrl);
-                syncTimestamp = uri.getQueryParameter("since");
-            }
         } while (nextUrl != null && !isCancelled());
 
         // SENT MESSAGES
-        syncTimestamp = originalSyncTimestamp;
-
         do {
-            MessageListResponse sentResponse = getPeppermintApi().getMessages(getId().toString(), serverAccountId, syncTimestamp, false);
+            MessageListResponse sentResponse = nextUrl == null ?
+                    getPeppermintApi().getMessages(getId().toString(), serverAccountId, originalSyncTimestamp, false) :
+                    getPeppermintApi().getMessages(getId().toString(), nextUrl);
+
             int sentAmount = sentResponse.getMessages().size();
             for (int i=0; i<sentAmount && !isCancelled(); i++) {
                 MessagesResponse messagesResponse = sentResponse.getMessages().get(i);
@@ -131,8 +135,12 @@ public class MessagesSyncTask extends SenderSupportTask {
                         _sentMessages.add(message);
                     }
                     db.setTransactionSuccessful();
+                    if(mLastMessageTimestamp == null || mLastMessageTimestamp.compareTo(message.getRegistrationTimestamp()) < 0) {
+                        mLastMessageTimestamp = message.getRegistrationTimestamp();
+                    }
                 } catch (Exception e) {
                     getTrackerManager().logException(e);
+                    mLocalError = true;
                 } finally {
                     db.endTransaction();
                     mDatabaseHelper.unlock();
@@ -140,11 +148,6 @@ public class MessagesSyncTask extends SenderSupportTask {
             }
 
             nextUrl = sentResponse.getNextUrl();
-            if (nextUrl != null) {
-                Uri uri = Uri.parse(nextUrl);
-                syncTimestamp = uri.getQueryParameter("since");
-            }
-
         } while (nextUrl != null && !isCancelled());
 
         GlobalManager.clearCache();
@@ -170,8 +173,9 @@ public class MessagesSyncTask extends SenderSupportTask {
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
         PeppermintEventBus.unregister(this);
-        if(getError() == null) {
-            getSenderPreferences().setLastSyncTimestamp(DateContainer.getCurrentUTCTimestamp());
+        if(getError() == null && !mLocalError && mLastMessageTimestamp != null) {
+            Log.d(TAG, "New Messages Sync Date: " + mLastMessageTimestamp);
+            getSenderPreferences().setLastSyncTimestamp(mLastMessageTimestamp);
         }
     }
 

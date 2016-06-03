@@ -145,6 +145,18 @@ public class PeppermintApi extends BaseApi implements Serializable {
         return response;
     }
 
+    public MessageListResponse getMessages(final String requesterId, final String nextUrl) throws Exception {
+        final HttpRequest request = new HttpRequest(nextUrl, HttpRequest.METHOD_GET, false);
+
+        final HttpJSONResponse<MessageListResponse> response = executeRequest(requesterId, request, new HttpJSONResponse<>(mMessageListResponseParser), true);
+        if(response.getCode() == 404) {
+            throw new PeppermintApiRecipientNoAppException(response.getCode());
+        }
+        processGenericExceptions(request, response);
+
+        return response.getJsonBody();
+    }
+
     public MessageListResponse getMessages(final String requesterId, final String serverAccountId, final String sinceTimestamp, final boolean received) throws Exception {
         final HttpRequest request = new HttpRequest(MESSAGES_ENDPOINT, HttpRequest.METHOD_GET, false);
         request.setUrlParam(received ? "recipient" : "sender", serverAccountId);
