@@ -149,7 +149,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
             return recording.getTranscription();
         }
 
-        int waitCount = 20; // 30 secs tops
+        int waitCount = 20; // 20 secs tops
 
         if(recording.getTranscriptionConfidence() < 0) {
             Intent popTranscriptionIntent = new Intent(getContext(), RecordService.class);
@@ -170,17 +170,42 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         return recording.getTranscription();
     }
 
-    protected Object[] getTranscription() throws IOException, NoInternetConnectionException {
+    protected String getTranscription() throws IOException, NoInternetConnectionException {
         final Message message = getMessage();
         final Recording recording = message.getRecordingParameter();
-        final File mintFile = new File(recording.getFilePath() + ".mint");
 
-        if(!mintFile.exists()) {
-            return null;
+        if(waitTranscription() == null) {
+            final File mintFile = new File(recording.getFilePath() + ".mint");
+            if (!mintFile.exists()) {
+                return null;
+            }
+
+            final GoogleSpeechRecognizeClient googleSpeechRecognizeClient = new GoogleSpeechRecognizeClient(getContext(), message.getUUID().toString());
+            Object[] transcriptionResults = googleSpeechRecognizeClient.getTranscriptionSync(mintFile.getAbsolutePath());
+            if(transcriptionResults != null) {
+                recording.setTranscription((String) transcriptionResults[0]);
+                recording.setTranscriptionConfidence((float) transcriptionResults[1]);
+                recording.setTranscriptionLanguage((String) transcriptionResults[2]);
+            }
         }
 
-        final GoogleSpeechRecognizeClient googleSpeechRecognizeClient = new GoogleSpeechRecognizeClient(getContext(), message.getUUID().toString());
-        return googleSpeechRecognizeClient.getTranscriptionSync(mintFile.getAbsolutePath());
+        if(recording.getTranscription() != null) {
+            // immediately update recording with transcription data
+            final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getContext());
+            databaseHelper.lock();
+            try {
+                RecordingManager.update(databaseHelper.getWritableDatabase(), recording);
+            } catch (SQLException e) {
+                getTrackerManager().logException(e);
+            }
+            databaseHelper.unlock();
+
+            if(mSenderUploadListener != null && !mRecovering) {
+                mSenderUploadListener.onSendingUploadProgress(this, 0);
+            }
+        }
+
+        return recording.getTranscription();
     }
 
     protected String sendPeppermintTranscription() throws Exception {
@@ -191,31 +216,12 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
             return recording.getTranscriptionUrl();
         }
 
-        if(waitTranscription() == null) {
-            Object[] transcriptionResults = getTranscription();
-            if(transcriptionResults != null) {
-                recording.setTranscription((String) transcriptionResults[0]);
-                recording.setTranscriptionConfidence((float) transcriptionResults[1]);
-                recording.setTranscriptionLanguage((String) transcriptionResults[2]);
-            }
-        }
-
         if(recording.getTranscription() != null) {
             final PeppermintApi peppermintApi = getPeppermintApi();
 
             TranscriptionResponse response = peppermintApi.sendTranscription(getId().toString(), message.getServerCanonicalUrl(),
                     recording.getTranscriptionLanguage(), recording.getTranscriptionConfidence(), recording.getTranscription());
             recording.setTranscriptionUrl(response.getTranscriptionUrl());
-
-            // immediately update recording with transcription data
-            final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getContext());
-            databaseHelper.lock();
-            try {
-                RecordingManager.update(databaseHelper.getWritableDatabase(), recording);
-            } catch (SQLException e) {
-                getTrackerManager().logException(e);
-            }
-            databaseHelper.unlock();
 
             return response.getTranscriptionUrl();
         }
