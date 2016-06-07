@@ -4,10 +4,10 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.peppermint.app.authenticator.AuthenticationData;
-import com.peppermint.app.authenticator.AuthenticatorActivity;
-import com.peppermint.app.authenticator.AuthenticatorUtils;
-import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
+import com.peppermint.app.services.authenticator.AuthenticationData;
+import com.peppermint.app.ui.authentication.AuthenticatorActivity;
+import com.peppermint.app.services.authenticator.AuthenticatorUtils;
+import com.peppermint.app.cloud.apis.peppermint.PeppermintApiNoAccountException;
 import com.peppermint.app.ui.recipients.ContactListActivity;
 
 /**

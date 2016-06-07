@@ -22,19 +22,19 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.authenticator.AuthenticationData;
-import com.peppermint.app.cloud.MessagesServiceManager;
-import com.peppermint.app.data.ChatManager;
-import com.peppermint.app.data.ContactManager;
-import com.peppermint.app.data.ContactRaw;
-import com.peppermint.app.data.DatabaseHelper;
-import com.peppermint.app.ui.Overlay;
-import com.peppermint.app.ui.OverlayManager;
-import com.peppermint.app.ui.PermissionsPolicyEnforcer;
+import com.peppermint.app.services.authenticator.AuthenticationData;
+import com.peppermint.app.services.messenger.MessagesServiceManager;
+import com.peppermint.app.dal.chat.ChatManager;
+import com.peppermint.app.dal.contact.ContactManager;
+import com.peppermint.app.dal.contact.ContactRaw;
+import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.ui.base.Overlay;
+import com.peppermint.app.ui.base.OverlayManager;
+import com.peppermint.app.ui.base.PermissionsPolicyEnforcer;
 import com.peppermint.app.ui.about.AboutActivity;
-import com.peppermint.app.ui.base.CustomActionBarView;
-import com.peppermint.app.ui.base.NavigationItem;
-import com.peppermint.app.ui.base.NavigationItemSimpleAction;
+import com.peppermint.app.ui.base.views.CustomActionBarView;
+import com.peppermint.app.ui.base.navigation.NavigationItem;
+import com.peppermint.app.ui.base.navigation.NavigationItemSimpleAction;
 import com.peppermint.app.ui.base.activities.CustomActionBarDrawerActivity;
 import com.peppermint.app.ui.base.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.ui.base.dialogs.PopupDialog;
@@ -182,7 +182,7 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
 
         // show recent contacts if recents are empty
         if(!mHasSavedInstanceState) {
-            if(ChatManager.getChatCount(DatabaseHelper.getInstance(this).getReadableDatabase(), true) <= 0) {
+            if(ChatManager.getInstance(this).getChatCount(DatabaseHelper.getInstance(this).getReadableDatabase(), true) <= 0) {
                 this.mTappedItemPosition = 1;
             } else {
                 this.mTappedItemPosition = 0;
@@ -328,12 +328,12 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
                 mSearchListBarView.setSearchText(name);
             } else {
                 // if mail is supplied, check if the contact exists
-                ContactRaw foundRecipient = ContactManager.getRawContactByVia(ContactListActivity.this, mail);
+                ContactRaw foundRecipient = ContactManager.getInstance().getRawContactByVia(ContactListActivity.this, mail);
 
                 // if not, add the contact
                 if(foundRecipient == null) {
                     try {
-                        foundRecipient = ContactManager.insert(ContactListActivity.this, 0, 0, name, null, null, mail, null, authenticationData.getEmail(), false);
+                        foundRecipient = ContactManager.getInstance().insert(ContactListActivity.this, 0, 0, name, null, null, mail, null, authenticationData.getEmail(), false);
                     } catch (Exception e) {
                             /* nothing to do here */
                     }

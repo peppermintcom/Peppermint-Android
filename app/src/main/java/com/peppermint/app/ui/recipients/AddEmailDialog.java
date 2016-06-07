@@ -7,7 +7,7 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 
 import com.peppermint.app.R;
-import com.peppermint.app.data.ContactRaw;
+import com.peppermint.app.dal.contact.ContactRaw;
 import com.peppermint.app.ui.base.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.ui.base.views.CustomFontButton;
 import com.peppermint.app.ui.base.views.CustomFontEditText;

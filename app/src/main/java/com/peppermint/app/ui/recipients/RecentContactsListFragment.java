@@ -9,10 +9,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 
-import com.peppermint.app.data.ChatManager;
-import com.peppermint.app.data.ContactData;
-import com.peppermint.app.data.ContactManager;
-import com.peppermint.app.data.DatabaseHelper;
+import com.peppermint.app.dal.chat.ChatManager;
+import com.peppermint.app.dal.contact.ContactData;
+import com.peppermint.app.dal.contact.ContactManager;
+import com.peppermint.app.dal.DatabaseHelper;
 import com.peppermint.app.ui.chat.ChatActivity;
 import com.peppermint.app.ui.chat.ChatCursorAdapter;
 
@@ -84,8 +84,8 @@ public class RecentContactsListFragment extends ContactListFragment {
 
     @Override
     protected Object onAsyncRefresh(Context context, String searchName, String searchVia) {
-        mPeppermintContacts = ContactManager.getPeppermintContacts(context);
-        return ChatManager.getAll(DatabaseHelper.getInstance(context).getReadableDatabase(), true);
+        mPeppermintContacts = ContactManager.getInstance().getPeppermintContacts(context);
+        return ChatManager.getInstance(context).getAll(DatabaseHelper.getInstance(context).getReadableDatabase(), true);
     }
 
     @Override

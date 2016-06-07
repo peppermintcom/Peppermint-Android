@@ -13,7 +13,7 @@ import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.trackers.TrackerManager;
 
 import java.util.ArrayList;
 import java.util.List;

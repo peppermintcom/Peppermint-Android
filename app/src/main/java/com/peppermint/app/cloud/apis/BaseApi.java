@@ -5,8 +5,8 @@ import android.content.Context;
 import com.peppermint.app.cloud.rest.HttpRequest;
 import com.peppermint.app.cloud.rest.HttpResponse;
 import com.peppermint.app.cloud.rest.HttpResponseException;
-import com.peppermint.app.tracking.TrackerApi;
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.trackers.TrackerApi;
+import com.peppermint.app.trackers.TrackerManager;
 
 import java.io.Serializable;
 import java.util.HashSet;

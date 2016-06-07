@@ -13,7 +13,7 @@ import android.os.Build;
 import android.util.AttributeSet;
 
 import com.peppermint.app.R;
-import com.peppermint.app.data.ContactRaw;
+import com.peppermint.app.dal.contact.ContactRaw;
 import com.peppermint.app.ui.canvas.AnimatedView;
 import com.peppermint.app.ui.canvas.BitmapLayer;
 import com.peppermint.app.ui.canvas.BitmapSequenceAnimatedLayer;

@@ -4,7 +4,7 @@ import android.content.Context;
 import android.graphics.Paint;
 
 import com.peppermint.app.R;
-import com.peppermint.app.data.ContactRaw;
+import com.peppermint.app.dal.contact.ContactRaw;
 import com.peppermint.app.ui.canvas.BitmapSequenceAnimatedLayer;
 
 /**

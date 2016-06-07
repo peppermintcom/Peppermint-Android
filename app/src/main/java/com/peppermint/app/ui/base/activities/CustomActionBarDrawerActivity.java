@@ -18,11 +18,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.peppermint.app.R;
-import com.peppermint.app.authenticator.AuthenticationData;
-import com.peppermint.app.cloud.senders.SenderPreferences;
-import com.peppermint.app.ui.base.CustomActionBarView;
-import com.peppermint.app.ui.base.NavigationItem;
-import com.peppermint.app.ui.base.NavigationListAdapter;
+import com.peppermint.app.services.authenticator.AuthenticationData;
+import com.peppermint.app.services.messenger.handlers.SenderPreferences;
+import com.peppermint.app.ui.base.views.CustomActionBarView;
+import com.peppermint.app.ui.base.navigation.NavigationItem;
+import com.peppermint.app.ui.base.navigation.NavigationListAdapter;
 import com.peppermint.app.ui.base.views.RoundImageView;
 import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;

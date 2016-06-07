@@ -4,21 +4,21 @@ import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 
-import com.peppermint.app.PlayerServiceManager;
+import com.peppermint.app.services.player.PlayerServiceManager;
 import com.peppermint.app.R;
-import com.peppermint.app.cloud.MessagesServiceManager;
-import com.peppermint.app.cloud.senders.SenderPreferences;
-import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.Message;
-import com.peppermint.app.data.Recording;
-import com.peppermint.app.events.PeppermintEventBus;
-import com.peppermint.app.events.PlayerEvent;
-import com.peppermint.app.events.ReceiverEvent;
-import com.peppermint.app.events.RecorderEvent;
-import com.peppermint.app.events.SenderEvent;
-import com.peppermint.app.events.SyncEvent;
-import com.peppermint.app.ui.OverlayManager;
-import com.peppermint.app.ui.TouchInterceptable;
+import com.peppermint.app.services.messenger.MessagesServiceManager;
+import com.peppermint.app.services.messenger.handlers.SenderPreferences;
+import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.dal.message.Message;
+import com.peppermint.app.dal.recording.Recording;
+import com.peppermint.app.PeppermintEventBus;
+import com.peppermint.app.services.player.PlayerEvent;
+import com.peppermint.app.services.messenger.ReceiverEvent;
+import com.peppermint.app.services.recorder.RecorderEvent;
+import com.peppermint.app.services.messenger.SenderEvent;
+import com.peppermint.app.services.messenger.SyncEvent;
+import com.peppermint.app.ui.base.OverlayManager;
+import com.peppermint.app.ui.base.TouchInterceptable;
 
 /**
  * Created by Nuno Luz on 04-03-2016.

@@ -17,14 +17,14 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.authenticator.AuthenticationData;
-import com.peppermint.app.data.ContactManager;
-import com.peppermint.app.data.ContactRaw;
-import com.peppermint.app.data.DatabaseHelper;
-import com.peppermint.app.data.GlobalManager;
-import com.peppermint.app.ui.base.CustomActionBarView;
-import com.peppermint.app.ui.base.NavigationItem;
-import com.peppermint.app.ui.base.NavigationListAdapter;
+import com.peppermint.app.services.authenticator.AuthenticationData;
+import com.peppermint.app.dal.contact.ContactManager;
+import com.peppermint.app.dal.contact.ContactRaw;
+import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.dal.GlobalManager;
+import com.peppermint.app.ui.base.views.CustomActionBarView;
+import com.peppermint.app.ui.base.navigation.NavigationItem;
+import com.peppermint.app.ui.base.navigation.NavigationListAdapter;
 import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
 import com.peppermint.app.ui.base.dialogs.CustomListDialog;
 import com.peppermint.app.ui.base.views.CustomFontEditText;
@@ -322,7 +322,7 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
         ContactRaw recipient;
 
         try {
-            if((recipient = ContactManager.insert(this, 0, rawId, firstName, lastName, null, email, mAvatarUrl, mAuthenticationData.getEmail(), false)) == null) {
+            if((recipient = ContactManager.getInstance().insert(this, 0, rawId, firstName, lastName, null, email, mAvatarUrl, mAuthenticationData.getEmail(), false)) == null) {
                 Toast.makeText(this, R.string.msg_unable_addcontact, Toast.LENGTH_LONG).show();
                 return;
             }

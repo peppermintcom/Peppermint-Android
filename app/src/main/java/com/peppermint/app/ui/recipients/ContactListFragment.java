@@ -18,16 +18,16 @@ import android.widget.Button;
 import android.widget.PopupWindow;
 
 import com.peppermint.app.R;
-import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.ContactRaw;
-import com.peppermint.app.data.Message;
-import com.peppermint.app.data.Recording;
-import com.peppermint.app.events.MessageEvent;
-import com.peppermint.app.events.PeppermintEventBus;
-import com.peppermint.app.events.ReceiverEvent;
-import com.peppermint.app.events.SenderEvent;
-import com.peppermint.app.events.SyncEvent;
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.dal.contact.ContactRaw;
+import com.peppermint.app.dal.message.Message;
+import com.peppermint.app.dal.recording.Recording;
+import com.peppermint.app.services.messenger.MessageEvent;
+import com.peppermint.app.PeppermintEventBus;
+import com.peppermint.app.services.messenger.ReceiverEvent;
+import com.peppermint.app.services.messenger.SenderEvent;
+import com.peppermint.app.services.messenger.SyncEvent;
+import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.chat.ChatActivity;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
@@ -259,8 +259,8 @@ public abstract class ContactListFragment extends ListFragment implements
             @Override
             public void onEventMainThread(SyncEvent event) {
                 super.onEventMainThread(event);
-                if(event.getType() == SyncEvent.EVENT_FINISHED) {
-                    if(mSearchListBarView.getSearchText() == null) {
+                if(event.getType() == SyncEvent.EVENT_FINISHED || event.getType() == SyncEvent.EVENT_PROGRESS) {
+                    if(ContactListFragment.this instanceof RecentContactsListFragment) {
                         refresh();
                     }
                 }
@@ -270,7 +270,7 @@ public abstract class ContactListFragment extends ListFragment implements
             public void onEventMainThread(ReceiverEvent event) {
                 super.onEventMainThread(event);
                 if(event.getType() == ReceiverEvent.EVENT_RECEIVED) {
-                    if(mSearchListBarView.getSearchText() == null) {
+                    if(ContactListFragment.this instanceof RecentContactsListFragment) {
                         refresh();
                     }
                 }
@@ -280,7 +280,7 @@ public abstract class ContactListFragment extends ListFragment implements
             public void onEventMainThread(SenderEvent event) {
                 super.onEventMainThread(event);
                 if(event.getType() == SenderEvent.EVENT_FINISHED) {
-                    if(mSearchListBarView.getSearchText() == null) {
+                    if(ContactListFragment.this instanceof RecentContactsListFragment) {
                         refresh();
                     }
                 }

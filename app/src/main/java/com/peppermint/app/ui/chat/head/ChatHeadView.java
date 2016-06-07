@@ -12,7 +12,7 @@ import android.util.AttributeSet;
 import android.view.ViewGroup;
 
 import com.peppermint.app.R;
-import com.peppermint.app.data.Chat;
+import com.peppermint.app.dal.chat.Chat;
 import com.peppermint.app.ui.base.views.RoundImageView;
 import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;

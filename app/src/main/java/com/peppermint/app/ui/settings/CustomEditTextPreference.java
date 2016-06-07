@@ -22,7 +22,7 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.peppermint.app.R;
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.ui.base.views.CustomFontEditText;
 import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;

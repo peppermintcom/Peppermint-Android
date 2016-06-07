@@ -10,17 +10,17 @@ import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.RecordService;
-import com.peppermint.app.RecordServiceManager;
-import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.Recording;
-import com.peppermint.app.events.PeppermintEventBus;
-import com.peppermint.app.events.RecorderEvent;
-import com.peppermint.app.ui.Overlay;
-import com.peppermint.app.ui.OverlayManager;
-import com.peppermint.app.ui.TouchInterceptable;
+import com.peppermint.app.services.recorder.RecordService;
+import com.peppermint.app.services.recorder.RecordServiceManager;
+import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.dal.recording.Recording;
+import com.peppermint.app.PeppermintEventBus;
+import com.peppermint.app.services.recorder.RecorderEvent;
+import com.peppermint.app.ui.base.Overlay;
+import com.peppermint.app.ui.base.OverlayManager;
+import com.peppermint.app.ui.base.TouchInterceptable;
 import com.peppermint.app.ui.base.views.CustomToast;
-import com.peppermint.app.utils.NoMicDataIOException;
+import com.peppermint.app.services.recorder.NoMicDataIOException;
 import com.peppermint.app.utils.Utils;
 
 /**

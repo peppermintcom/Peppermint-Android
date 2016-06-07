@@ -15,16 +15,16 @@ import android.widget.AdapterView;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.ChatManager;
-import com.peppermint.app.data.ContactData;
-import com.peppermint.app.data.ContactManager;
-import com.peppermint.app.data.ContactRaw;
-import com.peppermint.app.data.DatabaseHelper;
-import com.peppermint.app.data.FilteredCursor;
-import com.peppermint.app.data.GlobalManager;
-import com.peppermint.app.data.PeppermintFilteredCursor;
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.dal.chat.ChatManager;
+import com.peppermint.app.dal.contact.ContactData;
+import com.peppermint.app.dal.contact.ContactManager;
+import com.peppermint.app.dal.contact.ContactRaw;
+import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.dal.FilteredCursor;
+import com.peppermint.app.dal.GlobalManager;
+import com.peppermint.app.dal.contact.ContactFilteredCursor;
+import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.ui.chat.ChatActivity;
 
 import java.sql.SQLException;
@@ -63,16 +63,16 @@ public class AllContactsListFragment extends ContactListFragment {
 
     // the recipient list
     private ContactCursorAdapter mAdapter;
-    private PeppermintFilteredCursor mCursor;
+    private ContactFilteredCursor mCursor;
 
     @Override
     protected Object onAsyncRefresh(Context context, String searchName, String searchVia) {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
             // get normal full, email or phone contact list
-            FilteredCursor cursor = (FilteredCursor) ContactManager.get(context, null, searchName, MIMETYPES, searchVia);
+            FilteredCursor cursor = (FilteredCursor) ContactManager.getInstance().get(context, null, searchName, MIMETYPES, searchVia);
             if (cursor.getOriginalCursor().getCount() <= 0 && searchName != null && searchVia != null) {
                 cursor.close();
-                cursor = (FilteredCursor) ContactManager.get(context, null, null, MIMETYPES, searchVia);
+                cursor = (FilteredCursor) ContactManager.getInstance().get(context, null, null, MIMETYPES, searchVia);
             }
             cursor.filter();
             return cursor;
@@ -91,7 +91,7 @@ public class AllContactsListFragment extends ContactListFragment {
 
     @Override
     protected void onAsyncRefreshFinished(Context context, Object data) {
-        mCursor = (PeppermintFilteredCursor) data;
+        mCursor = (ContactFilteredCursor) data;
 
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
             setCursor();
@@ -110,7 +110,7 @@ public class AllContactsListFragment extends ContactListFragment {
                 final ContactRaw contactRaw = mAddContactDialog.getContact();
                 final String emailAddress = mAddContactDialog.getEmail();
                 try {
-                    ContactManager.insertEmail(mActivity, emailAddress, contactRaw.getRawId(), 0, null);
+                    ContactManager.getInstance().insertEmail(mActivity, emailAddress, contactRaw.getRawId(), 0, null);
                     mAddContactDialog.dismiss();
                 } catch (ContactManager.InvalidEmailException e) {
                     TrackerManager.getInstance(mActivity).log("Invalid email address: " + emailAddress, e);
@@ -224,7 +224,7 @@ public class AllContactsListFragment extends ContactListFragment {
             final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(mActivity);
             databaseHelper.lock();
             try {
-                ChatManager.delete(databaseHelper.getWritableDatabase(), tappedChat.getId());
+                ChatManager.getInstance(mActivity).delete(databaseHelper.getWritableDatabase(), tappedChat.getId());
             } catch (SQLException e) {
                 TrackerManager.getInstance(mActivity.getApplicationContext()).logException(e);
             }

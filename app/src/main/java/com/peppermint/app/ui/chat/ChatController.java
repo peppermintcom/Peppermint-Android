@@ -11,20 +11,20 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.peppermint.app.R;
-import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.ChatManager;
-import com.peppermint.app.data.DatabaseHelper;
-import com.peppermint.app.data.Message;
-import com.peppermint.app.data.MessageManager;
-import com.peppermint.app.data.Recipient;
-import com.peppermint.app.events.ReceiverEvent;
-import com.peppermint.app.events.SenderEvent;
-import com.peppermint.app.events.SyncEvent;
-import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.ui.OverlayManager;
-import com.peppermint.app.ui.TouchInterceptable;
-import com.peppermint.app.ui.base.NavigationItem;
-import com.peppermint.app.ui.base.NavigationListAdapter;
+import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.dal.chat.ChatManager;
+import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.dal.message.Message;
+import com.peppermint.app.dal.message.MessageManager;
+import com.peppermint.app.dal.recipient.Recipient;
+import com.peppermint.app.services.messenger.ReceiverEvent;
+import com.peppermint.app.services.messenger.SenderEvent;
+import com.peppermint.app.services.messenger.SyncEvent;
+import com.peppermint.app.trackers.TrackerManager;
+import com.peppermint.app.ui.base.OverlayManager;
+import com.peppermint.app.ui.base.TouchInterceptable;
+import com.peppermint.app.ui.base.navigation.NavigationItem;
+import com.peppermint.app.ui.base.navigation.NavigationListAdapter;
 import com.peppermint.app.ui.base.dialogs.CustomListDialog;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
 import com.peppermint.app.utils.Utils;
@@ -49,7 +49,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
     protected class RefreshMessageCursorAsyncTask extends AsyncTask<Void, Void, Cursor> {
         @Override
         protected Cursor doInBackground(Void... params) {
-            return MessageManager.getByChatId(getDatabase(), mChat.getId());
+            return MessageManager.getInstance(getContext()).getByChatId(getDatabase(), mChat.getId());
         }
 
         @Override
@@ -88,7 +88,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
     // GENERIC
     private DatabaseHelper mDatabaseHelper;
-    private boolean mSavedInstanceState = false;
+    /*private boolean mSavedInstanceState = false;*/
 
     // UI
     private RecipientDataGUI mRecipientDataGUI;
@@ -172,7 +172,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
             outState.putBundle(STATE_DIALOG, dialogState);
         }
         outState.putLong(STATE_MESSAGE_ID_WITH_ERROR, mMessageIdWithError);
-        mSavedInstanceState = true;
+        /*mSavedInstanceState = true;*/
     }
 
     @Override
@@ -205,16 +205,16 @@ public class ChatController extends ChatRecordOverlayController implements View.
             mAdapter = null;
         }
         dismissErrorDialog();
-        mSavedInstanceState = false;
+        /*mSavedInstanceState = false;*/
 
         super.deinit();
     }
 
     @Override
     public boolean onLongClick(View v) {
-        if(mAdapter == null) {
+        /*if(mAdapter == null) {
             return false;
-        }
+        }*/
 
         if(getPlayerServiceManager() != null && getPlayerServiceManager().isBound()) {
             getPlayerServiceManager().pause();
@@ -242,7 +242,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
             return;
         }
 
-        if(event.getType() == SyncEvent.EVENT_FINISHED) {
+        if(event.getType() == SyncEvent.EVENT_FINISHED || event.getType() == SyncEvent.EVENT_PROGRESS) {
             if(hasChatMessage(event.getReceivedMessageList(), mChat.getId()) || hasChatMessage(event.getSentMessageList(), mChat.getId())) {
                 refreshList();
             }
@@ -321,7 +321,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
     }
 
     public void setChat(long chatId) {
-        setChat(ChatManager.getChatById(getDatabase(), chatId));
+        setChat(ChatManager.getInstance(getContext()).getChatById(getDatabase(), chatId));
     }
 
     public void setChat(Chat chat) {

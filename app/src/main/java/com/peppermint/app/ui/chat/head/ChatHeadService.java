@@ -18,15 +18,15 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 
-import com.peppermint.app.cloud.MessagesServiceManager;
-import com.peppermint.app.cloud.senders.SenderPreferences;
-import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.ChatManager;
-import com.peppermint.app.data.DatabaseHelper;
-import com.peppermint.app.data.MessageManager;
-import com.peppermint.app.events.MessageEvent;
-import com.peppermint.app.events.PeppermintEventBus;
-import com.peppermint.app.events.ReceiverEvent;
+import com.peppermint.app.services.messenger.MessagesServiceManager;
+import com.peppermint.app.services.messenger.handlers.SenderPreferences;
+import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.dal.chat.ChatManager;
+import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.dal.message.MessageManager;
+import com.peppermint.app.services.messenger.MessageEvent;
+import com.peppermint.app.PeppermintEventBus;
+import com.peppermint.app.services.messenger.ReceiverEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -233,11 +233,11 @@ public class ChatHeadService extends Service {
         if(isVisible() && mVisibleActivities.size() <= 0) {
             List<Chat> chatList = new ArrayList<>();
             SQLiteDatabase db = DatabaseHelper.getInstance(this).getReadableDatabase();
-            Cursor chatCursor = ChatManager.getAll(db, true);
+            Cursor chatCursor = ChatManager.getInstance(this).getAll(db, true);
             int i = 0;
             while(chatCursor.moveToNext() && i < ChatHeadGroupDisplayView.MAX_CHAT_HEADS) {
-                Chat chat = ChatManager.getChatFromCursor(db, chatCursor);
-                chat.setAmountUnopened(MessageManager.getUnopenedCountByChat(db, chat.getId()));
+                Chat chat = ChatManager.getInstance(this).getFromCursor(db, chatCursor);
+                chat.setAmountUnopened(MessageManager.getInstance(this).getUnopenedCountByChat(db, chat.getId()));
                 chatList.add(0, chat);
                 i++;
             }

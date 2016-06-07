@@ -11,7 +11,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.peppermint.app.R;
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.utils.ResourceUtils;
 
 /**

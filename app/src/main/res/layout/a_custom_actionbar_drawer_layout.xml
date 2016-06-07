@@ -5,13 +5,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.peppermint.app.ui.base.CustomActionBarView
+    <com.peppermint.app.ui.base.views.CustomActionBarView
         android:id="@+id/actionBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true" />
 
-    <com.peppermint.app.ui.base.FullDrawerLayout
+    <com.peppermint.app.ui.base.views.FullDrawerLayout
         android:id="@+id/drawer"
         android:layout_below="@id/actionBar"
         android:layout_width="match_parent"
@@ -110,7 +110,7 @@
 
         </LinearLayout>
 
-    </com.peppermint.app.ui.base.FullDrawerLayout>
+    </com.peppermint.app.ui.base.views.FullDrawerLayout>
 
     <FrameLayout
         android:id="@+id/touchInterceptor"

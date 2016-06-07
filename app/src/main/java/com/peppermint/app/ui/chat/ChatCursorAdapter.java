@@ -9,13 +9,13 @@ import android.view.ViewGroup;
 import android.widget.CursorAdapter;
 
 import com.peppermint.app.R;
-import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.ChatManager;
-import com.peppermint.app.data.ContactData;
-import com.peppermint.app.data.DatabaseHelper;
-import com.peppermint.app.data.MessageManager;
-import com.peppermint.app.data.Recipient;
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.dal.chat.ChatManager;
+import com.peppermint.app.dal.contact.ContactData;
+import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.dal.message.MessageManager;
+import com.peppermint.app.dal.recipient.Recipient;
+import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.ui.base.views.CustomFontTextView;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.utils.DateContainer;
@@ -97,7 +97,7 @@ public class ChatCursorAdapter extends CursorAdapter {
             txtLastMessageDate.setText("");
         }
 
-        int unreadAmount = MessageManager.getUnopenedCountByChat(mDatabaseHelper.getReadableDatabase(), chat.getId());
+        int unreadAmount = MessageManager.getInstance(mContext).getUnopenedCountByChat(mDatabaseHelper.getReadableDatabase(), chat.getId());
         if(unreadAmount > 0) {
             txtUnreadMessages.setText(String.valueOf(unreadAmount));
             txtUnreadMessages.setVisibility(View.VISIBLE);
@@ -108,7 +108,7 @@ public class ChatCursorAdapter extends CursorAdapter {
 
     public Chat getChat(Cursor cursor) {
         // get recipient data as well
-        return ChatManager.getChatFromCursor(mDatabaseHelper.getReadableDatabase(), cursor);
+        return ChatManager.getInstance(mContext).getFromCursor(mDatabaseHelper.getReadableDatabase(), cursor);
     }
 
     public Chat getChat(int position) {

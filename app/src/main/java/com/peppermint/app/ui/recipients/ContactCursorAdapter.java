@@ -10,14 +10,14 @@ import android.widget.CursorAdapter;
 import android.widget.TextView;
 
 import com.peppermint.app.R;
-import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.ChatManager;
-import com.peppermint.app.data.ContactManager;
-import com.peppermint.app.data.ContactRaw;
-import com.peppermint.app.data.DatabaseHelper;
-import com.peppermint.app.data.MessageManager;
-import com.peppermint.app.data.PeppermintFilteredCursor;
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.dal.chat.ChatManager;
+import com.peppermint.app.dal.contact.ContactManager;
+import com.peppermint.app.dal.contact.ContactRaw;
+import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.dal.message.MessageManager;
+import com.peppermint.app.dal.contact.ContactFilteredCursor;
+import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.ui.base.views.CustomFontTextView;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.utils.DateContainer;
@@ -53,9 +53,9 @@ public class ContactCursorAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View v, Context context, Cursor cursor) {
-        ContactRaw rawContact = cursor instanceof PeppermintFilteredCursor ?
-                ((PeppermintFilteredCursor) cursor).getContactRaw() :
-                 ContactManager.getRawContactFromCursor(context, cursor);
+        ContactRaw rawContact = cursor instanceof ContactFilteredCursor ?
+                ((ContactFilteredCursor) cursor).getContactRaw() :
+                 ContactManager.getInstance().getRawContactFromCursor(context, cursor);
 
         AnimatedAvatarView imgPhoto = (AnimatedAvatarView) v.findViewById(R.id.imgPhoto);
         TextView txtName = (TextView) v.findViewById(R.id.txtName);
@@ -103,7 +103,7 @@ public class ContactCursorAdapter extends CursorAdapter {
 
             int unreadAmount = 0;
             if(chat != null) {
-                unreadAmount = MessageManager.getUnopenedCountByChat(mDatabaseHelper.getReadableDatabase(), chat.getId());
+                unreadAmount = MessageManager.getInstance(mContext).getUnopenedCountByChat(mDatabaseHelper.getReadableDatabase(), chat.getId());
             }
 
             if(unreadAmount > 0) {
@@ -117,7 +117,7 @@ public class ContactCursorAdapter extends CursorAdapter {
 
     public ContactRaw getContactRaw(int position) {
         Cursor cursor = (Cursor) getItem(position);
-        return (cursor instanceof PeppermintFilteredCursor ? ((PeppermintFilteredCursor) cursor).getContactRaw() : ContactManager.getRawContactFromCursor(mContext, cursor));
+        return (cursor instanceof ContactFilteredCursor ? ((ContactFilteredCursor) cursor).getContactRaw() : ContactManager.getInstance().getRawContactFromCursor(mContext, cursor));
     }
 
     protected Chat getContactRawChat(ContactRaw rawContact) {
@@ -128,7 +128,7 @@ public class ContactCursorAdapter extends CursorAdapter {
 
         Chat chat;
         if(!mChats.containsKey(id)) {
-            chat = ChatManager.getMainChatByDroidContactId(mDatabaseHelper.getReadableDatabase(), rawContact.getContactId());
+            chat = ChatManager.getInstance(mContext).getMainChatByDroidContactId(mDatabaseHelper.getReadableDatabase(), rawContact.getContactId());
             if(chat != null) {
                 mChats.put(id, chat);
             }

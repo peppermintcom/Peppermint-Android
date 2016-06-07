@@ -6,11 +6,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
 
-import com.peppermint.app.PlayerServiceManager;
-import com.peppermint.app.cloud.MessagesServiceManager;
-import com.peppermint.app.data.DatabaseHelper;
-import com.peppermint.app.data.Message;
-import com.peppermint.app.data.MessageManager;
+import com.peppermint.app.services.player.PlayerServiceManager;
+import com.peppermint.app.services.messenger.MessagesServiceManager;
+import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.dal.message.Message;
+import com.peppermint.app.dal.message.MessageManager;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -72,7 +72,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
     }
 
     public Message getMessage(Cursor cursor) {
-        return MessageManager.getFromCursor(DatabaseHelper.getInstance(mContext).getReadableDatabase(), cursor);
+        return MessageManager.getInstance(mContext).getFromCursor(DatabaseHelper.getInstance(mContext).getReadableDatabase(), cursor);
     }
 
     public Message getMessage(int position) {

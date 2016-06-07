@@ -20,7 +20,7 @@ import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 
 import com.peppermint.app.R;
-import com.peppermint.app.ui.AnimatorBuilder;
+import com.peppermint.app.ui.base.AnimatorBuilder;
 import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;
 

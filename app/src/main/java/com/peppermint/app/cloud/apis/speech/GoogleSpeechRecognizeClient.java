@@ -9,9 +9,12 @@ import com.google.cloud.speech.v1.nano.InitialRecognizeRequest;
 import com.google.cloud.speech.v1.nano.RecognizeRequest;
 import com.google.cloud.speech.v1.nano.RecognizeResponse;
 import com.google.cloud.speech.v1.nano.SpeechGrpc;
+import com.peppermint.app.cloud.apis.speech.objects.SpeechApiHttpResponseData;
+import com.peppermint.app.cloud.apis.speech.objects.SpeechRecognitionResult;
+import com.peppermint.app.cloud.apis.speech.parsers.SpeechApiHttpResponseDataParser;
 import com.peppermint.app.cloud.rest.HttpJSONResponse;
-import com.peppermint.app.cloud.senders.exceptions.NoInternetConnectionException;
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.services.messenger.handlers.NoInternetConnectionException;
+import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.utils.Utils;
 
 import java.io.File;
@@ -299,7 +302,7 @@ public class GoogleSpeechRecognizeClient {
         String transcriptionLanguage = null;
 
         if(responseData != null && responseData.getErrorCode() == 0 && responseData.getResponses().size() > 0) {
-            final com.peppermint.app.cloud.apis.speech.RecognizeResponse recognizeResponse = responseData.getResponses().get(0);
+            final com.peppermint.app.cloud.apis.speech.objects.RecognizeResponse recognizeResponse = responseData.getResponses().get(0);
             if (recognizeResponse != null && recognizeResponse.getErrorCode() == 0 && recognizeResponse.getResults().size() > 0) {
                 transcriptionLanguage = request.getDetectedTranscriptionLanguage();
                 final SpeechRecognitionResult speechRecognitionResult =

@@ -15,7 +15,7 @@ import android.util.Log;
 import android.view.WindowManager;
 
 import com.crashlytics.android.Crashlytics;
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.trackers.TrackerManager;
 
 import java.io.File;
 import java.io.FileInputStream;
