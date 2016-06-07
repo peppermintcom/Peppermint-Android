@@ -2,6 +2,8 @@ package com.peppermint.app.dal;
 
 /**
  * Created by Nuno Luz on 03-06-2016.
+ *
+ * Represents a set of changes performed to a data object's fields.
  */
 public class DataObjectUpdate {
     private int mFieldId;

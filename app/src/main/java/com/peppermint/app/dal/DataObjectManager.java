@@ -18,6 +18,11 @@ import de.greenrobot.event.EventBus;
 
 /**
  * Created by Nuno Luz on 03-06-2016.
+ *
+ * Base implementation of a data object manager.<br />
+ * Allows performing insert/update/delete operations and triggering respective events.<br />
+ * External listeners can register for these events.<br />
+ * It also keeps a weak reference cache of data object instances that allows re-usability of in-memory instances.
  */
 public abstract class DataObjectManager<E, T extends DataObject> {
 
@@ -62,9 +67,11 @@ public abstract class DataObjectManager<E, T extends DataObject> {
     }
 
     public void update(SQLiteDatabase db, T dataObject) throws SQLException {
-        doUpdate(db, dataObject);
-        postDataEvent(DataObjectEvent.TYPE_UPDATE, dataObject);
-        dataObject.clearUpdateHistory();
+        if(dataObject.getUpdateHistory().size() > 0) {
+            doUpdate(db, dataObject);
+            postDataEvent(DataObjectEvent.TYPE_UPDATE, dataObject);
+            dataObject.clearUpdateHistory();
+        }
     }
 
     public void delete(SQLiteDatabase db, E dataObjectId) throws SQLException {

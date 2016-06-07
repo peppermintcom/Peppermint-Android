@@ -10,9 +10,6 @@ import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccoun
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.util.ExponentialBackOff;
 import com.peppermint.app.cloud.apis.BaseApi;
-import com.peppermint.app.cloud.apis.google.GoogleApiInvalidAccessTokenException;
-import com.peppermint.app.cloud.apis.google.GoogleApiNoAuthorizationException;
-import com.peppermint.app.cloud.apis.google.GoogleApiResponseException;
 import com.peppermint.app.cloud.rest.HttpRequest;
 import com.peppermint.app.cloud.rest.HttpResponse;
 import com.peppermint.app.services.messenger.handlers.gmail.GmailAttachmentRequest;

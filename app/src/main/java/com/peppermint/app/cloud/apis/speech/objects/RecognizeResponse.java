@@ -1,7 +1,5 @@
 package com.peppermint.app.cloud.apis.speech.objects;
 
-import com.peppermint.app.cloud.apis.speech.objects.SpeechRecognitionResult;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;

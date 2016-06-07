@@ -2,11 +2,10 @@ package com.peppermint.app.dal;
 
 import android.util.SparseArray;
 
-import com.peppermint.app.dal.DataObject;
-import com.peppermint.app.dal.DataObjectUpdate;
-
 /**
  * Created by Nuno Luz on 03-06-2016.
+ *
+ * An event triggered by some update/insert/delete operation on a data object.
  */
 public class DataObjectEvent<T extends DataObject> {
 

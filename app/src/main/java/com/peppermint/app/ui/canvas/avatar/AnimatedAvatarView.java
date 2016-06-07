@@ -3,12 +3,10 @@ package com.peppermint.app.ui.canvas.avatar;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
-import android.net.Uri;
 import android.os.Build;
 import android.util.AttributeSet;
 
@@ -17,7 +15,6 @@ import com.peppermint.app.dal.contact.ContactRaw;
 import com.peppermint.app.ui.canvas.AnimatedView;
 import com.peppermint.app.ui.canvas.BitmapLayer;
 import com.peppermint.app.ui.canvas.BitmapSequenceAnimatedLayer;
-import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
@@ -32,8 +29,6 @@ import java.util.Random;
  * The animation can be triggered through {@link #startAnimations()} and {@link #startDrawingThread()}.
  */
 public class AnimatedAvatarView extends AnimatedView {
-
-    private static final String TAG = AnimatedAvatarView.class.getSimpleName();
 
     private static final int DEF_BORDER_WIDTH_DP = 3;
     private static final int DEF_CORNER_RADIUS_DP = 10;
@@ -196,26 +191,8 @@ public class AnimatedAvatarView extends AnimatedView {
         mStaticAvatar.setBounds(mFullBounds);
     }
 
-    public synchronized boolean setStaticDrawable(Uri drawableUri) {
-        // scale bitmap to avoid black images to show up some times
-        int width = getMeasuredWidth();
-        int height = getMeasuredHeight();
-        final int fixedSize = Utils.dpToPx(getContext(), 50);
-        final Bitmap scaledBitmap = ResourceUtils.getScaledBitmap(getContext(), drawableUri, width > 0 ? width : fixedSize, height > 0 ? height : fixedSize);
-        if(scaledBitmap != null) {
-            final BitmapDrawable bitmapDrawable = new BitmapDrawable(getContext().getResources(), scaledBitmap);
-            mStaticAvatar.setBitmapDrawable(bitmapDrawable);
-        } else {
-            mStaticAvatar.setBitmapDrawable(null);
-        }
-        doDraw();
-        return mStaticAvatar.getBitmapDrawable() != null;
-    }
-
-    public synchronized boolean setStaticDrawable(int drawableRes) {
-        mStaticAvatar.setBitmapResourceId(drawableRes);
-        doDraw();
-        return true;
+    public synchronized void setStaticDrawable(BitmapDrawable bitmapDrawable) {
+        mStaticAvatar.setBitmapDrawable(bitmapDrawable);
     }
 
     public boolean isShowStaticAvatar() {
@@ -232,14 +209,6 @@ public class AnimatedAvatarView extends AnimatedView {
             addLayer(mCurrentAvatar);
         }
         doDraw();
-    }
-
-    public BitmapSequenceAnimatedLayer getCurrentAvatar() {
-        return mCurrentAvatar;
-    }
-
-    public List<BitmapSequenceAnimatedLayer> getAvatars() {
-        return mAvatars;
     }
 
     protected BitmapSequenceAnimatedLayer getRandomAnimatedAvatar() {

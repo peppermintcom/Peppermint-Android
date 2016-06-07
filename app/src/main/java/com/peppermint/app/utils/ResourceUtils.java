@@ -10,6 +10,7 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
+import android.support.annotation.WorkerThread;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.WindowManager;
@@ -100,6 +101,7 @@ public class ResourceUtils {
      * @param degrees the rotation degress
      * @return the new rotated bitmap
      */
+    @WorkerThread
     public static Bitmap getRotatedBitmap(final Bitmap bitmap, final int degrees) {
         int w = bitmap.getWidth();
         int h = bitmap.getHeight();
@@ -142,6 +144,7 @@ public class ResourceUtils {
         return scale;
     }
 
+    @WorkerThread
     private static Bitmap getScaledBitmap(final InputStream fis, final int scale) {
         // decode with inSampleSize
         BitmapFactory.Options o2 = new BitmapFactory.Options();
@@ -169,6 +172,7 @@ public class ResourceUtils {
      * @param height the new desired height
      * @return the loaded and scaled bitmap
      */
+    @WorkerThread
     public static Bitmap getScaledBitmap(final Context context, final Uri contentUri, final int width, final int height) {
         Bitmap bitmap = null;
         try {
@@ -198,6 +202,7 @@ public class ResourceUtils {
      * @param height the scaled image height
      * @return the scaled image bitmap
      */
+    @WorkerThread
     public static Bitmap getScaledBitmap(final Context context, final int resId, final int width, final int height) {
         Bitmap bitmap = null;
         try {
@@ -226,6 +231,7 @@ public class ResourceUtils {
      * @param keepAspectRatio true to keep aspect ratio; false otherwise
      * @return the new scaled/resized bitmap
      */
+    @WorkerThread
     public static Bitmap getScaledResizedBitmap(final Context context, final int resId, final int width, final int height, final boolean keepAspectRatio) {
         Bitmap bitmap = getScaledBitmap(context, resId, width, height);
 
@@ -303,6 +309,7 @@ public class ResourceUtils {
      * @param uri the {@link Uri}
      * @return the {@link Drawable} or null if unable to load
      */
+    @WorkerThread
     public static Drawable getDrawableFromUri(final Context context, final Uri uri) {
         if (uri == null) {
             return null;

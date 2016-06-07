@@ -93,8 +93,6 @@ public class GoogleSpeechRecognizeClient {
     private Context mContext;
 
     private ManagedChannel mManagedChannel;
-    private SpeechGrpc.SpeechStub mStub;
-    private StreamObserver<RecognizeRequest> mStreamObserver;
     private RecognitionListener mRecognitionListener;
 
     private BlockingQueue<byte[]> mAudioDataQueue = new LinkedBlockingQueue<>();
@@ -105,6 +103,8 @@ public class GoogleSpeechRecognizeClient {
     private Runnable mSenderRunnable = new Runnable() {
         @Override
         public void run() {
+            StreamObserver<RecognizeRequest> streamObserver;
+
             try {
                 GoogleCredentials creds = GoogleCredentials.fromStream(mContext.getAssets().open(SPEECH_CONFIG_FILE));
                 creds = creds.createScoped(OAUTH2_SCOPES);
@@ -115,8 +115,8 @@ public class GoogleSpeechRecognizeClient {
                         .sslSocketFactory(new NoSSLv3SocketFactory())
                         .intercept(new ClientAuthInterceptor(creds, Executors.newSingleThreadExecutor()))
                         .build();
-                mStub = SpeechGrpc.newStub(mManagedChannel);
-                mStreamObserver = mStub.recognize(new RecognizeStreamObserver());
+                SpeechGrpc.SpeechStub stub = SpeechGrpc.newStub(mManagedChannel);
+                streamObserver = stub.recognize(new RecognizeStreamObserver());
 
                 // build and send a RecognizeRequest containing the parameters for processing the audio
                 InitialRecognizeRequest initial = new InitialRecognizeRequest();
@@ -130,7 +130,7 @@ public class GoogleSpeechRecognizeClient {
 
                 RecognizeRequest firstRequest = new RecognizeRequest();
                 firstRequest.initialRequest = initial;
-                mStreamObserver.onNext(firstRequest);
+                streamObserver.onNext(firstRequest);
 
                 if(mRecognitionListener != null) {
                     mRecognitionListener.onRecognitionStarted(GoogleSpeechRecognizeClient.this);
@@ -153,9 +153,9 @@ public class GoogleSpeechRecognizeClient {
                 emptyRequest.audioRequest = emptyAudio;
                 try {
                     Thread.sleep(waitingMs);
-                    mStreamObserver.onNext(emptyRequest);
+                    streamObserver.onNext(emptyRequest);
                     Thread.sleep(waitingMs);
-                    mStreamObserver.onNext(emptyRequest);
+                    streamObserver.onNext(emptyRequest);
                     Thread.sleep(waitingMs);
                 } catch (InterruptedException e) {
                         /* nothing to do here */
@@ -169,7 +169,7 @@ public class GoogleSpeechRecognizeClient {
                         audio.content = bytes;
                         RecognizeRequest request = new RecognizeRequest();
                         request.audioRequest = audio;
-                        mStreamObserver.onNext(request);
+                        streamObserver.onNext(request);
                         long realWait = waitingMs - (System.currentTimeMillis() - ms);
                         if(realWait > 0) {
                             Thread.sleep(realWait);
@@ -179,11 +179,11 @@ public class GoogleSpeechRecognizeClient {
                     }
                 }
             } catch (RuntimeException e) {
-                mStreamObserver.onError(e);
+                streamObserver.onError(e);
             }
 
             // mark the end of requests
-            mStreamObserver.onCompleted();
+            streamObserver.onCompleted();
 
             if(mAudioDataQueue != null) {
                 mAudioDataQueue.clear();

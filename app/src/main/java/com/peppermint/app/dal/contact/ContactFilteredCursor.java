@@ -5,9 +5,6 @@ import android.database.Cursor;
 import android.provider.ContactsContract;
 
 import com.peppermint.app.dal.FilteredCursor;
-import com.peppermint.app.dal.contact.ContactManager;
-import com.peppermint.app.dal.contact.ContactData;
-import com.peppermint.app.dal.contact.ContactRaw;
 
 import java.util.ArrayList;
 import java.util.HashMap;

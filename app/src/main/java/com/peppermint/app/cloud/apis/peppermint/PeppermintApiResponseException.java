@@ -2,9 +2,6 @@ package com.peppermint.app.cloud.apis.peppermint;
 
 import com.peppermint.app.cloud.rest.HttpResponseException;
 
-/**
- * Created by Nuno Luz on 19-04-2016.
- */
 public class PeppermintApiResponseException extends HttpResponseException {
     public PeppermintApiResponseException() {
     }

@@ -4,19 +4,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 
-import com.peppermint.app.dal.chat.ChatManager;
-import com.peppermint.app.dal.contact.ContactData;
-import com.peppermint.app.dal.contact.ContactManager;
 import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.dal.chat.ChatManager;
 import com.peppermint.app.ui.chat.ChatActivity;
 import com.peppermint.app.ui.chat.ChatCursorAdapter;
-
-import java.util.Map;
 
 public class RecentContactsListFragment extends ContactListFragment {
 
@@ -24,25 +18,17 @@ public class RecentContactsListFragment extends ContactListFragment {
 
     private ChatCursorAdapter mAdapter;
     private Cursor mCursor;
-    private Map<Long, ContactData> mPeppermintContacts;
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        /*mActivity.getSearchListBarView().setSearchText(null);*/
-        return super.onCreateView(inflater, container, savedInstanceState);
-    }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        mAdapter = new ChatCursorAdapter(mActivity, null, mActivity.getTrackerManager());
+        mAdapter = new ChatCursorAdapter(mActivity, null);
         getListView().setAdapter(mAdapter);
     }
 
     private synchronized void setCursor() {
         if(mCursor != null && mAdapter != null && mCursor != mAdapter.getCursor()) {
-            mAdapter.setPeppermintContacts(mPeppermintContacts);
             mAdapter.changeCursor(mCursor);
         }
     }
@@ -74,17 +60,11 @@ public class RecentContactsListFragment extends ContactListFragment {
         mAdapter.changeCursor(null);
         mAdapter = null;
 
-        if(mPeppermintContacts != null) {
-            mPeppermintContacts.clear();
-            mPeppermintContacts = null;
-        }
-
         super.onDestroy();
     }
 
     @Override
     protected Object onAsyncRefresh(Context context, String searchName, String searchVia) {
-        mPeppermintContacts = ContactManager.getInstance().getPeppermintContacts(context);
         return ChatManager.getInstance(context).getAll(DatabaseHelper.getInstance(context).getReadableDatabase(), true);
     }
 

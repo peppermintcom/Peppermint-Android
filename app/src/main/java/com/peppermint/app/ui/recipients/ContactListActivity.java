@@ -335,7 +335,7 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
                     try {
                         foundRecipient = ContactManager.getInstance().insert(ContactListActivity.this, 0, 0, name, null, null, mail, null, authenticationData.getEmail(), false);
                     } catch (Exception e) {
-                            /* nothing to do here */
+                        /* nothing to do here */
                     }
                 }
 

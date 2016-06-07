@@ -185,24 +185,6 @@ public class ContactManager {
         return result;
     }
 
-    public ContactRaw getRawContactWithEmailByRawId(Context context, long rawId) {
-        ContactRaw result = null;
-
-        Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, null,
-                ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE) +
-                        " AND " + ContactsContract.Data.RAW_CONTACT_ID + "=" + rawId,
-                null, SQL_GENERAL_ORDER);
-
-        if(cursor != null) {
-            if (cursor.moveToNext()) {
-                result = getRawContactFromCursor(context, cursor);
-            }
-            cursor.close();
-        }
-
-        return result;
-    }
-
     public Cursor getPhone(Context context, long rawId, String phone) {
         List<Long> rawIds = new ArrayList<>();
         rawIds.add(rawId);

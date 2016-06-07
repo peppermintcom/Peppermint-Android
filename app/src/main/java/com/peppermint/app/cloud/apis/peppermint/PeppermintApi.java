@@ -5,7 +5,6 @@ import android.os.Build;
 
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.cloud.apis.BaseApi;
-import com.peppermint.app.services.authenticator.AuthenticatorUtils;
 import com.peppermint.app.cloud.apis.peppermint.objects.AccountsResponse;
 import com.peppermint.app.cloud.apis.peppermint.objects.JWTsResponse;
 import com.peppermint.app.cloud.apis.peppermint.objects.MessageListResponse;
@@ -25,6 +24,7 @@ import com.peppermint.app.cloud.rest.HttpRequest;
 import com.peppermint.app.cloud.rest.HttpRequestFileData;
 import com.peppermint.app.cloud.rest.HttpResponse;
 import com.peppermint.app.cloud.rest.HttpResponseException;
+import com.peppermint.app.services.authenticator.AuthenticatorUtils;
 import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.utils.Utils;
 

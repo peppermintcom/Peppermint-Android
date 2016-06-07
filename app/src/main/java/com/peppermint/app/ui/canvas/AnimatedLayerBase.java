@@ -168,10 +168,6 @@ public abstract class AnimatedLayerBase extends LayerBase implements AnimatedLay
         this.mLooping = looping;
     }
 
-    protected double getStartTime() {
-        return mStartTime;
-    }
-
     public void addAnimationListener(AnimatedLayerListener mListener) {
         if(!mListenerList.contains(mListener)) {
             mListenerList.add(mListener);

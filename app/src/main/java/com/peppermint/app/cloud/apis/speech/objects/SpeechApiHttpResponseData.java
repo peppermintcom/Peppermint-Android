@@ -19,11 +19,6 @@ public class SpeechApiHttpResponseData implements Serializable {
     public SpeechApiHttpResponseData() {
     }
 
-    public SpeechApiHttpResponseData(int mErrorCode, String mErrorMessage) {
-        this.mErrorCode = mErrorCode;
-        this.mErrorMessage = mErrorMessage;
-    }
-
     public int getErrorCode() {
         return mErrorCode;
     }

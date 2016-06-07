@@ -4,16 +4,15 @@ import android.util.SparseArray;
 
 /**
  * Created by Nuno Luz on 03-06-2016.
+ *
+ * A data object that can be stored in a database. Allows tracking all changes performed to the object.<br />
+ * Great for updating the object in the database efficiently and triggering update events.
  */
 public abstract class DataObject {
 
-    private boolean mKeepUpdateHistory = true;
     private SparseArray<DataObjectUpdate> mUpdateHistory = new SparseArray<>();
 
     protected synchronized boolean registerUpdate(int fieldId, Object beforeChangeData, Object afterChangeData) {
-        if(!mKeepUpdateHistory) {
-            return false;
-        }
         if (beforeChangeData == null && afterChangeData == null) {
             return false;
         }
@@ -37,18 +36,8 @@ public abstract class DataObject {
         mUpdateHistory.clear();
     }
 
-    public boolean isKeepUpdateHistory() {
-        return mKeepUpdateHistory;
-    }
-
-    public void setKeepUpdateHistory(boolean mKeepUpdateHistory) {
-        this.mKeepUpdateHistory = mKeepUpdateHistory;
-        clearUpdateHistory();
-    }
-
     @Override
     public String toString() {
-        return "UpdateHistory [" + mKeepUpdateHistory +
-                "] = " + mUpdateHistory;
+        return "UpdateHistory=" + mUpdateHistory;
     }
 }

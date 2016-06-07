@@ -26,14 +26,6 @@ public class SpeechApiHttpRequest extends HttpRequestFileData implements Parcela
 
     private String mDetectedTranscriptionLanguage;
 
-    /**
-     * Copy constructor
-     * @param req the {@link SpeechApiHttpRequest to be copied}
-     */
-    public SpeechApiHttpRequest(SpeechApiHttpRequest req) {
-        super(req);
-    }
-
     public SpeechApiHttpRequest(File file) {
         super(SPEECH_HTTPS_URL, METHOD_POST, false, file);
         removeUrlParam("_ts");

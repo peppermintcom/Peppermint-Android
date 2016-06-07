@@ -8,8 +8,8 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.peppermint.app.dal.DataObjectManager;
 import com.peppermint.app.dal.message.MessageManager;
-import com.peppermint.app.dal.recipient.RecipientManager;
 import com.peppermint.app.dal.recipient.Recipient;
+import com.peppermint.app.dal.recipient.RecipientManager;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
@@ -175,6 +175,7 @@ public class ChatManager extends DataObjectManager<Long, Chat> {
         chat.setTitle(cursor.getString(cursor.getColumnIndex("title")));
         chat.setLastMessageTimestamp(cursor.getString(cursor.getColumnIndex("last_message_ts")));
         chat.setPeppermintChatId(cursor.getLong(cursor.getColumnIndex("peppermint_chat_id")));
+        chat.setPeppermint(cursor.getInt(cursor.getColumnIndex("is_peppermint")) > 0);
         if(db != null) {
             chat.setRecipientList(RecipientManager.getInstance(mContext).getByChatId(db, chat.getId()));
         }

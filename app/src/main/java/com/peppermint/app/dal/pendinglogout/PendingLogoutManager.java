@@ -79,16 +79,6 @@ public class PendingLogoutManager extends DataObjectManager<Long, PendingLogout>
         return pendingLogout;
     }
 
-    public int getCount(SQLiteDatabase db) {
-        int count = 0;
-        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM tbl_pending_logout;", null);
-        if(cursor.moveToFirst()) {
-            count = cursor.getInt(0);
-        }
-        cursor.close();
-        return count;
-    }
-
     public Cursor getAll(SQLiteDatabase db) {
         return db.rawQuery("SELECT * FROM tbl_pending_logout;", null);
     }

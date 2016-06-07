@@ -28,6 +28,7 @@ public class Chat extends DataObject implements Serializable {
 
     private List<Recipient> mRecipientList = new ArrayList<>();
     private long mPeppermintChatId = 0;
+    private boolean mPeppermint = false;
 
     private int mAmountUnopened;
 
@@ -149,6 +150,14 @@ public class Chat extends DataObject implements Serializable {
         return builder.toString();
     }
 
+    public boolean isPeppermint() {
+        return mPeppermint;
+    }
+
+    public void setPeppermint(boolean mPeppermint) {
+        this.mPeppermint = mPeppermint;
+    }
+
     @Override
     public boolean equals(Object o) {
         if(o == null) {
@@ -168,6 +177,7 @@ public class Chat extends DataObject implements Serializable {
     public String toString() {
         return "Chat{" +
                 "mId=" + mId +
+                ", mPeppermint=" + mPeppermint +
                 ", mPeppermintChatId=" + mPeppermintChatId +
                 ", mTitle='" + mTitle + '\'' +
                 ", mAmountUnopened=" + mAmountUnopened +

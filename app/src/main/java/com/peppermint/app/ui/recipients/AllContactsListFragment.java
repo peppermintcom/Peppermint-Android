@@ -15,15 +15,15 @@ import android.widget.AdapterView;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.dal.chat.Chat;
-import com.peppermint.app.dal.chat.ChatManager;
-import com.peppermint.app.dal.contact.ContactData;
-import com.peppermint.app.dal.contact.ContactManager;
-import com.peppermint.app.dal.contact.ContactRaw;
 import com.peppermint.app.dal.DatabaseHelper;
 import com.peppermint.app.dal.FilteredCursor;
 import com.peppermint.app.dal.GlobalManager;
+import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.dal.chat.ChatManager;
+import com.peppermint.app.dal.contact.ContactData;
 import com.peppermint.app.dal.contact.ContactFilteredCursor;
+import com.peppermint.app.dal.contact.ContactManager;
+import com.peppermint.app.dal.contact.ContactRaw;
 import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.ui.chat.ChatActivity;
 
@@ -188,8 +188,7 @@ public class AllContactsListFragment extends ContactListFragment {
 
     @Override
     public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
-        ContactRaw contactRaw = mAdapter.getContactRaw(position);
-        Chat chat = mAdapter.getContactRawChat(contactRaw);
+        Chat chat = ((ContactView) view).getChat();
         if(chat == null) {
             showHoldPopup(view);
         } else {
