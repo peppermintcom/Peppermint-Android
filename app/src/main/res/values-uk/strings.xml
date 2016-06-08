@@ -128,7 +128,7 @@
     <string name="pref_title_automatic_transcription">Транскрипція</string>
     <string name="pref_summary_automatic_transcription">Увімкніть або вимкніть автоматичну транскрипцію аудіо повідомлень</string>
 
-    <string name="pref_title_transcription_language">Мова транскрипціи</string>
+    <string name="pref_title_transcription_language">Мова транскрипції</string>
     <string name="pref_summary_transcription_language">Оберіть мову для автоматичної транскрипції аудіо повідомлень</string>
 
     <string name="pref_title_displayname">Ваше ім\'я</string>
