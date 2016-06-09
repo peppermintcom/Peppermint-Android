@@ -39,22 +39,23 @@ public class Chat extends DataObject implements Serializable {
     public Chat(long mId, String mTitle, String mLastMessageTimestamp, Recipient... recipients) {
         this();
         this.mId = mId;
-        this.mTitle = mTitle;
-        this.mLastMessageTimestamp = mLastMessageTimestamp;
+        setTitle(mTitle);
+        setLastMessageTimestamp(mLastMessageTimestamp);
         Collections.addAll(this.mRecipientList, recipients);
+        setRecipientList(mRecipientList);
     }
 
     public Chat(long mId, String mTitle, String mLastMessageTimestamp, List<Recipient> mRecipientList) {
         this.mId = mId;
-        this.mTitle = mTitle;
-        this.mLastMessageTimestamp = mLastMessageTimestamp;
-        this.mRecipientList = mRecipientList;
+        setTitle(mTitle);
+        setLastMessageTimestamp(mLastMessageTimestamp);
+        setRecipientList(mRecipientList);
     }
 
     public Chat(List<Recipient> mRecipientList, String mLastMessageTimestamp) {
-        this.mRecipientList = mRecipientList;
-        this.mLastMessageTimestamp = mLastMessageTimestamp;
-        this.mTitle = getRecipientListDisplayNames();
+        setTitle(getRecipientListDisplayNames());
+        setLastMessageTimestamp(mLastMessageTimestamp);
+        setRecipientList(mRecipientList);
     }
 
     public long getId() {

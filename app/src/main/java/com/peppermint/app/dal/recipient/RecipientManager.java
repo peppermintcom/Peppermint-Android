@@ -104,6 +104,28 @@ public class RecipientManager extends DataObjectManager<Long, Recipient> {
     }
 
     @Override
+    protected Recipient newDataObjectInstance(Long id) {
+        final Recipient recipient = new Recipient();
+        recipient.setId(id);
+        return recipient;
+    }
+
+    @Override
+    protected Recipient doGetFromCursor(SQLiteDatabase db, Cursor cursor) {
+        Recipient recipient = obtainCacheDataObject(cursor.getLong(cursor.getColumnIndex("recipient_id")));
+        recipient.setDroidContactDataId(cursor.getLong(cursor.getColumnIndex("droid_contact_data_id")));
+        recipient.setDroidContactRawId(cursor.getLong(cursor.getColumnIndex("droid_contact_raw_id")));
+        recipient.setDroidContactId(cursor.getLong(cursor.getColumnIndex("droid_contact_id")));
+        recipient.setDisplayName(cursor.getString(cursor.getColumnIndex("display_name")));
+        recipient.setVia(cursor.getString(cursor.getColumnIndex("via")));
+        recipient.setMimeType(cursor.getString(cursor.getColumnIndex("mimetype")));
+        recipient.setPhotoUri(cursor.getString(cursor.getColumnIndex("photo_uri")));
+        recipient.setAddedTimestamp(cursor.getString(cursor.getColumnIndex("added_ts")));
+        recipient.setPeppermint(cursor.getInt(cursor.getColumnIndex("is_peppermint")) > 0);
+        return recipient;
+    }
+
+    @Override
     public boolean exists(SQLiteDatabase db, Recipient recipient) throws  SQLException {
         if(recipient.getVia() == null || recipient.getMimeType() == null) {
             throw new IllegalArgumentException("Invalid recipient! " + recipient.toString());
@@ -136,28 +158,6 @@ public class RecipientManager extends DataObjectManager<Long, Recipient> {
         }
 
         return true;
-    }
-
-    @Override
-    protected Recipient newDataObjectInstance(Long id) {
-        final Recipient recipient = new Recipient();
-        recipient.setId(id);
-        return recipient;
-    }
-
-    @Override
-    protected Recipient doGetFromCursor(SQLiteDatabase db, Cursor cursor) {
-        Recipient recipient = obtainCacheDataObject(cursor.getLong(cursor.getColumnIndex("recipient_id")));
-        recipient.setDroidContactDataId(cursor.getLong(cursor.getColumnIndex("droid_contact_data_id")));
-        recipient.setDroidContactRawId(cursor.getLong(cursor.getColumnIndex("droid_contact_raw_id")));
-        recipient.setDroidContactId(cursor.getLong(cursor.getColumnIndex("droid_contact_id")));
-        recipient.setDisplayName(cursor.getString(cursor.getColumnIndex("display_name")));
-        recipient.setVia(cursor.getString(cursor.getColumnIndex("via")));
-        recipient.setMimeType(cursor.getString(cursor.getColumnIndex("mimetype")));
-        recipient.setPhotoUri(cursor.getString(cursor.getColumnIndex("photo_uri")));
-        recipient.setAddedTimestamp(cursor.getString(cursor.getColumnIndex("added_ts")));
-        recipient.setPeppermint(cursor.getInt(cursor.getColumnIndex("is_peppermint")) > 0);
-        return recipient;
     }
 
     public List<Recipient> getByChatId(SQLiteDatabase db, long chatId) {

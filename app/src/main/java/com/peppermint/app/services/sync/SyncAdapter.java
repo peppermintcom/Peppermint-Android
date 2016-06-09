@@ -35,7 +35,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
     private static final String TAG = SyncAdapter.class.getSimpleName();
 
-    private static final String LAST_SYNC_TIMESTAMP_KEY = "lastSyncTimestmap";
+    private static final String LAST_SYNC_TIMESTAMP_KEY = TAG + "_lastSyncTimestamp";
 
     private static final int PROGRESS_BETWEEN_MS = 5000;
 
@@ -74,22 +74,24 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.d(TAG, "Starting Sync...");
 
-        if(mPermissionsManager.getPermissionsToAsk(getContext()).size() > 0) {
+        final Context context = getContext();
+
+        if(mPermissionsManager.getPermissionsToAsk(context).size() > 0) {
             Log.w(TAG, "Can't Sync: Permissions are required...");
             return;
         }
 
-        if(!Utils.isInternetAvailable(getContext()) || !Utils.isInternetActive(getContext())) {
+        if(!Utils.isInternetAvailable(context) || !Utils.isInternetActive(getContext())) {
             Log.w(TAG, "Can't Sync: No Internet connection!");
             return;
         }
 
-        PeppermintApi peppermintApi = new PeppermintApi(getContext());
+        PeppermintApi peppermintApi = new PeppermintApi(context);
         try {
             peppermintApi.setAuthenticationToken(mAccountManager.blockingGetAuthToken(account, AuthenticatorConstants.FULL_TOKEN_TYPE, true));
         } catch (Throwable e) {
             Log.w(TAG, "Can't Sync: Error getting authentication token!", e);
-            TrackerManager.getInstance(getContext()).logException(e);
+            TrackerManager.getInstance(context).logException(e);
             return;
         }
 
@@ -118,29 +120,41 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             // RECEIVED MESSAGES
             do {
                 MessageListResponse receivedResponse = nextUrl == null ?
-                        peppermintApi.getMessages(null, serverAccountId, originalSyncTimestamp, true) :
+                        peppermintApi.getMessages(null, serverAccountId, originalSyncTimestamp, true, true) :
                         peppermintApi.getMessages(null, nextUrl);
                 processMessages(receivedResponse, mReceivedMessageIds, false, localEmailAddress);
                 nextUrl = receivedResponse.getNextUrl();
+
+                try {
+                    Thread.sleep(1000);
+                } catch(InterruptedException e) {
+                    /* nothing to do here */
+                }
             } while (nextUrl != null);
 
             // SENT MESSAGES
             do {
                 MessageListResponse sentResponse = nextUrl == null ?
-                        peppermintApi.getMessages(null, serverAccountId, originalSyncTimestamp, false) :
+                        peppermintApi.getMessages(null, serverAccountId, originalSyncTimestamp, false, true) :
                         peppermintApi.getMessages(null, nextUrl);
                 processMessages(sentResponse, mSentMessageIds, true, localEmailAddress);
                 nextUrl = sentResponse.getNextUrl();
+
+                try {
+                    Thread.sleep(1000);
+                } catch(InterruptedException e) {
+                    /* nothing to do here */
+                }
             } while (nextUrl != null);
 
         } catch(InterruptedIOException | InterruptedException e) {
             Log.w(TAG, "Cancelled Sync...", e);
             SyncService.postSyncEvent(SyncEvent.EVENT_CANCELLED, mReceivedMessageIds, mSentMessageIds, mAffectedChatIds, null);
         } catch(Exception e) {
-            TrackerManager.getInstance(getContext()).logException(e);
+            TrackerManager.getInstance(context).logException(e);
             SyncService.postSyncEvent(SyncEvent.EVENT_ERROR, mReceivedMessageIds, mSentMessageIds, mAffectedChatIds, null);
         } finally {
-            GlobalManager.clearCache();
+            GlobalManager.getInstance(context).clearCache();
         }
 
         if(!mLocalError && mLastMessageTimestamp != null) {
@@ -162,14 +176,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             } else {
                 try {
                     Message message = areSent ?
-                            GlobalManager.insertSentMessage(
-                                    context, null,
+                            GlobalManager.getInstance(context).insertSentMessage(null,
                                     messagesResponse.getRecipientEmail(), messagesResponse.getSenderEmail(),
                                     messagesResponse.getAudioUrl(), messagesResponse.getMessageId(),
                                     messagesResponse.getTranscription(), messagesResponse.getCreatedTimestamp(),
                                     messagesResponse.getDuration(), true) :
-                            GlobalManager.insertReceivedMessage(
-                                    context, messagesResponse.getRecipientEmail(),
+                            GlobalManager.getInstance(context).insertReceivedMessage(messagesResponse.getRecipientEmail(),
                                     messagesResponse.getSenderName(), messagesResponse.getSenderEmail(),
                                     messagesResponse.getAudioUrl(), messagesResponse.getMessageId(),
                                     messagesResponse.getTranscription(), messagesResponse.getCreatedTimestamp(),
@@ -203,7 +215,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                 }
             }
         }
-
     }
 
     private void setLastSyncTimestamp(String ts) {

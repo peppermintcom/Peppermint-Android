@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.peppermint.app.PeppermintApp;
+import com.peppermint.app.trackers.TrackerManager;
 
 import java.lang.ref.WeakReference;
 import java.sql.SQLException;
@@ -24,6 +25,21 @@ import de.greenrobot.event.EventBus;
  * It also keeps a weak reference cache of data object instances that allows re-usability of in-memory instances.
  */
 public abstract class DataObjectManager<E, T extends DataObject> {
+
+    public static <T extends DataObject> boolean update(DataObjectManager<?, T> dataObjectManager, T dataObject) {
+        boolean updated = false;
+        final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(dataObjectManager.getContext());
+        databaseHelper.lock();
+        try {
+            dataObjectManager.update(databaseHelper.getWritableDatabase(), dataObject);
+            updated = true;
+        } catch (SQLException e) {
+            TrackerManager.getInstance(dataObjectManager.getContext()).logException(e);
+        } finally {
+            databaseHelper.unlock();
+        }
+        return updated;
+    }
 
     private final EventBus mEventBus = new EventBus();
     private final Map<E, WeakReference<T>> mDataObjectCache = new HashMap<>();
@@ -159,5 +175,9 @@ public abstract class DataObjectManager<E, T extends DataObject> {
                 it.remove();
             }
         }
+    }
+
+    public Context getContext() {
+        return mContext;
     }
 }

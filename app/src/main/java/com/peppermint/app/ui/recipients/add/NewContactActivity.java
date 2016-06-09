@@ -338,12 +338,16 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
         }
 
         // add new contact to recent contact list (i.e. create a chat record for it)
+        DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this);
+        databaseHelper.lock();
         try {
-            GlobalManager.insertOrUpdateTimestampChatAndRecipient(this,
-                    DatabaseHelper.getInstance(this).getWritableDatabase(),
+            GlobalManager.getInstance(this).insertOrUpdateTimestampChatAndRecipient(
+                    databaseHelper.getWritableDatabase(),
                     false, DateContainer.getCurrentUTCTimestamp(), recipient);
         } catch (SQLException e) {
             mTrackerManager.log("Unable to set new contact as recent contact!", e);
+        } finally {
+            databaseHelper.unlock();
         }
 
         Toast.makeText(this, R.string.msg_contact_added, Toast.LENGTH_LONG).show();

@@ -33,6 +33,9 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+        debug {
+            minifyEnabled false
+        }
     }
     sourceSets {
         main { jniLibs.srcDir file('native-libs/') }
@@ -113,7 +116,7 @@ dependencies {
 
     // TEST
     testCompile 'com.google.guava:guava:19.0'
-    testCompile 'org.robolectric:robolectric:3.1-SNAPSHOT'
+    testCompile 'org.robolectric:robolectric:3.1'
     testCompile 'junit:junit:4.12'
 }
 

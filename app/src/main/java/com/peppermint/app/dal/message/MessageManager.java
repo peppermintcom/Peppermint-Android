@@ -174,11 +174,6 @@ public class MessageManager extends DataObjectManager<Long, Message> {
     }
 
     @Override
-    public boolean exists(SQLiteDatabase db, Message dataObject) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     protected Message newDataObjectInstance(Long id) {
         final Message message = new Message();
         message.setId(id);
@@ -223,6 +218,11 @@ public class MessageManager extends DataObjectManager<Long, Message> {
         }
 
         return message;
+    }
+
+    @Override
+    public boolean exists(SQLiteDatabase db, Message dataObject) throws SQLException {
+        throw new UnsupportedOperationException();
     }
 
     public Cursor getByChatId(SQLiteDatabase db, long chatId) {

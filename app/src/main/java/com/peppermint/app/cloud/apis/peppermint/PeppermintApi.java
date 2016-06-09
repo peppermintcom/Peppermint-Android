@@ -152,10 +152,13 @@ public class PeppermintApi extends BaseApi implements Serializable {
         return response.getJsonBody();
     }
 
-    public MessageListResponse getMessages(final String requesterId, final String serverAccountId, final String sinceTimestamp, final boolean received) throws Exception {
+    public MessageListResponse getMessages(final String requesterId, final String serverAccountId, final String sinceTimestamp, final boolean received, final boolean reverse) throws Exception {
         final HttpRequest request = new HttpRequest(MESSAGES_ENDPOINT, HttpRequest.METHOD_GET, false);
         request.setUrlParam(received ? "recipient" : "sender", serverAccountId);
         request.setUrlParam("since", sinceTimestamp);
+        if(reverse) {
+            request.setUrlParam("order", "reverse");
+        }
 
         final HttpJSONResponse<MessageListResponse> response = executeRequest(requesterId, request, new HttpJSONResponse<>(mMessageListResponseParser), true);
         if(response.getCode() == 404) {

@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -22,9 +21,7 @@ import com.peppermint.app.dal.DataObjectEvent;
 import com.peppermint.app.dal.chat.Chat;
 import com.peppermint.app.dal.contact.ContactRaw;
 import com.peppermint.app.dal.message.Message;
-import com.peppermint.app.dal.message.MessageManager;
 import com.peppermint.app.dal.recording.Recording;
-import com.peppermint.app.services.messenger.MessengerSendEvent;
 import com.peppermint.app.services.sync.SyncEvent;
 import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
@@ -141,6 +138,7 @@ public abstract class ContactListFragment extends ListFragment implements
         }
     };
 
+    protected boolean mSyncing = false;
     protected boolean mRefreshing = false;
     protected RefreshTask mRefreshTask;
 
@@ -181,14 +179,6 @@ public abstract class ContactListFragment extends ListFragment implements
             }
 
             mHandler.postDelayed(mAnimationRunnable, FIXED_AVATAR_ANIMATION_INTERVAL_MS + mRandom.nextInt(VARIABLE_AVATAR_ANIMATION_INTERVAL_MS));
-        }
-    };
-
-    private Object mMessageEventListener = new Object() {
-        public void onEventMainThread(DataObjectEvent<Message> event) {
-            if(event.getType() == DataObjectEvent.TYPE_UPDATE && event.getUpdates().get(Message.FIELD_PLAYED) != null) {
-                refresh();
-            }
         }
     };
 
@@ -260,29 +250,30 @@ public abstract class ContactListFragment extends ListFragment implements
             public void onEventMainThread(SyncEvent event) {
                 super.onEventMainThread(event);
                 if(event.getType() == SyncEvent.EVENT_FINISHED || event.getType() == SyncEvent.EVENT_PROGRESS) {
-                    if(ContactListFragment.this instanceof RecentContactsListFragment) {
-                        refresh();
-                    }
+                    refresh();
+                }
+
+                switch(event.getType()) {
+                    case SyncEvent.EVENT_STARTED:
+                    case SyncEvent.EVENT_PROGRESS:
+                        if(!mSyncing) {
+                            mSyncing = true;
+                            onSyncOngoing();
+                        }
+                        break;
+                    default:
+                        if(mSyncing) {
+                            mSyncing = false;
+                            onSyncFinished();
+                        }
                 }
             }
 
             @Override
             public void onEventMainThread(DataObjectEvent<Message> event) {
                 super.onEventMainThread(event);
-                if(event.getType() == DataObjectEvent.TYPE_CREATE && event.getDataObject().isReceived()) {
-                    if(ContactListFragment.this instanceof RecentContactsListFragment) {
-                        refresh();
-                    }
-                }
-            }
-
-            @Override
-            public void onEventMainThread(MessengerSendEvent event) {
-                super.onEventMainThread(event);
-                if(event.getType() == MessengerSendEvent.EVENT_FINISHED) {
-                    if(ContactListFragment.this instanceof RecentContactsListFragment) {
-                        refresh();
-                    }
+                if(event.getType() != DataObjectEvent.TYPE_UPDATE || event.getUpdates().get(Message.FIELD_PLAYED) != null) {
+                    refresh();
                 }
             }
 
@@ -313,8 +304,6 @@ public abstract class ContactListFragment extends ListFragment implements
 
         mChatRecordOverlayController.init(getListView(), mActivity.getOverlayManager(),
                 mActivity, savedInstanceState);
-
-        MessageManager.getInstance(mActivity).registerDataListener(mMessageEventListener);
     }
 
     @Override
@@ -333,6 +322,11 @@ public abstract class ContactListFragment extends ListFragment implements
 
     @Override
     public void onStop() {
+        if(mSyncing) {
+            mSyncing = false;
+            onSyncFinished();
+        }
+
         mActivity.removeTouchEventInterceptor(mTouchInterceptor);
 
         mHandler.removeCallbacks(mAnimationRunnable);
@@ -346,8 +340,6 @@ public abstract class ContactListFragment extends ListFragment implements
 
     @Override
     public void onDestroy() {
-        MessageManager.getInstance(mActivity).unregisterDataListener(mMessageEventListener);
-
         if(mRefreshTask != null) {
             mRefreshTask.cancel(true);
             mRefreshTask = null;
@@ -394,6 +386,12 @@ public abstract class ContactListFragment extends ListFragment implements
         super.onSaveInstanceState(outState);
     }
 
+    protected void onSyncOngoing() {
+    }
+
+    protected void onSyncFinished() {
+    }
+
     @Override
     public boolean onSearch(String searchText, boolean wasClear) {
         if(mActivity == null) {
@@ -401,7 +399,6 @@ public abstract class ContactListFragment extends ListFragment implements
         }
 
         mRefreshing = true;
-        Log.d(TAG, "REFRESHING...");
 
         mRefreshTask.execute(searchText);
 

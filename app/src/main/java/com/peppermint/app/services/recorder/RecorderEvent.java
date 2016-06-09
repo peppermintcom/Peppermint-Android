@@ -67,4 +67,15 @@ public class RecorderEvent implements Serializable {
     public Throwable getError() {
         return mError;
     }
+
+    @Override
+    public String toString() {
+        return "RecorderEvent{" +
+                "mType=" + mType +
+                ", mLoudness=" + mLoudness +
+                ", mRecording=" + mRecording +
+                ", mChat=" + mChat +
+                ", mError=" + mError +
+                '}';
+    }
 }

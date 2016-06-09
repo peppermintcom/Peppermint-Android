@@ -166,7 +166,7 @@ public class ChatView extends LinearLayout {
         addView(dividerImageView, layoutParams);
     }
 
-    protected void refreshChatData() {
+    protected void refreshChatData(boolean executeTask) {
         if(mImgAvatar.isShowStaticAvatar()) {
             mImgAvatar.setShowStaticAvatar(false);
         }
@@ -201,7 +201,9 @@ public class ChatView extends LinearLayout {
             mTxtLastMessageDate.setText("");
         }
 
-        mExtraDataLoader.execute(mChat);
+        if(executeTask) {
+            mExtraDataLoader.execute(mChat);
+        }
     }
 
     public Chat getChat() {
@@ -212,7 +214,7 @@ public class ChatView extends LinearLayout {
         synchronized (this) {
             this.mChat = mChat;
         }
-        refreshChatData();
+        refreshChatData(true);
     }
 
     @Override
@@ -233,7 +235,7 @@ public class ChatView extends LinearLayout {
     private Object mMessageDataObjectListener = new Object() {
         public void onEventMainThread(DataObjectEvent<Message> messageDataObjectEvent) {
             if (mChat != null && messageDataObjectEvent.getDataObject().getChatId() == mChat.getId()) {
-                refreshChatData();
+                mExtraDataLoader.execute(mChat);
             }
         }
     };
@@ -241,7 +243,10 @@ public class ChatView extends LinearLayout {
     private Object mChatDataObjectListener = new Object() {
         public void onEventMainThread(DataObjectEvent<Chat> chatDataObjectEvent) {
             if (mChat != null && chatDataObjectEvent.getDataObject().getId() == mChat.getId()) {
-                refreshChatData();
+                synchronized (ChatView.this) {
+                    mChat = chatDataObjectEvent.getDataObject();
+                }
+                refreshChatData(mChat.getUpdateHistory().get(Chat.FIELD_RECIPIENTS) != null);
             }
         }
     };

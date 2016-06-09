@@ -3,7 +3,6 @@ package com.peppermint.app.ui.chat;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +26,7 @@ import com.peppermint.app.ui.base.dialogs.CustomListDialog;
 import com.peppermint.app.ui.base.navigation.NavigationItem;
 import com.peppermint.app.ui.base.navigation.NavigationListAdapter;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
+import com.peppermint.app.utils.SameAsyncTaskExecutor;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
@@ -46,9 +46,13 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
     private static final String SCREEN_ID = "Chat";
 
-    protected class RefreshMessageCursorAsyncTask extends AsyncTask<Void, Void, Cursor> {
+    protected class RefreshMessageCursorLoader extends SameAsyncTaskExecutor<Void, Void, Cursor> {
+        public RefreshMessageCursorLoader(Context mContext) {
+            super(mContext);
+        }
+
         @Override
-        protected Cursor doInBackground(Void... params) {
+        protected Cursor doInBackground(SameAsyncTask asyncTask, Void... params) {
             return MessageManager.getInstance(getContext()).getByChatId(getDatabase(), mChat.getId());
         }
 
@@ -61,7 +65,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
         @Override
         protected void onPostExecute(Cursor cursor) {
-            if(getContext() == null) {
+            if(ChatController.this.getContext() == null) {
                 if(cursor != null) {
                     cursor.close();
                 }
@@ -69,7 +73,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
             }
 
             if(mAdapter == null) {
-                mAdapter = new ChatMessageCursorAdapter(getContext(), getMessagesServiceManager(),
+                mAdapter = new ChatMessageCursorAdapter(ChatController.this.getContext(), getMessagesServiceManager(),
                         getPlayerServiceManager(), cursor);
                 mAdapter.setExclamationClickListener(new MessageView.ExclamationClickListener() {
                     @Override
@@ -84,7 +88,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
         }
     }
 
-    private RefreshMessageCursorAsyncTask mRefreshMessageCursorAsyncTask;
+    private RefreshMessageCursorLoader mRefreshMessageCursorLoader;
 
     // GENERIC
     private DatabaseHelper mDatabaseHelper;
@@ -107,6 +111,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
         super(context);
         this.mRecipientDataGUI = recipientDataGUI;
         mDatabaseHelper = DatabaseHelper.getInstance(context);
+        mRefreshMessageCursorLoader = new RefreshMessageCursorLoader(context);
     }
 
     @Override
@@ -183,6 +188,9 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
     @Override
     public void stop() {
+        if(mRefreshMessageCursorLoader != null) {
+            mRefreshMessageCursorLoader.cancel(true);
+        }
         if(mAdapter != null) {
             mAdapter.changeCursor(null);
         }
@@ -201,21 +209,16 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
         if(mAdapter != null) {
             mAdapter.changeCursor(null);
-            mAdapter.destroy(/*!mSavedInstanceState*/);
+            mAdapter.destroy();
             mAdapter = null;
         }
         dismissErrorDialog();
-        /*mSavedInstanceState = false;*/
 
         super.deinit();
     }
 
     @Override
     public boolean onLongClick(View v) {
-        /*if(mAdapter == null) {
-            return false;
-        }*/
-
         if(getPlayerServiceManager() != null && getPlayerServiceManager().isBound()) {
             getPlayerServiceManager().pause();
         }
@@ -241,12 +244,10 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
     public void onEventMainThread(DataObjectEvent<Message> event) {
         super.onEventMainThread(event);
-        if(mChat != null && event.getType() == DataObjectEvent.TYPE_CREATE && event.getDataObject().isReceived()) {
-            if(event.getDataObject().getChatId() == mChat.getId()) {
-                refreshList();
-                if (Utils.isScreenOnAndUnlocked(getContext())) {
-                    event.setSkipNotifications(true);
-                }
+        if(mChat != null && event.getDataObject().getChatId() == mChat.getId()) {
+            refreshList();
+            if (event.getDataObject().isReceived() && Utils.isScreenOnAndUnlocked(getContext())) {
+                event.setSkipNotifications(true);
             }
         }
     }
@@ -278,14 +279,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
         if(mChat == null || !getMessagesServiceManager().isBound() || !getPlayerServiceManager().isBound()) {
             return;
         }
-
-        if(mRefreshMessageCursorAsyncTask != null) {
-            mRefreshMessageCursorAsyncTask.cancel(true);
-            mRefreshMessageCursorAsyncTask = null;
-        }
-
-        mRefreshMessageCursorAsyncTask = new RefreshMessageCursorAsyncTask();
-        mRefreshMessageCursorAsyncTask.execute();
+        mRefreshMessageCursorLoader.execute();
     }
 
     private SQLiteDatabase getDatabase() {

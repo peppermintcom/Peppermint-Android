@@ -24,9 +24,9 @@ public class PendingLogout extends DataObject implements Serializable {
     public PendingLogout(long mId, String mDeviceServerId, String mAccountServerId, String mAuthenticationToken) {
         this();
         this.mId = mId;
-        this.mDeviceServerId = mDeviceServerId;
-        this.mAccountServerId = mAccountServerId;
-        this.mAuthenticationToken = mAuthenticationToken;
+        setDeviceServerId(mDeviceServerId);
+        setAccountServerId(mAccountServerId);
+        setAuthenticationToken(mAuthenticationToken);
     }
 
     public long getId() {

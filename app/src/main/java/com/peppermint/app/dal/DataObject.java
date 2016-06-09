@@ -21,7 +21,13 @@ public abstract class DataObject {
             if (change == null) {
                 mUpdateHistory.put(fieldId, new DataObjectUpdate(fieldId, beforeChangeData, afterChangeData));
             } else {
-                change.setAfterUpdateValue(afterChangeData);
+                // remove if before = after
+                if((change.getBeforeUpdateValue() == null && change.getBeforeUpdateValue() == afterChangeData) ||
+                        (change.getBeforeUpdateValue() != null && afterChangeData != null && change.getBeforeUpdateValue().equals(afterChangeData))) {
+                    mUpdateHistory.remove(fieldId);
+                } else {
+                    change.setAfterUpdateValue(afterChangeData);
+                }
             }
             return true;
         }

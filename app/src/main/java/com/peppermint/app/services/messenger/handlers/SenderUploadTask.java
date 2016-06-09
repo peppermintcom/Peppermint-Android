@@ -9,7 +9,7 @@ import com.peppermint.app.cloud.apis.peppermint.objects.MessagesResponse;
 import com.peppermint.app.cloud.apis.peppermint.objects.TranscriptionResponse;
 import com.peppermint.app.cloud.apis.peppermint.objects.UploadsResponse;
 import com.peppermint.app.cloud.apis.speech.GoogleSpeechRecognizeClient;
-import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.dal.DataObjectManager;
 import com.peppermint.app.dal.GlobalManager;
 import com.peppermint.app.dal.message.Message;
 import com.peppermint.app.dal.message.MessageManager;
@@ -113,7 +113,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
             message.setServerId(response.getMessageId());
             message.setRegistrationTimestamp(response.getCreatedTimestamp());
             try {
-                GlobalManager.markAsPeppermint(getContext(), recipient, data.getEmail());
+                GlobalManager.getInstance(getContext()).markAsPeppermint(recipient, data.getEmail());
             } catch (SQLException e) {
                 getTrackerManager().logException(e);
             }
@@ -124,21 +124,14 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
             message.removeConfirmedSentRecipientId(recipient.getId());
             sentInApp = false;
             try {
-                GlobalManager.unmarkAsPeppermint(getContext(), recipient);
+                GlobalManager.getInstance(getContext()).unmarkAsPeppermint(recipient);
             } catch (SQLException e1) {
                 getTrackerManager().logException(e1);
             }
         }
 
         // immediately update message with serverId and sent recipients
-        final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getContext());
-        databaseHelper.lock();
-        try {
-            MessageManager.getInstance(getContext()).update(databaseHelper.getWritableDatabase(), message);
-        } catch (SQLException e) {
-            getTrackerManager().logException(e);
-        }
-        databaseHelper.unlock();
+        DataObjectManager.update(MessageManager.getInstance(getContext()), message);
 
         return sentInApp;
     }
@@ -192,14 +185,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
 
         if(recording.getTranscription() != null) {
             // immediately update recording with transcription data
-            final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getContext());
-            databaseHelper.lock();
-            try {
-                RecordingManager.getInstance().update(databaseHelper.getWritableDatabase(), recording);
-            } catch (SQLException e) {
-                getTrackerManager().logException(e);
-            }
-            databaseHelper.unlock();
+            DataObjectManager.update(RecordingManager.getInstance(), recording);
 
             if(mSenderUploadListener != null && !mRecovering) {
                 mSenderUploadListener.onSendingUploadProgress(this, 0);

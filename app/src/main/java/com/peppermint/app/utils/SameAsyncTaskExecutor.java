@@ -128,8 +128,6 @@ public abstract class SameAsyncTaskExecutor<Params, Progress, Result> {
         }
 
         if(goAhead) {
-            Log.d(TAG, "Executing New SameAsyncTask!");
-
             markNextIsPending();
             final SameAsyncTask asyncTask = new SameAsyncTask();
             mAsyncTaskList.add(asyncTask);

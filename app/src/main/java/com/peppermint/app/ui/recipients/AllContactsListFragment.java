@@ -189,6 +189,22 @@ public class AllContactsListFragment extends ContactListFragment {
     }
 
     @Override
+    protected void onSyncOngoing() {
+        super.onSyncOngoing();
+        if(mActivity != null) {
+            mActivity.getContentResolver().unregisterContentObserver(mContactsObserver);
+        }
+    }
+
+    @Override
+    protected void onSyncFinished() {
+        super.onSyncFinished();
+        if(mActivity != null) {
+            mActivity.getContentResolver().registerContentObserver(ContactsContract.Contacts.CONTENT_URI, true, mContactsObserver);
+        }
+    }
+
+    @Override
     public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
         Chat chat = ((ContactView) view).getChat();
         if(chat == null) {
@@ -214,7 +230,7 @@ public class AllContactsListFragment extends ContactListFragment {
 
         Chat tappedChat;
         try {
-            tappedChat = GlobalManager.insertOrUpdateChatAndRecipients(mActivity, contactRaw);
+            tappedChat = GlobalManager.getInstance(mActivity).insertOrUpdateChatAndRecipients(contactRaw);
         } catch (SQLException e) {
             TrackerManager.getInstance(mActivity.getApplicationContext()).logException(e);
             Toast.makeText(mActivity, R.string.msg_database_error, Toast.LENGTH_LONG).show();

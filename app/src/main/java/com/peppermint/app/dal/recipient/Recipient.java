@@ -36,19 +36,19 @@ public class Recipient extends DataObject implements Serializable {
 
     public Recipient(long mId, long mDroidContactRawId, long mDroidContactId, long mDroidContactDataId, String mDisplayName, String mMimeType, String mVia, String mPhotoUri, String mAddedTimestamp, boolean mPeppermint) {
         this.mId = mId;
-        this.mDroidContactRawId = mDroidContactRawId;
-        this.mDroidContactId = mDroidContactId;
-        this.mDroidContactDataId = mDroidContactDataId;
-        this.mDisplayName = mDisplayName;
-        this.mMimeType = mMimeType;
-        this.mVia = mVia;
-        this.mPhotoUri = mPhotoUri;
-        this.mAddedTimestamp = mAddedTimestamp;
-        this.mPeppermint = mPeppermint;
+        setDroidContactRawId(mDroidContactRawId);
+        setDroidContactId(mDroidContactId);
+        setDroidContactDataId(mDroidContactDataId);
+        setDisplayName(mDisplayName);
+        setMimeType(mMimeType);
+        setVia(mVia);
+        setPhotoUri(mPhotoUri);
+        setAddedTimestamp(mAddedTimestamp);
+        setPeppermint(mPeppermint);
     }
 
     public Recipient(ContactRaw droidContactRaw, String mAddedTimestamp) {
-        this.mAddedTimestamp = mAddedTimestamp;
+        setAddedTimestamp(mAddedTimestamp);
         setFromDroidContactRaw(droidContactRaw);
     }
 

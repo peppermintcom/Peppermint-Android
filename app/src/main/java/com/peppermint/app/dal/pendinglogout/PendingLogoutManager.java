@@ -59,11 +59,6 @@ public class PendingLogoutManager extends DataObjectManager<Long, PendingLogout>
     }
 
     @Override
-    public boolean exists(SQLiteDatabase db, PendingLogout dataObject) throws SQLException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     protected PendingLogout newDataObjectInstance(Long id) {
         final PendingLogout pendingLogout = new PendingLogout();
         pendingLogout.setId(id);
@@ -77,6 +72,11 @@ public class PendingLogoutManager extends DataObjectManager<Long, PendingLogout>
         pendingLogout.setDeviceServerId(cursor.getString(cursor.getColumnIndex("device_server_id")));
         pendingLogout.setAuthenticationToken(cursor.getString(cursor.getColumnIndex("auth_token")));
         return pendingLogout;
+    }
+
+    @Override
+    public boolean exists(SQLiteDatabase db, PendingLogout dataObject) throws SQLException {
+        throw new UnsupportedOperationException();
     }
 
     public Cursor getAll(SQLiteDatabase db) {

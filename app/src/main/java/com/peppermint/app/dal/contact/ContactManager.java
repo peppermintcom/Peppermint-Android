@@ -218,9 +218,7 @@ public class ContactManager {
                                 phone != null ? ContactsContract.Data.DATA1 + " = " + DatabaseUtils.sqlEscapeString(phone) : null),
                         Utils.joinString(" OR ",
                                 ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE),
-                                ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE))/*,
-                        ContactsContract.RawContacts.ACCOUNT_TYPE + "=" + DatabaseUtils.sqlEscapeString(GOOGLE_ACCOUNT_TYPE),
-                        ContactsContract.RawContacts.ACCOUNT_NAME + "=" + DatabaseUtils.sqlEscapeString(googleAccountName)*/),
+                                ContactsContract.Data.MIMETYPE + "=" + DatabaseUtils.sqlEscapeString(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE))),
                 null, SQL_GENERAL_ORDER);
     }
 

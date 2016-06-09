@@ -98,11 +98,6 @@ public class RecordingManager extends DataObjectManager<Long, Recording> {
     }
 
     @Override
-    public boolean exists(SQLiteDatabase db, Recording recording) throws SQLException {
-        return recording.getId() > 0;
-    }
-
-    @Override
     protected Recording newDataObjectInstance(Long id) {
         final Recording recording = new Recording();
         recording.setId(id);
@@ -124,6 +119,11 @@ public class RecordingManager extends DataObjectManager<Long, Recording> {
         recording.setTranscriptionConfidence(cursor.isNull(cursor.getColumnIndex("transcription_confidence")) ?
                 -1f : cursor.getFloat(cursor.getColumnIndex("transcription_confidence")));
         return recording;
+    }
+
+    @Override
+    public boolean exists(SQLiteDatabase db, Recording recording) throws SQLException {
+        return recording.getId() > 0;
     }
 
     public Recording getRecordingById(SQLiteDatabase db, long recordingId) {

@@ -8,16 +8,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
+import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.dal.GlobalManager;
 import com.peppermint.app.dal.chat.Chat;
 import com.peppermint.app.dal.chat.ChatManager;
 import com.peppermint.app.dal.contact.ContactRaw;
-import com.peppermint.app.dal.DatabaseHelper;
-import com.peppermint.app.dal.GlobalManager;
 import com.peppermint.app.dal.message.Message;
 import com.peppermint.app.dal.recording.Recording;
 import com.peppermint.app.trackers.TrackerManager;
-import com.peppermint.app.ui.base.views.CustomActionBarView;
 import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
+import com.peppermint.app.ui.base.views.CustomActionBarView;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.chat.ChatActivity;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
@@ -136,7 +136,7 @@ public class FeedbackActivity extends CustomActionBarActivity implements View.On
 
         Chat tappedChat;
         try {
-            tappedChat = GlobalManager.insertOrUpdateChatAndRecipients(this, contactRaw);
+            tappedChat = GlobalManager.getInstance(this).insertOrUpdateChatAndRecipients(contactRaw);
         } catch (SQLException e) {
             TrackerManager.getInstance(this.getApplicationContext()).logException(e);
             Toast.makeText(this, R.string.msg_database_error, Toast.LENGTH_LONG).show();

@@ -2,21 +2,24 @@ package com.peppermint.app.ui.chat.recorder;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 import com.peppermint.app.R;
 import com.peppermint.app.dal.DataObjectEvent;
 import com.peppermint.app.dal.chat.Chat;
 import com.peppermint.app.dal.message.Message;
+import com.peppermint.app.dal.message.MessageManager;
 import com.peppermint.app.dal.recording.Recording;
 import com.peppermint.app.services.messenger.MessengerSendEvent;
 import com.peppermint.app.services.messenger.MessengerService;
 import com.peppermint.app.services.messenger.MessengerServiceManager;
-import com.peppermint.app.services.sync.SyncEvent;
 import com.peppermint.app.services.messenger.handlers.SenderPreferences;
 import com.peppermint.app.services.player.PlayerEvent;
 import com.peppermint.app.services.player.PlayerServiceManager;
 import com.peppermint.app.services.recorder.RecorderEvent;
+import com.peppermint.app.services.sync.SyncEvent;
+import com.peppermint.app.services.sync.SyncService;
 import com.peppermint.app.ui.base.OverlayManager;
 import com.peppermint.app.ui.base.TouchInterceptable;
 
@@ -65,6 +68,10 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
 
         mMessengerServiceManager.addServiceListener(this);
         mPlayerServiceManager.addServiceListener(this);
+
+        Log.d(TAG, "Registered Event Listener");
+        SyncService.registerEventListener(this);
+        MessageManager.getInstance(mContext).registerDataListener(this);
         MessengerService.registerEventListener(this);
 
         // start services
@@ -101,6 +108,9 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     }
 
     public void deinit() {
+        Log.d(TAG, "Unregistered Event Listener");
+        SyncService.unregisterEventListener(this);
+        MessageManager.getInstance(mContext).unregisterDataListener(this);
         MessengerService.unregisterEventListener(this);
         mMessengerServiceManager.removeServiceListener(this);
         mPlayerServiceManager.removeServiceListener(this);
@@ -169,15 +179,16 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         return mStarted;
     }
 
-    // message data listeners
+    // message data listener
     public void onEventMainThread(DataObjectEvent<Message> event) {
     }
 
-    // messenger service listeners
-    public void onEventMainThread(SyncEvent event) {
+    // messenger service listener
+    public void onEventMainThread(MessengerSendEvent event) {
     }
 
-    public void onEventMainThread(MessengerSendEvent event) {
+    // sync service listener
+    public void onEventMainThread(SyncEvent event) {
     }
 
     @Override

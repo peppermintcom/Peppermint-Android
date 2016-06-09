@@ -9,6 +9,7 @@ import android.database.DataSetObserver;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.WorkerThread;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,7 @@ import java.util.List;
  * Created by Nuno Luz on 11-09-2015.
  *
  * Cursor that filters all the contents of another {@link Cursor} to all those
- * accepted by a {@link FilteredCursor.Filter}.<br />
+ * accepted by a filter ({@link FilteredCursor.Filter}).<br />
  *
  * Inspired on the solution found at http://stackoverflow.com/questions/3766688/filtering-a-cursor-the-right-way
  */
@@ -41,6 +42,7 @@ public class FilteredCursor implements Cursor {
         filter(mFilter);
     }
 
+    @WorkerThread
     public void filter(Filter filter) {
         if(filter == null) {
             return;

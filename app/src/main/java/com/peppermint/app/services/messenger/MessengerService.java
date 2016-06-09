@@ -8,7 +8,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -27,6 +26,7 @@ import com.peppermint.app.StartupActivity;
 import com.peppermint.app.cloud.apis.google.GoogleApiNoAuthorizationException;
 import com.peppermint.app.cloud.apis.peppermint.PeppermintApiNoAccountException;
 import com.peppermint.app.dal.DataObjectEvent;
+import com.peppermint.app.dal.DataObjectManager;
 import com.peppermint.app.dal.DatabaseHelper;
 import com.peppermint.app.dal.GlobalManager;
 import com.peppermint.app.dal.chat.Chat;
@@ -34,14 +34,17 @@ import com.peppermint.app.dal.contact.ContactManager;
 import com.peppermint.app.dal.message.Message;
 import com.peppermint.app.dal.message.MessageManager;
 import com.peppermint.app.dal.recording.Recording;
+import com.peppermint.app.services.authenticator.AuthenticationService;
 import com.peppermint.app.services.authenticator.AuthenticatorUtils;
 import com.peppermint.app.services.authenticator.PendingLogoutPeppermintTask;
+import com.peppermint.app.services.authenticator.SignOutEvent;
 import com.peppermint.app.services.gcm.RegistrationIntentService;
 import com.peppermint.app.services.messenger.handlers.NoInternetConnectionException;
 import com.peppermint.app.services.messenger.handlers.NoPlayServicesException;
 import com.peppermint.app.services.messenger.handlers.SenderManager;
 import com.peppermint.app.services.messenger.handlers.SenderManagerListener;
 import com.peppermint.app.services.messenger.handlers.SenderPreferences;
+import com.peppermint.app.services.messenger.handlers.SenderSupportTask;
 import com.peppermint.app.services.messenger.handlers.SenderTask;
 import com.peppermint.app.services.messenger.handlers.SenderUploadTask;
 import com.peppermint.app.services.sync.SyncEvent;
@@ -116,17 +119,6 @@ public class MessengerService extends Service {
 
     // bridge directly to the event bus
     private SenderManagerListener mSenderManagerListener = new SenderManagerListener() {
-        private void saveMessage(Message message) {
-            final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(MessengerService.this);
-            databaseHelper.lock();
-            final SQLiteDatabase db = databaseHelper.getWritableDatabase();
-            try {
-                MessageManager.getInstance(MessengerService.this).update(db, message);
-            } catch (SQLException e) {
-                mTrackerManager.logException(e);
-            }
-            databaseHelper.unlock();
-        }
 
         private void handleError(SenderUploadTask uploadTask, Throwable error) {
             if (error != null) {
@@ -146,14 +138,14 @@ public class MessengerService extends Service {
 
         @Override
         public void onSendingStarted(SenderUploadTask uploadTask) {
-            saveMessage(uploadTask.getMessage());
+            DataObjectManager.update(MessageManager.getInstance(MessengerService.this), uploadTask.getMessage());
             postSendEvent(MessengerSendEvent.EVENT_STARTED, uploadTask, null);
         }
 
         @Override
         public void onSendingCancelled(SenderUploadTask uploadTask) {
             try {
-                GlobalManager.deleteMessageAndRecording(MessengerService.this, uploadTask.getMessage());
+                GlobalManager.getInstance(MessengerService.this).deleteMessageAndRecording(uploadTask.getMessage());
             } catch (SQLException e) {
                 mTrackerManager.logException(e);
             }
@@ -167,7 +159,7 @@ public class MessengerService extends Service {
             mPreferences.setHasSentMessage(true);
             mHandler.removeCallbacks(mNotificationRunnable);
             dismissFirstAudioMessageNotification();
-            saveMessage(uploadTask.getMessage());
+            DataObjectManager.update(MessageManager.getInstance(MessengerService.this), uploadTask.getMessage());
 
             postSendEvent(MessengerSendEvent.EVENT_FINISHED, uploadTask, null);
         }
@@ -175,7 +167,7 @@ public class MessengerService extends Service {
         @Override
         public void onSendingError(SenderUploadTask uploadTask, Throwable error) {
             handleError(uploadTask, error);
-            saveMessage(uploadTask.getMessage());
+            DataObjectManager.update(MessageManager.getInstance(MessengerService.this), uploadTask.getMessage());
             postSendEvent(MessengerSendEvent.EVENT_ERROR, uploadTask, error);
         }
 
@@ -187,13 +179,13 @@ public class MessengerService extends Service {
         @Override
         public void onSendingQueued(SenderUploadTask uploadTask, Throwable error) {
             handleError(uploadTask, error);
-            saveMessage(uploadTask.getMessage());
+            DataObjectManager.update(MessageManager.getInstance(MessengerService.this), uploadTask.getMessage());
             postSendEvent(MessengerSendEvent.EVENT_QUEUED, uploadTask, error);
         }
 
         @Override
         public void onSendingNonCancellable(SenderUploadTask uploadTask) {
-            saveMessage(uploadTask.getMessage());
+            DataObjectManager.update(MessageManager.getInstance(MessengerService.this), uploadTask.getMessage());
             postSendEvent(MessengerSendEvent.EVENT_NON_CANCELLABLE, uploadTask, null);
         }
     };
@@ -282,7 +274,7 @@ public class MessengerService extends Service {
 
         Message message = null;
         try {
-            message = GlobalManager.insertReceivedMessage(this, receiverEmail, senderName, senderEmail, audioUrl, serverId, transcription, createdTs, durationSeconds, null, false);
+            message = GlobalManager.getInstance(this).insertReceivedMessage(receiverEmail, senderName, senderEmail, audioUrl, serverId, transcription, createdTs, durationSeconds, null, false);
         } catch (ContactManager.InvalidViaException | ContactManager.InvalidNameException e) {
             mTrackerManager.log(senderName + " - " + senderEmail);
             mTrackerManager.logException(e);
@@ -375,7 +367,7 @@ public class MessengerService extends Service {
     private Object mNotificationEventReceiver = new Object() {
         @SuppressWarnings("unused") // used through reflection
         public void onEventMainThread(DataObjectEvent<Message> event) {
-            if(!event.isSkipNotifications()) {
+            if(event.getType() == DataObjectEvent.TYPE_CREATE && event.getDataObject().isReceived() && !event.isSkipNotifications()) {
                 showNotification(event.getDataObject());
             }
         }
@@ -402,7 +394,7 @@ public class MessengerService extends Service {
         mTrackerManager = TrackerManager.getInstance(getApplicationContext());
         mAuthenticatorUtils = new AuthenticatorUtils(this);
 
-        registerEventListener(mNotificationEventReceiver, Integer.MIN_VALUE);
+        MessageManager.getInstance(this).registerDataListener(mNotificationEventReceiver, Integer.MIN_VALUE);
         SyncService.registerEventListener(mSyncEventReceiver);
 
         mPreferences = new SenderPreferences(this);
@@ -485,7 +477,7 @@ public class MessengerService extends Service {
 
         // unregister before deinit() to avoid removing cancelled messages
         // must retry these after reboot
-        unregisterEventListener(mNotificationEventReceiver);
+        MessageManager.getInstance(this).unregisterDataListener(mNotificationEventReceiver);
         SyncService.unregisterEventListener(mSyncEventReceiver);
 
         mSenderManager.deinit();
@@ -502,12 +494,7 @@ public class MessengerService extends Service {
 
     private void markAsPlayed(Message message) {
         if(!message.isPlayed()) {
-            try {
-                GlobalManager.markAsPlayed(this, message);
-                refreshBadge();
-            } catch (SQLException e) {
-                mTrackerManager.logException(e);
-            }
+            (new MarkAsPlayedTask(message)).execute((Void) null);
         }
         removeNotification(message);
     }
@@ -538,7 +525,7 @@ public class MessengerService extends Service {
         Message message = null;
 
         try {
-            message = GlobalManager.insertNotSentMessage(this, chat, recording);
+            message = GlobalManager.getInstance(this).insertNotSentMessage(chat, recording);
         } catch (SQLException e) {
             mTrackerManager.logException(e);
         }
@@ -554,7 +541,7 @@ public class MessengerService extends Service {
         if(message != null) {
             if(!isSending(message)) {
                 try {
-                    GlobalManager.deleteMessageAndRecording(this, message);
+                    GlobalManager.getInstance(this).deleteMessageAndRecording(message);
                 } catch (SQLException e) {
                     mTrackerManager.logException(e);
                 }
@@ -650,5 +637,58 @@ public class MessengerService extends Service {
         NotificationManager notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancel(FIRST_AUDIO_MESSAGE_NOTIFICATION_ID);
+    }
+
+    private class MarkAsPlayedTask extends SenderSupportTask {
+
+        public MarkAsPlayedTask(Message message) {
+            super(null, null, null);
+            getIdentity().setContext(MessengerService.this);
+            getIdentity().setTrackerManager(TrackerManager.getInstance(MessengerService.this));
+            getIdentity().setPreferences(new SenderPreferences(MessengerService.this));
+            setMessage(message);
+        }
+
+        @Override
+        protected void execute() throws Throwable {
+            Log.d(TAG, "Starting Mark as Played...");
+
+            Message message = getMessage();
+            setupPeppermintAuthentication();
+            getPeppermintApi().markAsPlayedMessage(getId().toString(), message.getServerId());
+        }
+
+        public void onEventMainThread(SignOutEvent event) {
+            cancel(true);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            AuthenticationService.registerEventListener(this);
+        }
+
+        @Override
+        protected void onCancelled(Void aVoid) {
+            super.onCancelled(aVoid);
+            AuthenticationService.unregisterEventListener(this);
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            AuthenticationService.unregisterEventListener(this);
+            final Message message = getMessage();
+            if(getError() != null) {
+                message.setPlayed(false);
+                if(!(getError() instanceof NoInternetConnectionException)) {
+                    getTrackerManager().logException(getError());
+                }
+            } else {
+                message.setPlayed(true);
+            }
+            DataObjectManager.update(MessageManager.getInstance(MessengerService.this), message);
+            refreshBadge();
+        }
     }
 }

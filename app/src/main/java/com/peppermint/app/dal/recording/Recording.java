@@ -40,29 +40,23 @@ public class Recording extends DataObject implements Serializable {
     public Recording() {
     }
 
-    public Recording(String filePath) {
-        this.mFilePath = filePath;
+    public Recording(String mFilePath) {
+        setFilePath(mFilePath);
     }
 
-    public Recording(String filePath, long durationMillis, long sizeKb) {
-        this.mFilePath = filePath;
-        this.mDurationMillis = durationMillis;
-        this.mSizeKb = sizeKb;
+    public Recording(String mFilePath, long mDurationMillis, float mSizeKb, boolean mHasVideo) {
+        setFilePath(mFilePath);
+        setDurationMillis(mDurationMillis);
+        setSizeKb(mSizeKb);
+        setHasVideo(mHasVideo);
     }
 
-    public Recording(String filePath, long durationMillis, float sizeKb, boolean hasVideo) {
-        this.mFilePath = filePath;
-        this.mDurationMillis = durationMillis;
-        this.mSizeKb = sizeKb;
-        this.mHasVideo = hasVideo;
-    }
-
-    public Recording(String filePath, long durationMillis, float sizeKb, boolean hasVideo, String contentType) {
-        this.mFilePath = filePath;
-        this.mDurationMillis = durationMillis;
-        this.mSizeKb = sizeKb;
-        this.mHasVideo = hasVideo;
-        this.mContentType = contentType;
+    public Recording(String mFilePath, long mDurationMillis, float mSizeKb, boolean mHasVideo, String mContentType) {
+        setFilePath(mFilePath);
+        setDurationMillis(mDurationMillis);
+        setSizeKb(mSizeKb);
+        setHasVideo(mHasVideo);
+        setContentType(mContentType);
     }
 
     public File getFile() {

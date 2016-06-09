@@ -67,50 +67,32 @@ public class Message extends DataObject implements Serializable {
     public Message() {
     }
 
-    public Message(Message message) {
-        setId(message.mId);
-        mChatId = message.mChatId;
-        mRecordingId = message.mRecordingId;
-        mAuthorId = message.mAuthorId;
-        mEmailBody = message.mEmailBody;
-        mEmailSubject = message.mEmailSubject;
-        mRegistrationTimestamp = message.mRegistrationTimestamp;
-        mSent = message.mSent;
-        mReceived = message.mReceived;
-        mPlayed = message.mPlayed;
-        mServerId = message.mServerId;
-        mServerCanonicalUrl = message.mServerCanonicalUrl;
-        mServerShortUrl = message.mServerShortUrl;
-        mParameters.putAll(message.mParameters);
-        mConfirmedSentRecipientIds.addAll(message.mConfirmedSentRecipientIds);
-    }
-
     public Message(long mRecordingId, long mChatId) {
-        this.mChatId = mChatId;
-        this.mRecordingId = mRecordingId;
+        setChatId(mChatId);
+        setRecordingId(mRecordingId);
     }
 
     public Message(long mRecordingId, long mChatId, String mEmailSubject, String mEmailBody) {
-        this.mChatId = mChatId;
-        this.mRecordingId = mRecordingId;
-        this.mEmailSubject = mEmailSubject;
-        this.mEmailBody = mEmailBody;
+        setChatId(mChatId);
+        setRecordingId(mRecordingId);
+        setEmailSubject(mEmailSubject);
+        setEmailBody(mEmailBody);
     }
 
     public Message(long mId, long mChatId, long mRecordingId, long mAuthorId, String mEmailSubject, String mEmailBody, String mRegistrationTimestamp, boolean mReceived, boolean mSent, boolean mPlayed, String mServerId, String mServerCanonicalUrl, String mServerShortUrl) {
         setId(mId);
-        this.mChatId = mChatId;
-        this.mRecordingId = mRecordingId;
-        this.mAuthorId = mAuthorId;
-        this.mEmailSubject = mEmailSubject;
-        this.mEmailBody = mEmailBody;
-        this.mRegistrationTimestamp = mRegistrationTimestamp;
-        this.mReceived = mReceived;
-        this.mSent = mSent;
-        this.mPlayed = mPlayed;
-        this.mServerId = mServerId;
-        this.mServerCanonicalUrl = mServerCanonicalUrl;
-        this.mServerShortUrl = mServerShortUrl;
+        setChatId(mChatId);
+        setRecordingId(mRecordingId);
+        setEmailSubject(mEmailSubject);
+        setEmailBody(mEmailBody);
+        setAuthorId(mAuthorId);
+        setRegistrationTimestamp(mRegistrationTimestamp);
+        setReceived(mReceived);
+        setSent(mSent);
+        setPlayed(mPlayed);
+        setServerId(mServerId);
+        setServerCanonicalUrl(mServerCanonicalUrl);
+        setServerShortUrl(mServerShortUrl);
     }
 
     public long getChatId() {
