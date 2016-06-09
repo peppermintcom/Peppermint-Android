@@ -17,16 +17,16 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.services.authenticator.AuthenticationData;
-import com.peppermint.app.dal.contact.ContactManager;
-import com.peppermint.app.dal.contact.ContactRaw;
 import com.peppermint.app.dal.DatabaseHelper;
 import com.peppermint.app.dal.GlobalManager;
-import com.peppermint.app.ui.base.views.CustomActionBarView;
-import com.peppermint.app.ui.base.navigation.NavigationItem;
-import com.peppermint.app.ui.base.navigation.NavigationListAdapter;
+import com.peppermint.app.dal.contact.ContactManager;
+import com.peppermint.app.dal.contact.ContactRaw;
+import com.peppermint.app.services.authenticator.AuthenticationData;
 import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
 import com.peppermint.app.ui.base.dialogs.CustomListDialog;
+import com.peppermint.app.ui.base.navigation.NavigationItem;
+import com.peppermint.app.ui.base.navigation.NavigationListAdapter;
+import com.peppermint.app.ui.base.views.CustomActionBarView;
 import com.peppermint.app.ui.base.views.CustomFontEditText;
 import com.peppermint.app.ui.base.views.CustomToast;
 import com.peppermint.app.ui.base.views.EditTextValidatorLayout;
@@ -341,7 +341,7 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
         try {
             GlobalManager.insertOrUpdateTimestampChatAndRecipient(this,
                     DatabaseHelper.getInstance(this).getWritableDatabase(),
-                    DateContainer.getCurrentUTCTimestamp(), recipient);
+                    false, DateContainer.getCurrentUTCTimestamp(), recipient);
         } catch (SQLException e) {
             mTrackerManager.log("Unable to set new contact as recent contact!", e);
         }

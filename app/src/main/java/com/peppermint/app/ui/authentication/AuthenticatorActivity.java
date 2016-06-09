@@ -37,18 +37,14 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.peppermint.app.PeppermintEventBus;
 import com.peppermint.app.R;
 import com.peppermint.app.cloud.apis.google.GoogleApiDeniedAuthorizationException;
 import com.peppermint.app.cloud.apis.google.GoogleApiNoAuthorizationException;
 import com.peppermint.app.cloud.apis.peppermint.PeppermintApi;
 import com.peppermint.app.cloud.apis.peppermint.PeppermintApiInvalidAccessTokenException;
-import com.peppermint.app.cloud.apis.peppermint.PeppermintApiNoAccountException;
-import com.peppermint.app.services.authenticator.AuthenticationData;
 import com.peppermint.app.services.authenticator.AuthenticatorConstants;
 import com.peppermint.app.services.authenticator.AuthenticatorUtils;
-import com.peppermint.app.services.messenger.MessagesServiceManager;
-import com.peppermint.app.services.messenger.MessagesSyncTask;
+import com.peppermint.app.services.messenger.MessengerServiceManager;
 import com.peppermint.app.services.messenger.handlers.NoInternetConnectionException;
 import com.peppermint.app.services.messenger.handlers.SenderPreferences;
 import com.peppermint.app.services.messenger.handlers.SenderSupportListener;
@@ -112,7 +108,6 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
     // authentication process tasks
     private AuthenticationPeppermintTask mAuthenticationPeppermintTask;
     private AuthenticationGoogleApiTask mAuthenticationGoogleApiTask;
-    private MessagesSyncTask mMessagesSyncTask;
 
     // authentication process status variables
     private boolean mDoingAuth = false;
@@ -171,7 +166,16 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
             mDeviceServerId = task.getDeviceServerId();
             mAccountServerId = task.getAccountServerId();
             mAuthenticatorUtils.createAccount(task.getAccessToken(), mSelectedAccount, mAccountServerId, mPassword, mDeviceServerId, mDeviceId, mDeviceKey, mAccountType);
-            startMessagesSync();
+
+            try {
+                mAuthenticatorUtils.requestSync();
+            } catch (Exception e) {
+                Log.e(TAG, "Error requesting synchronization...", e);
+            }
+
+            finishAuthentication();
+            mDoingAuth = false;
+            hideProgress();
         }
 
         @Override
@@ -182,35 +186,6 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
 
         @Override
         public void onSendingSupportProgress(SenderSupportTask supportTask, float progressValue) { }
-    };
-
-    private final SenderSupportListener mSyncTaskListener = new SenderSupportListener() {
-        @Override
-        public void onSendingSupportStarted(SenderSupportTask supportTask) { mDoingAuth = true;
-            mProgressDialog.setMessage(getString(R.string.syncing_messages_));
-        }
-
-        @Override
-        public void onSendingSupportCancelled(SenderSupportTask supportTask) {
-            mDoingAuth = false;
-            hideProgress();
-        }
-
-        @Override
-        public void onSendingSupportFinished(SenderSupportTask supportTask) {
-            finishAuthentication();
-            mDoingAuth = false;
-            hideProgress();
-        }
-
-        @Override
-        public void onSendingSupportError(SenderSupportTask supportTask, Throwable error) {
-            onSendingSupportFinished(supportTask);
-        }
-
-        @Override
-        public void onSendingSupportProgress(SenderSupportTask supportTask, float progressValue) {
-        }
     };
 
     private void startGoogleAuthentication() {
@@ -231,12 +206,6 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         mAuthenticationPeppermintTask.getIdentity().setTrackerManager(mTrackerManager);
         mAuthenticationPeppermintTask.getIdentity().setPreferences(mPreferences);
         mAuthenticationPeppermintTask.execute((Void) null);
-    }
-
-    private void startMessagesSync() {
-        showProgress();
-        mMessagesSyncTask = new MessagesSyncTask(this, mSyncTaskListener);
-        mMessagesSyncTask.execute((Void) null);
     }
 
     private void handleError(Throwable error) {
@@ -288,20 +257,8 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         finish();
 
         // start the service so that we can receive GCM notifications
-        MessagesServiceManager messagesServiceManager = new MessagesServiceManager(this);
-        messagesServiceManager.start();
-
-        AuthenticationData authenticationData = null;
-
-        try {
-            authenticationData = mAuthenticatorUtils.getAccountData();
-        } catch (PeppermintApiNoAccountException e) {
-            mTrackerManager.logException(e);
-        }
-
-        if(authenticationData != null) {
-            PeppermintEventBus.postSignInEvent(authenticationData);
-        }
+        MessengerServiceManager messengerServiceManager = new MessengerServiceManager(this);
+        messengerServiceManager.start();
 
         if(getIntent() != null) {
             Intent activityIntent = getIntent().getParcelableExtra(PARAM_FORWARD_TO);
@@ -370,9 +327,6 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
                 }
                 if (mAuthenticationGoogleApiTask != null) {
                     mAuthenticationGoogleApiTask.cancel(true);
-                }
-                if (mMessagesSyncTask != null) {
-                    mMessagesSyncTask.cancel(true);
                 }
             }
         });
@@ -493,8 +447,7 @@ public class AuthenticatorActivity extends CustomAuthenticatorActivity implement
         super.onResume();
         refreshAccountList();
         if((mAuthenticationPeppermintTask != null && mAuthenticationPeppermintTask.getStatus() != AsyncTask.Status.FINISHED) ||
-                (mAuthenticationGoogleApiTask != null && mAuthenticationGoogleApiTask.getStatus() != AsyncTask.Status.FINISHED) ||
-                (mMessagesSyncTask != null && mMessagesSyncTask.getStatus() != AsyncTask.Status.FINISHED)) {
+                (mAuthenticationGoogleApiTask != null && mAuthenticationGoogleApiTask.getStatus() != AsyncTask.Status.FINISHED)) {
             showProgress();
         }
     }

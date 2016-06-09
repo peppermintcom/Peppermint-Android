@@ -1,6 +1,5 @@
 package com.peppermint.app.services.messenger;
 
-import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -22,29 +21,32 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.StartupActivity;
-import com.peppermint.app.services.authenticator.AuthenticatorUtils;
 import com.peppermint.app.cloud.apis.google.GoogleApiNoAuthorizationException;
 import com.peppermint.app.cloud.apis.peppermint.PeppermintApiNoAccountException;
-import com.peppermint.app.services.authenticator.PendingLogoutPeppermintTask;
-import com.peppermint.app.services.gcm.RegistrationIntentService;
-import com.peppermint.app.services.messenger.handlers.SenderManager;
-import com.peppermint.app.services.messenger.handlers.SenderPreferences;
-import com.peppermint.app.services.messenger.handlers.SenderSupportListener;
-import com.peppermint.app.services.messenger.handlers.SenderSupportTask;
-import com.peppermint.app.services.messenger.handlers.NoInternetConnectionException;
-import com.peppermint.app.services.messenger.handlers.NoPlayServicesException;
-import com.peppermint.app.dal.chat.Chat;
-import com.peppermint.app.dal.contact.ContactManager;
+import com.peppermint.app.dal.DataObjectEvent;
 import com.peppermint.app.dal.DatabaseHelper;
 import com.peppermint.app.dal.GlobalManager;
+import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.dal.contact.ContactManager;
 import com.peppermint.app.dal.message.Message;
 import com.peppermint.app.dal.message.MessageManager;
 import com.peppermint.app.dal.recording.Recording;
-import com.peppermint.app.PeppermintEventBus;
+import com.peppermint.app.services.authenticator.AuthenticatorUtils;
+import com.peppermint.app.services.authenticator.PendingLogoutPeppermintTask;
+import com.peppermint.app.services.gcm.RegistrationIntentService;
+import com.peppermint.app.services.messenger.handlers.NoInternetConnectionException;
+import com.peppermint.app.services.messenger.handlers.NoPlayServicesException;
+import com.peppermint.app.services.messenger.handlers.SenderManager;
+import com.peppermint.app.services.messenger.handlers.SenderManagerListener;
+import com.peppermint.app.services.messenger.handlers.SenderPreferences;
+import com.peppermint.app.services.messenger.handlers.SenderTask;
+import com.peppermint.app.services.messenger.handlers.SenderUploadTask;
+import com.peppermint.app.services.sync.SyncEvent;
+import com.peppermint.app.services.sync.SyncService;
 import com.peppermint.app.trackers.TrackerManager;
-import com.peppermint.app.ui.base.PermissionsPolicyEnforcer;
 import com.peppermint.app.ui.chat.ChatActivity;
 import com.peppermint.app.utils.Utils;
 
@@ -60,27 +62,141 @@ import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLException;
 
+import de.greenrobot.event.EventBus;
 import me.leolin.shortcutbadger.ShortcutBadger;
 
 /**
  * Service handles sending and receiving {@link Message}s.
  */
-public class MessagesService extends Service {
+public class MessengerService extends Service {
 
-    private static final String TAG = MessagesService.class.getSimpleName();
+    private static final String TAG = MessengerService.class.getSimpleName();
 
-    public static final String ACTION_CANCEL = "com.peppermint.app.cloud.MessagesService.CANCEL";
-    public static final String ACTION_DO_PENDING_LOGOUTS = "com.peppermint.app.cloud.MessagesService.DO_PENDING_LOGOUTS";
+    public static final String ACTION_CANCEL = "com.peppermint.app.cloud.MessengerService.CANCEL";
+    public static final String ACTION_DO_PENDING_LOGOUTS = "com.peppermint.app.cloud.MessengerService.DO_PENDING_LOGOUTS";
 
     // intent parameters to send a message
     public static final String PARAM_MESSAGE_SEND_RECORDING = TAG + "_paramMessageSendRecording";
     public static final String PARAM_MESSAGE_SEND_CHAT = TAG + "_paramMessageSendChat";
-    public static final String PARAM_DO_SYNC = TAG + "_paramDoSync";
 
     // intent parameters to receive a message
     public static final String PARAM_MESSAGE_RECEIVE_DATA = TAG + "_paramMessageReceiveData";
 
     private static final int FIRST_AUDIO_MESSAGE_NOTIFICATION_ID = 1;
+
+    private static final EventBus EVENT_BUS = new EventBus();
+
+    static {
+        if(PeppermintApp.DEBUG) {
+            EVENT_BUS.register(new Object() {
+                public void onEventBackgroundThread(MessengerSendEvent event) {
+                    Log.d(TAG, event.toString());
+                }
+            });
+        }
+    }
+
+    public static void registerEventListener(Object listener) {
+        EVENT_BUS.register(listener);
+    }
+
+    public static void registerEventListener(Object listener, int priority) {
+        EVENT_BUS.register(listener, priority);
+    }
+
+    public static void unregisterEventListener(Object listener) {
+        EVENT_BUS.unregister(listener);
+    }
+
+    private static void postSendEvent(int type, SenderTask senderTask, Throwable error) {
+        if(EVENT_BUS.hasSubscriberForEvent(MessengerSendEvent.class)) {
+            EVENT_BUS.post(new MessengerSendEvent(senderTask, type, error));
+        }
+    }
+
+    // bridge directly to the event bus
+    private SenderManagerListener mSenderManagerListener = new SenderManagerListener() {
+        private void saveMessage(Message message) {
+            final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(MessengerService.this);
+            databaseHelper.lock();
+            final SQLiteDatabase db = databaseHelper.getWritableDatabase();
+            try {
+                MessageManager.getInstance(MessengerService.this).update(db, message);
+            } catch (SQLException e) {
+                mTrackerManager.logException(e);
+            }
+            databaseHelper.unlock();
+        }
+
+        private void handleError(SenderUploadTask uploadTask, Throwable error) {
+            if (error != null) {
+                if(error instanceof NoInternetConnectionException) {
+                    Toast.makeText(MessengerService.this, R.string.sender_msg_no_internet, Toast.LENGTH_LONG).show();
+                } else if(error instanceof SSLException) {
+                    Toast.makeText(MessengerService.this, R.string.sender_msg_secure_connection, Toast.LENGTH_LONG).show();
+                } else if(error instanceof GoogleApiNoAuthorizationException) {
+                    Toast.makeText(MessengerService.this, R.string.sender_msg_unable_to_send_permissions, Toast.LENGTH_LONG).show();
+                } else if(error instanceof NoPlayServicesException) {
+                    Toast.makeText(MessengerService.this, R.string.sender_msg_no_gplay, Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(MessengerService.this, String.format(getString(R.string.sender_msg_send_error), uploadTask.getMessage().getChatParameter().getTitle()), Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+
+        @Override
+        public void onSendingStarted(SenderUploadTask uploadTask) {
+            saveMessage(uploadTask.getMessage());
+            postSendEvent(MessengerSendEvent.EVENT_STARTED, uploadTask, null);
+        }
+
+        @Override
+        public void onSendingCancelled(SenderUploadTask uploadTask) {
+            try {
+                GlobalManager.deleteMessageAndRecording(MessengerService.this, uploadTask.getMessage());
+            } catch (SQLException e) {
+                mTrackerManager.logException(e);
+            }
+            postSendEvent(MessengerSendEvent.EVENT_CANCELLED, uploadTask, null);
+        }
+
+        @Override
+        public void onSendingFinished(SenderUploadTask uploadTask) {
+            // message sending has finished, so update the saved data and mark as sent
+            uploadTask.getMessage().setSent(true);
+            mPreferences.setHasSentMessage(true);
+            mHandler.removeCallbacks(mNotificationRunnable);
+            dismissFirstAudioMessageNotification();
+            saveMessage(uploadTask.getMessage());
+
+            postSendEvent(MessengerSendEvent.EVENT_FINISHED, uploadTask, null);
+        }
+
+        @Override
+        public void onSendingError(SenderUploadTask uploadTask, Throwable error) {
+            handleError(uploadTask, error);
+            saveMessage(uploadTask.getMessage());
+            postSendEvent(MessengerSendEvent.EVENT_ERROR, uploadTask, error);
+        }
+
+        @Override
+        public void onSendingProgress(SenderUploadTask uploadTask, float progressValue) {
+            postSendEvent(MessengerSendEvent.EVENT_PROGRESS, uploadTask, null);
+        }
+
+        @Override
+        public void onSendingQueued(SenderUploadTask uploadTask, Throwable error) {
+            handleError(uploadTask, error);
+            saveMessage(uploadTask.getMessage());
+            postSendEvent(MessengerSendEvent.EVENT_QUEUED, uploadTask, error);
+        }
+
+        @Override
+        public void onSendingNonCancellable(SenderUploadTask uploadTask) {
+            saveMessage(uploadTask.getMessage());
+            postSendEvent(MessengerSendEvent.EVENT_NON_CANCELLABLE, uploadTask, null);
+        }
+    };
 
     protected SendRecordServiceBinder mBinder = new SendRecordServiceBinder();
 
@@ -96,11 +212,11 @@ public class MessagesService extends Service {
          * @return the {@link UUID} of the send file request/task
          */
         Message send(Chat chat, Recording recording) {
-            return MessagesService.this.send(chat, recording);
+            return MessengerService.this.send(chat, recording);
         }
 
         boolean retry(Message message) {
-            return MessagesService.this.retry(message);
+            return MessengerService.this.retry(message);
         }
 
         /**
@@ -109,10 +225,10 @@ public class MessagesService extends Service {
          * @param message the UUID of the message returned by {@link #send(Chat, Recording)}
          */
         boolean cancel(Message message) {
-            return MessagesService.this.cancel(message);
+            return MessengerService.this.cancel(message);
         }
         boolean cancel() {
-            return MessagesService.this.cancel(null);
+            return MessengerService.this.cancel(null);
         }
 
         /**
@@ -124,80 +240,30 @@ public class MessagesService extends Service {
         }
 
         boolean isSending() {
-            return MessagesService.this.isSending(null);
+            return MessengerService.this.isSending(null);
         }
         boolean isSending(Message message) {
-            return MessagesService.this.isSending(message);
+            return MessengerService.this.isSending(message);
         }
 
         boolean isSendingAndCancellable(Message message) {
-            return MessagesService.this.isSendingAndCancellable(message);
+            return MessengerService.this.isSendingAndCancellable(message);
         }
 
         void markAsPlayed(Message message) {
-            MessagesService.this.markAsPlayed(message);
+            MessengerService.this.markAsPlayed(message);
         }
 
         void removeAllNotifications() {
-            MessagesService.this.removeAllNotifications();
+            MessengerService.this.removeAllNotifications();
         }
     }
-
-    private PermissionsPolicyEnforcer mPermissionsManager = new PermissionsPolicyEnforcer(
-            Manifest.permission.READ_CONTACTS,
-            Manifest.permission.WRITE_CONTACTS,
-            Manifest.permission.INTERNET,
-            Manifest.permission.ACCESS_NETWORK_STATE);
 
     private TrackerManager mTrackerManager;
     private SenderPreferences mPreferences;
     private SenderManager mSenderManager;
     private AuthenticatorUtils mAuthenticatorUtils;
     private PendingLogoutPeppermintTask mPendingLogoutPeppermintTask;
-
-    private MessagesSyncTask mMessagesSyncTask;
-    private SenderSupportListener mMessagesSyncTaskListener = new SenderSupportListener() {
-        @Override
-        public void onSendingSupportStarted(SenderSupportTask supportTask) {
-            PeppermintEventBus.postSyncEvent(SyncEvent.EVENT_STARTED, mMessagesSyncTask.getReceivedMessages(), mMessagesSyncTask.getSentMessages(), null);
-        }
-
-        @Override
-        public void onSendingSupportCancelled(SenderSupportTask supportTask) {
-            PeppermintEventBus.postSyncEvent(SyncEvent.EVENT_CANCELLED, mMessagesSyncTask.getReceivedMessages(), mMessagesSyncTask.getSentMessages(), null);
-        }
-
-        @Override
-        public void onSendingSupportFinished(SenderSupportTask supportTask) {
-            refreshBadge();
-            PeppermintEventBus.postSyncEvent(SyncEvent.EVENT_FINISHED, mMessagesSyncTask.getReceivedMessages(), mMessagesSyncTask.getSentMessages(), null);
-        }
-
-        @Override
-        public void onSendingSupportError(SenderSupportTask supportTask, Throwable error) {
-            if(!(error instanceof NoInternetConnectionException)) {
-                mTrackerManager.logException(error);
-            }
-            PeppermintEventBus.postSyncEvent(SyncEvent.EVENT_ERROR, mMessagesSyncTask.getReceivedMessages(), mMessagesSyncTask.getSentMessages(), error);
-        }
-
-        @Override
-        public void onSendingSupportProgress(SenderSupportTask supportTask, float progressValue) {
-            PeppermintEventBus.postSyncEvent(SyncEvent.EVENT_PROGRESS, mMessagesSyncTask.getReceivedMessages(), mMessagesSyncTask.getSentMessages(), null);
-        }
-    };
-
-    private void runMessagesSync() {
-        if(mPermissionsManager.getPermissionsToAsk(MessagesService.this).size() > 0) {
-            Log.d(TAG, "Not triggering sync since permissions are required...");
-            return;
-        }
-
-        if(mMessagesSyncTask == null || mMessagesSyncTask.getStatus() == AsyncTask.Status.FINISHED) {
-            mMessagesSyncTask = new MessagesSyncTask(this, mMessagesSyncTaskListener);
-            mMessagesSyncTask.executeOnExecutor(mScheduledExecutor);
-        }
-    }
 
     private Message handleReceivedMessage(String emailAddress, String serverId, String audioUrl, String transcription, String receiverEmail, String senderEmail, String senderName, String createdTs, int durationSeconds) {
         if(audioUrl == null || senderEmail == null || receiverEmail == null) {
@@ -214,24 +280,15 @@ public class MessagesService extends Service {
             return null;
         }
 
-        DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this);
-        databaseHelper.lock();
-        SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        db.beginTransaction();
-
         Message message = null;
         try {
-            message = GlobalManager.insertReceivedMessage(this, db, receiverEmail, senderName, senderEmail, audioUrl, serverId, transcription, createdTs, durationSeconds, null);
-            db.setTransactionSuccessful();
+            message = GlobalManager.insertReceivedMessage(this, receiverEmail, senderName, senderEmail, audioUrl, serverId, transcription, createdTs, durationSeconds, null, false);
         } catch (ContactManager.InvalidViaException | ContactManager.InvalidNameException e) {
             mTrackerManager.log(senderName + " - " + senderEmail);
             mTrackerManager.logException(e);
         } catch (SQLException e) {
             mTrackerManager.logException(e);
         }
-
-        db.endTransaction();
-        databaseHelper.unlock();
 
         return message;
     }
@@ -261,12 +318,12 @@ public class MessagesService extends Service {
             // it tries to re-execute pending sending requests that failed due to
             // the lack of internet connectivity
             try {
-                if (Utils.isInternetAvailable(MessagesService.this)) {
+                if (Utils.isInternetAvailable(MessengerService.this)) {
                     doPendingLogouts();
                     doGcmRegistration();
 
-                    List<Message> queued = MessageManager.getInstance(MessagesService.this).getMessagesQueued(DatabaseHelper.getInstance(MessagesService.this).getReadableDatabase());
-                    if (queued.size() > 0 && Utils.isInternetActive(MessagesService.this)) {
+                    List<Message> queued = MessageManager.getInstance(MessengerService.this).getMessagesQueued(DatabaseHelper.getInstance(MessengerService.this).getReadableDatabase());
+                    if (queued.size() > 0 && Utils.isInternetActive(MessengerService.this)) {
                         // try to resend all queued recordings..
                         for (Message message : queued) {
                             if(!mSenderManager.isSending(message)) {
@@ -317,14 +374,23 @@ public class MessagesService extends Service {
 
     private Object mNotificationEventReceiver = new Object() {
         @SuppressWarnings("unused") // used through reflection
-        public void onEventMainThread(ReceiverEvent event) {
-            if(!event.doNotShowNotification()) {
-                showNotification(event.getMessage());
+        public void onEventMainThread(DataObjectEvent<Message> event) {
+            if(!event.isSkipNotifications()) {
+                showNotification(event.getDataObject());
             }
         }
     };
 
-    public MessagesService() {
+    private Object mSyncEventReceiver = new Object() {
+        @SuppressWarnings("unused") // used through reflection
+        public void onEventMainThread(SyncEvent event) {
+            if(event.getType() == SyncEvent.EVENT_FINISHED) {
+                refreshBadge();
+            }
+        }
+    };
+
+    public MessengerService() {
         // executor for the maintenance routine
         this.mScheduledExecutor = Executors.newScheduledThreadPool(1);
     }
@@ -336,12 +402,12 @@ public class MessagesService extends Service {
         mTrackerManager = TrackerManager.getInstance(getApplicationContext());
         mAuthenticatorUtils = new AuthenticatorUtils(this);
 
-        PeppermintEventBus.registerMessages(this, Integer.MAX_VALUE);
-        PeppermintEventBus.registerMessages(mNotificationEventReceiver, Integer.MIN_VALUE);
+        registerEventListener(mNotificationEventReceiver, Integer.MIN_VALUE);
+        SyncService.registerEventListener(mSyncEventReceiver);
 
         mPreferences = new SenderPreferences(this);
 
-        mSenderManager = new SenderManager(this, new HashMap<String, Object>());
+        mSenderManager = new SenderManager(this, mSenderManagerListener, new HashMap<String, Object>());
         mSenderManager.init();
 
         mHandler.postDelayed(mNotificationRunnable, 180000); // after 3 mins.
@@ -385,10 +451,7 @@ public class MessagesService extends Service {
                 // notify
                 if(message != null) {
                     refreshBadge();
-                    PeppermintEventBus.postReceiverEvent(receiverEmail, message);
                 }
-            } else if(intent.hasExtra(PARAM_DO_SYNC) && intent.getBooleanExtra(PARAM_DO_SYNC, false)) {
-                runMessagesSync();
             } else if(intent.getAction() != null) {
                 if(intent.getAction().compareTo(ACTION_CANCEL) == 0) {
                     cancel(null);
@@ -422,8 +485,8 @@ public class MessagesService extends Service {
 
         // unregister before deinit() to avoid removing cancelled messages
         // must retry these after reboot
-        PeppermintEventBus.unregisterMessages(this);
-        PeppermintEventBus.unregisterMessages(mNotificationEventReceiver);
+        unregisterEventListener(mNotificationEventReceiver);
+        SyncService.unregisterEventListener(mSyncEventReceiver);
 
         mSenderManager.deinit();
 
@@ -434,59 +497,6 @@ public class MessagesService extends Service {
         if(mPendingLogoutPeppermintTask == null || mPendingLogoutPeppermintTask.getStatus() == AsyncTask.Status.FINISHED) {
             mPendingLogoutPeppermintTask = new PendingLogoutPeppermintTask(this);
             mPendingLogoutPeppermintTask.execute((Void) null);
-        }
-    }
-
-    public void onEventMainThread(SenderEvent event) {
-        final Message message = event.getSenderTask().getMessage();
-        final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this);
-        final SQLiteDatabase db = databaseHelper.getWritableDatabase();
-
-        switch (event.getType()) {
-            case SenderEvent.EVENT_ERROR:
-            case SenderEvent.EVENT_QUEUED:
-                if (event.getError() != null) {
-                    if(event.getError() instanceof NoInternetConnectionException) {
-                        Toast.makeText(this, R.string.sender_msg_no_internet, Toast.LENGTH_LONG).show();
-                    } else if(event.getError() instanceof SSLException) {
-                        Toast.makeText(this, R.string.sender_msg_secure_connection, Toast.LENGTH_LONG).show();
-                    } else if(event.getError() instanceof GoogleApiNoAuthorizationException) {
-                        Toast.makeText(this, R.string.sender_msg_unable_to_send_permissions, Toast.LENGTH_LONG).show();
-                    } else if(event.getError() instanceof NoPlayServicesException) {
-                        Toast.makeText(this, R.string.sender_msg_no_gplay, Toast.LENGTH_LONG).show();
-                    } else {
-                        Toast.makeText(this, String.format(getString(R.string.sender_msg_send_error), event.getSenderTask().getMessage().getChatParameter().getTitle()), Toast.LENGTH_LONG).show();
-                    }
-                }
-                break;
-
-            case SenderEvent.EVENT_CANCELLED:
-                try {
-                    GlobalManager.deleteMessageAndRecording(this, message);
-                } catch (SQLException e) {
-                    mTrackerManager.logException(e);
-                }
-                break;
-
-            case SenderEvent.EVENT_FINISHED:
-                // message sending has finished, so update the saved data and mark as sent
-                message.setSent(true);
-                // notifications
-                mPreferences.setHasSentMessage(true);
-                mHandler.removeCallbacks(mNotificationRunnable);
-                dismissFirstAudioMessageNotification();
-                break;
-        }
-
-        if(event.getType() != SenderEvent.EVENT_CANCELLED &&
-                event.getType() != SenderEvent.EVENT_PROGRESS) {
-            databaseHelper.lock();
-            try {
-                MessageManager.getInstance(this).update(db, message);
-            } catch (SQLException e) {
-                mTrackerManager.logException(e);
-            }
-            databaseHelper.unlock();
         }
     }
 
@@ -571,13 +581,13 @@ public class MessagesService extends Service {
     // UPDATE NOTIFICATION
 
     private Notification getNotification(final Message message) {
-        Intent notificationIntent = new Intent(MessagesService.this, ChatActivity.class);
+        Intent notificationIntent = new Intent(MessengerService.this, ChatActivity.class);
         notificationIntent.putExtra(ChatActivity.PARAM_CHAT_ID, message.getChatId());
-        PendingIntent pendingIntent = PendingIntent.getActivity(MessagesService.this, (int) message.getId(), notificationIntent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(MessengerService.this, (int) message.getId(), notificationIntent, 0);
 
         String title = message.getChatParameter().getRecipientListDisplayNames();
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(MessagesService.this)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(MessengerService.this)
                 .setSmallIcon(R.drawable.ic_mail_36dp)
                 .setContentTitle(getString(R.string.new_message))
                 .setContentText(title + " " + getString(R.string.sent_you_a_message))
@@ -616,8 +626,8 @@ public class MessagesService extends Service {
             NotificationManager notificationManager =
                     (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-            Intent notificationIntent = new Intent(MessagesService.this, StartupActivity.class);
-            PendingIntent pendingIntent = PendingIntent.getActivity(MessagesService.this, 0, notificationIntent, 0);
+            Intent notificationIntent = new Intent(MessengerService.this, StartupActivity.class);
+            PendingIntent pendingIntent = PendingIntent.getActivity(MessengerService.this, 0, notificationIntent, 0);
 
             NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                     .setContentTitle(getString(R.string.you_have_installed_peppermint))

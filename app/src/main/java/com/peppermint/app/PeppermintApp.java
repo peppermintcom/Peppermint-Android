@@ -8,7 +8,7 @@ import android.support.multidex.MultiDexApplication;
 import android.util.Log;
 
 import com.google.android.gms.security.ProviderInstaller;
-import com.peppermint.app.services.messenger.MessagesServiceManager;
+import com.peppermint.app.services.messenger.MessengerServiceManager;
 import com.peppermint.app.cloud.apis.peppermint.PeppermintApi;
 import com.peppermint.app.cloud.apis.sparkpost.SparkPostApi;
 import com.peppermint.app.services.messenger.handlers.SenderObject;
@@ -51,8 +51,8 @@ public class PeppermintApp extends MultiDexApplication {
         TrackerManager.getInstance(this);
 
         // start the service so that we can receive GCM notifications
-        MessagesServiceManager messagesServiceManager = new MessagesServiceManager(this);
-        messagesServiceManager.start();
+        MessengerServiceManager messengerServiceManager = new MessengerServiceManager(this);
+        messengerServiceManager.start();
 
         // try to start and enable the chat head overlay
         ChatHeadServiceManager.startAndEnable(this);

@@ -58,7 +58,6 @@ public class LoadingBoxAnimatedLayer extends AnimatedLayerBase {
     @Override
     public synchronized void onDraw(View view, Canvas canvas, double interpolatedElapsedTime) {
         double halfDuration = getDuration() / 2f;
-        Rect bounds = getBounds();
 
         double progress;
         boolean goTwoHalves = mProgressType == PROGRESS_BOX && !mFirstPartOnly;
@@ -68,9 +67,9 @@ public class LoadingBoxAnimatedLayer extends AnimatedLayerBase {
             progress = (interpolatedElapsedTime < halfDuration ? (interpolatedElapsedTime / halfDuration) : (interpolatedElapsedTime - halfDuration) / halfDuration) * mTotalLength;
         }
 
-        Path fullPath = getRoundRectPath(bounds.centerX(), bounds.centerY(), mCornerRadius, mCornerLength, mFullSideLength, mTotalLength);
-        Path progressPath = mProgressType == PROGRESS_BOX ? getRoundRectPath(bounds.centerX(), bounds.centerY(), mCornerRadius, mCornerLength, mFullSideLength, (float) progress)
-                : getSinWavePath(bounds.centerX(), bounds.centerY(), mCornerRadius, mCornerLength, mFullSideLength, mProgressWidth, (float) (interpolatedElapsedTime / getDuration() * 20f * Math.PI));
+        Path fullPath = getRoundRectPath(mBounds.centerX(), mBounds.centerY(), mCornerRadius, mCornerLength, mFullSideLength, mTotalLength);
+        Path progressPath = mProgressType == PROGRESS_BOX ? getRoundRectPath(mBounds.centerX(), mBounds.centerY(), mCornerRadius, mCornerLength, mFullSideLength, (float) progress)
+                : getSinWavePath(mBounds.centerX(), mBounds.centerY(), mCornerRadius, mCornerLength, mFullSideLength, mProgressWidth, (float) (interpolatedElapsedTime / getDuration() * 20f * Math.PI));
 
         // progress paths
         if(goTwoHalves && interpolatedElapsedTime >= halfDuration) {
@@ -90,7 +89,7 @@ public class LoadingBoxAnimatedLayer extends AnimatedLayerBase {
         }
 
         if(mProgressType == PROGRESS_BOX) {
-            Path maskPath = getRoundRectPath(bounds.centerX(), bounds.centerY(), mCornerRadius - mProgressWidth, mCornerLength, mFullSideLength - (mProgressWidth * 2f), mTotalLength);
+            Path maskPath = getRoundRectPath(mBounds.centerX(), mBounds.centerY(), mCornerRadius - mProgressWidth, mCornerLength, mFullSideLength - (mProgressWidth * 2f), mTotalLength);
 
             if (mBackgroundPressedPaint != null && view.isPressed()) {
                 canvas.drawPath(maskPath, mBackgroundPressedPaint);

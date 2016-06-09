@@ -58,17 +58,17 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
 
         if(canvas != null) {
             canvas.save();
-            canvas.translate(getBounds().left, getBounds().top);
+            canvas.translate(mBounds.left, mBounds.top);
             if (mBorderWidth > 0 && mBorderPaint != null) {
-                canvas.drawRoundRect(new RectF(0, 0, getBounds().width(), getBounds().height()), mCornerRadius, mCornerRadius, mBorderPaint);
+                canvas.drawRoundRect(new RectF(0, 0, mBounds.width(), mBounds.height()), mCornerRadius, mCornerRadius, mBorderPaint);
             }
-            canvas.drawRoundRect(new RectF(mBorderWidth, mBorderWidth, getBounds().width() - mBorderWidth, getBounds().height() - mBorderWidth), mCornerRadius - mBorderWidth, mCornerRadius - mBorderWidth, mPaint);
+            canvas.drawRoundRect(new RectF(mBorderWidth, mBorderWidth, mBounds.width() - mBorderWidth, mBounds.height() - mBorderWidth), mCornerRadius - mBorderWidth, mCornerRadius - mBorderWidth, mPaint);
             canvas.restore();
         }
     }
 
     private synchronized void initShader(int frame) {
-        if(getBounds() == null || getBounds().width() <= 0 || getBounds().height() <= 0) {
+        if(mBounds == null || mBounds.width() <= 0 || mBounds.height() <= 0) {
             return;
         }
 
@@ -80,7 +80,7 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
         if(mBitmapSequence != null && mBitmapSequence.length > frame) {
             bitmap = mBitmapSequence[frame];
         } else if(mBitmapSequenceRes.length > frame) {
-            bitmap = ResourceUtils.getScaledResizedBitmap(getContext(), mBitmapSequenceRes[frame], getBounds().width() - mBorderWidth, getBounds().height() - mBorderWidth, false);
+            bitmap = ResourceUtils.getScaledResizedBitmap(mContext, mBitmapSequenceRes[frame], mBounds.width() - mBorderWidth, mBounds.height() - mBorderWidth, false);
             if(mLastBitmap != null && !mLastBitmap.isRecycled()) {
                 mPaint.setShader(null);
                 mLastBitmap.recycle();
@@ -114,7 +114,7 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
 
             mBitmapSequence = new Bitmap[mBitmapSequenceRes.length];
             for (int i = 0; i < mBitmapSequenceRes.length; i++) {
-                mBitmapSequence[i] = ((BitmapDrawable) ResourceUtils.getDrawable(getContext(), mBitmapSequenceRes[i])).getBitmap();
+                mBitmapSequence[i] = ((BitmapDrawable) ResourceUtils.getDrawable(mContext, mBitmapSequenceRes[i])).getBitmap();
             }
         }
 

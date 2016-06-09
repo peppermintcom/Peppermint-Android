@@ -14,13 +14,13 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.google.cloud.speech.v1.nano.InitialRecognizeRequest;
+import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.cloud.apis.speech.GoogleSpeechRecognizeClient;
-import com.peppermint.app.services.messenger.handlers.SenderPreferences;
 import com.peppermint.app.dal.chat.Chat;
 import com.peppermint.app.dal.contact.ContactRaw;
 import com.peppermint.app.dal.recording.Recording;
-import com.peppermint.app.PeppermintEventBus;
+import com.peppermint.app.services.messenger.handlers.SenderPreferences;
 import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.ui.base.views.CustomToast;
 
@@ -31,6 +31,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import de.greenrobot.event.EventBus;
 import io.grpc.Status;
 
 /**
@@ -71,6 +72,36 @@ public class RecordService extends Service {
         This should be supplied for the START_RECORDING action.
      **/
     public static final String INTENT_DATA_MAXDURATION = TAG + "_MaxDuration";
+
+    private static final EventBus EVENT_BUS = new EventBus();
+
+    static {
+        if(PeppermintApp.DEBUG) {
+            EVENT_BUS.register(new Object() {
+                public void onEventBackgroundThread(RecorderEvent event) {
+                    Log.d(TAG, event.toString());
+                }
+            });
+        }
+    }
+
+    public static void registerEventListener(Object listener) {
+        EVENT_BUS.register(listener);
+    }
+
+    public static void registerEventListener(Object listener, int priority) {
+        EVENT_BUS.register(listener, priority);
+    }
+
+    public static void unregisterEventListener(Object listener) {
+        EVENT_BUS.unregister(listener);
+    }
+
+    public static void postRecorderEvent(int type, Recording recording, Chat chat, float loudness, Throwable error) {
+        if(EVENT_BUS.hasSubscriberForEvent(RecorderEvent.class)) {
+            EVENT_BUS.post(new RecorderEvent(type, recording, chat, loudness, error));
+        }
+    }
 
     protected RecordServiceBinder mBinder = new RecordServiceBinder();
 
@@ -210,20 +241,20 @@ public class RecordService extends Service {
                 mIsInForegroundMode = true;
             }
 
-            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_START, newRecording(mRecorder), mChat, amplitude, null);
+            postRecorderEvent(RecorderEvent.EVENT_START, newRecording(mRecorder), mChat, amplitude, null);
         }
 
         @Override
         public void onPause(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp) {
             updateNotification();
-            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_PAUSE, newRecording(mRecorder), mChat, amplitude, null);
+            postRecorderEvent(RecorderEvent.EVENT_PAUSE, newRecording(mRecorder), mChat, amplitude, null);
         }
 
         @Override
         public void onResume(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp) {
             updateLoudness();
             updateNotification();
-            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_RESUME, newRecording(mRecorder), mChat, amplitude, null);
+            postRecorderEvent(RecorderEvent.EVENT_RESUME, newRecording(mRecorder), mChat, amplitude, null);
         }
 
         @Override
@@ -235,7 +266,7 @@ public class RecordService extends Service {
 
             finishSpeechToText(filePath);
 
-            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_STOP, newRecording(mRecorder), mChat, amplitude, null);
+            postRecorderEvent(RecorderEvent.EVENT_STOP, newRecording(mRecorder), mChat, amplitude, null);
         }
 
         @Override
@@ -247,7 +278,7 @@ public class RecordService extends Service {
 
             finishSpeechToText(filePath);
 
-            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_ERROR, newRecording(mRecorder), mChat, 0, t);
+            postRecorderEvent(RecorderEvent.EVENT_ERROR, newRecording(mRecorder), mChat, 0, t);
         }
 
         @Override
@@ -338,7 +369,7 @@ public class RecordService extends Service {
             if(lastResponse != null) {
                 mTranscriptionResults.put(client.getId(), lastResponse);
             }
-            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_TRANSCRIPTION, newRecording(mRecorder), mChat, 0, null);
+            postRecorderEvent(RecorderEvent.EVENT_TRANSCRIPTION, newRecording(mRecorder), mChat, 0, null);
         }
 
         @Override
@@ -347,7 +378,7 @@ public class RecordService extends Service {
             if(lastResponse != null) {
                 mTranscriptionResults.put(client.getId(), lastResponse);
             }
-            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_TRANSCRIPTION, newRecording(mRecorder), mChat, 0, null);
+            postRecorderEvent(RecorderEvent.EVENT_TRANSCRIPTION, newRecording(mRecorder), mChat, 0, null);
         }
     };
 
@@ -424,7 +455,7 @@ public class RecordService extends Service {
     String popTranscription(String filePath, float minConfidence, boolean sendEvent) {
         if(!mTranscriptionResults.containsKey(filePath)) {
             if(sendEvent) {
-                PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_TRANSCRIPTION, new Recording(filePath), null, 0, null);
+                postRecorderEvent(RecorderEvent.EVENT_TRANSCRIPTION, new Recording(filePath), null, 0, null);
             }
             return null;
         }
@@ -437,7 +468,7 @@ public class RecordService extends Service {
             recording.setTranscription((String) transcriptionData[0]);
             recording.setTranscriptionConfidence((float) transcriptionData[1]);
             recording.setTranscriptionLanguage((String) transcriptionData[2]);
-            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_TRANSCRIPTION, recording, null, 0, null);
+            postRecorderEvent(RecorderEvent.EVENT_TRANSCRIPTION, recording, null, 0, null);
         }
 
         if((float) transcriptionData[1] >= minConfidence) {
@@ -501,7 +532,7 @@ public class RecordService extends Service {
 
     private void updateLoudness() {
         if(isRecording()) {
-            PeppermintEventBus.postRecorderEvent(RecorderEvent.EVENT_LOUDNESS, newRecording(mRecorder), mChat, getLoudnessFromAmplitude(mRecorder.getAmplitude()), null);
+            postRecorderEvent(RecorderEvent.EVENT_LOUDNESS, newRecording(mRecorder), mChat, getLoudnessFromAmplitude(mRecorder.getAmplitude()), null);
             mHandler.postDelayed(mLoudnessRunnable, 50);
         }
     }

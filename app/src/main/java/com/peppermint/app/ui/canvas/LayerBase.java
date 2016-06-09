@@ -10,16 +10,11 @@ import android.graphics.Rect;
  */
 public abstract class LayerBase implements Layer {
 
-    private Rect mBounds;
-    private Context mContext;
+    protected Rect mBounds;
+    protected Context mContext;
 
     public LayerBase(Context context) {
         this.mContext = context;
-    }
-
-    @Override
-    public Rect getBounds() {
-        return mBounds;
     }
 
     /**
@@ -34,10 +29,6 @@ public abstract class LayerBase implements Layer {
 
     protected void onMeasure(Rect bounds) {
         // nothing to do here
-    }
-
-    public Context getContext() {
-        return mContext;
     }
 
 }

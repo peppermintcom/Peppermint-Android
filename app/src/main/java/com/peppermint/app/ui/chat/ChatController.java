@@ -11,21 +11,21 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.peppermint.app.R;
+import com.peppermint.app.dal.DataObjectEvent;
+import com.peppermint.app.dal.DatabaseHelper;
 import com.peppermint.app.dal.chat.Chat;
 import com.peppermint.app.dal.chat.ChatManager;
-import com.peppermint.app.dal.DatabaseHelper;
 import com.peppermint.app.dal.message.Message;
 import com.peppermint.app.dal.message.MessageManager;
 import com.peppermint.app.dal.recipient.Recipient;
-import com.peppermint.app.services.messenger.ReceiverEvent;
-import com.peppermint.app.services.messenger.SenderEvent;
-import com.peppermint.app.services.messenger.SyncEvent;
+import com.peppermint.app.services.messenger.MessengerSendEvent;
+import com.peppermint.app.services.sync.SyncEvent;
 import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.ui.base.OverlayManager;
 import com.peppermint.app.ui.base.TouchInterceptable;
+import com.peppermint.app.ui.base.dialogs.CustomListDialog;
 import com.peppermint.app.ui.base.navigation.NavigationItem;
 import com.peppermint.app.ui.base.navigation.NavigationListAdapter;
-import com.peppermint.app.ui.base.dialogs.CustomListDialog;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
 import com.peppermint.app.utils.Utils;
 
@@ -225,16 +225,6 @@ public class ChatController extends ChatRecordOverlayController implements View.
         return true;
     }
 
-    private boolean hasChatMessage(List<Message> messages, long chatId) {
-        final int messageAmount = messages.size();
-        for(int i=0; i<messageAmount; i++) {
-            if(messages.get(i).getChatId() == chatId) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     @Override
     public void onEventMainThread(SyncEvent event) {
         super.onEventMainThread(event);
@@ -243,27 +233,26 @@ public class ChatController extends ChatRecordOverlayController implements View.
         }
 
         if(event.getType() == SyncEvent.EVENT_FINISHED || event.getType() == SyncEvent.EVENT_PROGRESS) {
-            if(hasChatMessage(event.getReceivedMessageList(), mChat.getId()) || hasChatMessage(event.getSentMessageList(), mChat.getId())) {
+            if(event.getAffectedChatIdSet().contains(mChat.getId())) {
                 refreshList();
             }
         }
     }
 
-    @Override
-    public void onEventMainThread(ReceiverEvent event) {
+    public void onEventMainThread(DataObjectEvent<Message> event) {
         super.onEventMainThread(event);
-        if(mChat != null && event.getType() == ReceiverEvent.EVENT_RECEIVED) {
-            if(event.getMessage().getChatId() == mChat.getId()) {
+        if(mChat != null && event.getType() == DataObjectEvent.TYPE_CREATE && event.getDataObject().isReceived()) {
+            if(event.getDataObject().getChatId() == mChat.getId()) {
                 refreshList();
                 if (Utils.isScreenOnAndUnlocked(getContext())) {
-                    event.setDoNotShowNotification(true);
+                    event.setSkipNotifications(true);
                 }
             }
         }
     }
 
     @Override
-    public void onEventMainThread(SenderEvent event) {
+    public void onEventMainThread(MessengerSendEvent event) {
         super.onEventMainThread(event);
         if(mChat == null) {
             return;

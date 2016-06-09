@@ -18,15 +18,14 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 
-import com.peppermint.app.services.messenger.MessagesServiceManager;
-import com.peppermint.app.services.messenger.handlers.SenderPreferences;
+import com.peppermint.app.dal.DataObjectEvent;
+import com.peppermint.app.dal.DatabaseHelper;
 import com.peppermint.app.dal.chat.Chat;
 import com.peppermint.app.dal.chat.ChatManager;
-import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.dal.message.Message;
 import com.peppermint.app.dal.message.MessageManager;
-import com.peppermint.app.services.messenger.MessageEvent;
-import com.peppermint.app.PeppermintEventBus;
-import com.peppermint.app.services.messenger.ReceiverEvent;
+import com.peppermint.app.services.messenger.MessengerServiceManager;
+import com.peppermint.app.services.messenger.handlers.SenderPreferences;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +49,7 @@ public class ChatHeadService extends Service {
     private List<String> mVisibleActivities = new ArrayList<>();
 
     private SenderPreferences mPreferences;
-    private MessagesServiceManager mMessagesServiceManager;
+    private MessengerServiceManager mMessengerServiceManager;
 
     protected ChatHeadServiceBinder mBinder = new ChatHeadServiceBinder();
 
@@ -178,10 +177,10 @@ public class ChatHeadService extends Service {
         super.onCreate();
         mPreferences = new SenderPreferences(this);
 
-        mMessagesServiceManager = new MessagesServiceManager(this);
-        mMessagesServiceManager.startAndBind();
+        mMessengerServiceManager = new MessengerServiceManager(this);
+        mMessengerServiceManager.startAndBind();
 
-        PeppermintEventBus.registerMessages(this);
+        MessageManager.getInstance(this).registerDataListener(this);
 
         this.mDisplay = new Display(this);
 
@@ -212,9 +211,9 @@ public class ChatHeadService extends Service {
         mChatView.deinit();
         mDisplay.deinit();
 
-        mMessagesServiceManager.unbind();
+        mMessengerServiceManager.unbind();
 
-        PeppermintEventBus.unregisterMessages(this);
+        MessageManager.getInstance(this).unregisterDataListener(this);
     }
 
     private boolean refreshChatHeadController() {
@@ -261,15 +260,13 @@ public class ChatHeadService extends Service {
         return true;
     }
 
-    public void onEventMainThread(ReceiverEvent event) {
-        if(event.getType() == ReceiverEvent.EVENT_RECEIVED) {
-            mBinder.show();
-        }
-    }
-
-    public void onEventMainThread(MessageEvent event) {
-        if(event.getType() == MessageEvent.EVENT_MARK_PLAYED) {
+    public void onEventMainThread(DataObjectEvent<Message> event) {
+        if(event.getType() == DataObjectEvent.TYPE_UPDATE && event.getUpdates().get(Message.FIELD_PLAYED) != null) {
             refreshChatHeadController();
+            return;
+        }
+        if(event.getType() == DataObjectEvent.TYPE_CREATE && event.getDataObject().isReceived()) {
+            mBinder.show();
         }
     }
 

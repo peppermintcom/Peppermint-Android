@@ -6,7 +6,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.peppermint.app.PeppermintApp;
-import com.peppermint.app.dal.pendinglogout.PendingLogout;
 
 import java.lang.ref.WeakReference;
 import java.sql.SQLException;
@@ -34,7 +33,7 @@ public abstract class DataObjectManager<E, T extends DataObject> {
     protected DataObjectManager() {
         if(PeppermintApp.DEBUG) {
             registerDataListener(new Object() {
-                public void onEventMainThread(DataObjectEvent<PendingLogout> dataObjectEvent) {
+                public void onEventBackgroundThread(DataObjectEvent<T> dataObjectEvent) {
                     Log.d(DataObjectManager.this.getClass().getSimpleName(), dataObjectEvent.toString());
                 }
             }, Integer.MAX_VALUE);
@@ -59,32 +58,54 @@ public abstract class DataObjectManager<E, T extends DataObject> {
         return instance;
     }
 
-    public T insert(SQLiteDatabase db, T dataObject) throws SQLException {
+    public T insert(SQLiteDatabase db, T dataObject, boolean avoidEventBus) throws SQLException {
         dataObject = doInsert(db, dataObject);
-        postDataEvent(DataObjectEvent.TYPE_CREATE, dataObject);
+        if(!avoidEventBus) {
+            postDataEvent(DataObjectEvent.TYPE_CREATE, dataObject);
+        }
         dataObject.clearUpdateHistory();
         return dataObject;
     }
 
-    public void update(SQLiteDatabase db, T dataObject) throws SQLException {
+    public T insert(SQLiteDatabase db, T dataObject) throws SQLException {
+        return insert(db, dataObject, false);
+    }
+
+    public void update(SQLiteDatabase db, T dataObject, boolean avoidEventBus) throws SQLException {
         if(dataObject.getUpdateHistory().size() > 0) {
             doUpdate(db, dataObject);
-            postDataEvent(DataObjectEvent.TYPE_UPDATE, dataObject);
+            if(!avoidEventBus) {
+                postDataEvent(DataObjectEvent.TYPE_UPDATE, dataObject);
+            }
             dataObject.clearUpdateHistory();
         }
     }
 
-    public void delete(SQLiteDatabase db, E dataObjectId) throws SQLException {
+    public void update(SQLiteDatabase db, T dataObject) throws SQLException {
+        update(db, dataObject, false);
+    }
+
+    public void delete(SQLiteDatabase db, E dataObjectId, boolean avoidEventBus) throws SQLException {
         doDelete(db, dataObjectId);
-        postDataEvent(DataObjectEvent.TYPE_DELETE, obtainCacheDataObject(dataObjectId));
+        if(!avoidEventBus) {
+            postDataEvent(DataObjectEvent.TYPE_DELETE, obtainCacheDataObject(dataObjectId));
+        }
+    }
+
+    public void delete(SQLiteDatabase db, E dataObjectId) throws SQLException {
+        delete(db, dataObjectId, false);
+    }
+
+    public T insertOrUpdate(SQLiteDatabase db, T dataObject, boolean avoidEventBus) throws SQLException {
+        if(!exists(db, dataObject)) {
+            return insert(db, dataObject, avoidEventBus);
+        }
+        update(db, dataObject, avoidEventBus);
+        return dataObject;
     }
 
     public T insertOrUpdate(SQLiteDatabase db, T dataObject) throws SQLException {
-        if(!exists(db, dataObject)) {
-            return insert(db, dataObject);
-        }
-        update(db, dataObject);
-        return dataObject;
+        return insertOrUpdate(db, dataObject, false);
     }
 
     protected abstract T doGetFromCursor(SQLiteDatabase db, Cursor cursor);

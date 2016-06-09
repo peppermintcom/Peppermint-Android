@@ -19,6 +19,11 @@ package com.peppermint.app.services.authenticator;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.util.Log;
+
+import com.peppermint.app.PeppermintApp;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * Created by Nuno Luz on 26-01-2016.
@@ -28,6 +33,47 @@ import android.os.IBinder;
  * </p>
  */
 public class AuthenticationService extends Service {
+
+    private static final String TAG = AuthenticationService.class.getSimpleName();
+
+    private static final EventBus EVENT_BUS = new EventBus();
+
+    static {
+        if(PeppermintApp.DEBUG) {
+            EVENT_BUS.register(new Object() {
+                public void onEventBackgroundThread(SignInEvent event) {
+                    Log.d(TAG, event.toString());
+                }
+                public void onEventBackgroundThread(SignOutEvent event) {
+                    Log.d(TAG, event.toString());
+                }
+            });
+        }
+    }
+
+    public static void registerEventListener(Object listener) {
+        EVENT_BUS.register(listener);
+    }
+
+    public static void registerEventListener(Object listener, int priority) {
+        EVENT_BUS.register(listener, priority);
+    }
+
+    public static void unregisterEventListener(Object listener) {
+        EVENT_BUS.unregister(listener);
+    }
+
+    protected static void postSignOutEvent() {
+        if(EVENT_BUS.hasSubscriberForEvent(SignOutEvent.class)) {
+            EVENT_BUS.post(new SignOutEvent());
+        }
+    }
+
+    protected static void postSignInEvent(AuthenticationData data) {
+        if(EVENT_BUS.hasSubscriberForEvent(SignInEvent.class)) {
+            EVENT_BUS.post(new SignInEvent(data));
+        }
+    }
 
     private Authenticator mAuthenticator;
 

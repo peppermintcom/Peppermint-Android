@@ -16,6 +16,7 @@ public class DataObjectEvent<T extends DataObject> {
     private T mDataObject;
     private SparseArray<DataObjectUpdate> mUpdates;
     private int mType;
+    private boolean mSkipNotifications = false;
 
     public DataObjectEvent(int mType, T mDataObject, SparseArray<DataObjectUpdate> mUpdates) {
         this.mType = mType;
@@ -47,10 +48,19 @@ public class DataObjectEvent<T extends DataObject> {
         this.mType = mType;
     }
 
+    public boolean isSkipNotifications() {
+        return mSkipNotifications;
+    }
+
+    public void setSkipNotifications(boolean mSkipNotifications) {
+        this.mSkipNotifications = mSkipNotifications;
+    }
+
     @Override
     public String toString() {
         return "DataObjectEvent{" +
                 (mType == TYPE_CREATE ? "TYPE_CREATE" : (mType == TYPE_UPDATE ? "TYPE_UPDATE" : (mType == TYPE_DELETE ? "TYPE_DELETE" : mType))) +
+                ", mSkipNotifications=" + mSkipNotifications +
                 ", mDataObject=" + mDataObject +
                 ", mUpdates=" + mUpdates +
                 '}';

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.View;
@@ -19,11 +18,10 @@ import com.peppermint.app.dal.recipient.Recipient;
 import com.peppermint.app.ui.base.views.CustomFontTextView;
 import com.peppermint.app.ui.chat.ChatView;
 import com.peppermint.app.utils.ResourceUtils;
+import com.peppermint.app.utils.SameAsyncTaskExecutor;
 import com.peppermint.app.utils.Utils;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by Nuno Luz on 07-06-2016.
@@ -32,9 +30,12 @@ import java.util.Set;
  */
 public class ContactView extends ChatView {
 
-    private class ExtraDataLoaderTask extends AsyncTask<Void, Void, Chat> {
+    private class ExtraDataLoaderExecutor extends SameAsyncTaskExecutor<ContactRaw, Void, Object[]> {
         private int mAvatarWidth, mAvatarHeight;
-        private BitmapDrawable mScaledBitmapDrawable;
+
+        public ExtraDataLoaderExecutor(Context mContext) {
+            super(mContext);
+        }
 
         @Override
         protected void onPreExecute() {
@@ -43,57 +44,56 @@ public class ContactView extends ChatView {
         }
 
         @Override
-        protected Chat doInBackground(Void... params) {
+        protected Object[] doInBackground(SameAsyncTask asyncTask, ContactRaw... params) {
             Chat chat = null;
+            BitmapDrawable scaledBitmapDrawable = null;
 
             synchronized (ContactView.this) {
-                if (mContactRaw == null) {
+                if (params[0] == null) {
                     return null;
                 }
 
-                if (!isCancelled()) {
+                if (!asyncTask.isCancelled()) {
                     chat = ChatManager.getInstance(mContext).
-                            getMainChatByDroidContactId(mDatabaseHelper.getReadableDatabase(), mContactRaw.getContactId());
+                            getMainChatByDroidContactId(mDatabaseHelper.getReadableDatabase(), params[0].getContactId());
                 }
 
-                if (chat == null && !isCancelled()) {
+                if (chat == null && !asyncTask.isCancelled()) {
                     // for now only a single recipient is supported
-                    if (mContactRaw.getPhotoUri() != null) {
-                        final Uri uri = Uri.parse(mContactRaw.getPhotoUri());
+                    if (params[0].getPhotoUri() != null) {
+                        final Uri uri = Uri.parse(params[0].getPhotoUri());
                         final int fixedSize = Utils.dpToPx(mContext, FIXED_AVATAR_SIZE_DP);
                         final Bitmap scaledBitmap = ResourceUtils.getScaledBitmap(mContext, uri,
                                 mAvatarWidth > 0 ? mAvatarWidth : fixedSize,
                                 mAvatarHeight > 0 ? mAvatarHeight : fixedSize);
                         if (scaledBitmap != null) {
-                            mScaledBitmapDrawable = new BitmapDrawable(mContext.getResources(), scaledBitmap);
+                            scaledBitmapDrawable = new BitmapDrawable(mContext.getResources(), scaledBitmap);
                         }
                     }
                 }
             }
 
-            return chat;
+            return new Object[] { params[0], chat, scaledBitmapDrawable };
         }
 
         @Override
-        protected void onPostExecute(Chat chat) {
-            if(mContactRaw != null) {
+        protected void onPostExecute(Object[] data) {
+            final ContactRaw contactRaw = (ContactRaw) data[0];
+            final Chat chat = (Chat) data[1];
+            final BitmapDrawable scaledBitmapDrawable = (BitmapDrawable) data[2];
+
+            if(contactRaw != null) {
                 if (chat != null) {
                     setChat(chat);
                 } else {
-                    if (mScaledBitmapDrawable != null) {
-                        mImgAvatar.setStaticDrawable(mScaledBitmapDrawable);
+                    if (scaledBitmapDrawable != null) {
+                        mImgAvatar.setStaticDrawable(scaledBitmapDrawable);
                         mImgAvatar.setShowStaticAvatar(true);
                     } else {
                         mImgAvatar.setShowStaticAvatar(false);
                     }
                 }
             }
-            mTaskSet.remove(this);
-        }
-
-        @Override
-        protected void onCancelled(Chat aVoid) {
-            mTaskSet.remove(this);
         }
     }
 
@@ -101,7 +101,7 @@ public class ContactView extends ChatView {
 
     protected ContactRaw mContactRaw;
 
-    private Set<ExtraDataLoaderTask> mTaskSet = new HashSet<>(2);
+    private ExtraDataLoaderExecutor mExtraDataLoaderExecutor;
 
     public ContactView(Context context) {
         super(context);
@@ -124,6 +124,7 @@ public class ContactView extends ChatView {
     protected void init(Context context) {
         super.init(context);
         mTxtVia = (CustomFontTextView) findViewById(R.id.txtVia);
+        mExtraDataLoaderExecutor = new ExtraDataLoaderExecutor(context);
     }
 
     protected void refreshContactRawData() {
@@ -151,7 +152,7 @@ public class ContactView extends ChatView {
         mTxtLastMessageDate.setText("");
         mTxtUnreadMessages.setVisibility(GONE);
 
-        launchLoaderTask();
+        mExtraDataLoaderExecutor.execute(mContactRaw);
     }
 
     public ContactRaw getContactRaw() {
@@ -176,27 +177,14 @@ public class ContactView extends ChatView {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         ChatManager.getInstance(getContext()).unregisterDataListener(mChatDataObjectListener);
-        for(ExtraDataLoaderTask task : mTaskSet) {
-            if (task != null) {
-                task.cancel(true);
-            }
-        }
-    }
-
-    private void launchLoaderTask() {
-        if(mTaskSet.size() >= 2) {
-            return;
-        }
-        final ExtraDataLoaderTask extraDataLoaderTask = new ExtraDataLoaderTask();
-        mTaskSet.add(extraDataLoaderTask);
-        extraDataLoaderTask.execute();
+        mExtraDataLoaderExecutor.cancel(true);
     }
 
     private Object mChatDataObjectListener = new Object() {
-        public void onEventMainThread(DataObjectEvent<Chat> chatDataObjectEvent) {
+        public void onEventBackgroundThread(DataObjectEvent<Chat> chatDataObjectEvent) {
             final List<Recipient> recipientList = chatDataObjectEvent.getDataObject().getRecipientList();
             if (mContactRaw != null && recipientList != null && recipientList.size() > 0 && recipientList.get(0).getDroidContactId() == mContactRaw.getContactId()) {
-                launchLoaderTask();
+                mExtraDataLoaderExecutor.execute(mContactRaw);
             }
         }
     };

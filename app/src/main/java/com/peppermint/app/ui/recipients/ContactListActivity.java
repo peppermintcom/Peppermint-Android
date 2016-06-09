@@ -22,22 +22,22 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.services.authenticator.AuthenticationData;
-import com.peppermint.app.services.messenger.MessagesServiceManager;
+import com.peppermint.app.cloud.apis.peppermint.PeppermintApiNoAccountException;
+import com.peppermint.app.dal.DatabaseHelper;
 import com.peppermint.app.dal.chat.ChatManager;
 import com.peppermint.app.dal.contact.ContactManager;
 import com.peppermint.app.dal.contact.ContactRaw;
-import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.services.authenticator.AuthenticationData;
+import com.peppermint.app.ui.about.AboutActivity;
 import com.peppermint.app.ui.base.Overlay;
 import com.peppermint.app.ui.base.OverlayManager;
 import com.peppermint.app.ui.base.PermissionsPolicyEnforcer;
-import com.peppermint.app.ui.about.AboutActivity;
-import com.peppermint.app.ui.base.views.CustomActionBarView;
-import com.peppermint.app.ui.base.navigation.NavigationItem;
-import com.peppermint.app.ui.base.navigation.NavigationItemSimpleAction;
 import com.peppermint.app.ui.base.activities.CustomActionBarDrawerActivity;
 import com.peppermint.app.ui.base.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.ui.base.dialogs.PopupDialog;
+import com.peppermint.app.ui.base.navigation.NavigationItem;
+import com.peppermint.app.ui.base.navigation.NavigationItemSimpleAction;
+import com.peppermint.app.ui.base.views.CustomActionBarView;
 import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
 import com.peppermint.app.ui.feedback.FeedbackActivity;
 import com.peppermint.app.ui.settings.SettingsActivity;
@@ -284,8 +284,11 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
 
         // synchronize messages (only when the activity is created for the first time)
         if(savedInstanceState == null) {
-            final MessagesServiceManager messagesServiceManager = new MessagesServiceManager(this);
-            messagesServiceManager.startAndSync();
+            try {
+                mAuthenticatorUtils.requestSync();
+            } catch(PeppermintApiNoAccountException e) {
+                /* nothing to do here */
+            }
         }
 
         getDrawerListView().setItemChecked(this.mTappedItemPosition, true);

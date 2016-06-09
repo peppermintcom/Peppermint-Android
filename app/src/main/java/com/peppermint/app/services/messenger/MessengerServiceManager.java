@@ -19,7 +19,7 @@ import java.util.List;
  * Manages the Android Service that sends messages through different methods.
  * It allows an easier interaction with the Android Service API.
  */
-public class MessagesServiceManager {
+public class MessengerServiceManager {
 
     public interface ServiceListener {
         /**
@@ -29,7 +29,7 @@ public class MessagesServiceManager {
     }
 
     private Context mContext;
-    private MessagesService.SendRecordServiceBinder mService;
+    private MessengerService.SendRecordServiceBinder mService;
     private List<ServiceListener> mServiceListenerList = new ArrayList<>();
     protected boolean mIsBound = false;                                         // if the manager is bound to the service
     protected boolean mIsBinding = false;
@@ -39,7 +39,7 @@ public class MessagesServiceManager {
      */
     protected ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder binder) {
-            mService = (MessagesService.SendRecordServiceBinder) binder;
+            mService = (MessengerService.SendRecordServiceBinder) binder;
 
             mIsBound = true;
             mIsBinding = false;
@@ -57,30 +57,12 @@ public class MessagesServiceManager {
         }
     };
 
-    public MessagesServiceManager(Context context) {
+    public MessengerServiceManager(Context context) {
         this.mContext = context;
     }
 
-    /**
-     * Starts the service and sends an intent to start sending the supplied file to the supplied chat.
-     * @param chat the chat to send the file to
-     * @param recording the recording with the file to send
-     */
-    public void startAndSend(Chat chat, Recording recording) {
-        Intent intent = new Intent(mContext, MessagesService.class);
-        intent.putExtra(MessagesService.PARAM_MESSAGE_SEND_RECORDING, recording);
-        intent.putExtra(MessagesService.PARAM_MESSAGE_SEND_CHAT, chat);
-        mContext.startService(intent);
-    }
-
-    public void startAndSync() {
-        Intent intent = new Intent(mContext, MessagesService.class);
-        intent.putExtra(MessagesService.PARAM_DO_SYNC, true);
-        mContext.startService(intent);
-    }
-
     public void start() {
-        Intent intent = new Intent(mContext, MessagesService.class);
+        Intent intent = new Intent(mContext, MessengerService.class);
         mContext.startService(intent);
     }
 
@@ -89,7 +71,7 @@ public class MessagesServiceManager {
      * <b>Also binds this manager to the service.</b>
      */
     public void startAndBind() {
-        Intent intent = new Intent(mContext, MessagesService.class);
+        Intent intent = new Intent(mContext, MessengerService.class);
         mContext.startService(intent);
         bind();
     }
@@ -108,7 +90,7 @@ public class MessagesServiceManager {
      */
     public void bind() {
         mIsBinding = true;
-        mContext.bindService(new Intent(mContext, MessagesService.class), mConnection, Context.BIND_AUTO_CREATE);
+        mContext.bindService(new Intent(mContext, MessengerService.class), mConnection, Context.BIND_AUTO_CREATE);
     }
 
     /**
@@ -163,15 +145,15 @@ public class MessagesServiceManager {
             return mService.cancel();
         }
 
-        Intent intent = new Intent(mContext, MessagesService.class);
-        intent.setAction(MessagesService.ACTION_CANCEL);
+        Intent intent = new Intent(mContext, MessengerService.class);
+        intent.setAction(MessengerService.ACTION_CANCEL);
         mContext.startService(intent);
         return true;
     }
 
     public void doPendingLogouts() {
-        Intent intent = new Intent(mContext, MessagesService.class);
-        intent.setAction(MessagesService.ACTION_DO_PENDING_LOGOUTS);
+        Intent intent = new Intent(mContext, MessengerService.class);
+        intent.setAction(MessengerService.ACTION_DO_PENDING_LOGOUTS);
         mContext.startService(intent);
     }
 

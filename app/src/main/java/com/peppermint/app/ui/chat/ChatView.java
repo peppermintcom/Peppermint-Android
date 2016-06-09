@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.Gravity;
@@ -28,11 +27,10 @@ import com.peppermint.app.ui.base.views.CustomFontTextView;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.ResourceUtils;
+import com.peppermint.app.utils.SameAsyncTaskExecutor;
 import com.peppermint.app.utils.Utils;
 
 import java.text.ParseException;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.TimeZone;
 
 /**
@@ -44,9 +42,12 @@ public class ChatView extends LinearLayout {
 
     protected static final int FIXED_AVATAR_SIZE_DP = 50;
 
-    private class ExtraDataLoaderTask extends AsyncTask<Void, Void, Integer> {
+    private class ExtraDataLoaderTask extends SameAsyncTaskExecutor<Chat, Void, Object[]> {
         private int mAvatarWidth, mAvatarHeight;
-        private BitmapDrawable mScaledBitmapDrawable;
+
+        public ExtraDataLoaderTask(Context mContext) {
+            super(mContext);
+        }
 
         @Override
         protected void onPreExecute() {
@@ -55,22 +56,23 @@ public class ChatView extends LinearLayout {
         }
 
         @Override
-        protected Integer doInBackground(Void... params) {
+        protected Object[] doInBackground(SameAsyncTask sameAsyncTask, Chat... params) {
             Integer amountUnopened = null;
+            BitmapDrawable scaledBitmapDrawable = null;
 
             synchronized (ChatView.this) {
-                if (mChat == null) {
+                if (params[0] == null) {
                     return null;
                 }
 
-                if (!isCancelled()) {
+                if (!sameAsyncTask.isCancelled()) {
                     amountUnopened = MessageManager.getInstance(null).
-                            getUnopenedCountByChat(mDatabaseHelper.getReadableDatabase(), mChat.getId());
+                            getUnopenedCountByChat(mDatabaseHelper.getReadableDatabase(), params[0].getId());
                 }
 
-                if (!isCancelled() && mChat != null) {
+                if (!sameAsyncTask.isCancelled() && params[0] != null) {
                     // for now only a single recipient is supported
-                    final Recipient recipient = mChat.getRecipientList().get(0);
+                    final Recipient recipient = params[0].getRecipientList().get(0);
                     if (recipient != null && recipient.getPhotoUri() != null) {
                         final Uri uri = Uri.parse(recipient.getPhotoUri());
                         final int fixedSize = Utils.dpToPx(mContext, FIXED_AVATAR_SIZE_DP);
@@ -78,38 +80,37 @@ public class ChatView extends LinearLayout {
                                 mAvatarWidth > 0 ? mAvatarWidth : fixedSize,
                                 mAvatarHeight > 0 ? mAvatarHeight : fixedSize);
                         if (scaledBitmap != null) {
-                            mScaledBitmapDrawable = new BitmapDrawable(mContext.getResources(), scaledBitmap);
+                            scaledBitmapDrawable = new BitmapDrawable(mContext.getResources(), scaledBitmap);
                         }
                     }
                 }
             }
 
-            return amountUnopened;
+            params[0].setAmountUnopened(amountUnopened == null ? 0 : amountUnopened);
+
+            return new Object[]{ params[0], scaledBitmapDrawable };
         }
 
         @Override
-        protected void onPostExecute(Integer amountUnopened) {
-            if(mChat != null) {
-                if (amountUnopened != null && amountUnopened > 0) {
-                    mTxtUnreadMessages.setText(String.valueOf(mChat.getAmountUnopened()));
+        protected void onPostExecute(Object[] data) {
+            final Chat chat = (Chat) data[0];
+            final BitmapDrawable scaledBitmapDrawable = (BitmapDrawable) data[1];
+
+            if(chat != null) {
+                if (chat.getAmountUnopened() > 0) {
+                    mTxtUnreadMessages.setText(String.valueOf(chat.getAmountUnopened()));
                     mTxtUnreadMessages.setVisibility(View.VISIBLE);
                 } else {
                     mTxtUnreadMessages.setVisibility(View.GONE);
                 }
 
-                if (mScaledBitmapDrawable != null) {
-                    mImgAvatar.setStaticDrawable(mScaledBitmapDrawable);
+                if (scaledBitmapDrawable != null) {
+                    mImgAvatar.setStaticDrawable(scaledBitmapDrawable);
                     mImgAvatar.setShowStaticAvatar(true);
                 } else {
                     mImgAvatar.setShowStaticAvatar(false);
                 }
             }
-            mTaskSet.remove(this);
-        }
-
-        @Override
-        protected void onCancelled(Integer amountUnopened) {
-            mTaskSet.remove(this);
         }
     }
 
@@ -121,7 +122,7 @@ public class ChatView extends LinearLayout {
     protected DatabaseHelper mDatabaseHelper;
     protected Context mContext;
 
-    private Set<ExtraDataLoaderTask> mTaskSet = new HashSet<>(2);
+    private ExtraDataLoaderTask mExtraDataLoader;
 
     public ChatView(Context context) {
         super(context);
@@ -147,6 +148,7 @@ public class ChatView extends LinearLayout {
     protected void init(Context context) {
         mContext = context;
         mDatabaseHelper = DatabaseHelper.getInstance(context);
+        mExtraDataLoader = new ExtraDataLoaderTask(context);
 
         setOrientation(VERTICAL);
         LayoutInflater.from(context).inflate(R.layout.i_chat_layout, this);
@@ -165,16 +167,18 @@ public class ChatView extends LinearLayout {
     }
 
     protected void refreshChatData() {
+        if(mImgAvatar.isShowStaticAvatar()) {
+            mImgAvatar.setShowStaticAvatar(false);
+        }
+
+        mTxtUnreadMessages.setVisibility(View.GONE);
+
         if(mChat == null || mChat.getRecipientList().size() <= 0) {
             return;
         }
 
         // for now only a single recipient is supported
         final Recipient recipient = mChat.getRecipientList().get(0);
-
-        if(mImgAvatar.isShowStaticAvatar()) {
-            mImgAvatar.setShowStaticAvatar(false);
-        }
 
         if(recipient != null) {
             mTxtName.setText(recipient.getDisplayName());
@@ -197,9 +201,7 @@ public class ChatView extends LinearLayout {
             mTxtLastMessageDate.setText("");
         }
 
-        mTxtUnreadMessages.setVisibility(View.GONE);
-
-        launchLoaderTask();
+        mExtraDataLoader.execute(mChat);
     }
 
     public Chat getChat() {
@@ -225,20 +227,7 @@ public class ChatView extends LinearLayout {
         super.onDetachedFromWindow();
         MessageManager.getInstance(getContext()).unregisterDataListener(mMessageDataObjectListener);
         ChatManager.getInstance(getContext()).unregisterDataListener(mChatDataObjectListener);
-        for(ExtraDataLoaderTask task : mTaskSet) {
-            if (task != null) {
-                task.cancel(true);
-            }
-        }
-    }
-
-    private void launchLoaderTask() {
-        if(mTaskSet.size() >= 2) {
-            return;
-        }
-        final ExtraDataLoaderTask extraDataLoaderTask = new ExtraDataLoaderTask();
-        mTaskSet.add(extraDataLoaderTask);
-        extraDataLoaderTask.execute();
+        mExtraDataLoader.cancel(true);
     }
 
     private Object mMessageDataObjectListener = new Object() {

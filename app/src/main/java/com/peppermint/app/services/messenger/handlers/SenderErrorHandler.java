@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
 import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
@@ -223,7 +224,7 @@ public class SenderErrorHandler extends SenderObject {
             return;
         }
 
-        mTrackerManager.log("Retry #" + retryNum + " for Task " + taskUuid);
+        Log.w(TAG, "Retry #" + retryNum + " for Task " + taskUuid);
 
         // just try again for MAX_RETRIES times tops
         doRecover(failedSendingTask, false);

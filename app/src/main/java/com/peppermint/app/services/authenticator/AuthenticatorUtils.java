@@ -4,21 +4,22 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.OperationCanceledException;
 import android.app.NotificationManager;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 
-import com.peppermint.app.services.messenger.MessagesServiceManager;
 import com.peppermint.app.cloud.apis.peppermint.PeppermintApiNoAccountException;
+import com.peppermint.app.dal.DatabaseHelper;
 import com.peppermint.app.dal.contact.ContactData;
 import com.peppermint.app.dal.contact.ContactManager;
-import com.peppermint.app.dal.DatabaseHelper;
 import com.peppermint.app.dal.pendinglogout.PendingLogout;
 import com.peppermint.app.dal.pendinglogout.PendingLogoutManager;
-import com.peppermint.app.PeppermintEventBus;
+import com.peppermint.app.services.messenger.MessengerServiceManager;
 import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.utils.Utils;
 
@@ -33,6 +34,8 @@ import java.util.Map;
  */
 public class AuthenticatorUtils {
 
+    private static final long SYNC_INTERVAL = 3600L;
+
     private TrackerManager mTrackerManager;
     private AccountManager mAccountManager;
     private Context mContext;
@@ -42,6 +45,30 @@ public class AuthenticatorUtils {
         mContext = context;
         mTrackerManager = TrackerManager.getInstance(context.getApplicationContext());
         refreshAccount();
+    }
+
+    public void requestSync() throws PeppermintApiNoAccountException {
+        if(mAccount == null) {
+            throw new PeppermintApiNoAccountException();
+        }
+
+        if(!ContentResolver.isSyncActive(mAccount, AuthenticatorConstants.AUTHORITY)) {
+            final Bundle bundle = new Bundle();
+            bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+            bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+            ContentResolver.requestSync(mAccount, AuthenticatorConstants.AUTHORITY, bundle);
+        }
+    }
+
+    public void setupPeriodicSync() throws PeppermintApiNoAccountException {
+        if(mAccount == null) {
+            throw new PeppermintApiNoAccountException();
+        }
+        ContentResolver.addPeriodicSync(
+                mAccount,
+                AuthenticatorConstants.AUTHORITY,
+                Bundle.EMPTY,
+                SYNC_INTERVAL);
     }
 
     /**
@@ -140,8 +167,8 @@ public class AuthenticatorUtils {
         }
 
         // cancel all pending messages
-        final MessagesServiceManager messagesServiceManager = new MessagesServiceManager(mContext);
-        messagesServiceManager.cancel();
+        final MessengerServiceManager messengerServiceManager = new MessengerServiceManager(mContext);
+        messengerServiceManager.cancel();
 
         // remove all peppermint contacts
         int permissionCheck = ContextCompat.checkSelfPermission(mContext,
@@ -175,7 +202,7 @@ public class AuthenticatorUtils {
         }
         databaseHelper.unlock();
 
-        messagesServiceManager.doPendingLogouts();
+        messengerServiceManager.doPendingLogouts();
 
         // remove the account
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
@@ -192,7 +219,7 @@ public class AuthenticatorUtils {
         notificationManager.cancelAll();
 
         // send global sign out event
-        PeppermintEventBus.postSignOutEvent();
+        AuthenticationService.postSignOutEvent();
     }
 
     private void clearSharedPreferences() {
@@ -237,6 +264,12 @@ public class AuthenticatorUtils {
 
         if(accessToken != null) {
             mAccountManager.setAuthToken(mAccount, AuthenticatorConstants.FULL_TOKEN_TYPE, accessToken);
+        }
+
+        try {
+            AuthenticationService.postSignInEvent(getAccountData());
+        } catch (PeppermintApiNoAccountException e) {
+            /* nothing to do here */
         }
     }
 

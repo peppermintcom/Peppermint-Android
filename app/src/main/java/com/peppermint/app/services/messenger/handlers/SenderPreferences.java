@@ -34,8 +34,6 @@ public class SenderPreferences {
     public static final String AUTOMATIC_TRANSCRIPTION = "automaticTranscription";
     public static final String TRANSCRIPTION_LANGUAGE_CODE = "transcriptionLanguageCode";
 
-    public static final String LAST_SYNC_TIMESTAMP_KEY = "lastSyncTimestmap";
-
     private SharedPreferences mSharedPreferences;
     private Context mContext;
 
@@ -66,16 +64,6 @@ public class SenderPreferences {
         }
 
         return recentContactUris;
-    }
-
-    public void setLastSyncTimestamp(String ts) {
-        SharedPreferences.Editor editor = getSharedPreferences().edit();
-        editor.putString(LAST_SYNC_TIMESTAMP_KEY, ts);
-        editor.commit();
-    }
-
-    public String getLastSyncTimestamp() {
-        return getSharedPreferences().getString(LAST_SYNC_TIMESTAMP_KEY, null);
     }
 
     public void setFirstName(String name) {

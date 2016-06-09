@@ -6,18 +6,18 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 
 import com.peppermint.app.R;
-import com.peppermint.app.dal.chat.ChatManager;
-import com.peppermint.app.dal.contact.ContactManager;
-import com.peppermint.app.dal.message.MessageManager;
-import com.peppermint.app.dal.recipient.RecipientManager;
-import com.peppermint.app.dal.recording.RecordingManager;
-import com.peppermint.app.services.messenger.MessagesMarkPlayedTask;
 import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.dal.chat.ChatManager;
 import com.peppermint.app.dal.contact.ContactData;
+import com.peppermint.app.dal.contact.ContactManager;
 import com.peppermint.app.dal.contact.ContactRaw;
 import com.peppermint.app.dal.message.Message;
+import com.peppermint.app.dal.message.MessageManager;
 import com.peppermint.app.dal.recipient.Recipient;
+import com.peppermint.app.dal.recipient.RecipientManager;
 import com.peppermint.app.dal.recording.Recording;
+import com.peppermint.app.dal.recording.RecordingManager;
+import com.peppermint.app.services.messenger.MessagesMarkPlayedTask;
 import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
@@ -49,16 +49,18 @@ public class GlobalManager {
         RAW_CONTACT_CACHE.clear();
     }
 
-    public static Message insertReceivedMessage(final Context context, final SQLiteDatabase db, String receiverEmail,
+    public static Message insertReceivedMessage(final Context context, String receiverEmail,
                                                 String senderName, String senderEmail, String audioUrl,
                                                 String serverId, String transcription, String createdTs,
-                                                int durationSeconds, String readTimestamp) throws SQLException, ContactManager.InvalidPhoneException, ContactManager.InvalidNameException, ContactManager.InvalidEmailException {
+                                                int durationSeconds, String readTimestamp, boolean avoidEventBus) throws SQLException, ContactManager.InvalidPhoneException, ContactManager.InvalidNameException, ContactManager.InvalidEmailException {
 
         if(audioUrl == null || senderEmail == null || receiverEmail == null) {
             return null;
         }
 
-        Message message = MessageManager.getInstance(context).getMessageByIdOrServerId(db, 0, serverId, true);
+        final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(context);
+
+        Message message = MessageManager.getInstance(context).getMessageByIdOrServerId(databaseHelper.getReadableDatabase(), 0, serverId, true);
         if(message != null) {
             return message;
         }
@@ -71,17 +73,19 @@ public class GlobalManager {
         }
         ContactRaw contactRaw = RAW_CONTACT_CACHE.get(rawContactKey);
 
+        databaseHelper.lock();
+        final SQLiteDatabase db = databaseHelper.getWritableDatabase();
         db.beginTransaction();
 
         try {
             // insert chat and recipient
-            Chat chat = insertOrUpdateTimestampChatAndRecipient(context, db, createdTs, contactRaw);
+            Chat chat = insertOrUpdateTimestampChatAndRecipient(context, db, avoidEventBus, createdTs, contactRaw);
 
             // insert recording
             Recording recording = new Recording(null, durationSeconds * 1000L, 0, false, Recording.CONTENT_TYPE_AUDIO);
             recording.setTranscription(transcription);
             recording.setRecordedTimestamp(createdTs);
-            RecordingManager.getInstance().insert(db, recording);
+            RecordingManager.getInstance().insert(db, recording, avoidEventBus);
 
             // insert message
             Recipient recipient = null;
@@ -97,26 +101,29 @@ public class GlobalManager {
                     createdTs, true, false, readTimestamp != null, serverId, audioUrl, null);
             message.setChatParameter(chat);
             message.setRecordingParameter(recording);
-            MessageManager.getInstance(context).insert(db, message);
+            MessageManager.getInstance(context).insert(db, message, avoidEventBus);
 
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
+            databaseHelper.unlock();
         }
 
         return message;
     }
 
-    public static Message insertSentMessage(final Context context, final SQLiteDatabase db, String receiverName, String receiverEmail,
+    public static Message insertSentMessage(final Context context, String receiverName, String receiverEmail,
                                             String senderEmail, String audioUrl,
                                             String serverId, String transcription, String createdTs,
-                                            int durationSeconds) throws SQLException, ContactManager.InvalidPhoneException, ContactManager.InvalidNameException, ContactManager.InvalidEmailException {
+                                            int durationSeconds, boolean avoidEventBus) throws SQLException, ContactManager.InvalidPhoneException, ContactManager.InvalidNameException, ContactManager.InvalidEmailException {
 
         if(audioUrl == null || senderEmail == null || receiverEmail == null) {
             return null;
         }
 
-        Message message = MessageManager.getInstance(context).getMessageByIdOrServerId(db, 0, serverId, false);
+        final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(context);
+
+        Message message = MessageManager.getInstance(context).getMessageByIdOrServerId(databaseHelper.getReadableDatabase(), 0, serverId, false);
         if(message != null) {
             return message;
         }
@@ -129,17 +136,19 @@ public class GlobalManager {
         }
         ContactRaw contactRaw = RAW_CONTACT_CACHE.get(rawContactKey);
 
+        databaseHelper.lock();
+        final SQLiteDatabase db = databaseHelper.getWritableDatabase();
         db.beginTransaction();
 
         try {
             // insert chat and recipient
-            Chat chat = insertOrUpdateTimestampChatAndRecipient(context, db, createdTs, contactRaw);
+            Chat chat = insertOrUpdateTimestampChatAndRecipient(context, db, avoidEventBus, createdTs, contactRaw);
 
             // insert recording
             Recording recording = new Recording(null, durationSeconds * 1000L, 0, false, Recording.CONTENT_TYPE_AUDIO);
             recording.setTranscription(transcription);
             recording.setRecordedTimestamp(createdTs);
-            RecordingManager.getInstance().insert(db, recording);
+            RecordingManager.getInstance().insert(db, recording, avoidEventBus);
 
             // insert message
             List<Long> recipientIds = new ArrayList<>();
@@ -154,11 +163,12 @@ public class GlobalManager {
             message.setConfirmedSentRecipientIds(recipientIds);
             message.setChatParameter(chat);
             message.setRecordingParameter(recording);
-            MessageManager.getInstance(context).insert(db, message);
+            MessageManager.getInstance(context).insert(db, message, avoidEventBus);
 
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
+            databaseHelper.unlock();
         }
 
         return message;
@@ -221,7 +231,7 @@ public class GlobalManager {
      * @return the Chat instance
      * @throws SQLException if the database insert fails
      */
-    public static Chat insertOrUpdateTimestampChatAndRecipient(Context context, SQLiteDatabase db, String newTimestamp, ContactRaw... contactRaw) throws SQLException {
+    public static Chat insertOrUpdateTimestampChatAndRecipient(Context context, SQLiteDatabase db, boolean avoidEventBus, String newTimestamp, ContactRaw... contactRaw) throws SQLException {
         Chat newChat;
 
         db.beginTransaction();
@@ -246,10 +256,10 @@ public class GlobalManager {
 
                 if (recipient == null) {
                     recipient = new Recipient(contactRaw[i], DateContainer.getCurrentUTCTimestamp());
-                    RecipientManager.getInstance(context).insert(db, recipient);
+                    RecipientManager.getInstance(context).insert(db, recipient, avoidEventBus);
                 } else {
                     recipient.setPeppermint(contactRaw[i].getPeppermint() != null && recipient.getVia().compareTo(contactRaw[i].getPeppermint().getVia()) == 0);
-                    RecipientManager.getInstance(context).update(db, recipient);
+                    RecipientManager.getInstance(context).update(db, recipient, avoidEventBus);
                 }
 
                 recipientList.add(recipient);
@@ -268,10 +278,10 @@ public class GlobalManager {
                 if (foundChat.getLastMessageTimestamp() != null && foundChat.getLastMessageTimestamp().compareToIgnoreCase(newTimestamp) > 0) {
                     newChat.setLastMessageTimestamp(foundChat.getLastMessageTimestamp());
                 }
-                ChatManager.getInstance(context).update(db, newChat);
+                ChatManager.getInstance(context).update(db, newChat, avoidEventBus);
             } else {
                 // otherwise, just insert
-                ChatManager.getInstance(context).insert(db, newChat);
+                ChatManager.getInstance(context).insert(db, newChat, avoidEventBus);
             }
 
             db.setTransactionSuccessful();

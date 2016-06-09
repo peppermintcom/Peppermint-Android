@@ -8,7 +8,7 @@ import com.peppermint.app.services.messenger.handlers.SenderTask;
  *
  * Represents an event dispatched by the {@link SenderManager} and triggered by the Sender API.
  */
-public class SenderEvent {
+public class MessengerSendEvent {
 
     /**
      * When a {@link SenderTask} starts
@@ -49,18 +49,18 @@ public class SenderEvent {
     private int mType;
     private Throwable mError;
 
-    public SenderEvent(SenderTask task, int type) {
+    public MessengerSendEvent(SenderTask task, int type) {
         this.mTask = task;
         this.mType = type;
     }
 
-    public SenderEvent(SenderTask task, int type, Throwable error) {
+    public MessengerSendEvent(SenderTask task, int type, Throwable error) {
         this.mTask = task;
         this.mType = type;
         this.mError = error;
     }
 
-    public SenderEvent(SenderTask task, Throwable error) {
+    public MessengerSendEvent(SenderTask task, Throwable error) {
         this.mTask = task;
         this.mType = EVENT_ERROR;
         this.mError = error;
@@ -92,7 +92,7 @@ public class SenderEvent {
 
     @Override
     public String toString() {
-        return "SenderEvent{" +
+        return "MessengerSendEvent{" +
                 "mTask=" + mTask +
                 ", mType=" + mType +
                 ", mError=" + mError +

@@ -10,21 +10,22 @@ import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.services.recorder.RecordService;
-import com.peppermint.app.services.recorder.RecordServiceManager;
 import com.peppermint.app.dal.chat.Chat;
 import com.peppermint.app.dal.recording.Recording;
-import com.peppermint.app.PeppermintEventBus;
+import com.peppermint.app.services.recorder.NoMicDataIOException;
+import com.peppermint.app.services.recorder.RecordService;
+import com.peppermint.app.services.recorder.RecordServiceManager;
 import com.peppermint.app.services.recorder.RecorderEvent;
 import com.peppermint.app.ui.base.Overlay;
 import com.peppermint.app.ui.base.OverlayManager;
 import com.peppermint.app.ui.base.TouchInterceptable;
 import com.peppermint.app.ui.base.views.CustomToast;
-import com.peppermint.app.services.recorder.NoMicDataIOException;
 import com.peppermint.app.utils.Utils;
 
 /**
  * Created by Nuno Luz on 06-02-2016.
+ *
+ * UI overlay that shows up while recording.
  */
 public class ChatRecordOverlay extends Overlay implements RecordServiceManager.RecordServiceListener, View.OnTouchListener, OverlayManager.OverlayVisibilityChangeListener {
 
@@ -86,7 +87,7 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.R
             mRecordServiceManager.bind();
         }
         mTouchInterceptable.addTouchEventInterceptor(this);
-        PeppermintEventBus.registerAudio(this);
+        RecordService.registerEventListener(this);
     }
 
     /**
@@ -94,7 +95,7 @@ public class ChatRecordOverlay extends Overlay implements RecordServiceManager.R
      * Also stops listening for touch events that trigger the overlay.
      */
     public void unbindService() {
-        PeppermintEventBus.unregisterAudio(this);
+        RecordService.unregisterEventListener(this);
         mTouchInterceptable.removeTouchEventInterceptor(this);
         if(mRecordServiceManager != null) {
             mRecordServiceManager.unbind();

@@ -3,14 +3,14 @@ package com.peppermint.app.services.messenger;
 import android.content.Context;
 import android.util.Log;
 
+import com.peppermint.app.dal.GlobalManager;
+import com.peppermint.app.dal.message.Message;
+import com.peppermint.app.services.authenticator.AuthenticationService;
+import com.peppermint.app.services.authenticator.SignOutEvent;
+import com.peppermint.app.services.messenger.handlers.NoInternetConnectionException;
 import com.peppermint.app.services.messenger.handlers.SenderPreferences;
 import com.peppermint.app.services.messenger.handlers.SenderSupportListener;
 import com.peppermint.app.services.messenger.handlers.SenderSupportTask;
-import com.peppermint.app.services.messenger.handlers.NoInternetConnectionException;
-import com.peppermint.app.dal.GlobalManager;
-import com.peppermint.app.dal.message.Message;
-import com.peppermint.app.PeppermintEventBus;
-import com.peppermint.app.services.authenticator.SignOutEvent;
 import com.peppermint.app.trackers.TrackerManager;
 
 import java.sql.SQLException;
@@ -50,19 +50,19 @@ public class MessagesMarkPlayedTask extends SenderSupportTask {
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-        PeppermintEventBus.register(this);
+        AuthenticationService.registerEventListener(this);
     }
 
     @Override
     protected void onCancelled(Void aVoid) {
         super.onCancelled(aVoid);
-        PeppermintEventBus.unregister(this);
+        AuthenticationService.unregisterEventListener(this);
     }
 
     @Override
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
-        PeppermintEventBus.unregister(this);
+        AuthenticationService.unregisterEventListener(this);
         if(getError() != null) {
             Message message = getMessage();
             try {
@@ -74,8 +74,6 @@ public class MessagesMarkPlayedTask extends SenderSupportTask {
             if(!(getError() instanceof NoInternetConnectionException)) {
                 getTrackerManager().logException(getError());
             }
-        } else {
-            PeppermintEventBus.postMarkAsPlayedEvent(getMessage());
         }
     }
 }

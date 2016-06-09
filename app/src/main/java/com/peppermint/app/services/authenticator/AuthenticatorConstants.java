@@ -21,4 +21,6 @@ public class AuthenticatorConstants {
     public static final String ACCOUNT_PARAM_DEVICE_KEY = "deviceKey";
     public static final String ACCOUNT_PARAM_TYPE = "accountType";
     public static final String ACCOUNT_PARAM_GCM_REG = "gcmRegistration";
+
+    public static final String AUTHORITY = "com.peppermint.app";
 }

@@ -1,14 +1,13 @@
 package com.peppermint.app.services.messenger.handlers;
 
 import android.content.Intent;
+import android.util.Log;
 
-import com.peppermint.app.services.recorder.RecordService;
-import com.peppermint.app.services.authenticator.AuthenticationData;
 import com.peppermint.app.cloud.apis.peppermint.PeppermintApi;
+import com.peppermint.app.cloud.apis.peppermint.PeppermintApiRecipientNoAppException;
 import com.peppermint.app.cloud.apis.peppermint.objects.MessagesResponse;
 import com.peppermint.app.cloud.apis.peppermint.objects.TranscriptionResponse;
 import com.peppermint.app.cloud.apis.peppermint.objects.UploadsResponse;
-import com.peppermint.app.cloud.apis.peppermint.PeppermintApiRecipientNoAppException;
 import com.peppermint.app.cloud.apis.speech.GoogleSpeechRecognizeClient;
 import com.peppermint.app.dal.DatabaseHelper;
 import com.peppermint.app.dal.GlobalManager;
@@ -17,7 +16,8 @@ import com.peppermint.app.dal.message.MessageManager;
 import com.peppermint.app.dal.recipient.Recipient;
 import com.peppermint.app.dal.recording.Recording;
 import com.peppermint.app.dal.recording.RecordingManager;
-import com.peppermint.app.PeppermintEventBus;
+import com.peppermint.app.services.authenticator.AuthenticationData;
+import com.peppermint.app.services.recorder.RecordService;
 import com.peppermint.app.services.recorder.RecorderEvent;
 
 import java.io.File;
@@ -35,6 +35,8 @@ import java.sql.SQLException;
  * </p>
  */
 public abstract class SenderUploadTask extends SenderTask implements Cloneable {
+
+    private static final String TAG = SenderUploadTask.class.getSimpleName();
 
     private SenderUploadListener mSenderUploadListener;
     private boolean mRecovering = false;
@@ -118,7 +120,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
             message.addConfirmedSentRecipientId(recipient.getId());
             sentInApp = true;
         } catch(PeppermintApiRecipientNoAppException e) {
-            getTrackerManager().log("Unable to send through Peppermint", e);
+            Log.w(TAG, "Unable to send through Peppermint", e);
             message.removeConfirmedSentRecipientId(recipient.getId());
             sentInApp = false;
             try {
@@ -244,7 +246,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
         if(mSenderUploadListener != null && !mRecovering) {
             mSenderUploadListener.onSendingUploadStarted(this);
         }
-        PeppermintEventBus.registerAudio(this);
+        RecordService.registerEventListener(this);
     }
 
     @Override
@@ -257,7 +259,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
 
     @Override
     protected void onCancelled(Void aVoid) {
-        PeppermintEventBus.unregisterAudio(this);
+        RecordService.unregisterEventListener(this);
         if(mSenderUploadListener != null) {
             mSenderUploadListener.onSendingUploadCancelled(this);
         }
@@ -265,7 +267,7 @@ public abstract class SenderUploadTask extends SenderTask implements Cloneable {
 
     @Override
     protected void onPostExecute(Void aVoid) {
-        PeppermintEventBus.unregisterAudio(this);
+        RecordService.unregisterEventListener(this);
         if(getError() == null) {
             if(mSenderUploadListener != null) {
                 mSenderUploadListener.onSendingUploadFinished(this);

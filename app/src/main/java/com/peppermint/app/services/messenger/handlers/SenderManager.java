@@ -2,10 +2,9 @@ package com.peppermint.app.services.messenger.handlers;
 
 import android.content.Context;
 import android.provider.ContactsContract;
+import android.util.Log;
 
 import com.peppermint.app.dal.message.Message;
-import com.peppermint.app.PeppermintEventBus;
-import com.peppermint.app.services.messenger.SenderEvent;
 import com.peppermint.app.services.messenger.handlers.gmail.GmailSender;
 import com.peppermint.app.trackers.TrackerApi;
 import com.peppermint.app.trackers.TrackerManager;
@@ -43,6 +42,8 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
 
     private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
 
+    private SenderManagerListener mListener;
+
     private ThreadPoolExecutor mExecutor, mCancelExecutor;      // a thread pool for sending tasks
 
     private Map<String, Sender> mSenderMap;                     // map of senders <mime type, sender>
@@ -62,11 +63,13 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
         }
     }
 
-    public SenderManager(Context context, Map<String, Object> defaultSenderParameters) {
+    public SenderManager(Context context, SenderManagerListener mListener, Map<String, Object> defaultSenderParameters) {
         super(context,
                 TrackerManager.getInstance(context.getApplicationContext()),
                 defaultSenderParameters,
                 new SenderPreferences(context));
+
+        this.mListener = mListener;
 
         this.mTaskMap = new ConcurrentHashMap<>();
         this.mSenderMap = new HashMap<>();
@@ -254,26 +257,26 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
 
     @Override
     public void onSendingUploadNonCancellable(SenderUploadTask uploadTask) {
-        PeppermintEventBus.postSenderEvent(SenderEvent.EVENT_NON_CANCELLABLE, uploadTask, null);
+        mListener.onSendingNonCancellable(uploadTask);
     }
 
     @Override
     public void onSendingUploadStarted(SenderUploadTask uploadTask) {
-        PeppermintEventBus.postSenderEvent(SenderEvent.EVENT_STARTED, uploadTask, null);
+        mListener.onSendingStarted(uploadTask);
     }
 
     @Override
     public void onSendingUploadCancelled(SenderUploadTask uploadTask) {
-        mTrackerManager.log("Cancelled SenderUploadTask " + uploadTask.getId());
+        Log.d(TAG, "Cancelled SenderUploadTask " + uploadTask.getId());
         mTaskMap.remove(uploadTask.getId());
-        PeppermintEventBus.postSenderEvent(SenderEvent.EVENT_CANCELLED, uploadTask, null);
+        mListener.onSendingCancelled(uploadTask);
     }
 
     @Override
     public void onSendingUploadFinished(SenderUploadTask uploadTask) {
-        mTrackerManager.log("Finished SenderUploadTask " + uploadTask.getId());
+        Log.d(TAG, "Finished SenderUploadTask " + uploadTask.getId());
         mTaskMap.remove(uploadTask.getId());
-        PeppermintEventBus.postSenderEvent(SenderEvent.EVENT_FINISHED, uploadTask, null);
+        mListener.onSendingFinished(uploadTask);
     }
 
     @Override
@@ -281,17 +284,17 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
         // just try to recover
         SenderErrorHandler errorHandler = uploadTask.getSender().getSenderErrorHandler();
         if(errorHandler != null) {
-            mTrackerManager.log("Error on SenderUploadTask (Handling...) " + uploadTask.getId(), error);
+            Log.d(TAG, "Error on SenderUploadTask (Handling...) " + uploadTask.getId(), error);
             errorHandler.tryToRecover(uploadTask);
         } else {
-            mTrackerManager.log("Error on SenderUploadTask (Cannot Handle) " + uploadTask.getId(), error);
+            Log.d(TAG, "Error on SenderUploadTask (Cannot Handle) " + uploadTask.getId(), error);
             onSendingUploadRequestNotRecovered(uploadTask, error);
         }
     }
 
     @Override
     public void onSendingUploadProgress(SenderUploadTask uploadTask, float progressValue) {
-        PeppermintEventBus.postSenderEvent(SenderEvent.EVENT_PROGRESS, uploadTask, null);
+        mListener.onSendingProgress(uploadTask, progressValue);
     }
 
     @Override
@@ -310,7 +313,7 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
             if(error != null) {
                 mTrackerManager.track(TrackerApi.TYPE_EVENT, error, TAG);
             }
-            PeppermintEventBus.postSenderEvent(SenderEvent.EVENT_QUEUED, previousUploadTask, error);
+            mListener.onSendingQueued(previousUploadTask, error);
         } else {
             send(message, nextSender, previousUploadTask);
         }
