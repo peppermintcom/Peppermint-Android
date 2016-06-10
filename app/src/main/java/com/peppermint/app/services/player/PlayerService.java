@@ -14,6 +14,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.peppermint.app.BuildConfig;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.dal.message.Message;
 import com.peppermint.app.trackers.TrackerManager;
@@ -40,7 +41,7 @@ public class PlayerService extends Service {
     private static final EventBus EVENT_BUS = new EventBus();
 
     static {
-        if(PeppermintApp.DEBUG) {
+        if(BuildConfig.DEBUG) {
             EVENT_BUS.register(new Object() {
                 public void onEventBackgroundThread(PlayerEvent event) {
                     Log.d(TAG, event.toString());

@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.peppermint.app.BuildConfig;
 import com.peppermint.app.PeppermintApp;
 
 import java.util.HashSet;
@@ -22,7 +23,7 @@ public class SyncService extends Service {
     private static final EventBus EVENT_BUS = new EventBus();
 
     static {
-        if(PeppermintApp.DEBUG) {
+        if(BuildConfig.DEBUG) {
             EVENT_BUS.register(new Object() {
                 public void onEventBackgroundThread(SyncEvent event) {
                     Log.d(TAG, event.toString());

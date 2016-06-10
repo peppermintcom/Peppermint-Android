@@ -3,7 +3,7 @@ package com.peppermint.app.cloud.apis.peppermint;
 import android.content.Context;
 import android.os.Build;
 
-import com.peppermint.app.PeppermintApp;
+import com.peppermint.app.BuildConfig;
 import com.peppermint.app.cloud.apis.BaseApi;
 import com.peppermint.app.cloud.apis.peppermint.objects.AccountsResponse;
 import com.peppermint.app.cloud.apis.peppermint.objects.JWTsResponse;
@@ -81,7 +81,7 @@ public class PeppermintApi extends BaseApi implements Serializable {
 
     public PeppermintApi(final Context mContext) {
         super(mContext);
-        this.mApiKey = PeppermintApp.DEBUG ? DEBUG_API_KEY : API_KEY;
+        this.mApiKey = BuildConfig.DEBUG ? DEBUG_API_KEY : API_KEY;
     }
 
     @Override

@@ -2,7 +2,7 @@ package com.peppermint.app.trackers;
 
 import android.content.Context;
 
-import com.peppermint.app.PeppermintApp;
+import com.peppermint.app.BuildConfig;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -37,7 +37,7 @@ public class TrackerManager extends TrackerApi {
         super(applicationContext);
 
         mTrackers = new HashSet<>();
-        if(!PeppermintApp.DEBUG) {
+        if(!BuildConfig.DEBUG) {
             mTrackers.add(new GoogleAnalyticsTracker(applicationContext));
             mTrackers.add(new FabricTracker(applicationContext));
             mTrackers.add(new FlurryTracker(applicationContext));

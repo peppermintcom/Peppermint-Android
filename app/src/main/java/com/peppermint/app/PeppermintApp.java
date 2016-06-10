@@ -8,9 +8,9 @@ import android.support.multidex.MultiDexApplication;
 import android.util.Log;
 
 import com.google.android.gms.security.ProviderInstaller;
-import com.peppermint.app.services.messenger.MessengerServiceManager;
 import com.peppermint.app.cloud.apis.peppermint.PeppermintApi;
 import com.peppermint.app.cloud.apis.sparkpost.SparkPostApi;
+import com.peppermint.app.services.messenger.MessengerServiceManager;
 import com.peppermint.app.services.messenger.handlers.SenderObject;
 import com.peppermint.app.services.messenger.handlers.SenderPreferences;
 import com.peppermint.app.services.messenger.handlers.gmail.GmailSender;
@@ -26,8 +26,6 @@ import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
 public class PeppermintApp extends MultiDexApplication {
 
     private static final String TAG = PeppermintApi.class.getSimpleName();
-
-    public static final boolean DEBUG = true;
 
     private static final String PREF_LAST_VERSION = "PeppermintApp_LastVersion";
 
@@ -68,7 +66,7 @@ public class PeppermintApp extends MultiDexApplication {
             editor.commit();
         }
 
-        if(DEBUG) {
+        if(BuildConfig.DEBUG) {
             StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
                     .detectDiskReads()
                     .detectDiskWrites()

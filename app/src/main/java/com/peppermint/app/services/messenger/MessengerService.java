@@ -20,6 +20,7 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.peppermint.app.BuildConfig;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.StartupActivity;
@@ -90,7 +91,7 @@ public class MessengerService extends Service {
     private static final EventBus EVENT_BUS = new EventBus();
 
     static {
-        if(PeppermintApp.DEBUG) {
+        if(BuildConfig.DEBUG) {
             EVENT_BUS.register(new Object() {
                 public void onEventBackgroundThread(MessengerSendEvent event) {
                     Log.d(TAG, event.toString());

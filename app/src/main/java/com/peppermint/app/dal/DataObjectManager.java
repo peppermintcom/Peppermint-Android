@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.peppermint.app.BuildConfig;
 import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.trackers.TrackerManager;
 
@@ -47,7 +48,7 @@ public abstract class DataObjectManager<E, T extends DataObject> {
     protected Context mContext;
 
     protected DataObjectManager() {
-        if(PeppermintApp.DEBUG) {
+        if(BuildConfig.DEBUG) {
             registerDataListener(new Object() {
                 public void onEventBackgroundThread(DataObjectEvent<T> dataObjectEvent) {
                     Log.d(DataObjectManager.this.getClass().getSimpleName(), dataObjectEvent.toString());

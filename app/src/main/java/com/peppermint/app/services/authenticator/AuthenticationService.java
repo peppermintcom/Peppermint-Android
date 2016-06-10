@@ -21,6 +21,7 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.peppermint.app.BuildConfig;
 import com.peppermint.app.PeppermintApp;
 
 import de.greenrobot.event.EventBus;
@@ -39,7 +40,7 @@ public class AuthenticationService extends Service {
     private static final EventBus EVENT_BUS = new EventBus();
 
     static {
-        if(PeppermintApp.DEBUG) {
+        if(BuildConfig.DEBUG) {
             EVENT_BUS.register(new Object() {
                 public void onEventBackgroundThread(SignInEvent event) {
                     Log.d(TAG, event.toString());

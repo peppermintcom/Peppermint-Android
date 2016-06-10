@@ -77,15 +77,6 @@ public class MessengerServiceManager {
     }
 
     /**
-     * Tries to stop the service.
-     * <b>Also unbinds this manager from the service.</b>
-     */
-    public void shouldStop() {
-        unbind();
-        mService.shutdown();
-    }
-
-    /**
      * Binds this manager to the service.
      */
     public void bind() {
