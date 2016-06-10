@@ -209,8 +209,6 @@ public class AuthenticatorUtils {
         }
         databaseHelper.unlock();
 
-        messengerServiceManager.doPendingLogouts();
-
         // remove the account
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             mAccountManager.removeAccountExplicitly(getAccount());

@@ -6,7 +6,6 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.peppermint.app.BuildConfig;
-import com.peppermint.app.PeppermintApp;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -34,10 +33,6 @@ public class SyncService extends Service {
 
     public static void registerEventListener(Object listener) {
         EVENT_BUS.register(listener);
-    }
-
-    public static void registerEventListener(Object listener, int priority) {
-        EVENT_BUS.register(listener, priority);
     }
 
     public static void unregisterEventListener(Object listener) {

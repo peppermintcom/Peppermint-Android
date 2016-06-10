@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -21,7 +20,6 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.peppermint.app.BuildConfig;
-import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.StartupActivity;
 import com.peppermint.app.cloud.apis.google.GoogleApiNoAuthorizationException;
@@ -37,7 +35,6 @@ import com.peppermint.app.dal.message.MessageManager;
 import com.peppermint.app.dal.recording.Recording;
 import com.peppermint.app.services.authenticator.AuthenticationService;
 import com.peppermint.app.services.authenticator.AuthenticatorUtils;
-import com.peppermint.app.services.authenticator.PendingLogoutPeppermintTask;
 import com.peppermint.app.services.authenticator.SignOutEvent;
 import com.peppermint.app.services.gcm.RegistrationIntentService;
 import com.peppermint.app.services.messenger.handlers.NoInternetConnectionException;
@@ -77,7 +74,6 @@ public class MessengerService extends Service {
     private static final String TAG = MessengerService.class.getSimpleName();
 
     public static final String ACTION_CANCEL = "com.peppermint.app.cloud.MessengerService.CANCEL";
-    public static final String ACTION_DO_PENDING_LOGOUTS = "com.peppermint.app.cloud.MessengerService.DO_PENDING_LOGOUTS";
 
     // intent parameters to send a message
     public static final String PARAM_MESSAGE_SEND_RECORDING = TAG + "_paramMessageSendRecording";
@@ -102,10 +98,6 @@ public class MessengerService extends Service {
 
     public static void registerEventListener(Object listener) {
         EVENT_BUS.register(listener);
-    }
-
-    public static void registerEventListener(Object listener, int priority) {
-        EVENT_BUS.register(listener, priority);
     }
 
     public static void unregisterEventListener(Object listener) {
@@ -198,38 +190,16 @@ public class MessengerService extends Service {
      */
     public class SendRecordServiceBinder extends Binder {
 
-        /**
-         * Start a send file request/task that will send the file at the supplied location to the specified recipient.
-         * @param chat the chat to send the recording to
-         * @param recording the recording/file
-         * @return the {@link UUID} of the send file request/task
-         */
-        Message send(Chat chat, Recording recording) {
-            return MessengerService.this.send(chat, recording);
-        }
-
+        Message send(Chat chat, Recording recording) { return MessengerService.this.send(chat, recording); }
         boolean retry(Message message) {
             return MessengerService.this.retry(message);
         }
 
-        /**
-         * Cancel the message with the specified {@link UUID}.
-         * <b>If the message is being sent, it might get sent anyway.</b>
-         * @param message the UUID of the message returned by {@link #send(Chat, Recording)}
-         */
         boolean cancel(Message message) {
             return MessengerService.this.cancel(message);
         }
         boolean cancel() {
             return MessengerService.this.cancel(null);
-        }
-
-        /**
-         * Cancel all pending and ongoing send requests.
-         * <b>If a send request is ongoing, it might get sent anyway.</b>
-         */
-        void shutdown() {
-            stopSelf();
         }
 
         boolean isSending() {
@@ -238,17 +208,10 @@ public class MessengerService extends Service {
         boolean isSending(Message message) {
             return MessengerService.this.isSending(message);
         }
-
-        boolean isSendingAndCancellable(Message message) {
-            return MessengerService.this.isSendingAndCancellable(message);
-        }
+        boolean isSendingAndCancellable(Message message) { return MessengerService.this.isSendingAndCancellable(message); }
 
         void markAsPlayed(Message message) {
             MessengerService.this.markAsPlayed(message);
-        }
-
-        void removeAllNotifications() {
-            MessengerService.this.removeAllNotifications();
         }
     }
 
@@ -256,7 +219,6 @@ public class MessengerService extends Service {
     private SenderPreferences mPreferences;
     private SenderManager mSenderManager;
     private AuthenticatorUtils mAuthenticatorUtils;
-    private PendingLogoutPeppermintTask mPendingLogoutPeppermintTask;
 
     private Message handleReceivedMessage(String emailAddress, String serverId, String audioUrl, String transcription, String receiverEmail, String senderEmail, String senderName, String createdTs, int durationSeconds) {
         if(audioUrl == null || senderEmail == null || receiverEmail == null) {
@@ -312,7 +274,6 @@ public class MessengerService extends Service {
             // the lack of internet connectivity
             try {
                 if (Utils.isInternetAvailable(MessengerService.this)) {
-                    doPendingLogouts();
                     doGcmRegistration();
 
                     List<Message> queued = MessageManager.getInstance(MessengerService.this).getMessagesQueued(DatabaseHelper.getInstance(MessengerService.this).getReadableDatabase());
@@ -448,8 +409,6 @@ public class MessengerService extends Service {
             } else if(intent.getAction() != null) {
                 if(intent.getAction().compareTo(ACTION_CANCEL) == 0) {
                     cancel(null);
-                } else if(intent.getAction().compareTo(ACTION_DO_PENDING_LOGOUTS) == 0) {
-                    doPendingLogouts();
                 }
             }
         }
@@ -484,13 +443,6 @@ public class MessengerService extends Service {
         mSenderManager.deinit();
 
         super.onDestroy();
-    }
-
-    private void doPendingLogouts() {
-        if(mPendingLogoutPeppermintTask == null || mPendingLogoutPeppermintTask.getStatus() == AsyncTask.Status.FINISHED) {
-            mPendingLogoutPeppermintTask = new PendingLogoutPeppermintTask(this);
-            mPendingLogoutPeppermintTask.execute((Void) null);
-        }
     }
 
     private void markAsPlayed(Message message) {
@@ -567,7 +519,6 @@ public class MessengerService extends Service {
     }
 
     // UPDATE NOTIFICATION
-
     private Notification getNotification(final Message message) {
         Intent notificationIntent = new Intent(MessengerService.this, ChatActivity.class);
         notificationIntent.putExtra(ChatActivity.PARAM_CHAT_ID, message.getChatId());
@@ -608,7 +559,6 @@ public class MessengerService extends Service {
     }
 
     // FIRST INSTALL/USE NOTIFICATION
-
     private boolean showFirstAudioMessageNotification() {
         if(!mPreferences.hasSentMessage()) {
             NotificationManager notificationManager =

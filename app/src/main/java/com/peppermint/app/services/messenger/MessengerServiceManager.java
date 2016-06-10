@@ -111,10 +111,6 @@ public class MessengerServiceManager {
         return mService.send(chat, recording);
     }
 
-    public void removeAllNotifications() {
-        mService.removeAllNotifications();
-    }
-
     public void markAsPlayed(Message message) {
         mService.markAsPlayed(message);
     }
@@ -140,12 +136,6 @@ public class MessengerServiceManager {
         intent.setAction(MessengerService.ACTION_CANCEL);
         mContext.startService(intent);
         return true;
-    }
-
-    public void doPendingLogouts() {
-        Intent intent = new Intent(mContext, MessengerService.class);
-        intent.setAction(MessengerService.ACTION_DO_PENDING_LOGOUTS);
-        mContext.startService(intent);
     }
 
     public boolean isSending(Message message) {
