@@ -171,4 +171,6 @@
     <!-- FEEDBACK SCREEN -->
     <string name="send_us_audio_feedback_on_the_app">Sesli bir geri bildirim yapın</string>
     <string name="or_email_us_for_support">ya da destek için e-posta atın</string>
+    <string name="support_display_name">Destek servisi</string>
+
 </resources>
