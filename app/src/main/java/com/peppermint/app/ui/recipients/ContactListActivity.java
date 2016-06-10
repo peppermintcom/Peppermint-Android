@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -28,6 +29,8 @@ import com.peppermint.app.dal.chat.ChatManager;
 import com.peppermint.app.dal.contact.ContactManager;
 import com.peppermint.app.dal.contact.ContactRaw;
 import com.peppermint.app.services.authenticator.AuthenticationData;
+import com.peppermint.app.services.sync.SyncEvent;
+import com.peppermint.app.services.sync.SyncService;
 import com.peppermint.app.ui.about.AboutActivity;
 import com.peppermint.app.ui.base.Overlay;
 import com.peppermint.app.ui.base.OverlayManager;
@@ -49,6 +52,8 @@ import java.util.List;
 public class ContactListActivity extends CustomActionBarDrawerActivity implements SearchListBarView.OnSearchListener,
         OverlayManager.OverlayVisibilityChangeListener {
 
+    private static final String TAG = ContactListActivity.class.getSimpleName();
+
     private static final int OVERLAY_PERMISSION_REQUEST_CODE = 121;
 
     protected static final int SEARCH_LISTENER_PRIORITY_FRAGMENT = 1;
@@ -64,6 +69,10 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
     private boolean mIsDestroyed = false;
 
     private CustomConfirmationDialog mOverlayPermissionDialog;
+
+    public void onEventMainThread(SyncEvent event) {
+        setLoading(event.getType() == SyncEvent.EVENT_STARTED || event.getType() == SyncEvent.EVENT_PROGRESS);
+    }
 
     // search tip popup
     private Handler mHandler = new Handler();
@@ -369,6 +378,18 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
         addTouchEventInterceptor(mTouchInterceptor);
 
         getAuthenticationData(getIntentReplica());
+
+        try {
+            if(mAuthenticatorUtils.isPerformingSync()) {
+                setLoading(true);
+            } else {
+                setLoading(false);
+            }
+        } catch (PeppermintApiNoAccountException e) {
+            Log.w(TAG, "Not authenticated!", e);
+        }
+
+        SyncService.registerEventListener(this);
     }
 
     @Override
@@ -397,6 +418,9 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
 
     @Override
     protected void onStop() {
+        SyncService.unregisterEventListener(this);
+        setLoading(false);
+
         removeTouchEventInterceptor(mTouchInterceptor);
 
         mOverlayManager.removeOverlayVisibilityChangeListener(this);

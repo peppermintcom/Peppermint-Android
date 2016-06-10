@@ -81,6 +81,9 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.3.0'
     compile 'com.android.support:multidex:1.0.0'
 
+    // PROGRESS
+    compile 'com.github.castorflex.smoothprogressbar:library:1.1.0'
+
     // TRANSCRIPTION
     compile('io.grpc:grpc-okhttp:0.14.0')
     compile('io.grpc:grpc-protobuf-nano:0.14.0') {

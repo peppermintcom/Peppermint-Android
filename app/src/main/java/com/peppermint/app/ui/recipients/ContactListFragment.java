@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -41,7 +42,7 @@ import java.util.regex.Pattern;
 
 public abstract class ContactListFragment extends ListFragment implements
         AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener,
-        SearchListBarView.OnSearchListener, View.OnClickListener {
+        SearchListBarView.OnSearchListener, View.OnClickListener, SwipeRefreshLayout.OnRefreshListener {
 
     private static final String TAG = ContactListFragment.class.getSimpleName();
 
@@ -57,6 +58,7 @@ public abstract class ContactListFragment extends ListFragment implements
     protected ChatRecordOverlayController mChatRecordOverlayController;
 
     // UI
+    private SwipeRefreshLayout mLytSwipeRefresh;
     private SearchListBarView mSearchListBarView;
     private ViewGroup mListFooterView;
 
@@ -81,8 +83,8 @@ public abstract class ContactListFragment extends ListFragment implements
 
         @Override
         protected void onPreExecute() {
-            if(mActivity != null && mActivity.getLoadingController() != null) {
-                mActivity.getLoadingController().setLoading(true);
+            if(mActivity != null && mLytSwipeRefresh != null) {
+                mLytSwipeRefresh.setRefreshing(true);
             }
 
             onAsyncRefreshStarted(mContext);
@@ -117,8 +119,8 @@ public abstract class ContactListFragment extends ListFragment implements
             onAsyncRefreshFinished(mContext, o);
 
             // check if data is valid and activity has not been destroyed by the main thread
-            if(mActivity != null && mActivity.getLoadingController() != null) {
-                mActivity.getLoadingController().setLoading(false);
+            if(mActivity != null && mLytSwipeRefresh != null) {
+                mLytSwipeRefresh.setRefreshing(false);
             }
         }
 
@@ -126,8 +128,8 @@ public abstract class ContactListFragment extends ListFragment implements
         protected void onCancelled(Object o) {
             onAsyncRefreshCancelled(mContext, o);
 
-            if(mActivity != null && mActivity.getLoadingController() != null) {
-                mActivity.getLoadingController().setLoading(false);
+            if(mActivity != null && mLytSwipeRefresh != null) {
+                mLytSwipeRefresh.setRefreshing(false);
             }
         }
 
@@ -199,10 +201,6 @@ public abstract class ContactListFragment extends ListFragment implements
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        if(mRefreshing) {
-            mActivity.getLoadingController().setLoading(true);
-        }
-
         // hold popup
         mHoldPopup = new PopupWindow(mActivity);
         mHoldPopup.setContentView(inflater.inflate(R.layout.v_recipients_popup, null));
@@ -217,6 +215,13 @@ public abstract class ContactListFragment extends ListFragment implements
 
         // inflate the view
         final View v = inflater.inflate(R.layout.f_recipients_layout, container, false);
+
+        mLytSwipeRefresh = (SwipeRefreshLayout) v.findViewById(R.id.swipeContainer);
+        mLytSwipeRefresh.setOnRefreshListener(this);
+
+        if(mRefreshing) {
+            mLytSwipeRefresh.setRefreshing(true);
+        }
 
         // init no recipients view
         mListFooterView = (ViewGroup) inflater.inflate(R.layout.v_recipients_footer_layout, null);
@@ -312,8 +317,6 @@ public abstract class ContactListFragment extends ListFragment implements
 
         mChatRecordOverlayController.start();
 
-        mActivity.getLoadingController().setText(R.string.loading_contacts);
-
         mHandler.postDelayed(mAnimationRunnable, FIXED_AVATAR_ANIMATION_INTERVAL_MS + mRandom.nextInt(VARIABLE_AVATAR_ANIMATION_INTERVAL_MS));
 
         // global touch interceptor to hide keyboard
@@ -359,7 +362,7 @@ public abstract class ContactListFragment extends ListFragment implements
     public void onDetach() {
         if(mActivity != null) {
             mSearchListBarView.removeOnSearchListener(this);
-            mActivity.getLoadingController().setLoading(false);
+            mLytSwipeRefresh.setRefreshing(false);
             mActivity = null;
         }
 
@@ -471,5 +474,10 @@ public abstract class ContactListFragment extends ListFragment implements
             viaName[1] = filter;
         }
         return viaName;
+    }
+
+    @Override
+    public void onRefresh() {
+        refresh();
     }
 }

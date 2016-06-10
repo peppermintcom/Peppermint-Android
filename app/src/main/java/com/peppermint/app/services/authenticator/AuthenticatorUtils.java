@@ -60,6 +60,13 @@ public class AuthenticatorUtils {
         }
     }
 
+    public boolean isPerformingSync() throws PeppermintApiNoAccountException {
+        if(mAccount == null) {
+            throw new PeppermintApiNoAccountException();
+        }
+        return ContentResolver.isSyncActive(mAccount, AuthenticatorConstants.AUTHORITY);
+    }
+
     public void setupPeriodicSync() throws PeppermintApiNoAccountException {
         if(mAccount == null) {
             throw new PeppermintApiNoAccountException();

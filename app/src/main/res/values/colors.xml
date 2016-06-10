@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <integer-array name="smooth_progress_colors">
+        <item>@color/progress0</item>
+        <item>@color/progress1</item>
+    </integer-array>
+
+    <color name="progress0">#f1693f</color>
+    <color name="progress1">#f2b09c</color>
 
     <color name="orange_text">#f1693f</color>
 

@@ -11,53 +11,37 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true" />
 
+    <fr.castorflex.android.smoothprogressbar.SmoothProgressBar
+        android:id="@+id/smoothProgress"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:layout_below="@id/actionBar"
+        android:layout_margin="0dp"
+        android:padding="0dp"
+        android:indeterminate="true"
+        android:interpolator="@anim/pocket_interpolator"
+        custom:spb_interpolator="spb_interpolator_acceleratedecelerate"
+        custom:spb_background="@null"
+        custom:spb_generate_background_with_colors="false"
+        custom:spb_sections_count="2"
+        custom:spb_colors="@array/smooth_progress_colors"
+        custom:spb_speed="2.0"
+        custom:spb_stroke_width="6dp"
+        custom:spb_stroke_separator_length="0dp"
+        custom:spb_reversed="false"
+        custom:spb_mirror_mode="false" />
+
     <com.peppermint.app.ui.base.views.FullDrawerLayout
         android:id="@+id/drawer"
-        android:layout_below="@id/actionBar"
+        android:layout_below="@id/smoothProgress"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <com.peppermint.app.ui.base.views.FitsSystemWindowsFrameLayout
+            android:id="@+id/container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_below="@id/actionBar">
-
-            <com.peppermint.app.ui.base.views.FitsSystemWindowsFrameLayout
-                android:id="@+id/container"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-            <RelativeLayout
-                android:id="@+id/fragmentProgressContainer"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@color/dark_green_60percent"
-                android:visibility="gone"
-                android:gravity="center">
-
-                <ImageView
-                    android:layout_width="170dp"
-                    android:layout_height="170dp"
-                    android:layout_marginBottom="40dp"
-                    android:layout_marginTop="40dp"
-                    android:layout_marginRight="40dp"
-                    android:layout_marginLeft="40dp"
-                    android:src="@drawable/img_static_loading_170dp" />
-
-                <com.peppermint.app.ui.canvas.loading.LoadingView
-                    android:id="@+id/loading"
-                    android:layout_width="170dp"
-                    android:layout_height="170dp"
-                    android:layout_marginBottom="40dp"
-                    android:layout_marginTop="40dp"
-                    android:layout_marginRight="40dp"
-                    android:layout_marginLeft="40dp"
-                    custom:text="@string/loading_contacts" />
-
-            </RelativeLayout>
-
-        </com.peppermint.app.ui.base.views.FitsSystemWindowsFrameLayout>
+            android:layout_below="@id/smoothProgress" />
 
         <!-- The navigation drawer -->
         <LinearLayout

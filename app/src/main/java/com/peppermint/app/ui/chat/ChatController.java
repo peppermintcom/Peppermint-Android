@@ -4,12 +4,14 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.peppermint.app.R;
+import com.peppermint.app.cloud.apis.peppermint.PeppermintApiNoAccountException;
 import com.peppermint.app.dal.DataObjectEvent;
 import com.peppermint.app.dal.DatabaseHelper;
 import com.peppermint.app.dal.chat.Chat;
@@ -17,6 +19,7 @@ import com.peppermint.app.dal.chat.ChatManager;
 import com.peppermint.app.dal.message.Message;
 import com.peppermint.app.dal.message.MessageManager;
 import com.peppermint.app.dal.recipient.Recipient;
+import com.peppermint.app.services.authenticator.AuthenticatorUtils;
 import com.peppermint.app.services.messenger.MessengerSendEvent;
 import com.peppermint.app.services.sync.SyncEvent;
 import com.peppermint.app.trackers.TrackerManager;
@@ -31,6 +34,8 @@ import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import fr.castorflex.android.smoothprogressbar.SmoothProgressBar;
 
 /**
  * Created by Nuno Luz on 04-03-2016.
@@ -92,7 +97,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
     // GENERIC
     private DatabaseHelper mDatabaseHelper;
-    /*private boolean mSavedInstanceState = false;*/
+    private SmoothProgressBar mProgressBar;
 
     // UI
     private RecipientDataGUI mRecipientDataGUI;
@@ -156,6 +161,8 @@ public class ChatController extends ChatRecordOverlayController implements View.
         NavigationListAdapter errorAdapter = new NavigationListAdapter(getContext(), errorOptions);
         mErrorDialog.setListAdapter(errorAdapter);
 
+        mProgressBar = (SmoothProgressBar) rootView.getRootView().findViewById(R.id.smoothProgress);
+        setLoading(false);
         mListView = (ListView) rootView.findViewById(android.R.id.list);
 
         final ViewGroup recordLayout = (ViewGroup) rootView.findViewById(R.id.lytRecord);
@@ -183,7 +190,22 @@ public class ChatController extends ChatRecordOverlayController implements View.
     @Override
     public void start() {
         super.start();
-        TrackerManager.getInstance(getContext().getApplicationContext()).trackScreenView(SCREEN_ID);
+
+        final Context context = getContext();
+        TrackerManager.getInstance(context).trackScreenView(SCREEN_ID);
+
+        if(mProgressBar != null) {
+            final AuthenticatorUtils authenticatorUtils = new AuthenticatorUtils(context);
+            try {
+                if (authenticatorUtils.isPerformingSync()) {
+                    setLoading(true);
+                } else {
+                    setLoading(false);
+                }
+            } catch (PeppermintApiNoAccountException e) {
+                Log.w(TAG, "Not authenticated!", e);
+            }
+        }
     }
 
     @Override
@@ -195,6 +217,22 @@ public class ChatController extends ChatRecordOverlayController implements View.
             mAdapter.changeCursor(null);
         }
         super.stop();
+    }
+
+    public void setLoading(boolean loading) {
+        if(mProgressBar == null) {
+            return;
+        }
+        boolean currentlyLoading = mProgressBar.getVisibility() == View.VISIBLE;
+        if(loading != currentlyLoading) {
+            if(loading) {
+                mProgressBar.progressiveStart();
+                mProgressBar.setVisibility(View.VISIBLE);
+            } else {
+                mProgressBar.setVisibility(View.GONE);
+                mProgressBar.progressiveStop();
+            }
+        }
     }
 
     public void stopPlayer() {
@@ -234,6 +272,8 @@ public class ChatController extends ChatRecordOverlayController implements View.
         if(mChat == null) {
             return;
         }
+
+        setLoading(event.getType() == SyncEvent.EVENT_STARTED || event.getType() == SyncEvent.EVENT_PROGRESS);
 
         if(event.getType() == SyncEvent.EVENT_FINISHED || event.getType() == SyncEvent.EVENT_PROGRESS) {
             if(event.getAffectedChatIdSet().contains(mChat.getId())) {
