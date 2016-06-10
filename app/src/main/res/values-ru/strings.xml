@@ -170,6 +170,8 @@
 
 
     <!-- FEEDBACK SCREEN -->
-    <string name="send_us_audio_feedback_on_the_app">Отправить аудио отзыв о приложении</string>
+    <string name="send_us_audio_feedback_on_the_app">Аудио отзыв о приложении</string>
     <string name="or_email_us_for_support">или напишите е-мейл в службу поддержки</string>
+    <string name="support_display_name">Служба поддержки</string>
+
 </resources>

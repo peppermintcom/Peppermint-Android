@@ -187,8 +187,8 @@
     <string name="send_us_audio_feedback_on_the_app">Send us audio feedback on the app</string>
     <string name="or_email_us_for_support">or email us for support</string>
 
+    <string name="support_display_name">Peppermint Support</string>
     <!-- BO: Keep English Only -->
-        <string name="support_display_name" translatable="false">Peppermint Support</string>
         <string name="support_audio_subject" translatable="false">Android feedback from email address</string>
         <string name="support_text_subject" translatable="false">Feedback or question about Peppermint Android app</string>
         <string name="support_email" translatable="false">support@peppermint.com</string>

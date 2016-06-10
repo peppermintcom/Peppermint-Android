@@ -171,5 +171,6 @@
     <!-- FEEDBACK SCREEN -->
     <string name="send_us_audio_feedback_on_the_app">Envie-nos a sua opinião numa mensagem de voz</string>
     <string name="or_email_us_for_support">ou através de um email</string>
+    <string name="support_display_name">Suporte Peppermint</string>
 
 </resources>
