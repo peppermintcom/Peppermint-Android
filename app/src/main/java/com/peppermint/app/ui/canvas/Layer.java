@@ -11,7 +11,5 @@ import android.view.View;
  */
 public interface Layer {
     void draw(View view, Canvas canvas);
-
-    Rect getBounds();
     void setBounds(Rect bounds);
 }

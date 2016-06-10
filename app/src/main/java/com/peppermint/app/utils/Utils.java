@@ -32,7 +32,7 @@ import android.view.inputmethod.InputMethodManager;
 
 import com.peppermint.app.BuildConfig;
 import com.peppermint.app.R;
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.trackers.TrackerManager;
 
 import java.io.File;
 import java.io.IOException;

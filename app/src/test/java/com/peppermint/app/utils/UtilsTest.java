@@ -3,7 +3,7 @@ package com.peppermint.app.utils;
 import android.content.Context;
 
 import com.peppermint.app.BuildConfig;
-import com.peppermint.app.cloud.senders.SenderPreferences;
+import com.peppermint.app.services.messenger.handlers.SenderPreferences;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

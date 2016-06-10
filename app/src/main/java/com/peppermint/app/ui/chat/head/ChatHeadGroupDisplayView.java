@@ -11,7 +11,7 @@ import android.view.View;
 import android.view.WindowManager;
 
 import com.facebook.rebound.SpringSystem;
-import com.peppermint.app.data.Chat;
+import com.peppermint.app.dal.chat.Chat;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;

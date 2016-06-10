@@ -9,8 +9,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
 
-import com.peppermint.app.ui.KeyInterceptable;
-import com.peppermint.app.ui.TouchInterceptable;
+import com.peppermint.app.ui.base.KeyInterceptable;
+import com.peppermint.app.ui.base.TouchInterceptable;
 
 import java.util.ArrayList;
 import java.util.List;

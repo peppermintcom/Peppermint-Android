@@ -6,8 +6,8 @@ import android.os.Bundle;
 import android.view.View;
 
 import com.peppermint.app.R;
-import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.ui.base.CustomActionBarView;
+import com.peppermint.app.trackers.TrackerManager;
+import com.peppermint.app.ui.base.views.CustomActionBarView;
 import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
 import com.peppermint.app.ui.base.views.CustomFontTextView;
 import com.peppermint.app.ui.base.views.RoundImageView;

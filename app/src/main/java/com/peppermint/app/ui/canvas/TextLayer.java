@@ -29,7 +29,7 @@ public class TextLayer extends LayerBase implements Layer {
             String[] split = mText.split("\n");
             float offsetY = - (((mTextSize/2f)+(mTextSpacing/2f)) * (float) (split.length - 1));
             for(int i=0; i<split.length; i++) {
-                canvas.drawText(split[i], getBounds().centerX(), offsetY + getBounds().centerY() + ((mTextSize + mTextSpacing) * (float) i), mPaint);
+                canvas.drawText(split[i], mBounds.centerX(), offsetY + mBounds.centerY() + ((mTextSize + mTextSpacing) * (float) i), mPaint);
             }
         }
     }

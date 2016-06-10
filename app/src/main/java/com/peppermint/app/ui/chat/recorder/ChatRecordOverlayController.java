@@ -2,23 +2,26 @@ package com.peppermint.app.ui.chat.recorder;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
-import com.peppermint.app.PlayerServiceManager;
 import com.peppermint.app.R;
-import com.peppermint.app.cloud.MessagesServiceManager;
-import com.peppermint.app.cloud.senders.SenderPreferences;
-import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.Message;
-import com.peppermint.app.data.Recording;
-import com.peppermint.app.events.PeppermintEventBus;
-import com.peppermint.app.events.PlayerEvent;
-import com.peppermint.app.events.ReceiverEvent;
-import com.peppermint.app.events.RecorderEvent;
-import com.peppermint.app.events.SenderEvent;
-import com.peppermint.app.events.SyncEvent;
-import com.peppermint.app.ui.OverlayManager;
-import com.peppermint.app.ui.TouchInterceptable;
+import com.peppermint.app.dal.DataObjectEvent;
+import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.dal.message.Message;
+import com.peppermint.app.dal.message.MessageManager;
+import com.peppermint.app.dal.recording.Recording;
+import com.peppermint.app.services.messenger.MessengerSendEvent;
+import com.peppermint.app.services.messenger.MessengerService;
+import com.peppermint.app.services.messenger.MessengerServiceManager;
+import com.peppermint.app.services.messenger.handlers.SenderPreferences;
+import com.peppermint.app.services.player.PlayerEvent;
+import com.peppermint.app.services.player.PlayerServiceManager;
+import com.peppermint.app.services.recorder.RecorderEvent;
+import com.peppermint.app.services.sync.SyncEvent;
+import com.peppermint.app.services.sync.SyncService;
+import com.peppermint.app.ui.base.OverlayManager;
+import com.peppermint.app.ui.base.TouchInterceptable;
 
 /**
  * Created by Nuno Luz on 04-03-2016.
@@ -26,7 +29,7 @@ import com.peppermint.app.ui.TouchInterceptable;
  * Controls the "tap and hold to record, release to send" record overlay.
  */
 public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordingFinishedCallback,
-        MessagesServiceManager.ServiceListener,
+        MessengerServiceManager.ServiceListener,
         PlayerServiceManager.PlayServiceListener {
 
     private static final String TAG = ChatRecordOverlayController.class.getSimpleName();
@@ -40,7 +43,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     private OverlayManager mOverlayManager;
     private TouchInterceptable mTouchInterceptable;
 
-    private MessagesServiceManager mMessagesServiceManager;
+    private MessengerServiceManager mMessengerServiceManager;
     private PlayerServiceManager mPlayerServiceManager;
 
     // overlay
@@ -55,7 +58,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         mPreferences = new SenderPreferences(mContext);
 
         // services
-        mMessagesServiceManager = new MessagesServiceManager(mContext);
+        mMessengerServiceManager = new MessengerServiceManager(mContext);
         mPlayerServiceManager = new PlayerServiceManager(mContext);
     }
 
@@ -63,12 +66,16 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         mOverlayManager = overlayManager;
         mTouchInterceptable = touchInterceptable;
 
-        mMessagesServiceManager.addServiceListener(this);
+        mMessengerServiceManager.addServiceListener(this);
         mPlayerServiceManager.addServiceListener(this);
-        PeppermintEventBus.registerMessages(this);
+
+        Log.d(TAG, "Registered Event Listener");
+        SyncService.registerEventListener(this);
+        MessageManager.getInstance(mContext).registerDataListener(this);
+        MessengerService.registerEventListener(this);
 
         // start services
-        mMessagesServiceManager.start();
+        mMessengerServiceManager.start();
         mPlayerServiceManager.start();
 
         if (savedInstanceState != null) {
@@ -87,7 +94,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
 
     public void start() {
         mStarted = true;
-        mMessagesServiceManager.bind();
+        mMessengerServiceManager.bind();
         mPlayerServiceManager.bind();
         mChatRecordOverlay.bindService();
     }
@@ -96,13 +103,16 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         mChatRecordOverlay.hide(false, true);
         mChatRecordOverlay.unbindService();
         mPlayerServiceManager.unbind();
-        mMessagesServiceManager.unbind();
+        mMessengerServiceManager.unbind();
         mStarted = false;
     }
 
     public void deinit() {
-        PeppermintEventBus.unregisterMessages(this);
-        mMessagesServiceManager.removeServiceListener(this);
+        Log.d(TAG, "Unregistered Event Listener");
+        SyncService.unregisterEventListener(this);
+        MessageManager.getInstance(mContext).unregisterDataListener(this);
+        MessengerService.unregisterEventListener(this);
+        mMessengerServiceManager.removeServiceListener(this);
         mPlayerServiceManager.removeServiceListener(this);
     }
 
@@ -130,7 +140,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     }
 
     protected Message sendMessage(Chat chat, Recording recording) {
-        return mMessagesServiceManager.send(chat, recording);
+        return mMessengerServiceManager.send(chat, recording);
     }
 
     public ChatRecordOverlay getChatRecordOverlay() {
@@ -149,8 +159,8 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         this.mContext = mContext;
     }
 
-    public MessagesServiceManager getMessagesServiceManager() {
-        return mMessagesServiceManager;
+    public MessengerServiceManager getMessagesServiceManager() {
+        return mMessengerServiceManager;
     }
 
     public PlayerServiceManager getPlayerServiceManager() {
@@ -169,19 +179,23 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         return mStarted;
     }
 
+    // message data listener
+    public void onEventMainThread(DataObjectEvent<Message> event) {
+    }
+
+    // messenger service listener
+    public void onEventMainThread(MessengerSendEvent event) {
+    }
+
+    // sync service listener
     public void onEventMainThread(SyncEvent event) {
-    }
-
-    public void onEventMainThread(ReceiverEvent event) {
-    }
-
-    public void onEventMainThread(SenderEvent event) {
     }
 
     @Override
     public void onBoundSendService() {
     }
 
+    // player service listeners
     public void onEventMainThread(PlayerEvent event) {
     }
 

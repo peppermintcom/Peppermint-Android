@@ -12,21 +12,22 @@ import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.authenticator.AuthenticationData;
-import com.peppermint.app.authenticator.AuthenticatorActivity;
-import com.peppermint.app.authenticator.AuthenticatorUtils;
-import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
-import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.ui.OverlayManager;
-import com.peppermint.app.ui.PermissionsPolicyEnforcer;
-import com.peppermint.app.ui.TouchInterceptable;
-import com.peppermint.app.ui.base.CustomActionBarView;
-import com.peppermint.app.ui.base.LoadingController;
+import com.peppermint.app.cloud.apis.peppermint.PeppermintApiNoAccountException;
+import com.peppermint.app.services.authenticator.AuthenticationData;
+import com.peppermint.app.services.authenticator.AuthenticatorUtils;
+import com.peppermint.app.trackers.TrackerManager;
+import com.peppermint.app.ui.authentication.AuthenticatorActivity;
+import com.peppermint.app.ui.base.OverlayManager;
+import com.peppermint.app.ui.base.PermissionsPolicyEnforcer;
+import com.peppermint.app.ui.base.TouchInterceptable;
+import com.peppermint.app.ui.base.views.CustomActionBarView;
 import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import fr.castorflex.android.smoothprogressbar.SmoothProgressBar;
 
 /**
  * Created by Nuno Luz on 22-09-2015.
@@ -36,8 +37,7 @@ import java.util.List;
 public abstract class CustomActionBarActivity extends FragmentActivity implements TouchInterceptable,
         ChatHeadServiceManager.ChatHeadServiceBinderListener {
 
-    // loading controller
-    protected LoadingController mLoadingController;
+    protected SmoothProgressBar mProgressBar;
 
     // chat head overlay manager
     protected ChatHeadServiceManager mChatHeadServiceManager;
@@ -84,13 +84,15 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
 
         mPermissionsManager = new PermissionsPolicyEnforcer();
         onSetupPermissions(mPermissionsManager);
-        mLoadingController = new LoadingController(this, R.id.fragmentProgressContainer, R.id.loading);
 
         mChatHeadServiceManager = new ChatHeadServiceManager(this);
         mChatHeadServiceManager.addServiceBinderListener(this);
 
         // init full content view
         setContentView(getContentViewLayoutId());
+
+        mProgressBar = (SmoothProgressBar) findViewById(R.id.smoothProgress);
+        setLoading(false);
 
         int layoutResId = getContainerViewLayoutId();
         if (layoutResId > 0) {
@@ -159,6 +161,7 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
 
     @Override
     protected void onDestroy() {
+        setLoading(false);
         mOverlayManager.destroyAllOverlays();
         super.onDestroy();
     }
@@ -212,8 +215,21 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
         return (ViewGroup) findViewById(R.id.container);
     }
 
-    public LoadingController getLoadingController() {
-        return mLoadingController;
+    public boolean isLoading() {
+        return mProgressBar.getVisibility() == View.VISIBLE;
+    }
+
+    public void setLoading(boolean loading) {
+        boolean currentlyLoading = isLoading();
+        if(loading != currentlyLoading) {
+            if(loading) {
+                mProgressBar.progressiveStart();
+                mProgressBar.setVisibility(View.VISIBLE);
+            } else {
+                mProgressBar.setVisibility(View.GONE);
+                mProgressBar.progressiveStop();
+            }
+        }
     }
 
     protected Intent getIntentReplica() {

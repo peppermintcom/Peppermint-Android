@@ -8,7 +8,7 @@ import android.widget.TextView;
 
 import com.peppermint.app.BuildConfig;
 import com.peppermint.app.R;
-import com.peppermint.app.ui.base.CustomActionBarView;
+import com.peppermint.app.ui.base.views.CustomActionBarView;
 import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
 
 /**

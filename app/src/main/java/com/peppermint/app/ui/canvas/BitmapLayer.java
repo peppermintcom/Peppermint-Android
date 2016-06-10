@@ -37,7 +37,7 @@ public class BitmapLayer extends LayerBase implements Layer {
     }
 
     private synchronized void initDrawable() {
-        mDrawable = (BitmapDrawable) ResourceUtils.getDrawable(getContext(), mBitmapRes);
+        mDrawable = (BitmapDrawable) ResourceUtils.getDrawable(mContext, mBitmapRes);
         mPrevBounds = null;
         initShader();
     }
@@ -53,30 +53,30 @@ public class BitmapLayer extends LayerBase implements Layer {
         }
 
         // do nothing if bounds are invalid or didn't change
-        if(getBounds() == null || getBounds().width() <= 0 || getBounds().height() <= 0) {
+        if(mBounds == null || mBounds.width() <= 0 || mBounds.height() <= 0) {
             return;
         }
 
-        if(mPrevBounds != null && mPrevBounds.equals(getBounds())) {
+        if(mPrevBounds != null && mPrevBounds.equals(mBounds)) {
             return;
         }
 
-        mPrevBounds = getBounds();
+        mPrevBounds = mBounds;
 
         if(mShaderBitmap == null || mShaderBitmap.isRecycled() ||
-                mShaderBitmap.getHeight() != getBounds().height() || mShaderBitmap.getWidth() != getBounds().width()) {
+                mShaderBitmap.getHeight() != mBounds.height() || mShaderBitmap.getWidth() != mBounds.width()) {
             if(mShaderBitmap != null && !mShaderBitmap.isRecycled()) {
                 mPaint.setShader(null);
                 mShaderBitmap.recycle();
             }
 
-            mShaderBitmap = Bitmap.createBitmap(getBounds().width(), getBounds().height(), Bitmap.Config.ARGB_8888);
+            mShaderBitmap = Bitmap.createBitmap(mBounds.width(), mBounds.height(), Bitmap.Config.ARGB_8888);
             mPaint.setShader(new BitmapShader(mShaderBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
         }
 
         // draw to bitmap
         final Canvas canvas = new Canvas(mShaderBitmap);
-        mDrawable.setBounds(0, 0, getBounds().width(), getBounds().height());
+        mDrawable.setBounds(0, 0, mBounds.width(), mBounds.height());
         mDrawable.draw(canvas);
         canvas.setBitmap(null);
     }
@@ -90,11 +90,11 @@ public class BitmapLayer extends LayerBase implements Layer {
     public synchronized void draw(View view, Canvas canvas) {
         if(canvas != null) {
             canvas.save();
-            canvas.translate(getBounds().left, getBounds().top);
+            canvas.translate(mBounds.left, mBounds.top);
             if (mBorderWidth > 0 && mBorderPaint != null) {
-                canvas.drawRoundRect(new RectF(0, 0, getBounds().width(), getBounds().height()), mCornerRadius, mCornerRadius, mBorderPaint);
+                canvas.drawRoundRect(new RectF(0, 0, mBounds.width(), mBounds.height()), mCornerRadius, mCornerRadius, mBorderPaint);
             }
-            canvas.drawRoundRect(new RectF(mBorderWidth, mBorderWidth, getBounds().width() - mBorderWidth, getBounds().height() - mBorderWidth), mCornerRadius - mBorderWidth, mCornerRadius - mBorderWidth, mPaint);
+            canvas.drawRoundRect(new RectF(mBorderWidth, mBorderWidth, mBounds.width() - mBorderWidth, mBounds.height() - mBorderWidth), mCornerRadius - mBorderWidth, mCornerRadius - mBorderWidth, mPaint);
             canvas.restore();
         }
     }

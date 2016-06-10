@@ -18,15 +18,14 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 
-import com.peppermint.app.cloud.MessagesServiceManager;
-import com.peppermint.app.cloud.senders.SenderPreferences;
-import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.ChatManager;
-import com.peppermint.app.data.DatabaseHelper;
-import com.peppermint.app.data.MessageManager;
-import com.peppermint.app.events.MessageEvent;
-import com.peppermint.app.events.PeppermintEventBus;
-import com.peppermint.app.events.ReceiverEvent;
+import com.peppermint.app.dal.DataObjectEvent;
+import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.dal.chat.ChatManager;
+import com.peppermint.app.dal.message.Message;
+import com.peppermint.app.dal.message.MessageManager;
+import com.peppermint.app.services.messenger.MessengerServiceManager;
+import com.peppermint.app.services.messenger.handlers.SenderPreferences;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +49,7 @@ public class ChatHeadService extends Service {
     private List<String> mVisibleActivities = new ArrayList<>();
 
     private SenderPreferences mPreferences;
-    private MessagesServiceManager mMessagesServiceManager;
+    private MessengerServiceManager mMessengerServiceManager;
 
     protected ChatHeadServiceBinder mBinder = new ChatHeadServiceBinder();
 
@@ -178,10 +177,10 @@ public class ChatHeadService extends Service {
         super.onCreate();
         mPreferences = new SenderPreferences(this);
 
-        mMessagesServiceManager = new MessagesServiceManager(this);
-        mMessagesServiceManager.startAndBind();
+        mMessengerServiceManager = new MessengerServiceManager(this);
+        mMessengerServiceManager.startAndBind();
 
-        PeppermintEventBus.registerMessages(this);
+        MessageManager.getInstance(this).registerDataListener(this);
 
         this.mDisplay = new Display(this);
 
@@ -212,9 +211,9 @@ public class ChatHeadService extends Service {
         mChatView.deinit();
         mDisplay.deinit();
 
-        mMessagesServiceManager.unbind();
+        mMessengerServiceManager.unbind();
 
-        PeppermintEventBus.unregisterMessages(this);
+        MessageManager.getInstance(this).unregisterDataListener(this);
     }
 
     private boolean refreshChatHeadController() {
@@ -233,11 +232,11 @@ public class ChatHeadService extends Service {
         if(isVisible() && mVisibleActivities.size() <= 0) {
             List<Chat> chatList = new ArrayList<>();
             SQLiteDatabase db = DatabaseHelper.getInstance(this).getReadableDatabase();
-            Cursor chatCursor = ChatManager.getAll(db, true);
+            Cursor chatCursor = ChatManager.getInstance(this).getAll(db, true);
             int i = 0;
             while(chatCursor.moveToNext() && i < ChatHeadGroupDisplayView.MAX_CHAT_HEADS) {
-                Chat chat = ChatManager.getChatFromCursor(db, chatCursor);
-                chat.setAmountUnopened(MessageManager.getUnopenedCountByChat(db, chat.getId()));
+                Chat chat = ChatManager.getInstance(this).getFromCursor(db, chatCursor);
+                chat.setAmountUnopened(MessageManager.getInstance(this).getUnopenedCountByChat(db, chat.getId()));
                 chatList.add(0, chat);
                 i++;
             }
@@ -261,15 +260,13 @@ public class ChatHeadService extends Service {
         return true;
     }
 
-    public void onEventMainThread(ReceiverEvent event) {
-        if(event.getType() == ReceiverEvent.EVENT_RECEIVED) {
-            mBinder.show();
-        }
-    }
-
-    public void onEventMainThread(MessageEvent event) {
-        if(event.getType() == MessageEvent.EVENT_MARK_PLAYED) {
+    public void onEventMainThread(DataObjectEvent<Message> event) {
+        if(event.getType() == DataObjectEvent.TYPE_UPDATE && event.getUpdates().get(Message.FIELD_PLAYED) != null) {
             refreshChatHeadController();
+            return;
+        }
+        if(event.getType() == DataObjectEvent.TYPE_CREATE && event.getDataObject().isReceived()) {
+            mBinder.show();
         }
     }
 

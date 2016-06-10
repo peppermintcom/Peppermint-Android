@@ -3,34 +3,39 @@ package com.peppermint.app.ui.chat;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.peppermint.app.R;
-import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.ChatManager;
-import com.peppermint.app.data.DatabaseHelper;
-import com.peppermint.app.data.Message;
-import com.peppermint.app.data.MessageManager;
-import com.peppermint.app.data.Recipient;
-import com.peppermint.app.events.ReceiverEvent;
-import com.peppermint.app.events.SenderEvent;
-import com.peppermint.app.events.SyncEvent;
-import com.peppermint.app.tracking.TrackerManager;
-import com.peppermint.app.ui.OverlayManager;
-import com.peppermint.app.ui.TouchInterceptable;
-import com.peppermint.app.ui.base.NavigationItem;
-import com.peppermint.app.ui.base.NavigationListAdapter;
+import com.peppermint.app.cloud.apis.peppermint.PeppermintApiNoAccountException;
+import com.peppermint.app.dal.DataObjectEvent;
+import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.dal.chat.ChatManager;
+import com.peppermint.app.dal.message.Message;
+import com.peppermint.app.dal.message.MessageManager;
+import com.peppermint.app.dal.recipient.Recipient;
+import com.peppermint.app.services.authenticator.AuthenticatorUtils;
+import com.peppermint.app.services.messenger.MessengerSendEvent;
+import com.peppermint.app.services.sync.SyncEvent;
+import com.peppermint.app.trackers.TrackerManager;
+import com.peppermint.app.ui.base.OverlayManager;
+import com.peppermint.app.ui.base.TouchInterceptable;
 import com.peppermint.app.ui.base.dialogs.CustomListDialog;
+import com.peppermint.app.ui.base.navigation.NavigationItem;
+import com.peppermint.app.ui.base.navigation.NavigationListAdapter;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
+import com.peppermint.app.utils.SameAsyncTaskExecutor;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import fr.castorflex.android.smoothprogressbar.SmoothProgressBar;
 
 /**
  * Created by Nuno Luz on 04-03-2016.
@@ -46,10 +51,14 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
     private static final String SCREEN_ID = "Chat";
 
-    protected class RefreshMessageCursorAsyncTask extends AsyncTask<Void, Void, Cursor> {
+    protected class RefreshMessageCursorLoader extends SameAsyncTaskExecutor<Void, Void, Cursor> {
+        public RefreshMessageCursorLoader(Context mContext) {
+            super(mContext);
+        }
+
         @Override
-        protected Cursor doInBackground(Void... params) {
-            return MessageManager.getByChatId(getDatabase(), mChat.getId());
+        protected Cursor doInBackground(SameAsyncTask asyncTask, Void... params) {
+            return MessageManager.getInstance(getContext()).getByChatId(getDatabase(), mChat.getId());
         }
 
         @Override
@@ -61,7 +70,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
         @Override
         protected void onPostExecute(Cursor cursor) {
-            if(getContext() == null) {
+            if(ChatController.this.getContext() == null) {
                 if(cursor != null) {
                     cursor.close();
                 }
@@ -69,7 +78,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
             }
 
             if(mAdapter == null) {
-                mAdapter = new ChatMessageCursorAdapter(getContext(), getMessagesServiceManager(),
+                mAdapter = new ChatMessageCursorAdapter(ChatController.this.getContext(), getMessagesServiceManager(),
                         getPlayerServiceManager(), cursor);
                 mAdapter.setExclamationClickListener(new MessageView.ExclamationClickListener() {
                     @Override
@@ -84,11 +93,11 @@ public class ChatController extends ChatRecordOverlayController implements View.
         }
     }
 
-    private RefreshMessageCursorAsyncTask mRefreshMessageCursorAsyncTask;
+    private RefreshMessageCursorLoader mRefreshMessageCursorLoader;
 
     // GENERIC
     private DatabaseHelper mDatabaseHelper;
-    private boolean mSavedInstanceState = false;
+    private SmoothProgressBar mProgressBar;
 
     // UI
     private RecipientDataGUI mRecipientDataGUI;
@@ -107,6 +116,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
         super(context);
         this.mRecipientDataGUI = recipientDataGUI;
         mDatabaseHelper = DatabaseHelper.getInstance(context);
+        mRefreshMessageCursorLoader = new RefreshMessageCursorLoader(context);
     }
 
     @Override
@@ -151,6 +161,8 @@ public class ChatController extends ChatRecordOverlayController implements View.
         NavigationListAdapter errorAdapter = new NavigationListAdapter(getContext(), errorOptions);
         mErrorDialog.setListAdapter(errorAdapter);
 
+        mProgressBar = (SmoothProgressBar) rootView.getRootView().findViewById(R.id.smoothProgress);
+        setLoading(false);
         mListView = (ListView) rootView.findViewById(android.R.id.list);
 
         final ViewGroup recordLayout = (ViewGroup) rootView.findViewById(R.id.lytRecord);
@@ -172,21 +184,55 @@ public class ChatController extends ChatRecordOverlayController implements View.
             outState.putBundle(STATE_DIALOG, dialogState);
         }
         outState.putLong(STATE_MESSAGE_ID_WITH_ERROR, mMessageIdWithError);
-        mSavedInstanceState = true;
+        /*mSavedInstanceState = true;*/
     }
 
     @Override
     public void start() {
         super.start();
-        TrackerManager.getInstance(getContext().getApplicationContext()).trackScreenView(SCREEN_ID);
+
+        final Context context = getContext();
+        TrackerManager.getInstance(context).trackScreenView(SCREEN_ID);
+
+        if(mProgressBar != null) {
+            final AuthenticatorUtils authenticatorUtils = new AuthenticatorUtils(context);
+            try {
+                if (authenticatorUtils.isPerformingSync()) {
+                    setLoading(true);
+                } else {
+                    setLoading(false);
+                }
+            } catch (PeppermintApiNoAccountException e) {
+                Log.w(TAG, "Not authenticated!", e);
+            }
+        }
     }
 
     @Override
     public void stop() {
+        if(mRefreshMessageCursorLoader != null) {
+            mRefreshMessageCursorLoader.cancel(true);
+        }
         if(mAdapter != null) {
             mAdapter.changeCursor(null);
         }
         super.stop();
+    }
+
+    public void setLoading(boolean loading) {
+        if(mProgressBar == null) {
+            return;
+        }
+        boolean currentlyLoading = mProgressBar.getVisibility() == View.VISIBLE;
+        if(loading != currentlyLoading) {
+            if(loading) {
+                mProgressBar.progressiveStart();
+                mProgressBar.setVisibility(View.VISIBLE);
+            } else {
+                mProgressBar.setVisibility(View.GONE);
+                mProgressBar.progressiveStop();
+            }
+        }
     }
 
     public void stopPlayer() {
@@ -201,21 +247,16 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
         if(mAdapter != null) {
             mAdapter.changeCursor(null);
-            mAdapter.destroy(/*!mSavedInstanceState*/);
+            mAdapter.destroy();
             mAdapter = null;
         }
         dismissErrorDialog();
-        mSavedInstanceState = false;
 
         super.deinit();
     }
 
     @Override
     public boolean onLongClick(View v) {
-        if(mAdapter == null) {
-            return false;
-        }
-
         if(getPlayerServiceManager() != null && getPlayerServiceManager().isBound()) {
             getPlayerServiceManager().pause();
         }
@@ -225,16 +266,6 @@ public class ChatController extends ChatRecordOverlayController implements View.
         return true;
     }
 
-    private boolean hasChatMessage(List<Message> messages, long chatId) {
-        final int messageAmount = messages.size();
-        for(int i=0; i<messageAmount; i++) {
-            if(messages.get(i).getChatId() == chatId) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     @Override
     public void onEventMainThread(SyncEvent event) {
         super.onEventMainThread(event);
@@ -242,28 +273,27 @@ public class ChatController extends ChatRecordOverlayController implements View.
             return;
         }
 
-        if(event.getType() == SyncEvent.EVENT_FINISHED) {
-            if(hasChatMessage(event.getReceivedMessageList(), mChat.getId()) || hasChatMessage(event.getSentMessageList(), mChat.getId())) {
+        setLoading(event.getType() == SyncEvent.EVENT_STARTED || event.getType() == SyncEvent.EVENT_PROGRESS);
+
+        if(event.getType() == SyncEvent.EVENT_FINISHED || event.getType() == SyncEvent.EVENT_PROGRESS) {
+            if(event.getAffectedChatIdSet().contains(mChat.getId())) {
                 refreshList();
             }
         }
     }
 
-    @Override
-    public void onEventMainThread(ReceiverEvent event) {
+    public void onEventMainThread(DataObjectEvent<Message> event) {
         super.onEventMainThread(event);
-        if(mChat != null && event.getType() == ReceiverEvent.EVENT_RECEIVED) {
-            if(event.getMessage().getChatId() == mChat.getId()) {
-                refreshList();
-                if (Utils.isScreenOnAndUnlocked(getContext())) {
-                    event.setDoNotShowNotification(true);
-                }
+        if(mChat != null && event.getDataObject().getChatId() == mChat.getId()) {
+            refreshList();
+            if (event.getDataObject().isReceived() && Utils.isScreenOnAndUnlocked(getContext())) {
+                event.setSkipNotifications(true);
             }
         }
     }
 
     @Override
-    public void onEventMainThread(SenderEvent event) {
+    public void onEventMainThread(MessengerSendEvent event) {
         super.onEventMainThread(event);
         if(mChat == null) {
             return;
@@ -289,14 +319,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
         if(mChat == null || !getMessagesServiceManager().isBound() || !getPlayerServiceManager().isBound()) {
             return;
         }
-
-        if(mRefreshMessageCursorAsyncTask != null) {
-            mRefreshMessageCursorAsyncTask.cancel(true);
-            mRefreshMessageCursorAsyncTask = null;
-        }
-
-        mRefreshMessageCursorAsyncTask = new RefreshMessageCursorAsyncTask();
-        mRefreshMessageCursorAsyncTask.execute();
+        mRefreshMessageCursorLoader.execute();
     }
 
     private SQLiteDatabase getDatabase() {
@@ -321,7 +344,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
     }
 
     public void setChat(long chatId) {
-        setChat(ChatManager.getChatById(getDatabase(), chatId));
+        setChat(ChatManager.getInstance(getContext()).getChatById(getDatabase(), chatId));
     }
 
     public void setChat(Chat chat) {

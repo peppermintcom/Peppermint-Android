@@ -19,7 +19,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
@@ -37,8 +37,6 @@ import java.util.Random;
  * The view supports a content explosion animation through {@link #startExplosion()}.
  */
 public class AnimatedView extends TextureView {
-
-    private static final String TAG = AnimatedView.class.getSimpleName();
 
     // explosion animation values
     private static final int STATUS_NORMAL = 0;
@@ -185,29 +183,32 @@ public class AnimatedView extends TextureView {
 
     private final float[] mGravityVector = { 0, 2f, 0 };
     private static Random mRandomizer;
+    protected Context mContext;
 
     public AnimatedView(Context context) {
         super(context);
-        init(null);
+        init(context, null);
     }
 
     public AnimatedView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init(attrs);
+        init(context, attrs);
     }
 
     public AnimatedView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init(attrs);
+        init(context, attrs);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public AnimatedView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
-        init(attrs);
+        init(context, attrs);
     }
 
-    private void init(AttributeSet attrs) {
+    private void init(Context context, AttributeSet attrs) {
+        mContext = context;
+
         if (mRandomizer == null) {
             mRandomizer = new Random(SystemClock.uptimeMillis());
         }
@@ -221,9 +222,6 @@ public class AnimatedView extends TextureView {
         mSlicesVerticalAmount = SLICES_VERTICAL_AMOUNT;
 
         setSurfaceTextureListener(mSurfaceCallback);
-        //setZOrderOnTop(true);
-        //setFormat(PixelFormat.TRANSPARENT);
-        //setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         setOpaque(false);
     }
 

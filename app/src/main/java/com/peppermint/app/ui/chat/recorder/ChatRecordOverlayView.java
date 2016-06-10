@@ -18,7 +18,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.peppermint.app.R;
-import com.peppermint.app.ui.AnimatorBuilder;
+import com.peppermint.app.ui.base.AnimatorBuilder;
 import com.peppermint.app.utils.Utils;
 
 /**

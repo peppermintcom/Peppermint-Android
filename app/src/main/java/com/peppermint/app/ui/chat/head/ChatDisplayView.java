@@ -10,9 +10,9 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.peppermint.app.R;
-import com.peppermint.app.data.Chat;
-import com.peppermint.app.ui.KeyInterceptable;
-import com.peppermint.app.ui.OverlayManager;
+import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.ui.base.KeyInterceptable;
+import com.peppermint.app.ui.base.OverlayManager;
 import com.peppermint.app.ui.base.views.TouchInterceptorView;
 import com.peppermint.app.ui.chat.ChatController;
 import com.peppermint.app.ui.chat.RecipientDataGUI;

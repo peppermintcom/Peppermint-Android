@@ -5,9 +5,9 @@ import android.app.ListFragment;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Point;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -18,35 +18,33 @@ import android.widget.Button;
 import android.widget.PopupWindow;
 
 import com.peppermint.app.R;
-import com.peppermint.app.data.Chat;
-import com.peppermint.app.data.ContactRaw;
-import com.peppermint.app.data.Message;
-import com.peppermint.app.data.Recording;
-import com.peppermint.app.events.MessageEvent;
-import com.peppermint.app.events.PeppermintEventBus;
-import com.peppermint.app.events.ReceiverEvent;
-import com.peppermint.app.events.SenderEvent;
-import com.peppermint.app.events.SyncEvent;
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.dal.DataObjectEvent;
+import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.dal.contact.ContactRaw;
+import com.peppermint.app.dal.message.Message;
+import com.peppermint.app.dal.recording.Recording;
+import com.peppermint.app.services.sync.SyncEvent;
+import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.chat.ChatActivity;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
 import com.peppermint.app.ui.recipients.add.NewContactActivity;
 import com.peppermint.app.utils.ResourceUtils;
+import com.peppermint.app.utils.SameAsyncTaskExecutor;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class ContactListFragment extends ListFragment implements
         AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener,
-        SearchListBarView.OnSearchListener, View.OnClickListener {
+        SearchListBarView.OnSearchListener, View.OnClickListener, SwipeRefreshLayout.OnRefreshListener {
+
+    private static final String TAG = ContactListFragment.class.getSimpleName();
 
     protected static final int REQUEST_NEWCONTACT = 224;
 
@@ -60,6 +58,7 @@ public abstract class ContactListFragment extends ListFragment implements
     protected ChatRecordOverlayController mChatRecordOverlayController;
 
     // UI
+    private SwipeRefreshLayout mLytSwipeRefresh;
     private SearchListBarView mSearchListBarView;
     private ViewGroup mListFooterView;
 
@@ -74,48 +73,41 @@ public abstract class ContactListFragment extends ListFragment implements
     };
 
     // search
-    private RefreshTask mRefreshTask;
-    private ThreadPoolExecutor mThreadPoolExecutor;
-    protected boolean mRefreshing = false;
-
-    private class RefreshTask extends AsyncTask<Void, Void, Object> {
-        private Context _context;
-        private String _filter;
+    private class RefreshTask extends SameAsyncTaskExecutor<String, Void, Object> {
         private String _name, _via;
-        private boolean _doNotChangeState = false;
 
-        protected RefreshTask(Context context, String filter) {
-            this._context = context;
-            this._filter = filter;
+        public RefreshTask(Context mContext) {
+            super(mContext);
+            mExecutor = Executors.newSingleThreadExecutor();
         }
 
         @Override
         protected void onPreExecute() {
-            if(mActivity != null && mActivity.getLoadingController() != null) {
-                mActivity.getLoadingController().setLoading(true);
+            if(mActivity != null && mLytSwipeRefresh != null) {
+                mLytSwipeRefresh.setRefreshing(true);
             }
 
-            onAsyncRefreshStarted(_context);
-
-            if(_filter == null) {
-                return;
-            }
-
-            String[] viaName = getFilterData(_filter);
-            _via = viaName[0]; _name = viaName[1];
+            onAsyncRefreshStarted(mContext);
         }
 
         @Override
-        protected Object doInBackground(Void... nothing) {
+        protected Object doInBackground(SameAsyncTask sameAsyncTask, String... params) {
+            final String searchText = params[0];
+
+            if(searchText != null) {
+                String[] viaName = getFilterData(searchText);
+                _via = viaName[0]; _name = viaName[1];
+            }
+
             mRefreshing = true;
 
             try {
-                return onAsyncRefresh(_context, _name, _via);
+                return onAsyncRefresh(mContext, _name, _via);
             } catch(Throwable e) {
-                TrackerManager.getInstance(_context.getApplicationContext()).logException(e);
+                TrackerManager.getInstance(mContext).logException(e);
             }
 
-            if(!_doNotChangeState) {
+            if(!sameAsyncTask.isNextPending()) {
                 mRefreshing = false;
             }
 
@@ -123,24 +115,34 @@ public abstract class ContactListFragment extends ListFragment implements
         }
 
         @Override
-        protected void onPostExecute(Object data) {
-            onAsyncRefreshFinished(_context, data);
+        protected void onPostExecute(Object o) {
+            onAsyncRefreshFinished(mContext, o);
 
             // check if data is valid and activity has not been destroyed by the main thread
-            if(mActivity != null && mActivity.getLoadingController() != null) {
-                mActivity.getLoadingController().setLoading(false);
+            if(mActivity != null && mLytSwipeRefresh != null) {
+                mLytSwipeRefresh.setRefreshing(false);
             }
         }
 
         @Override
         protected void onCancelled(Object o) {
-            onAsyncRefreshCancelled(_context, o);
+            onAsyncRefreshCancelled(mContext, o);
 
-            if(mActivity != null && mActivity.getLoadingController() != null) {
-                mActivity.getLoadingController().setLoading(false);
+            if(mActivity != null && mLytSwipeRefresh != null) {
+                mLytSwipeRefresh.setRefreshing(false);
             }
         }
-    }
+
+        protected void shutdownExecutor() {
+            if(mExecutor != null) {
+                mExecutor.shutdown();
+            }
+        }
+    };
+
+    protected boolean mSyncing = false;
+    protected boolean mRefreshing = false;
+    protected RefreshTask mRefreshTask;
 
     protected void onAsyncRefreshStarted(Context context) { /* nothing to do */ }
     protected abstract Object onAsyncRefresh(Context context, String searchName, String searchVia);
@@ -182,18 +184,7 @@ public abstract class ContactListFragment extends ListFragment implements
         }
     };
 
-    private Object mMessageEventListener = new Object() {
-        public void onEventMainThread(MessageEvent event) {
-            if(event.getType() == MessageEvent.EVENT_MARK_PLAYED) {
-                refresh();
-            }
-        }
-    };
-
     public ContactListFragment() {
-        this.mThreadPoolExecutor = new ThreadPoolExecutor(1, 1,
-                60, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<Runnable>());
     }
 
     @SuppressWarnings("deprecation")
@@ -202,16 +193,13 @@ public abstract class ContactListFragment extends ListFragment implements
         super.onAttach(activity);
         mActivity = (ContactListActivity) activity;
         mSearchListBarView = mActivity.getSearchListBarView();
+        mRefreshTask = new RefreshTask(mActivity);
 
         refresh();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
-        if(mRefreshing) {
-            mActivity.getLoadingController().setLoading(true);
-        }
 
         // hold popup
         mHoldPopup = new PopupWindow(mActivity);
@@ -227,6 +215,13 @@ public abstract class ContactListFragment extends ListFragment implements
 
         // inflate the view
         final View v = inflater.inflate(R.layout.f_recipients_layout, container, false);
+
+        mLytSwipeRefresh = (SwipeRefreshLayout) v.findViewById(R.id.swipeContainer);
+        mLytSwipeRefresh.setOnRefreshListener(this);
+
+        if(mRefreshing) {
+            mLytSwipeRefresh.setRefreshing(true);
+        }
 
         // init no recipients view
         mListFooterView = (ViewGroup) inflater.inflate(R.layout.v_recipients_footer_layout, null);
@@ -259,30 +254,31 @@ public abstract class ContactListFragment extends ListFragment implements
             @Override
             public void onEventMainThread(SyncEvent event) {
                 super.onEventMainThread(event);
-                if(event.getType() == SyncEvent.EVENT_FINISHED) {
-                    if(mSearchListBarView.getSearchText() == null) {
-                        refresh();
-                    }
+                if(event.getType() == SyncEvent.EVENT_FINISHED || event.getType() == SyncEvent.EVENT_PROGRESS) {
+                    refresh();
+                }
+
+                switch(event.getType()) {
+                    case SyncEvent.EVENT_STARTED:
+                    case SyncEvent.EVENT_PROGRESS:
+                        if(!mSyncing) {
+                            mSyncing = true;
+                            onSyncOngoing();
+                        }
+                        break;
+                    default:
+                        if(mSyncing) {
+                            mSyncing = false;
+                            onSyncFinished();
+                        }
                 }
             }
 
             @Override
-            public void onEventMainThread(ReceiverEvent event) {
+            public void onEventMainThread(DataObjectEvent<Message> event) {
                 super.onEventMainThread(event);
-                if(event.getType() == ReceiverEvent.EVENT_RECEIVED) {
-                    if(mSearchListBarView.getSearchText() == null) {
-                        refresh();
-                    }
-                }
-            }
-
-            @Override
-            public void onEventMainThread(SenderEvent event) {
-                super.onEventMainThread(event);
-                if(event.getType() == SenderEvent.EVENT_FINISHED) {
-                    if(mSearchListBarView.getSearchText() == null) {
-                        refresh();
-                    }
+                if(event.getType() != DataObjectEvent.TYPE_UPDATE || event.getUpdates().get(Message.FIELD_PLAYED) != null) {
+                    refresh();
                 }
             }
 
@@ -313,8 +309,6 @@ public abstract class ContactListFragment extends ListFragment implements
 
         mChatRecordOverlayController.init(getListView(), mActivity.getOverlayManager(),
                 mActivity, savedInstanceState);
-
-        PeppermintEventBus.registerMessages(mMessageEventListener);
     }
 
     @Override
@@ -322,8 +316,6 @@ public abstract class ContactListFragment extends ListFragment implements
         super.onStart();
 
         mChatRecordOverlayController.start();
-
-        mActivity.getLoadingController().setText(R.string.loading_contacts);
 
         mHandler.postDelayed(mAnimationRunnable, FIXED_AVATAR_ANIMATION_INTERVAL_MS + mRandom.nextInt(VARIABLE_AVATAR_ANIMATION_INTERVAL_MS));
 
@@ -333,6 +325,11 @@ public abstract class ContactListFragment extends ListFragment implements
 
     @Override
     public void onStop() {
+        if(mSyncing) {
+            mSyncing = false;
+            onSyncFinished();
+        }
+
         mActivity.removeTouchEventInterceptor(mTouchInterceptor);
 
         mHandler.removeCallbacks(mAnimationRunnable);
@@ -346,15 +343,13 @@ public abstract class ContactListFragment extends ListFragment implements
 
     @Override
     public void onDestroy() {
-        PeppermintEventBus.unregisterMessages(mMessageEventListener);
-
         if(mRefreshTask != null) {
             mRefreshTask.cancel(true);
             mRefreshTask = null;
         }
 
-        if(mThreadPoolExecutor != null) {
-            mThreadPoolExecutor.shutdown();
+        if(mRefreshTask != null) {
+            mRefreshTask.shutdownExecutor();
         }
 
         mChatRecordOverlayController.deinit();
@@ -367,7 +362,7 @@ public abstract class ContactListFragment extends ListFragment implements
     public void onDetach() {
         if(mActivity != null) {
             mSearchListBarView.removeOnSearchListener(this);
-            mActivity.getLoadingController().setLoading(false);
+            mLytSwipeRefresh.setRefreshing(false);
             mActivity = null;
         }
 
@@ -394,22 +389,21 @@ public abstract class ContactListFragment extends ListFragment implements
         super.onSaveInstanceState(outState);
     }
 
+    protected void onSyncOngoing() {
+    }
+
+    protected void onSyncFinished() {
+    }
+
     @Override
     public boolean onSearch(String searchText, boolean wasClear) {
         if(mActivity == null) {
             return false;
         }
 
-        if(mRefreshTask != null) {
-            mRefreshTask._doNotChangeState = true;
-            mRefreshTask.cancel(true);
-            mRefreshTask = null;
-        }
-
         mRefreshing = true;
 
-        mRefreshTask = new RefreshTask(mActivity, searchText);
-        mRefreshTask.executeOnExecutor(mThreadPoolExecutor);
+        mRefreshTask.execute(searchText);
 
         return false;
     }
@@ -480,5 +474,10 @@ public abstract class ContactListFragment extends ListFragment implements
             viaName[1] = filter;
         }
         return viaName;
+    }
+
+    @Override
+    public void onRefresh() {
+        refresh();
     }
 }

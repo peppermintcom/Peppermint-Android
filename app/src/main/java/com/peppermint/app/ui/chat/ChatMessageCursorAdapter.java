@@ -6,11 +6,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
 
-import com.peppermint.app.PlayerServiceManager;
-import com.peppermint.app.cloud.MessagesServiceManager;
-import com.peppermint.app.data.DatabaseHelper;
-import com.peppermint.app.data.Message;
-import com.peppermint.app.data.MessageManager;
+import com.peppermint.app.services.player.PlayerServiceManager;
+import com.peppermint.app.services.messenger.MessengerServiceManager;
+import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.dal.message.Message;
+import com.peppermint.app.dal.message.MessageManager;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -25,14 +25,14 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
     private Set<MessageView> mViewSet = new HashSet<>();
 
     private final Context mContext;
-    private MessagesServiceManager mMessagesServiceManager;
+    private MessengerServiceManager mMessengerServiceManager;
     private PlayerServiceManager mPlayerServiceManager;
     private MessageView.ExclamationClickListener mExclamationClickListener;
 
-    public ChatMessageCursorAdapter(final Context mContext, MessagesServiceManager mMessagesServiceManager, PlayerServiceManager mPlayerServiceManager, Cursor cursor) {
+    public ChatMessageCursorAdapter(final Context mContext, MessengerServiceManager mMessengerServiceManager, PlayerServiceManager mPlayerServiceManager, Cursor cursor) {
         super(mContext, cursor, 0);
         this.mContext = mContext;
-        this.mMessagesServiceManager = mMessagesServiceManager;
+        this.mMessengerServiceManager = mMessengerServiceManager;
         this.mPlayerServiceManager = mPlayerServiceManager;
     }
 
@@ -66,13 +66,13 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
 
         final MessageView messageView = (MessageView) view;
         messageView.setSharedPlayerServiceManager(mPlayerServiceManager);
-        messageView.setSharedMessageServiceManager(mMessagesServiceManager);
+        messageView.setSharedMessageServiceManager(mMessengerServiceManager);
         messageView.setOnExclamationClickListener(mExclamationClickListener);
         messageView.setMessage(message, prevMessage);
     }
 
     public Message getMessage(Cursor cursor) {
-        return MessageManager.getFromCursor(DatabaseHelper.getInstance(mContext).getReadableDatabase(), cursor);
+        return MessageManager.getInstance(mContext).getFromCursor(DatabaseHelper.getInstance(mContext).getReadableDatabase(), cursor);
     }
 
     public Message getMessage(int position) {

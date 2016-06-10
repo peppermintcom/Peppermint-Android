@@ -8,13 +8,13 @@ import android.support.multidex.MultiDexApplication;
 import android.util.Log;
 
 import com.google.android.gms.security.ProviderInstaller;
-import com.peppermint.app.cloud.MessagesServiceManager;
-import com.peppermint.app.cloud.apis.PeppermintApi;
-import com.peppermint.app.cloud.apis.SparkPostApi;
-import com.peppermint.app.cloud.senders.SenderObject;
-import com.peppermint.app.cloud.senders.SenderPreferences;
-import com.peppermint.app.cloud.senders.mail.gmail.GmailSender;
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.cloud.apis.peppermint.PeppermintApi;
+import com.peppermint.app.cloud.apis.sparkpost.SparkPostApi;
+import com.peppermint.app.services.messenger.MessengerServiceManager;
+import com.peppermint.app.services.messenger.handlers.SenderObject;
+import com.peppermint.app.services.messenger.handlers.SenderPreferences;
+import com.peppermint.app.services.messenger.handlers.gmail.GmailSender;
+import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
 
 
@@ -26,8 +26,6 @@ import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
 public class PeppermintApp extends MultiDexApplication {
 
     private static final String TAG = PeppermintApi.class.getSimpleName();
-
-    public static final boolean DEBUG = false;
 
     private static final String PREF_LAST_VERSION = "PeppermintApp_LastVersion";
 
@@ -51,8 +49,8 @@ public class PeppermintApp extends MultiDexApplication {
         TrackerManager.getInstance(this);
 
         // start the service so that we can receive GCM notifications
-        MessagesServiceManager messagesServiceManager = new MessagesServiceManager(this);
-        messagesServiceManager.start();
+        MessengerServiceManager messengerServiceManager = new MessengerServiceManager(this);
+        messengerServiceManager.start();
 
         // try to start and enable the chat head overlay
         ChatHeadServiceManager.startAndEnable(this);
@@ -68,7 +66,7 @@ public class PeppermintApp extends MultiDexApplication {
             editor.commit();
         }
 
-        if(DEBUG) {
+        if(BuildConfig.DEBUG) {
             StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
                     .detectDiskReads()
                     .detectDiskWrites()

@@ -16,11 +16,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.authenticator.AuthenticatorUtils;
-import com.peppermint.app.cloud.apis.exceptions.PeppermintApiNoAccountException;
+import com.peppermint.app.services.authenticator.AuthenticatorUtils;
+import com.peppermint.app.cloud.apis.peppermint.PeppermintApiNoAccountException;
 import com.peppermint.app.cloud.apis.speech.GoogleSpeechRecognizeClient;
-import com.peppermint.app.cloud.senders.SenderPreferences;
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.services.messenger.handlers.SenderPreferences;
+import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
 import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
 import com.peppermint.app.utils.Utils;

@@ -14,6 +14,9 @@
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.READ_SYNC_STATS" />
 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 
@@ -43,20 +46,20 @@
             </intent-filter>
         </receiver>
         <service
-            android:name=".cloud.gcm.PeppermintGcmListenerService"
+            android:name=".services.gcm.PeppermintGcmListenerService"
             android:exported="false" >
             <intent-filter>
                 <action android:name="com.google.android.c2dm.intent.RECEIVE" />
             </intent-filter>
         </service>
         <service
-            android:name=".cloud.gcm.PeppermintInstanceIDListenerService"
+            android:name=".services.gcm.PeppermintInstanceIDListenerService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.android.gms.iid.InstanceID" />
             </intent-filter>
         </service>
-        <service android:name=".cloud.gcm.RegistrationIntentService" android:exported="false">
+        <service android:name=".services.gcm.RegistrationIntentService" android:exported="false">
         </service>
         <!-- EO GCM Components -->
         
@@ -161,7 +164,7 @@
         <!-- DUI: HELPER GET RESULT (utilitary invisible activity that allows services to
             launch other activities and obtain a result through "onActivityResult") -->
         <activity
-            android:name=".cloud.senders.GetResultActivity"
+            android:name=".services.GetResultActivity"
             android:theme="@style/Peppermint.Theme.Dim50">
         </activity>
 
@@ -178,14 +181,14 @@
 
         <!-- SERV: RECORDING -->
         <service
-            android:name=".RecordService"
+            android:name=".services.recorder.RecordService"
             android:enabled="true"
             android:exported="false" >
         </service>
 
         <!-- SERV: SENDING -->
         <service
-            android:name=".cloud.MessagesService"
+            android:name=".services.messenger.MessengerService"
             android:enabled="true"
             android:exported="false" >
             <intent-filter>
@@ -196,13 +199,23 @@
 
         <!-- SERV: PLAYER -->
         <service
-            android:name=".PlayerService"
+            android:name=".services.player.PlayerService"
             android:enabled="true"
             android:exported="false" >
         </service>
 
+        <!-- SERV: AUTHENTICATION -->
+        <service
+            android:name="com.peppermint.app.services.sync.SyncService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter"/>
+            </intent-filter>
+            <meta-data android:name="android.content.SyncAdapter" android:resource="@xml/sync_adapter" />
+        </service>
+
         <!-- UI: AUTHENTICATION -->
-        <service android:name=".authenticator.AuthenticationService"
+        <service android:name=".services.authenticator.AuthenticationService"
             android:exported="false"
             android:enabled="true">
             <intent-filter>
@@ -214,7 +227,7 @@
 
         <activity
             android:launchMode="singleTop"
-            android:name=".authenticator.AuthenticatorActivity"
+            android:name=".ui.authentication.AuthenticatorActivity"
             android:label="@string/app_name"
             android:windowSoftInputMode="stateHidden|adjustPan"
             android:theme="@style/Peppermint.Theme.NoActionBar" >
@@ -227,7 +240,7 @@
             android:name="io.fabric.ApiKey"
             android:value="e8809814fc7d62266d6e3bb86faecc9e86696f83" />
 
-        <receiver android:name="com.peppermint.app.InstallReceiver" android:exported="true">
+        <receiver android:name=".services.InstallReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="com.android.vending.INSTALL_REFERRER" />
             </intent-filter>

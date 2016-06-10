@@ -3,7 +3,7 @@ package com.peppermint.app.ui.settings;
 import android.os.Bundle;
 
 import com.peppermint.app.R;
-import com.peppermint.app.ui.base.CustomActionBarView;
+import com.peppermint.app.ui.base.views.CustomActionBarView;
 import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
 
 public class SettingsActivity extends CustomActionBarActivity {

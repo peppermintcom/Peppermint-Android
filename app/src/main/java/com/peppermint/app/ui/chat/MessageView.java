@@ -16,14 +16,14 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
-import com.peppermint.app.PlayerServiceManager;
 import com.peppermint.app.R;
-import com.peppermint.app.cloud.MessagesServiceManager;
-import com.peppermint.app.data.Message;
-import com.peppermint.app.data.Recording;
-import com.peppermint.app.events.PeppermintEventBus;
-import com.peppermint.app.events.PlayerEvent;
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.dal.message.Message;
+import com.peppermint.app.dal.recording.Recording;
+import com.peppermint.app.services.messenger.MessengerServiceManager;
+import com.peppermint.app.services.player.PlayerEvent;
+import com.peppermint.app.services.player.PlayerService;
+import com.peppermint.app.services.player.PlayerServiceManager;
+import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.ui.base.views.CustomFontButton;
 import com.peppermint.app.ui.base.views.CustomFontTextView;
 import com.peppermint.app.utils.DateContainer;
@@ -66,7 +66,7 @@ public class MessageView extends LinearLayout implements View.OnClickListener, S
     private ViewGroup mLytBalloon;
 
     private PlayerServiceManager mSharedPlayerServiceManager;
-    private MessagesServiceManager mSharedMessageServiceManager;
+    private MessengerServiceManager mSharedMessageServiceManager;
     private Message mMessage, mPreviousMessage;
 
     private int mBalloonMargin, mBalloonMarginWithExclamation;
@@ -382,11 +382,11 @@ public class MessageView extends LinearLayout implements View.OnClickListener, S
     public void setMessage(Message mMessage, Message mPreviousMessage) {
         if(mMessage != null) {
             if(this.mMessage == null) {
-                PeppermintEventBus.registerAudio(this);
+                PlayerService.registerEventListener(this);
             }
         } else {
             if(this.mMessage != null) {
-                PeppermintEventBus.unregisterAudio(this);
+                PlayerService.unregisterEventListener(this);
             }
         }
 
@@ -408,7 +408,7 @@ public class MessageView extends LinearLayout implements View.OnClickListener, S
         return mSharedMessageServiceManager != null && mSharedMessageServiceManager.isBound();
     }
 
-    public void setSharedMessageServiceManager(MessagesServiceManager mSharedMessageServiceManager) {
+    public void setSharedMessageServiceManager(MessengerServiceManager mSharedMessageServiceManager) {
         this.mSharedMessageServiceManager = mSharedMessageServiceManager;
     }
 

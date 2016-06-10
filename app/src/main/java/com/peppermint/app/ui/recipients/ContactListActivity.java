@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -22,22 +23,24 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.authenticator.AuthenticationData;
-import com.peppermint.app.cloud.MessagesServiceManager;
-import com.peppermint.app.data.ChatManager;
-import com.peppermint.app.data.ContactManager;
-import com.peppermint.app.data.ContactRaw;
-import com.peppermint.app.data.DatabaseHelper;
-import com.peppermint.app.ui.Overlay;
-import com.peppermint.app.ui.OverlayManager;
-import com.peppermint.app.ui.PermissionsPolicyEnforcer;
+import com.peppermint.app.cloud.apis.peppermint.PeppermintApiNoAccountException;
+import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.dal.chat.ChatManager;
+import com.peppermint.app.dal.contact.ContactManager;
+import com.peppermint.app.dal.contact.ContactRaw;
+import com.peppermint.app.services.authenticator.AuthenticationData;
+import com.peppermint.app.services.sync.SyncEvent;
+import com.peppermint.app.services.sync.SyncService;
 import com.peppermint.app.ui.about.AboutActivity;
-import com.peppermint.app.ui.base.CustomActionBarView;
-import com.peppermint.app.ui.base.NavigationItem;
-import com.peppermint.app.ui.base.NavigationItemSimpleAction;
+import com.peppermint.app.ui.base.Overlay;
+import com.peppermint.app.ui.base.OverlayManager;
+import com.peppermint.app.ui.base.PermissionsPolicyEnforcer;
 import com.peppermint.app.ui.base.activities.CustomActionBarDrawerActivity;
 import com.peppermint.app.ui.base.dialogs.CustomConfirmationDialog;
 import com.peppermint.app.ui.base.dialogs.PopupDialog;
+import com.peppermint.app.ui.base.navigation.NavigationItem;
+import com.peppermint.app.ui.base.navigation.NavigationItemSimpleAction;
+import com.peppermint.app.ui.base.views.CustomActionBarView;
 import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
 import com.peppermint.app.ui.feedback.FeedbackActivity;
 import com.peppermint.app.ui.settings.SettingsActivity;
@@ -48,6 +51,8 @@ import java.util.List;
 
 public class ContactListActivity extends CustomActionBarDrawerActivity implements SearchListBarView.OnSearchListener,
         OverlayManager.OverlayVisibilityChangeListener {
+
+    private static final String TAG = ContactListActivity.class.getSimpleName();
 
     private static final int OVERLAY_PERMISSION_REQUEST_CODE = 121;
 
@@ -64,6 +69,10 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
     private boolean mIsDestroyed = false;
 
     private CustomConfirmationDialog mOverlayPermissionDialog;
+
+    public void onEventMainThread(SyncEvent event) {
+        setLoading(event.getType() == SyncEvent.EVENT_STARTED || event.getType() == SyncEvent.EVENT_PROGRESS);
+    }
 
     // search tip popup
     private Handler mHandler = new Handler();
@@ -182,7 +191,7 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
 
         // show recent contacts if recents are empty
         if(!mHasSavedInstanceState) {
-            if(ChatManager.getChatCount(DatabaseHelper.getInstance(this).getReadableDatabase(), true) <= 0) {
+            if(ChatManager.getInstance(this).getChatCount(DatabaseHelper.getInstance(this).getReadableDatabase(), true) <= 0) {
                 this.mTappedItemPosition = 1;
             } else {
                 this.mTappedItemPosition = 0;
@@ -284,8 +293,11 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
 
         // synchronize messages (only when the activity is created for the first time)
         if(savedInstanceState == null) {
-            final MessagesServiceManager messagesServiceManager = new MessagesServiceManager(this);
-            messagesServiceManager.startAndSync();
+            try {
+                mAuthenticatorUtils.requestSync();
+            } catch(PeppermintApiNoAccountException e) {
+                /* nothing to do here */
+            }
         }
 
         getDrawerListView().setItemChecked(this.mTappedItemPosition, true);
@@ -328,14 +340,14 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
                 mSearchListBarView.setSearchText(name);
             } else {
                 // if mail is supplied, check if the contact exists
-                ContactRaw foundRecipient = ContactManager.getRawContactByVia(ContactListActivity.this, mail);
+                ContactRaw foundRecipient = ContactManager.getInstance().getRawContactByVia(ContactListActivity.this, mail);
 
                 // if not, add the contact
                 if(foundRecipient == null) {
                     try {
-                        foundRecipient = ContactManager.insert(ContactListActivity.this, 0, 0, name, null, null, mail, null, authenticationData.getEmail(), false);
+                        foundRecipient = ContactManager.getInstance().insert(ContactListActivity.this, 0, 0, name, null, null, mail, null, authenticationData.getEmail(), false);
                     } catch (Exception e) {
-                            /* nothing to do here */
+                        /* nothing to do here */
                     }
                 }
 
@@ -366,6 +378,18 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
         addTouchEventInterceptor(mTouchInterceptor);
 
         getAuthenticationData(getIntentReplica());
+
+        try {
+            if(mAuthenticatorUtils.isPerformingSync()) {
+                setLoading(true);
+            } else {
+                setLoading(false);
+            }
+        } catch (PeppermintApiNoAccountException e) {
+            Log.w(TAG, "Not authenticated!", e);
+        }
+
+        SyncService.registerEventListener(this);
     }
 
     @Override
@@ -394,6 +418,9 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
 
     @Override
     protected void onStop() {
+        SyncService.unregisterEventListener(this);
+        setLoading(false);
+
         removeTouchEventInterceptor(mTouchInterceptor);
 
         mOverlayManager.removeOverlayVisibilityChangeListener(this);

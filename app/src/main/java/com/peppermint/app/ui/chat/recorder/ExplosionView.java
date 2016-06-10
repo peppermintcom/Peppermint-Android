@@ -20,7 +20,7 @@ import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 
-import com.peppermint.app.tracking.TrackerManager;
+import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.utils.Utils;
 
 import java.util.ArrayList;
