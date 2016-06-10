@@ -1,7 +1,6 @@
 package com.peppermint.app.utils;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -269,16 +268,6 @@ public class ResourceUtils {
      */
     public static int getColor(final Context context, final int colorRes) {
         return ContextCompat.getColor(context, colorRes);
-    }
-
-    /**
-     * Get a color state list from resources according to the current API.
-     * @param context the context
-     * @param colorRes the color resource id
-     * @return the color
-     */
-    public static ColorStateList getColorStateList(final Context context, final int colorRes) {
-        return ContextCompat.getColorStateList(context, colorRes);
     }
 
     /**

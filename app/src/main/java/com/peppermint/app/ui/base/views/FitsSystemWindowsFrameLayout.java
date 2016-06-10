@@ -11,11 +11,12 @@ import android.view.WindowInsets;
 import android.widget.FrameLayout;
 
 /**
+ *
+ * {@link FrameLayout} that is able to fit to system windows.
+ *
  * As seen at https://gist.github.com/cbeyls/ab6903e103475bd4d51b
  */
 public class FitsSystemWindowsFrameLayout extends FrameLayout {
-
-    private static final String TAG = FitsSystemWindowsFrameLayout.class.getSimpleName();
 
     private Rect windowInsets = new Rect();
     private Rect tempInsets = new Rect();

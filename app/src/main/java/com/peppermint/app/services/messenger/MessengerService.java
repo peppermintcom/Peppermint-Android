@@ -276,7 +276,7 @@ public class MessengerService extends Service {
                     doGcmRegistration();
 
                     List<Message> queued = MessageManager.getInstance(MessengerService.this).getMessagesQueued(DatabaseHelper.getInstance(MessengerService.this).getReadableDatabase());
-                    if (queued.size() > 0 && Utils.isInternetActive(MessengerService.this)) {
+                    if (queued.size() > 0 && Utils.isInternetActive()) {
                         // try to resend all queued recordings..
                         for (Message message : queued) {
                             if(!mSenderManager.isSending(message)) {

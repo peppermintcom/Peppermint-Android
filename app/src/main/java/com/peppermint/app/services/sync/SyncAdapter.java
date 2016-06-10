@@ -85,7 +85,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
         final Context context = getContext();
 
-        if(!Utils.isInternetAvailable(context) || !Utils.isInternetActive(context)) {
+        if(!Utils.isInternetAvailable(context) || !Utils.isInternetActive()) {
             Log.w(TAG, "Can't Sync: No Internet connection!");
             return;
         }

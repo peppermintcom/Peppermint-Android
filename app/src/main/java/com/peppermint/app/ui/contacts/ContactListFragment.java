@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.recipients;
+package com.peppermint.app.ui.contacts;
 
 import android.app.Activity;
 import android.app.ListFragment;
@@ -28,7 +28,7 @@ import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.chat.ChatActivity;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
-import com.peppermint.app.ui.recipients.add.NewContactActivity;
+import com.peppermint.app.ui.contacts.add.NewContactActivity;
 import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.SameAsyncTaskExecutor;
 import com.peppermint.app.utils.Utils;
@@ -40,11 +40,12 @@ import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Base implementation that shows lists of contacts or chats with search feature.
+ */
 public abstract class ContactListFragment extends ListFragment implements
         AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener,
         SearchListBarView.OnSearchListener, View.OnClickListener, SwipeRefreshLayout.OnRefreshListener {
-
-    private static final String TAG = ContactListFragment.class.getSimpleName();
 
     protected static final int REQUEST_NEWCONTACT = 224;
 
@@ -57,7 +58,7 @@ public abstract class ContactListFragment extends ListFragment implements
     protected ContactListActivity mActivity;
     protected ChatRecordOverlayController mChatRecordOverlayController;
 
-    // UI
+    // ui
     private SwipeRefreshLayout mLytSwipeRefresh;
     private SearchListBarView mSearchListBarView;
     private ViewGroup mListFooterView;
@@ -138,13 +139,13 @@ public abstract class ContactListFragment extends ListFragment implements
                 mExecutor.shutdown();
             }
         }
-    };
+    }
 
     protected boolean mSyncing = false;
     protected boolean mRefreshing = false;
     protected RefreshTask mRefreshTask;
 
-    protected void onAsyncRefreshStarted(Context context) { /* nothing to do */ }
+    protected abstract void onAsyncRefreshStarted(Context context);
     protected abstract Object onAsyncRefresh(Context context, String searchName, String searchVia);
     protected abstract void onAsyncRefreshCancelled(Context context, Object data);
     protected abstract void onAsyncRefreshFinished(Context context, Object data);
@@ -155,7 +156,7 @@ public abstract class ContactListFragment extends ListFragment implements
     private final Runnable mAnimationRunnable = new Runnable() {
         @Override
         public void run() {
-            List<AnimatedAvatarView> possibleAnimationsList = new ArrayList<>();
+            final List<AnimatedAvatarView> possibleAnimationsList = new ArrayList<>();
 
             // get all anonymous avatar instances
             for (int i = 0; i < getListView().getChildCount() - 1; i++) {
@@ -166,7 +167,7 @@ public abstract class ContactListFragment extends ListFragment implements
             }
 
             // randomly pick one
-            int index = possibleAnimationsList.size() > 0 ? mRandom.nextInt(possibleAnimationsList.size()) : 0;
+            final int index = possibleAnimationsList.size() > 0 ? mRandom.nextInt(possibleAnimationsList.size()) : 0;
 
             // start the animation for the picked avatar and stop all others (avoids unnecessary drawing threads)
             for (int i = 0; i < possibleAnimationsList.size(); i++) {
@@ -284,11 +285,11 @@ public abstract class ContactListFragment extends ListFragment implements
 
             @Override
             protected Message sendMessage(Chat chat, Recording recording) {
-                Message message = super.sendMessage(chat, recording);
+                final Message message = super.sendMessage(chat, recording);
 
                 // launch chat activity
-                long chatId = message.getChatParameter().getPeppermintChatId() > 0 ? message.getChatParameter().getPeppermintChatId() : message.getChatParameter().getId();
-                Intent chatIntent = new Intent(mActivity, ChatActivity.class);
+                final long chatId = message.getChatParameter().getPeppermintChatId() > 0 ? message.getChatParameter().getPeppermintChatId() : message.getChatParameter().getId();
+                final Intent chatIntent = new Intent(mActivity, ChatActivity.class);
                 chatIntent.putExtra(ChatActivity.PARAM_CHAT_ID, chatId);
                 startActivity(chatIntent);
 
@@ -301,7 +302,6 @@ public abstract class ContactListFragment extends ListFragment implements
                         mSearchListBarView.clearSearch(true);
                     }
                 }, 100);
-
 
                 return message;
             }
@@ -345,11 +345,8 @@ public abstract class ContactListFragment extends ListFragment implements
     public void onDestroy() {
         if(mRefreshTask != null) {
             mRefreshTask.cancel(true);
-            mRefreshTask = null;
-        }
-
-        if(mRefreshTask != null) {
             mRefreshTask.shutdownExecutor();
+            mRefreshTask = null;
         }
 
         mChatRecordOverlayController.deinit();
@@ -375,7 +372,7 @@ public abstract class ContactListFragment extends ListFragment implements
 
         if(requestCode == REQUEST_NEWCONTACT) {
             if(resultCode == Activity.RESULT_OK) {
-                ContactRaw contact = (ContactRaw) data.getSerializableExtra(NewContactActivity.KEY_RECIPIENT);
+                final ContactRaw contact = (ContactRaw) data.getSerializableExtra(NewContactActivity.KEY_RECIPIENT);
                 if(contact != null) {
                     mSearchListBarView.setSearchText(contact.getDisplayName());
                 }
@@ -390,9 +387,11 @@ public abstract class ContactListFragment extends ListFragment implements
     }
 
     protected void onSyncOngoing() {
+        /* nothing to do here; override in children */
     }
 
     protected void onSyncFinished() {
+        /* nothing to do here; override in children */
     }
 
     @Override
@@ -443,11 +442,11 @@ public abstract class ContactListFragment extends ListFragment implements
 
     @Override
     public void onClick(View v) {
-        Intent intent = new Intent(mActivity, NewContactActivity.class);
+        final Intent intent = new Intent(mActivity, NewContactActivity.class);
 
-        String filter = mSearchListBarView.getSearchText();
+        final String filter = mSearchListBarView.getSearchText();
         if (filter != null) {
-            String[] viaName = getFilterData(filter);
+            final String[] viaName = getFilterData(filter);
             intent.putExtra(NewContactActivity.KEY_VIA, viaName[0]);
 
             if (viaName[0] == null && (Utils.isValidPhoneNumber(viaName[1]) || Utils.isValidEmail(viaName[1]))) {
@@ -461,8 +460,8 @@ public abstract class ContactListFragment extends ListFragment implements
     }
 
     private static String[] getFilterData(String filter) {
-        String[] viaName = new String[2];
-        Matcher matcher = VIA_PATTERN.matcher(filter);
+        final String[] viaName = new String[2];
+        final Matcher matcher = VIA_PATTERN.matcher(filter);
         if (matcher.find()) {
             viaName[0] = matcher.group(1);
             viaName[1] = filter.replaceAll(VIA_PATTERN.pattern(), "").trim();

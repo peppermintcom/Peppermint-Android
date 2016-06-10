@@ -24,6 +24,8 @@ import static junit.framework.Assert.assertTrue;
 
 /**
  * Created by Nuno Luz on 21-02-2016.
+ *
+ * Tests for the {@link Utils} class.
  */
 @RunWith(RobolectricGradleTestRunner.class)
 @Config(constants = BuildConfig.class)
@@ -74,9 +76,6 @@ public class UtilsTest {
         assertTrue(Utils.isValidName("S"));
         assertTrue(!Utils.isValidName(""));
         assertTrue(!Utils.isValidName(null));
-
-        assertTrue(Utils.isValidNameMaybeEmpty(""));
-        assertTrue(Utils.isValidNameMaybeEmpty(null));
     }
 
     @Test

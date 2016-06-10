@@ -8,7 +8,7 @@ import com.peppermint.app.services.authenticator.AuthenticationData;
 import com.peppermint.app.ui.authentication.AuthenticatorActivity;
 import com.peppermint.app.services.authenticator.AuthenticatorUtils;
 import com.peppermint.app.cloud.apis.peppermint.PeppermintApiNoAccountException;
-import com.peppermint.app.ui.recipients.ContactListActivity;
+import com.peppermint.app.ui.contacts.ContactListActivity;
 
 /**
  * Created by Nuno Luz on 06-01-2016.

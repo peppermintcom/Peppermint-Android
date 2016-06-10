@@ -166,7 +166,7 @@
     <string name="about">Информация</string>
     <string name="privacy_policy_terms_of_use">Политика конфиденциальности\n&amp; Условия использования</string>
     <string name="privacy_policy_terms_of_use_singleline">Политика конфиденциальности &amp; Условия использования</string>
-    <string name="version">Версия</string>
+    <string name="version">Версия %1$s</string>
 
 
     <!-- FEEDBACK SCREEN -->

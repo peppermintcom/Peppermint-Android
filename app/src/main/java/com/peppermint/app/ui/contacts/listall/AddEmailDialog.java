@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.recipients;
+package com.peppermint.app.ui.contacts.listall;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -57,16 +57,6 @@ public class AddEmailDialog extends CustomConfirmationDialog implements DialogIn
 
     public AddEmailDialog(Context context) {
         super(context);
-        setLayout(R.layout.d_add_email);
-    }
-
-    public AddEmailDialog(Context context, int themeResId) {
-        super(context, themeResId);
-        setLayout(R.layout.d_add_email);
-    }
-
-    public AddEmailDialog(Context context, boolean cancelable, OnCancelListener cancelListener) {
-        super(context, cancelable, cancelListener);
         setLayout(R.layout.d_add_email);
     }
 

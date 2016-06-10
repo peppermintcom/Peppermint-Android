@@ -17,7 +17,6 @@ import android.widget.FrameLayout;
 import android.widget.GridLayout;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.TableLayout;
 
 import com.peppermint.app.R;
 import com.peppermint.app.utils.ResourceUtils;
@@ -31,6 +30,8 @@ import java.util.Set;
 
 /**
  * Created by Nuno Luz on 16-02-2016.
+ *
+ * Container for {@link EditText} views that validates their content and shows warnings if necessary.
  */
 public class EditTextValidatorLayout extends LinearLayout implements ViewGroup.OnHierarchyChangeListener, View.OnFocusChangeListener, TextWatcher {
 
@@ -50,7 +51,7 @@ public class EditTextValidatorLayout extends LinearLayout implements ViewGroup.O
         }
 
         public ValidityChecker(EditTextValidatorLayout... validatorLayouts) {
-            mSet = new HashSet<>();
+            this();
             Collections.addAll(mSet, validatorLayouts);
         }
 
@@ -81,26 +82,26 @@ public class EditTextValidatorLayout extends LinearLayout implements ViewGroup.O
 
     public EditTextValidatorLayout(Context context) {
         super(context);
-        init(context, null, -1, -1);
+        init(context, null);
     }
 
     public EditTextValidatorLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init(context, attrs, -1, -1);
+        init(context, attrs);
     }
 
     public EditTextValidatorLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init(context, attrs, defStyleAttr, -1);
+        init(context, attrs);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public EditTextValidatorLayout(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
-        init(context, attrs, defStyleAttr, defStyleRes);
+        init(context, attrs);
     }
 
-    private void init(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    private void init(Context context, AttributeSet attrs) {
         setOrientation(VERTICAL);
         mEditTextList = new ArrayList<>();
         setSaveEnabled(true);
@@ -230,8 +231,6 @@ public class EditTextValidatorLayout extends LinearLayout implements ViewGroup.O
             ((RelativeLayout.LayoutParams) params).setMargins(0, 0, 0, 0);
         } else if(params instanceof GridLayout.LayoutParams) {
             ((GridLayout.LayoutParams) params).setMargins(0, 0, 0, 0);
-        } else if(params instanceof TableLayout.LayoutParams) {
-            ((TableLayout.LayoutParams) params).setMargins(0, 0, 0, 0);
         }
     }
 

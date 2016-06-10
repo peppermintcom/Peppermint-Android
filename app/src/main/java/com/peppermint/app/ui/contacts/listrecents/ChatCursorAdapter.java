@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.chat;
+package com.peppermint.app.ui.contacts.listrecents;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -42,7 +42,7 @@ public class ChatCursorAdapter extends CursorAdapter {
     }
 
     public Chat getChat(int position) {
-        Cursor cursor = (Cursor) getItem(position);
+        final Cursor cursor = (Cursor) getItem(position);
         return getChat(cursor);
     }
 }

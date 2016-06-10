@@ -16,6 +16,9 @@ import java.util.Set;
 
 /**
  * Created by Nuno Luz on 04-02-2016.
+ *
+ * Utility class to request and enforce a set of permissions in Android 6.
+ *
  */
 public class PermissionsPolicyEnforcer {
 
@@ -76,12 +79,12 @@ public class PermissionsPolicyEnforcer {
     }
 
     public boolean onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if(requestCode == PERMISSION_REQUEST_CODE && mPermissionsToAsk != null && grantResults != null) {
+        if(requestCode == PERMISSION_REQUEST_CODE && mPermissionsToAsk != null) {
             if (grantResults.length == mPermissionsToAsk.size()) {
                 boolean permissionsGranted = true;
                 for(int i=0; i<grantResults.length && permissionsGranted; i++) {
                     if(!mPermissionsToAsk.get(i).optional) {
-                        permissionsGranted = permissionsGranted && grantResults[i] == PackageManager.PERMISSION_GRANTED;
+                        permissionsGranted = grantResults[i] == PackageManager.PERMISSION_GRANTED;
                     }
                 }
                 return permissionsGranted;
@@ -104,7 +107,7 @@ public class PermissionsPolicyEnforcer {
                 Iterator<String> featureIt = permission.requiredFeatures.iterator();
                 while(featureIt.hasNext() && requirementsOk) {
                     String feature = featureIt.next();
-                    requirementsOk = requirementsOk && context.getPackageManager().hasSystemFeature(feature);
+                    requirementsOk = context.getPackageManager().hasSystemFeature(feature);
                 }
             }
 

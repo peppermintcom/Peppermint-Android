@@ -16,6 +16,8 @@ import com.peppermint.app.utils.ResourceUtils;
 
 /**
  * Created by Nuno Luz on 22-10-2015.
+ *
+ * Generic custom styled preference, with {@link com.peppermint.app.ui.base.views.CustomFontTextView}s.
  */
 public class CustomPreference extends Preference {
 

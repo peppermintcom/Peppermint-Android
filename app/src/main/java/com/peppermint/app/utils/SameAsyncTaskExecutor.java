@@ -90,17 +90,8 @@ public abstract class SameAsyncTaskExecutor<Params, Progress, Result> {
         this.mContext = mContext;
     }
 
-    public SameAsyncTaskExecutor(Context mContext, int mMode) {
-        this(mContext);
-        this.mMode = mMode;
-    }
-
-    public SameAsyncTaskExecutor(Context mContext, int mMode, int mMaxTasks) {
-        this(mContext, mMode);
-        this.mMaxTasks = mMaxTasks;
-    }
-
-    public synchronized SameAsyncTask execute(Params... params) {
+    @SafeVarargs
+    public final synchronized SameAsyncTask execute(Params... params) {
         boolean goAhead = false;
         switch (mMode) {
             case MODE_CANCEL_CURRENT:
@@ -168,7 +159,7 @@ public abstract class SameAsyncTaskExecutor<Params, Progress, Result> {
 
     private boolean hasPendingTask() {
         for(SameAsyncTask sameAsyncTask : mAsyncTaskList) {
-            if(sameAsyncTask.getStatus() == AsyncTask.Status.PENDING && sameAsyncTask.mRunning == false) {
+            if(sameAsyncTask.getStatus() == AsyncTask.Status.PENDING && !sameAsyncTask.mRunning) {
                 return true;
             }
         }

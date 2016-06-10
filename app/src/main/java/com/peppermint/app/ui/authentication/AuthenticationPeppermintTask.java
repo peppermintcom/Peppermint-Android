@@ -23,11 +23,13 @@ public class AuthenticationPeppermintTask extends SenderSupportTask {
 
     public AuthenticationPeppermintTask(Context context, int accountType, String deviceId, String deviceKey, String email, String password, SenderSupportListener senderSupportListener) {
         super(null, null, senderSupportListener);
+
         mEmail = email;
         mPassword = password;
         mAccountType = accountType;
         mDeviceId = deviceId;
         mDeviceKey = deviceKey;
+
         // override to set the context
         getIdentity().setContext(context);
     }
@@ -36,33 +38,18 @@ public class AuthenticationPeppermintTask extends SenderSupportTask {
     protected void execute() throws Throwable {
         checkInternetConnection();
 
-        String fullName = getSenderPreferences().getFullName();
-
-        JWTsResponse response = getPeppermintApi().authOrRegister(getId().toString(), mEmail, mPassword, mAccountType, mDeviceId, mDeviceKey, fullName, getTrackerManager());
+        JWTsResponse response = getPeppermintApi().authOrRegister(
+                getId().toString(), mEmail, mPassword,
+                mAccountType, mDeviceId, mDeviceKey,
+                getSenderPreferences().getFullName(), getTrackerManager());
 
         mAccessToken = response.getAccessToken();
         mAccountServerId = response.getAccount().getAccountId();
         mDeviceServerId = response.getRecorder().getRecorderId();
     }
 
-    public String getDeviceId() {
-        return mDeviceId;
-    }
-
-    public String getDeviceKey() {
-        return mDeviceKey;
-    }
-
     public String getEmail() {
         return mEmail;
-    }
-
-    public String getPassword() {
-        return mPassword;
-    }
-
-    public int getAccountType() {
-        return mAccountType;
     }
 
     public String getAccessToken() {

@@ -34,8 +34,6 @@ import com.peppermint.app.utils.Utils;
  */
 public class CustomNamePreference extends CustomDialogPreference {
 
-    private static final String TAG = CustomNamePreference.class.getSimpleName();
-
     private String mFirstNameKey, mLastNameKey;
 
     private String mContent;

@@ -165,7 +165,7 @@
     <string name="about">Інформація</string>
     <string name="privacy_policy_terms_of_use">Політика конфіденційності\n&amp; Умови використання</string>
     <string name="privacy_policy_terms_of_use_singleline">Політика конфіденційності &amp; Умови використання</string>
-    <string name="version">Версія</string>
+    <string name="version">Версія %1$s</string>
 
 
     <!-- FEEDBACK SCREEN -->

@@ -13,6 +13,8 @@ import android.widget.ListAdapter;
 
 /**
  * Created by Nuno Luz on 05-01-2016.
+ *
+ * ListView without scrolls.
  */
 public class CustomNoScrollListView extends LinearLayout implements OnClickListener {
 

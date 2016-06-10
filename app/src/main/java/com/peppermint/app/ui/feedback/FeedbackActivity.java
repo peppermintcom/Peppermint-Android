@@ -79,7 +79,7 @@ public class FeedbackActivity extends CustomActionBarActivity implements View.On
         mChatRecordOverlayController = new ChatRecordOverlayController(this) {
             @Override
             protected Message sendMessage(Chat chat, Recording recording) {
-                Intent chatIntent = new Intent(FeedbackActivity.this, ChatActivity.class);
+                final Intent chatIntent = new Intent(FeedbackActivity.this, ChatActivity.class);
                 chatIntent.putExtra(ChatActivity.PARAM_CHAT_ID, chat.getId());
                 startActivity(chatIntent);
 

@@ -5,9 +5,6 @@ import android.app.KeyguardManager;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Point;
 import android.net.ConnectivityManager;
@@ -17,15 +14,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.ContactsContract;
-import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Display;
-import android.view.KeyCharacterMap;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
@@ -64,7 +57,7 @@ public class Utils {
         long mins = totalSecs / 60;
         long secs = totalSecs % 60;
 
-        return String.format("%02d:%02d", mins, secs);
+        return String.format(Locale.ROOT, "%02d:%02d", mins, secs);
     }
 
     /**
@@ -122,18 +115,6 @@ public class Utils {
     }
 
     /**
-     * Converts device specific pixels to density independent pixels.
-     *
-     * @param px      A value in px (pixels) unit. Which we need to convert into db
-     * @param context Context to get resources and device specific display metrics
-     * @return A float value to represent dp equivalent to px value
-     */
-    public static float pxToDp(final Context context, final float px) {
-        float densityDpi = context.getResources().getDisplayMetrics().densityDpi;
-        return px / (densityDpi / 160f);
-    }
-
-    /**
      * Obtains the amount of pixels that correspond to the given percentage of the screen width.
      * @param context application context
      * @param percent width percentage value
@@ -184,10 +165,6 @@ public class Utils {
         return text != null && !TextUtils.isEmpty(text);
     }
 
-    public static boolean isValidNameMaybeEmpty(final CharSequence text) {
-        return true;
-    }
-
     /**
      * Checks if internet connection is available.<br />
      * Requires the permission "android.permission.ACCESS_NETWORK_STATE".<br />
@@ -205,10 +182,10 @@ public class Utils {
     /**
      * Actually checks if there's internet connectivity by connecting to the Peppermint web server.<br />
      * Times out after 2500 ms. <strong>Must be invoked from a secondary thread.</strong>
-     * @param context the app or activity context
+     *
      * @return true if there's connectivity; false otherwise
      */
-    public static boolean isInternetActive(final Context context) {
+    public static boolean isInternetActive() {
         try {
             HttpURLConnection urlc = (HttpURLConnection) (new URL("http://peppermint.com").openConnection());
             urlc.setRequestProperty("User-Agent", "Test");
@@ -316,19 +293,6 @@ public class Utils {
         }
 
         return data;
-    }
-
-    /**
-     * Check if the device supports telephony and if a SIM card is available.
-     * @param context the context
-     * @return true if supported; false if not
-     */
-    public static boolean isSimAvailable(final Context context) {
-        if(!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            return false;
-        }
-        TelephonyManager telManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-        return telManager.getSimState() != TelephonyManager.SIM_STATE_ABSENT;
     }
 
     /**
@@ -525,49 +489,6 @@ public class Utils {
     }
 
     /**
-     * Gets the navigation bar height. Tries to find out if the device has a soft navigation bar.
-     * If not, returns 0.
-     *
-     * @param context the app context
-     * @return the height in pixels
-     */
-    public static int getNavigationBarHeight(final Context context) {
-        int result = 0;
-        boolean hasMenuKey = ViewConfiguration.get(context).hasPermanentMenuKey();
-        boolean hasBackKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_BACK);
-
-        if(!hasMenuKey && !hasBackKey) {
-            //The device has a navigation bar
-            Resources resources = context.getResources();
-
-            int orientation = resources.getConfiguration().orientation;
-            int resourceId;
-            if (isTablet(context)){
-                resourceId = resources.getIdentifier(orientation == Configuration.ORIENTATION_PORTRAIT ? "navigation_bar_height" : "navigation_bar_height_landscape", "dimen", "android");
-            }  else {
-                resourceId = resources.getIdentifier(orientation == Configuration.ORIENTATION_PORTRAIT ? "navigation_bar_height" : "navigation_bar_width", "dimen", "android");
-            }
-
-            if (resourceId > 0) {
-                return resources.getDimensionPixelSize(resourceId);
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Checks if the device is a tablet, according to layout configuration and parameters.
-     * @param context the app context
-     * @return true if it's a tablet; false otherwise
-     */
-    public static boolean isTablet(final Context context) {
-        return (context.getResources().getConfiguration().screenLayout
-                & Configuration.SCREENLAYOUT_SIZE_MASK)
-                >= Configuration.SCREENLAYOUT_SIZE_LARGE;
-    }
-
-
-    /**
      * Returns the first clickable view found at the specified XY coordinates on screen.
      * @param x the X coordinate
      * @param y the Y coordinate
@@ -729,7 +650,7 @@ public class Utils {
     }
 
     public static String getSimplifiedString(String original, final int maxCharacterCount) {
-        StringBuffer simplified = new StringBuffer();
+        final StringBuilder simplified = new StringBuilder();
         int characterCount = 0;
         int i = 0;
         String[] wordSplit = original.split("\\s+");

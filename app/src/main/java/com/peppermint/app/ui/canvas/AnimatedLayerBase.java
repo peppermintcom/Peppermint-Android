@@ -55,7 +55,7 @@ public abstract class AnimatedLayerBase extends LayerBase implements AnimatedLay
     @Override
     public void draw(View view, Canvas canvas) {
         if(mRunning) {
-            long now = android.os.SystemClock.uptimeMillis();
+            final long now = android.os.SystemClock.uptimeMillis();
             if (mStartTime <= 0) {
                 mStartTime = now;
             }
@@ -131,7 +131,7 @@ public abstract class AnimatedLayerBase extends LayerBase implements AnimatedLay
                 return false;
             }
 
-            double rest = mElapsedTime % mDuration;
+            final double rest = mElapsedTime % mDuration;
             mElapsedTime = mDuration + (rest != 0 ? rest : mDuration);
         }
 

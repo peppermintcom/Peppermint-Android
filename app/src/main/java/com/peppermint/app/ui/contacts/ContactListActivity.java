@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.recipients;
+package com.peppermint.app.ui.contacts;
 
 import android.Manifest;
 import android.app.Fragment;
@@ -43,6 +43,8 @@ import com.peppermint.app.ui.base.navigation.NavigationItemSimpleAction;
 import com.peppermint.app.ui.base.views.CustomActionBarView;
 import com.peppermint.app.ui.chat.head.ChatHeadServiceManager;
 import com.peppermint.app.ui.feedback.FeedbackActivity;
+import com.peppermint.app.ui.contacts.listall.AllContactsListFragment;
+import com.peppermint.app.ui.contacts.listrecents.RecentContactsListFragment;
 import com.peppermint.app.ui.settings.SettingsActivity;
 import com.peppermint.app.utils.Utils;
 
@@ -70,7 +72,9 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
 
     private CustomConfirmationDialog mOverlayPermissionDialog;
 
+    @SuppressWarnings("unused")
     public void onEventMainThread(SyncEvent event) {
+        // set loading horizonta bar based on synchronization process
         setLoading(event.getType() == SyncEvent.EVENT_STARTED || event.getType() == SyncEvent.EVENT_PROGRESS);
     }
 
@@ -137,14 +141,14 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
     @Override
     protected List<NavigationItem> getNavigationItems() {
         final List<NavigationItem> navItems = new ArrayList<>();
-        navItems.add(new NavigationItem(getString(R.string.drawer_menu_recent_contacts), R.drawable.ic_drawer_recent, RecentContactsListFragment.class, false, R.string.loading_contacts, new NavigationItemSimpleAction() {
+        navItems.add(new NavigationItem(getString(R.string.drawer_menu_recent_contacts), R.drawable.ic_drawer_recent, RecentContactsListFragment.class, false, new NavigationItemSimpleAction() {
             @Override
             public void onPreFragmentInit(Fragment newFragment, boolean isNewInstance) {
                 super.onPreFragmentInit(newFragment, isNewInstance);
                 mSearchListBarView.clearSearch(false);
             }
         }));
-        navItems.add(new NavigationItem(getString(R.string.drawer_menu_all_contacts), R.drawable.ic_drawer_contacts, AllContactsListFragment.class, false, R.string.loading_contacts, null));
+        navItems.add(new NavigationItem(getString(R.string.drawer_menu_all_contacts), R.drawable.ic_drawer_contacts, AllContactsListFragment.class, false, null));
         navItems.add(new NavigationItem(getString(R.string.drawer_menu_settings), R.drawable.ic_drawer_settings, new NavigationItemSimpleAction() {
             @Override
             public void onPreFragmentInit(Fragment newFragment, boolean isNewInstance) {
@@ -208,7 +212,7 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
             @Override
             public void onClick(View v) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(ContactListActivity.this)) {
-                    Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    final Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                             Uri.parse("package:" + getPackageName()));
                     startActivityForResult(intent, OVERLAY_PERMISSION_REQUEST_CODE);
                 } else {
@@ -231,7 +235,6 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
         final CustomActionBarView customActionBarView = getCustomActionBar();
 
         mSearchListBarView = (SearchListBarView) LayoutInflater.from(this).inflate(R.layout.f_recipients_actionbar, null, false);
-
         customActionBarView.setContents(mSearchListBarView, false);
 
         // search tip popup
@@ -250,7 +253,7 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
                 mPreferences.setFirstRun(false);
 
                 if (mSearchTipPopup != null) {
-                    EditText searchEditText = mSearchListBarView.getSearchEditText();
+                    final EditText searchEditText = mSearchListBarView.getSearchEditText();
                     if (searchEditText != null) {
                         Rect mSearchRect = new Rect();
                         searchEditText.getGlobalVisibleRect(mSearchRect);
@@ -326,7 +329,7 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
 
     private boolean handleIntent(Intent paramIntent) {
         final AuthenticationData authenticationData = getAuthenticationData(getIntentReplica());
-        Bundle paramBundle = paramIntent != null ? Utils.getParamsFromUri(paramIntent.getData()) : null;
+        final Bundle paramBundle = paramIntent != null ? Utils.getParamsFromUri(paramIntent.getData()) : null;
 
         if(paramBundle != null && (paramBundle.containsKey(FAST_REPLY_NAME_PARAM) || paramBundle.containsKey(FAST_REPLY_MAIL_PARAM))) {
             String name = paramBundle.getString(FAST_REPLY_NAME_PARAM);
@@ -406,7 +409,7 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
 
         // remove focus on search view
         mSearchListBarView.removeSearchTextFocus(null);
-        View v = getContainerView();
+        final View v = getContainerView();
         if(v != null) {
             v.requestFocus();
         }
@@ -471,7 +474,7 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
     public void onOverlayHidden(Overlay overlay, boolean wasCancelled) {
         if(mSearchListBarView != null) {
             mSearchListBarView.clearFocus();
-            ViewGroup v = getContainerView();
+            final ViewGroup v = getContainerView();
             if(v != null) {
                 v.requestFocus();
             }
@@ -479,7 +482,7 @@ public class ContactListActivity extends CustomActionBarDrawerActivity implement
     }
 
     private void refreshContactList() {
-        ContactListFragment fragment = (ContactListFragment) getCurrentFragment();
+        final ContactListFragment fragment = (ContactListFragment) getCurrentFragment();
         boolean refresh = fragment != null;
 
         if(fragment == null) {

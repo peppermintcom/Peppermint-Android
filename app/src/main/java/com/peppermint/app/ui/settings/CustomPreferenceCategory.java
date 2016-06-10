@@ -13,6 +13,8 @@ import com.peppermint.app.utils.ResourceUtils;
 
 /**
  * Created by Nuno Luz on 27-10-2015.
+ *
+ * Custom styled {@link PreferenceCategory} with {@link com.peppermint.app.ui.base.views.CustomFontTextView}s.
  */
 public class CustomPreferenceCategory extends PreferenceCategory {
 

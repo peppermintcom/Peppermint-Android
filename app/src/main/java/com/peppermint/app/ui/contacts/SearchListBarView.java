@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.recipients;
+package com.peppermint.app.ui.contacts;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * Created by Nuno Luz on 17-09-2015.
  *
- * Search bar (edittext) view by item type (spinner).
+ * Search bar (EditText) view for contacts and chats.
  */
 public class SearchListBarView extends FrameLayout {
 
@@ -83,7 +83,7 @@ public class SearchListBarView extends FrameLayout {
                 innerTriggerSearch(getSearchText() == null && _previousText != null);
             } else {
                 if(_startVia >= 0) {
-                    int keepVia = _startVia;
+                    final int keepVia = _startVia;
                     s.append(">");
                     mTxtSearch.setSelection(keepVia + 1);
                 }
@@ -145,7 +145,7 @@ public class SearchListBarView extends FrameLayout {
         });
 
         if(attrs != null) {
-            TypedArray a = getContext().getTheme().obtainStyledAttributes(
+            final TypedArray a = getContext().getTheme().obtainStyledAttributes(
                     attrs,
                     R.styleable.SearchListBarView,
                     0, 0);
@@ -186,7 +186,7 @@ public class SearchListBarView extends FrameLayout {
     }
 
     private void innerTriggerSearch(boolean wasClear) {
-        String searchText = getSearchText();
+        final String searchText = getSearchText();
         if(searchText == null) {
             mBtnClear.setVisibility(GONE);
         } else {
@@ -194,13 +194,13 @@ public class SearchListBarView extends FrameLayout {
         }
 
         // avoid recursive listener invocations
-        List<OnSearchListener> tmpList = new ArrayList<>(mOnSearchListeners);
-        List<Integer> tmpPriorities = new ArrayList<>(mOnSearchListenerPriorities);
+        final List<OnSearchListener> tmpList = new ArrayList<>(mOnSearchListeners);
+        final List<Integer> tmpPriorities = new ArrayList<>(mOnSearchListenerPriorities);
 
         mOnSearchListeners.clear();
         mOnSearchListenerPriorities.clear();
 
-        Iterator<OnSearchListener> it = tmpList.iterator();
+        final Iterator<OnSearchListener> it = tmpList.iterator();
         boolean stopPropagation = false;
         while(it.hasNext() && !stopPropagation) {
             stopPropagation = it.next().onSearch(searchText, wasClear);
@@ -233,7 +233,7 @@ public class SearchListBarView extends FrameLayout {
      * @param priority the priority value
      */
     public void addOnSearchListener(OnSearchListener mOnSearchListener, int priority) {
-        int onSearchListenerAmount = mOnSearchListeners.size();
+        final int onSearchListenerAmount = mOnSearchListeners.size();
         int newIndex = -1;
         for(int i=0; i<onSearchListenerAmount && newIndex < 0; i++) {
             if(mOnSearchListenerPriorities.get(i) < priority) {
@@ -250,7 +250,7 @@ public class SearchListBarView extends FrameLayout {
     }
 
     public boolean removeOnSearchListener(OnSearchListener mOnSearchListener) {
-        int index = this.mOnSearchListeners.indexOf(mOnSearchListener);
+        final int index = this.mOnSearchListeners.indexOf(mOnSearchListener);
         if(index < 0) {
             return false;
         }
@@ -282,7 +282,7 @@ public class SearchListBarView extends FrameLayout {
 
     @Override
     public Parcelable onSaveInstanceState() {
-        Bundle bundle = new Bundle();
+        final Bundle bundle = new Bundle();
         bundle.putCharSequence(STATE_PARAM_SEARCH_TEXT, mTxtSearch.getText());
         bundle.putParcelable(STATE_PARAM_SUPER, super.onSaveInstanceState());
         return bundle;
@@ -290,10 +290,10 @@ public class SearchListBarView extends FrameLayout {
 
     @Override
     public void onRestoreInstanceState(Parcelable state) {
-        Bundle bundle = (Bundle) state;
+        final Bundle bundle = (Bundle) state;
         super.onRestoreInstanceState(bundle.getParcelable(STATE_PARAM_SUPER));
-        CharSequence searchCharSequence = bundle.getCharSequence(STATE_PARAM_SEARCH_TEXT);
-        String searchText = searchCharSequence == null || searchCharSequence.length() <= 0 ? null : searchCharSequence.toString();
+        final CharSequence searchCharSequence = bundle.getCharSequence(STATE_PARAM_SEARCH_TEXT);
+        final String searchText = searchCharSequence == null || searchCharSequence.length() <= 0 ? null : searchCharSequence.toString();
         if(!(searchText == null && getSearchText() == null) &&
                 !(searchText != null && getSearchText() != null && searchText.compareTo(getSearchText()) == 0)) {
             // do not trigger the listener while restoring instance state

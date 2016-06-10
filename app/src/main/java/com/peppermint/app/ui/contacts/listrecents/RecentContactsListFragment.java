@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.recipients;
+package com.peppermint.app.ui.contacts.listrecents;
 
 import android.content.Context;
 import android.content.Intent;
@@ -10,8 +10,11 @@ import android.widget.AdapterView;
 import com.peppermint.app.dal.DatabaseHelper;
 import com.peppermint.app.dal.chat.ChatManager;
 import com.peppermint.app.ui.chat.ChatActivity;
-import com.peppermint.app.ui.chat.ChatCursorAdapter;
+import com.peppermint.app.ui.contacts.ContactListFragment;
 
+/**
+ * Shows the list of all chats/recent contacts.
+ */
 public class RecentContactsListFragment extends ContactListFragment {
 
     private static final String SCREEN_ID = "RecentContacts";
@@ -61,6 +64,11 @@ public class RecentContactsListFragment extends ContactListFragment {
         mAdapter = null;
 
         super.onDestroy();
+    }
+
+    @Override
+    protected void onAsyncRefreshStarted(Context context) {
+        /* nothing to do here */
     }
 
     @Override

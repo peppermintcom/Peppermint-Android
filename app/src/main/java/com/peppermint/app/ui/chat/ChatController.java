@@ -40,7 +40,8 @@ import fr.castorflex.android.smoothprogressbar.SmoothProgressBar;
 /**
  * Created by Nuno Luz on 04-03-2016.
  *
- * Controls a conversation screen.
+ * Controls a chat/conversation/list of messages. Detaching the controller code from the
+ * Activity/Fragment allows it to be used in chat heads (from a Service).
  */
 public class ChatController extends ChatRecordOverlayController implements View.OnLongClickListener {
 
@@ -93,19 +94,16 @@ public class ChatController extends ChatRecordOverlayController implements View.
         }
     }
 
-    private RefreshMessageCursorLoader mRefreshMessageCursorLoader;
-
-    // GENERIC
     private DatabaseHelper mDatabaseHelper;
     private SmoothProgressBar mProgressBar;
+    private RefreshMessageCursorLoader mRefreshMessageCursorLoader;
 
-    // UI
+    // ui
     private RecipientDataGUI mRecipientDataGUI;
     private ListView mListView;
 
-    // DATA
+    // data
     private Chat mChat;
-
     private ChatMessageCursorAdapter mAdapter;
 
     // error dialog
@@ -123,7 +121,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
     public void init(View rootView, OverlayManager overlayManager, TouchInterceptable touchInterceptable, Bundle savedInstanceState) {
         super.init(rootView, overlayManager, touchInterceptable, savedInstanceState);
 
-        List<NavigationItem> errorOptions = new ArrayList<>();
+        final List<NavigationItem> errorOptions = new ArrayList<>();
         errorOptions.add(new NavigationItem(getContext().getString(R.string.retry), R.drawable.ic_drawer_refresh, null, true));
         errorOptions.add(new NavigationItem(getContext().getString(R.string.delete), R.drawable.ic_drawer_delete, null, true));
 
@@ -142,23 +140,22 @@ public class ChatController extends ChatRecordOverlayController implements View.
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 dismissErrorDialog();
 
-                Message message = new Message();
+                final Message message = new Message();
                 message.setId(mMessageIdWithError);
 
                 switch (position) {
-                    case 0:
-                        // retry
+                    case 0: // retry
                         getMessagesServiceManager().retry(message);
                         break;
-                    case 1:
-                        // delete
+                    case 1: // delete
                         getMessagesServiceManager().cancel(message);
                         refreshList();
                         break;
                 }
             }
         });
-        NavigationListAdapter errorAdapter = new NavigationListAdapter(getContext(), errorOptions);
+
+        final NavigationListAdapter errorAdapter = new NavigationListAdapter(getContext(), errorOptions);
         mErrorDialog.setListAdapter(errorAdapter);
 
         mProgressBar = (SmoothProgressBar) rootView.getRootView().findViewById(R.id.smoothProgress);
@@ -169,7 +166,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
         recordLayout.setOnLongClickListener(this);
 
         if(savedInstanceState != null) {
-            Bundle dialogState = savedInstanceState.getBundle(STATE_DIALOG);
+            final Bundle dialogState = savedInstanceState.getBundle(STATE_DIALOG);
             if (dialogState != null) {
                 mErrorDialog.onRestoreInstanceState(dialogState);
             }
@@ -179,12 +176,11 @@ public class ChatController extends ChatRecordOverlayController implements View.
 
     @Override
     public void saveInstanceState(Bundle outState) {
-        Bundle dialogState = mErrorDialog.onSaveInstanceState();
+        final Bundle dialogState = mErrorDialog.onSaveInstanceState();
         if (dialogState != null) {
             outState.putBundle(STATE_DIALOG, dialogState);
         }
         outState.putLong(STATE_MESSAGE_ID_WITH_ERROR, mMessageIdWithError);
-        /*mSavedInstanceState = true;*/
     }
 
     @Override
@@ -223,7 +219,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
         if(mProgressBar == null) {
             return;
         }
-        boolean currentlyLoading = mProgressBar.getVisibility() == View.VISIBLE;
+        final boolean currentlyLoading = mProgressBar.getVisibility() == View.VISIBLE;
         if(loading != currentlyLoading) {
             if(loading) {
                 mProgressBar.progressiveStart();
@@ -299,7 +295,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
             return;
         }
 
-        // add to UI
+        // add to ui
         if(event.getSenderTask().getMessage().getChatId() == mChat.getId()) {
             refreshList();
         }
@@ -352,7 +348,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
         if(mChat == null) {
             return;
         }
-        Recipient recipient = mChat.getRecipientList().get(0);
+        final Recipient recipient = mChat.getRecipientList().get(0);
         if(recipient != null && mRecipientDataGUI != null) {
             mRecipientDataGUI.setRecipientData(recipient.getDisplayName(),
                     recipient.getVia(),

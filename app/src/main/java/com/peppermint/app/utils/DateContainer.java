@@ -9,6 +9,7 @@ import com.peppermint.app.R;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 import java.util.TimeZone;
 
 /**
@@ -30,9 +31,9 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
     public static final String FRIENDLY_MONTH_DATE_FORMAT = "d MMM";
     public static final String FRIENDLY_WEEK_DATE_FORMAT = "EEEE";
 
-	private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat(DATE_FORMAT);
-	private static final SimpleDateFormat TIME_FORMATTER = new SimpleDateFormat(TIME_FORMAT);
-	private static final SimpleDateFormat DATE_TIME_FORMATTER = new SimpleDateFormat(DATETIME_FORMAT);
+	private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat(DATE_FORMAT, Locale.ROOT);
+	private static final SimpleDateFormat TIME_FORMATTER = new SimpleDateFormat(TIME_FORMAT, Locale.ROOT);
+	private static final SimpleDateFormat DATE_TIME_FORMATTER = new SimpleDateFormat(DATETIME_FORMAT, Locale.ROOT);
 
     public static final int TYPE_DATE = 1;
     public static final int TYPE_TIME = 2;
@@ -104,7 +105,7 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
         if(customPattern == null) {
             return getAsString(timeZone);
         }
-        SimpleDateFormat formatter = new SimpleDateFormat(customPattern);
+        SimpleDateFormat formatter = new SimpleDateFormat(customPattern, Locale.ROOT);
         formatter.setTimeZone(timeZone);
         return formatter.format(mInputCalendar.getTime());
 	}
@@ -131,10 +132,6 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
         return mInputCalendar;
     }
 
-    public void setCalendar(Calendar mCalendar) {
-        this.mInputCalendar = mCalendar;
-    }
-
     public int getType() {
         return mType;
     }
@@ -143,11 +140,13 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
         this.mType = mType;
     }
 
+    @SuppressWarnings("CloneDoesntCallSuperClone")
     @Override
     protected Object clone() throws CloneNotSupportedException {
         return new DateContainer(this);
     }
 
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object o) {
         return equals(o, UTC);
@@ -196,8 +195,8 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
      */
     public long getMillisOfDay() {
         return mInputCalendar.get(Calendar.MILLISECOND) + (((long) mInputCalendar.get(Calendar.SECOND)
-                + ((long) mInputCalendar.get(Calendar.MINUTE) * 60l)
-                + ((long) mInputCalendar.get(Calendar.HOUR_OF_DAY) * 3600l)) * 1000l);
+                + ((long) mInputCalendar.get(Calendar.MINUTE) * 60L)
+                + ((long) mInputCalendar.get(Calendar.HOUR_OF_DAY) * 3600L)) * 1000L);
 	}
 
     /**
@@ -253,7 +252,7 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
         Calendar refDate = (Calendar) date.getCalendar().clone();
         refDate.setTimeZone(timeZone);
 
-        SimpleDateFormat friendlyFullDateFormat = new SimpleDateFormat(FRIENDLY_FULL_DATE_FORMAT);
+        SimpleDateFormat friendlyFullDateFormat = new SimpleDateFormat(FRIENDLY_FULL_DATE_FORMAT, Locale.ROOT);
         friendlyFullDateFormat.setTimeZone(timeZone);
         String label = friendlyFullDateFormat.format(refDate.getTime());
 
@@ -272,7 +271,7 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
                 if(refDate.compareTo(tmpDate) < 0) {*/
                     refDate.add(Calendar.HOUR_OF_DAY, 24);
                     if(refDate.get(Calendar.YEAR) == tmpDate.get(Calendar.YEAR)) {
-                        SimpleDateFormat friendlyMonthDateFormat = new SimpleDateFormat(FRIENDLY_MONTH_DATE_FORMAT);
+                        SimpleDateFormat friendlyMonthDateFormat = new SimpleDateFormat(FRIENDLY_MONTH_DATE_FORMAT, Locale.ROOT);
                         friendlyMonthDateFormat.setTimeZone(timeZone);
                         label = friendlyMonthDateFormat.format(refDate.getTime());
                     }

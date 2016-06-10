@@ -14,6 +14,7 @@ import java.util.WeakHashMap;
 
 /**
  * Created by Nuno Luz on 25-05-2016.
+ *
  * {@link CheckedTextView} with the custom textFont attribute.
  */
 public class CustomFontCheckedTextView extends CheckedTextView {

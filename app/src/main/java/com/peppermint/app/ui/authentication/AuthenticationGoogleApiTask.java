@@ -40,7 +40,7 @@ public class AuthenticationGoogleApiTask extends SenderSupportTask {
         } catch (GoogleApiNoAuthorizationException e) {
             // retry since it might take a while for the permissions to take effect
             try {
-                Thread.sleep(1000l);
+                Thread.sleep(1000L);
             } catch(Exception e1) {
                 /* nothing to do here; eat up the exception */
             }
