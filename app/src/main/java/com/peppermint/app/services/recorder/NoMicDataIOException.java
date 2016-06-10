@@ -9,16 +9,4 @@ import java.io.IOException;
 public class NoMicDataIOException extends IOException {
     public NoMicDataIOException() {
     }
-
-    public NoMicDataIOException(String detailMessage) {
-        super(detailMessage);
-    }
-
-    public NoMicDataIOException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public NoMicDataIOException(Throwable cause) {
-        super(cause);
-    }
 }

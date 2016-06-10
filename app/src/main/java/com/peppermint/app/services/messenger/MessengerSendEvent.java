@@ -1,12 +1,11 @@
 package com.peppermint.app.services.messenger;
 
-import com.peppermint.app.services.messenger.handlers.SenderManager;
 import com.peppermint.app.services.messenger.handlers.SenderTask;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
  *
- * Represents an event dispatched by the {@link SenderManager} and triggered by the Sender API.
+ * Represents an event dispatched by the {@link MessengerService} and triggered by the Sender API.
  */
 public class MessengerSendEvent {
 
@@ -49,20 +48,9 @@ public class MessengerSendEvent {
     private int mType;
     private Throwable mError;
 
-    public MessengerSendEvent(SenderTask task, int type) {
-        this.mTask = task;
-        this.mType = type;
-    }
-
     public MessengerSendEvent(SenderTask task, int type, Throwable error) {
         this.mTask = task;
         this.mType = type;
-        this.mError = error;
-    }
-
-    public MessengerSendEvent(SenderTask task, Throwable error) {
-        this.mTask = task;
-        this.mType = EVENT_ERROR;
         this.mError = error;
     }
 

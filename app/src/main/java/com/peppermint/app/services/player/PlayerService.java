@@ -15,7 +15,6 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.peppermint.app.BuildConfig;
-import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.dal.message.Message;
 import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.utils.Utils;
@@ -43,6 +42,7 @@ public class PlayerService extends Service {
     static {
         if(BuildConfig.DEBUG) {
             EVENT_BUS.register(new Object() {
+                @SuppressWarnings("unused")
                 public void onEventBackgroundThread(PlayerEvent event) {
                     Log.d(TAG, event.toString());
                 }
@@ -52,10 +52,6 @@ public class PlayerService extends Service {
 
     public static void registerEventListener(Object listener) {
         EVENT_BUS.register(listener);
-    }
-
-    public static void registerEventListener(Object listener, int priority) {
-        EVENT_BUS.register(listener, priority);
     }
 
     public static void unregisterEventListener(Object listener) {
@@ -111,13 +107,6 @@ public class PlayerService extends Service {
          */
         boolean setPosition(Message message, int percent) {
             return PlayerService.this.setPosition(message, percent);
-        }
-
-        /**
-         * Stop and release player + shutdown the service.
-         */
-        void shutdown() {
-            stopSelf();
         }
 
         boolean isPlaying() {
@@ -409,7 +398,6 @@ public class PlayerService extends Service {
         if(message != null && mMessage != null && !message.equals(mMessage)) {
             return false;
         }
-
         return mMediaPlayer != null && mMediaPlayer.isPlaying();
     }
 
@@ -417,7 +405,6 @@ public class PlayerService extends Service {
         if(message != null && mMessage != null && !message.equals(mMessage)) {
             return false;
         }
-
         return mMediaPlayer != null && mLoading;
     }
 }

@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 
 /**
  * Created by Nuno Luz on 14-09-2015.
@@ -36,8 +37,8 @@ import java.util.Calendar;
 public class ExtendedAudioRecorder {
 
     public interface Listener {
-        void onStart(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp);
         void onAudioRecordFound(String filePath, int sampleRate);
+        void onStart(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp);
         void onPause(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp);
         void onResume(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp);
         void onStop(String filePath, long durationInMillis, float sizeKbs, int amplitude, String startTimestamp);
@@ -46,7 +47,7 @@ public class ExtendedAudioRecorder {
     }
 
     private static final String TAG = ExtendedAudioRecorder.class.getSimpleName();
-    private static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd'_'HH-mm-ss");
+    private static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd'_'HH-mm-ss", Locale.ROOT);
 
     private static final int SAMPLE_SIZE = 1024;
     private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO;
@@ -348,8 +349,7 @@ public class ExtendedAudioRecorder {
 
         // bo code to ignore the first 350ms to avoid noises and button sounds
         final int ignoreTimeMs = 350;
-        final int ignoreShortAmount = (int) ((float) sampleRate * ((float) ignoreTimeMs / 1000f));
-        int ignoredShortsLeft = ignoreShortAmount;
+        int ignoredShortsLeft = (int) ((float) sampleRate * ((float) ignoreTimeMs / 1000f));
         int emptyIts = 0;
         while(ignoredShortsLeft > 0 && emptyIts < MAX_EMPTY_ITERATIONS) {
             ignoredShortsLeft = ignoredShortsLeft - recorder.read(sData, 0, ignoredShortsLeft > SAMPLE_SIZE ? SAMPLE_SIZE : ignoredShortsLeft);
@@ -463,14 +463,6 @@ public class ExtendedAudioRecorder {
 
     public boolean isRecording() {
         return mRecording;
-    }
-
-    public String getFilePrefix() {
-        return mFilePrefix;
-    }
-
-    public void setFilePrefix(String mFilePrefix) {
-        this.mFilePrefix = mFilePrefix;
     }
 
     public long getFullDuration() {

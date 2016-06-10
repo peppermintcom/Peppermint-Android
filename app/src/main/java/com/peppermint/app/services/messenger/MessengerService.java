@@ -55,7 +55,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -89,6 +88,7 @@ public class MessengerService extends Service {
     static {
         if(BuildConfig.DEBUG) {
             EVENT_BUS.register(new Object() {
+                @SuppressWarnings("unused")
                 public void onEventBackgroundThread(MessengerSendEvent event) {
                     Log.d(TAG, event.toString());
                 }
@@ -140,7 +140,7 @@ public class MessengerService extends Service {
             try {
                 GlobalManager.getInstance(MessengerService.this).deleteMessageAndRecording(uploadTask.getMessage());
             } catch (SQLException e) {
-                mTrackerManager.logException(e);
+                TrackerManager.getInstance(MessengerService.this).logException(e);
             }
             postSendEvent(MessengerSendEvent.EVENT_CANCELLED, uploadTask, null);
         }
@@ -215,14 +215,13 @@ public class MessengerService extends Service {
         }
     }
 
-    private TrackerManager mTrackerManager;
     private SenderPreferences mPreferences;
     private SenderManager mSenderManager;
     private AuthenticatorUtils mAuthenticatorUtils;
 
     private Message handleReceivedMessage(String emailAddress, String serverId, String audioUrl, String transcription, String receiverEmail, String senderEmail, String senderName, String createdTs, int durationSeconds) {
         if(audioUrl == null || senderEmail == null || receiverEmail == null) {
-            mTrackerManager.log("Invalid GCM notification received! Either or both audio URL and sender email are null.");
+            TrackerManager.getInstance(this).log("Invalid GCM notification received! Either or both audio URL and sender email are null.");
             return null;
         }
 
@@ -231,7 +230,7 @@ public class MessengerService extends Service {
         }
 
         if(emailAddress.compareToIgnoreCase(receiverEmail.trim()) != 0) {
-            mTrackerManager.log("Received wrong message from GCM! Should have gone to email " + receiverEmail);
+            TrackerManager.getInstance(this).log("Received wrong message from GCM! Should have gone to email " + receiverEmail);
             return null;
         }
 
@@ -239,10 +238,10 @@ public class MessengerService extends Service {
         try {
             message = GlobalManager.getInstance(this).insertReceivedMessage(receiverEmail, senderName, senderEmail, audioUrl, serverId, transcription, createdTs, durationSeconds, null, false);
         } catch (ContactManager.InvalidViaException | ContactManager.InvalidNameException e) {
-            mTrackerManager.log(senderName + " - " + senderEmail);
-            mTrackerManager.logException(e);
+            TrackerManager.getInstance(this).log(senderName + " - " + senderEmail);
+            TrackerManager.getInstance(this).logException(e);
         } catch (SQLException e) {
-            mTrackerManager.logException(e);
+            TrackerManager.getInstance(this).logException(e);
         }
 
         return message;
@@ -291,7 +290,7 @@ public class MessengerService extends Service {
                 }
             } catch(Throwable e) {
                 Log.e(TAG, "Error on maintenance thread!", e);
-                mTrackerManager.logException(e);
+                TrackerManager.getInstance(MessengerService.this).logException(e);
             }
 
         }
@@ -315,10 +314,8 @@ public class MessengerService extends Service {
             mAuthenticatorUtils.refreshAccount();
             gcmToken = mAuthenticatorUtils.getAccountData().getGcmRegistration();
         } catch (PeppermintApiNoAccountException e) {
-            mTrackerManager.log("No account when getting GCM registration token...", e);
+            TrackerManager.getInstance(this).log("No account when getting GCM registration token...", e);
         }
-
-        mTrackerManager.log("GCM Reg. = " + gcmToken);
 
         if (gcmToken == null) {
             Intent gcmIntent = new Intent(this, RegistrationIntentService.class);
@@ -353,7 +350,6 @@ public class MessengerService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        mTrackerManager = TrackerManager.getInstance(getApplicationContext());
         mAuthenticatorUtils = new AuthenticatorUtils(this);
 
         MessageManager.getInstance(this).registerDataListener(mNotificationEventReceiver, Integer.MIN_VALUE);
@@ -397,7 +393,7 @@ public class MessengerService extends Service {
                 try {
                     emailAddress = mAuthenticatorUtils.getAccountData().getEmail();
                 } catch (PeppermintApiNoAccountException e) {
-                    mTrackerManager.log("No account when receiving message...", e);
+                    TrackerManager.getInstance(this).log("No account when receiving message...", e);
                 }
 
                 Message message = handleReceivedMessage(emailAddress, messageId, audioUrl, transcription, receiverEmail, senderEmail, senderName, createdTs, durationSeconds);
@@ -457,11 +453,6 @@ public class MessengerService extends Service {
         ShortcutBadger.applyCount(this, badgeCount);
     }
 
-    private void removeAllNotifications() {
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.cancelAll();
-    }
-
     private boolean retry(Message message) {
         if(isSending(message)) {
             return false;
@@ -480,7 +471,7 @@ public class MessengerService extends Service {
         try {
             message = GlobalManager.getInstance(this).insertNotSentMessage(chat, recording);
         } catch (SQLException e) {
-            mTrackerManager.logException(e);
+            TrackerManager.getInstance(this).logException(e);
         }
 
         if(message != null) {
@@ -496,7 +487,7 @@ public class MessengerService extends Service {
                 try {
                     GlobalManager.getInstance(this).deleteMessageAndRecording(message);
                 } catch (SQLException e) {
-                    mTrackerManager.logException(e);
+                    TrackerManager.getInstance(this).logException(e);
                 }
             }
             return mSenderManager.cancel(message);
@@ -512,10 +503,7 @@ public class MessengerService extends Service {
     }
 
     private boolean isSendingAndCancellable(final Message message) {
-        if(message != null) {
-            return mSenderManager.isSendingAndCancellable(message);
-        }
-        return false;
+        return message != null && mSenderManager.isSendingAndCancellable(message);
     }
 
     // UPDATE NOTIFICATION
@@ -539,7 +527,7 @@ public class MessengerService extends Service {
                 builder.setLargeIcon(MediaStore.Images.Media.getBitmap(getContentResolver(),
                         Uri.parse(message.getChatParameter().getRecipientList().get(0).getPhotoUri())));
             } catch (IOException e) {
-                mTrackerManager.log("Unable to use photo URI as notification large icon!", e);
+                TrackerManager.getInstance(this).log("Unable to use photo URI as notification large icon!", e);
             }
         }
 
@@ -609,6 +597,7 @@ public class MessengerService extends Service {
             getPeppermintApi().markAsPlayedMessage(getId().toString(), message.getServerId());
         }
 
+        @SuppressWarnings("UnusedParameters")
         public void onEventMainThread(SignOutEvent event) {
             cancel(true);
         }

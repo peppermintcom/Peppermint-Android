@@ -1,13 +1,11 @@
 package com.peppermint.app.services.sync;
 
-import com.peppermint.app.services.messenger.MessengerService;
-
 import java.util.Set;
 
 /**
  * Created by Nuno Luz on 01-10-2015.
  *
- * Represents an event dispatched by the {@link MessengerService} related to message synchronization with server.
+ * Represents an event dispatched by the {@link SyncService}.
  */
 public class SyncEvent {
 
@@ -22,10 +20,6 @@ public class SyncEvent {
     private Set<Long> mReceivedMessageIds;
     private Set<Long> mSentMessageIds;
     private Set<Long> mAffectedChatIds;
-
-    public SyncEvent() {
-        mType = EVENT_STARTED;
-    }
 
     public SyncEvent(int mType, Set<Long> mReceivedMessageIds, Set<Long> mSentMessageIds, Set<Long> mAffectedChatIds, Throwable mError) {
         this.mType = mType;

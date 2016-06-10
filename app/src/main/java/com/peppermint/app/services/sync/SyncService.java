@@ -14,6 +14,9 @@ import de.greenrobot.event.EventBus;
 
 /**
  * Created by Nuno Luz on 07-06-2016.
+ *
+ * Service that controls data synchronization.
+ *
  */
 public class SyncService extends Service {
 
@@ -24,6 +27,7 @@ public class SyncService extends Service {
     static {
         if(BuildConfig.DEBUG) {
             EVENT_BUS.register(new Object() {
+                @SuppressWarnings("unused")
                 public void onEventBackgroundThread(SyncEvent event) {
                     Log.d(TAG, event.toString());
                 }

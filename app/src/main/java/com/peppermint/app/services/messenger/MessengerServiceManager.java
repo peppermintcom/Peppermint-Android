@@ -16,8 +16,8 @@ import java.util.List;
 /**
  * Created by Nuno Luz on 28/08/2015.
  *
- * Manages the Android Service that sends messages through different methods.
- * It allows an easier interaction with the Android Service API.
+ * Manages the Android Service that sends/receives messages through different methods.
+ *
  */
 public class MessengerServiceManager {
 
@@ -31,7 +31,7 @@ public class MessengerServiceManager {
     private Context mContext;
     private MessengerService.SendRecordServiceBinder mService;
     private List<ServiceListener> mServiceListenerList = new ArrayList<>();
-    protected boolean mIsBound = false;                                         // if the manager is bound to the service
+    protected boolean mIsBound = false;     // if the manager is bound to the service
     protected boolean mIsBinding = false;
 
     /**

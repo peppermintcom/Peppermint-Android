@@ -22,7 +22,6 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.peppermint.app.BuildConfig;
-import com.peppermint.app.PeppermintApp;
 
 import de.greenrobot.event.EventBus;
 
@@ -42,9 +41,11 @@ public class AuthenticationService extends Service {
     static {
         if(BuildConfig.DEBUG) {
             EVENT_BUS.register(new Object() {
+                @SuppressWarnings("unused")
                 public void onEventBackgroundThread(SignInEvent event) {
                     Log.d(TAG, event.toString());
                 }
+                @SuppressWarnings("unused")
                 public void onEventBackgroundThread(SignOutEvent event) {
                     Log.d(TAG, event.toString());
                 }
@@ -54,10 +55,6 @@ public class AuthenticationService extends Service {
 
     public static void registerEventListener(Object listener) {
         EVENT_BUS.register(listener);
-    }
-
-    public static void registerEventListener(Object listener, int priority) {
-        EVENT_BUS.register(listener, priority);
     }
 
     public static void unregisterEventListener(Object listener) {
@@ -84,11 +81,8 @@ public class AuthenticationService extends Service {
     }
 
     @Override
-    public void onDestroy() {
-    }
-
-    @Override
     public IBinder onBind(Intent intent) {
         return mAuthenticator.getIBinder();
     }
+
 }

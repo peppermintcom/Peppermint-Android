@@ -19,7 +19,8 @@ public class AuthenticationData implements Serializable {
     public AuthenticationData() {
     }
 
-    public AuthenticationData(String mAccountServerId, String mEmail, String mPassword, String mDeviceServerId, String mDeviceId, String mDeviceKey, int mAccountType, String mGcmRegistration) {
+    public AuthenticationData(String mAccountServerId, String mEmail, String mPassword, String mDeviceServerId,
+                              String mDeviceId, String mDeviceKey, int mAccountType, String mGcmRegistration) {
         this.mAccountServerId = mAccountServerId;
         this.mEmail = mEmail;
         this.mPassword = mPassword;

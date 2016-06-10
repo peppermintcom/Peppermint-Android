@@ -13,7 +13,7 @@ import com.peppermint.app.dal.recording.Recording;
  * Created by Nuno Luz on 28/08/2015.
  *
  * Manages the Android Service that records audio/video files.
- * It allows an easier interaction with the Android Service API.
+ *
  */
 public class RecordServiceManager {
 
@@ -27,12 +27,10 @@ public class RecordServiceManager {
         void onBoundRecording(Recording recording, Chat currentChat, float currentLoudness);
     }
 
-    private static final String TAG = RecordServiceManager.class.getSimpleName();
-
     private Context mContext;
     private RecordService.RecordServiceBinder mService;
     private RecordServiceListener mListener;
-    protected boolean mIsBound = false;                                         // if the manager is bound to the service
+    protected boolean mIsBound = false;     // if the manager is bound to the service
     protected boolean mIsBinding = false;
 
     /**
@@ -75,16 +73,6 @@ public class RecordServiceManager {
     }
 
     /**
-     * Tries to stop the service.
-     * <b>Also unbinds this manager from the service.</b>
-     * The service will only stop after stopping the current recording.
-     */
-    public void shouldStop() {
-        unbind();
-        mService.shutdown();
-    }
-
-    /**
      * Binds this manager to the service.
      */
     public void bind() {
@@ -122,34 +110,12 @@ public class RecordServiceManager {
     }
 
     /**
-     * Pause the current recording.
-     */
-    public void pauseRecording() {
-        mService.pause();
-    }
-
-    /**
-     * Resume the current recording.
-     */
-    public void resumeRecording() {
-        mService.resume();
-    }
-
-    /**
      * Checks if the service is recording. Notice that the recording process can be paused.
      * It is still considered as an ongoing recording.
      * @return true if recording; false if not
      */
     public boolean isRecording() {
         return mService.isRecording();
-    }
-
-    /**
-     * Checks if the service is recording and paused.
-     * @return true if recording and paused; false if not
-     */
-    public boolean isPaused() {
-        return mService.isPaused();
     }
 
     public RecordServiceListener getListener() {
@@ -160,15 +126,4 @@ public class RecordServiceManager {
         this.mListener = mRecordServiceListener;
     }
 
-    public boolean isBound() {
-        return mIsBound;
-    }
-
-    public Chat getCurrentChat() {
-        return mService.getCurrentChat();
-    }
-
-    public Recording getCurrentRecording() {
-        return mService.getCurrentRecording();
-    }
 }

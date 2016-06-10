@@ -15,7 +15,7 @@ import java.util.List;
  * Created by Nuno Luz on 28/08/2015.
  *
  * Manages the Android Service that plays {@link Message}s.
- * It allows an easier interaction with the Android Service API.
+ *
  */
 public class PlayerServiceManager {
 
@@ -31,12 +31,6 @@ public class PlayerServiceManager {
     private List<PlayServiceListener> mServiceListenerList = new ArrayList<>();
     protected boolean mIsBound = false;
     protected boolean mIsBinding = false;
-
-    /*public void onEventMainThread(PlayerEvent event) {
-        for(PlayerListener listener : mPlayerListenerList) {
-            listener.onPlayerEvent(event);
-        }
-    }*/
 
     /**
      * Event listener associated with the service bind/unbind.
@@ -65,49 +59,9 @@ public class PlayerServiceManager {
         this.mContext = context;
     }
 
-    /**
-     * Starts the service and plays the supplied message.
-     * @param message the message
-     * @param startProgress the starting point in percentage of the total duration of the message
-     */
-    public void startAndPlay(Message message, int startProgress) {
-        Intent intent = new Intent(mContext, PlayerService.class);
-        intent.setAction(PlayerService.ACTION_PLAY);
-        intent.putExtra(PlayerService.PARAM_MESSAGE, message);
-        intent.putExtra(PlayerService.PARAM_START_PROGRESS, startProgress);
-        mContext.startService(intent);
-    }
-
-    public void startAndPause(Message message, boolean resetProgress) {
-        Intent intent = new Intent(mContext, PlayerService.class);
-        intent.setAction(PlayerService.ACTION_PAUSE);
-        intent.putExtra(PlayerService.PARAM_MESSAGE, message);
-        intent.putExtra(PlayerService.PARAM_RESET_PROGRESS, resetProgress);
-        mContext.startService(intent);
-    }
-
     public void start() {
         Intent intent = new Intent(mContext, PlayerService.class);
         mContext.startService(intent);
-    }
-
-    /**
-     * Starts the service.
-     * <b>Also binds this manager to the service.</b>
-     */
-    public void startAndBind() {
-        Intent intent = new Intent(mContext, PlayerService.class);
-        mContext.startService(intent);
-        bind();
-    }
-
-    /**
-     * Tries to stop the service.
-     * <b>Also unbinds this manager from the service.</b>
-     */
-    public void shouldStop() {
-        unbind();
-        mService.shutdown();
     }
 
     /**

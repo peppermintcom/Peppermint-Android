@@ -28,26 +28,12 @@ public class PlayerEvent {
     private long mCurrentMs;
     private int mErrorCode;
 
-    public PlayerEvent() {
-    }
-
-    public PlayerEvent(int mType, Message mMessage, int mPercent, long mCurrentMs) {
-        this.mType = mType;
-        this.mMessage = mMessage;
-        this.mPercent = mPercent;
-        this.mCurrentMs = mCurrentMs;
-    }
-
     public PlayerEvent(int mType, Message mMessage, int mPercent, long mCurrentMs, int mErrorCode) {
         this.mType = mType;
         this.mMessage = mMessage;
         this.mPercent = mPercent;
         this.mCurrentMs = mCurrentMs;
         this.mErrorCode = mErrorCode;
-    }
-
-    public PlayerEvent(Message mMessage, int mPercent, long mCurrentMs, int mErrorCode) {
-        this(EVENT_ERROR, mMessage, mPercent, mCurrentMs, mErrorCode);
     }
 
     public int getErrorCode() {

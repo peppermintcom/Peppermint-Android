@@ -36,6 +36,9 @@ import java.util.Set;
 
 /**
  * Created by Nuno Luz on 07-06-2016.
+ *
+ * Peppermint's synchronization adapter, according to the native Android framework.
+ *
  */
 public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
@@ -200,10 +203,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                         if(!mAffectedChatIds.contains(message.getChatId())) {
                             mAffectedChatIds.add(message.getChatId());
                         }
-                    }
-
-                    if (mLastMessageTimestamp == null || (message != null && mLastMessageTimestamp.compareTo(message.getRegistrationTimestamp()) < 0)) {
-                        mLastMessageTimestamp = message.getRegistrationTimestamp();
+                        if (mLastMessageTimestamp == null || mLastMessageTimestamp.compareTo(message.getRegistrationTimestamp()) < 0) {
+                            mLastMessageTimestamp = message.getRegistrationTimestamp();
+                        }
                     }
 
                     long currentMs = System.currentTimeMillis();
@@ -228,7 +230,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
     private void setLastSyncTimestamp(String ts) {
         SharedPreferences.Editor editor = mSharedPreferences.edit();
         editor.putString(LAST_SYNC_TIMESTAMP_KEY, ts);
-        editor.commit();
+        editor.apply();
     }
 
     private String getLastSyncTimestamp() {
