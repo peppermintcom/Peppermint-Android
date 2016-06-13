@@ -106,7 +106,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             return;
         }
 
-        SyncService.postSyncEvent(SyncEvent.EVENT_STARTED, null, null, null, null);
         mLastProgressMs = System.currentTimeMillis();
 
         mReceivedMessageIds = new HashSet<>();
@@ -119,11 +118,14 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         String localEmailAddress = mAccountManager.getUserData(account, AuthenticatorConstants.ACCOUNT_PARAM_EMAIL);
 
         String originalSyncTimestamp = getLastSyncTimestamp();
-        if(originalSyncTimestamp == null) {
+        final boolean isFirstSync = originalSyncTimestamp == null;
+        if(isFirstSync) {
             DateContainer weekAgo = new DateContainer(DateContainer.TYPE_DATETIME);
             weekAgo.getCalendar().add(Calendar.DAY_OF_YEAR, -15);
             originalSyncTimestamp = weekAgo.toString();
         }
+
+        SyncService.postSyncEvent(SyncEvent.EVENT_STARTED, null, null, null, isFirstSync, null);
 
         try {
             String nextUrl = null;
@@ -133,7 +135,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                 MessageListResponse receivedResponse = nextUrl == null ?
                         peppermintApi.getMessages(null, serverAccountId, originalSyncTimestamp, true, true) :
                         peppermintApi.getMessages(null, nextUrl);
-                processMessages(receivedResponse, mReceivedMessageIds, false, localEmailAddress);
+                processMessages(receivedResponse, mReceivedMessageIds, false, localEmailAddress, isFirstSync);
                 nextUrl = receivedResponse.getNextUrl();
 
                 try {
@@ -148,7 +150,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                 MessageListResponse sentResponse = nextUrl == null ?
                         peppermintApi.getMessages(null, serverAccountId, originalSyncTimestamp, false, true) :
                         peppermintApi.getMessages(null, nextUrl);
-                processMessages(sentResponse, mSentMessageIds, true, localEmailAddress);
+                processMessages(sentResponse, mSentMessageIds, true, localEmailAddress, isFirstSync);
                 nextUrl = sentResponse.getNextUrl();
 
                 try {
@@ -160,10 +162,10 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
         } catch(InterruptedIOException | InterruptedException e) {
             Log.w(TAG, "Cancelled Sync...", e);
-            SyncService.postSyncEvent(SyncEvent.EVENT_CANCELLED, mReceivedMessageIds, mSentMessageIds, mAffectedChatIds, null);
+            SyncService.postSyncEvent(SyncEvent.EVENT_CANCELLED, mReceivedMessageIds, mSentMessageIds, mAffectedChatIds, isFirstSync, null);
         } catch(Exception e) {
             TrackerManager.getInstance(context).logException(e);
-            SyncService.postSyncEvent(SyncEvent.EVENT_ERROR, mReceivedMessageIds, mSentMessageIds, mAffectedChatIds, null);
+            SyncService.postSyncEvent(SyncEvent.EVENT_ERROR, mReceivedMessageIds, mSentMessageIds, mAffectedChatIds, isFirstSync, null);
         } finally {
             GlobalManager.getInstance(context).clearCache();
         }
@@ -173,10 +175,10 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             setLastSyncTimestamp(mLastMessageTimestamp);
         }
 
-        SyncService.postSyncEvent(SyncEvent.EVENT_FINISHED, mReceivedMessageIds, mSentMessageIds, mAffectedChatIds, null);
+        SyncService.postSyncEvent(SyncEvent.EVENT_FINISHED, mReceivedMessageIds, mSentMessageIds, mAffectedChatIds, isFirstSync, null);
     }
 
-    private void processMessages(MessageListResponse response, Set<Long> trackList, boolean areSent, String localEmailAddress) {
+    private void processMessages(MessageListResponse response, Set<Long> trackList, boolean areSent, String localEmailAddress, boolean isFirstSync) {
         final Context context = getContext();
         final int sentAmount = response.getMessages().size();
         for (int i=0; i<sentAmount; i++) {
@@ -199,7 +201,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                                     messagesResponse.getDuration(), messagesResponse.getReadTimestamp(), true);
 
                     if (message != null) {
-                        trackList.add(message.getId());
+                        if((boolean) message.getParameter(Message.PARAM_INSERTED)) {
+                            trackList.add(message.getId());
+                        }
                         if(!mAffectedChatIds.contains(message.getChatId())) {
                             mAffectedChatIds.add(message.getChatId());
                         }
@@ -211,7 +215,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                     long currentMs = System.currentTimeMillis();
                     if(currentMs - mLastProgressMs > PROGRESS_BETWEEN_MS) {
                         mLastProgressMs = currentMs;
-                        SyncService.postSyncEvent(SyncEvent.EVENT_PROGRESS, mReceivedMessageIds, mSentMessageIds, mAffectedChatIds, null);
+                        SyncService.postSyncEvent(SyncEvent.EVENT_PROGRESS, mReceivedMessageIds, mSentMessageIds, mAffectedChatIds, isFirstSync, null);
                     }
                 } catch (Exception e) {
                     TrackerManager.getInstance(getContext()).logException(e);

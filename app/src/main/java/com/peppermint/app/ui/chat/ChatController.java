@@ -109,6 +109,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
     // error dialog
     private CustomListDialog mErrorDialog;
     private long mMessageIdWithError;
+    private boolean mAllowSkipNotification = true;
 
     public ChatController(Context context, RecipientDataGUI recipientDataGUI) {
         super(context);
@@ -282,7 +283,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
         super.onEventMainThread(event);
         if(mChat != null && event.getDataObject().getChatId() == mChat.getId()) {
             refreshList();
-            if (event.getDataObject().isReceived() && Utils.isScreenOnAndUnlocked(getContext())) {
+            if (mAllowSkipNotification && event.getDataObject().isReceived() && Utils.isScreenOnAndUnlocked(getContext())) {
                 event.setSkipNotifications(true);
             }
         }
@@ -311,7 +312,7 @@ public class ChatController extends ChatRecordOverlayController implements View.
         refreshList();
     }
 
-    private void refreshList() {
+    public void refreshList() {
         if(mChat == null || !getMessagesServiceManager().isBound() || !getPlayerServiceManager().isBound()) {
             return;
         }
@@ -355,5 +356,9 @@ public class ChatController extends ChatRecordOverlayController implements View.
                     recipient.getPhotoUri());
         }
         refreshList();
+    }
+
+    public void setAllowSkipNotification(boolean mAllowSkipNotification) {
+        this.mAllowSkipNotification = mAllowSkipNotification;
     }
 }
