@@ -27,6 +27,7 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -64,11 +65,11 @@ public class SparkPostApi extends BaseApi {
         public void readBody(InputStream inStream, HttpRequest request) throws Throwable {
             super.readBody(inStream, request);
 
-            JSONObject json = new JSONObject(String.valueOf(getBody()));
-            JSONObject jsonResults = json.getJSONObject("results");
+            final JSONObject json = new JSONObject(String.valueOf(getBody()));
+            final JSONObject jsonResults = json.getJSONObject("results");
             mLastUpdateTime = jsonResults.getString("last_update_time");
 
-            JSONObject jsonContent = jsonResults.getJSONObject("content");
+            final JSONObject jsonContent = jsonResults.getJSONObject("content");
             mHtmlTemplate = jsonContent.getString("html");
             mTextTemplate = jsonContent.getString("text");
         }
@@ -102,17 +103,17 @@ public class SparkPostApi extends BaseApi {
     }
 
     public synchronized EmailTemplateResponse getEmailTemplate(final String requesterId) throws Exception {
-        HttpRequest request = new HttpRequest(EMAIL_TEMPLATE_ENDPOINT, HttpRequest.METHOD_GET, false);
+        final HttpRequest request = new HttpRequest(EMAIL_TEMPLATE_ENDPOINT, HttpRequest.METHOD_GET, false);
         request.setHeaderParam("Authorization", EMAIL_TEMPLATE_API_KEY);
 
-        EmailTemplateResponse response = executeRequest(requesterId, request, new EmailTemplateResponse(), false);
+        final EmailTemplateResponse response = executeRequest(requesterId, request, new EmailTemplateResponse(), false);
         processGenericExceptions(request, response);
 
-        FileOutputStream outHtml = mContext.openFileOutput(EMAIL_TEMPLATE_LOCALFILE_HTML, Context.MODE_PRIVATE);
+        final FileOutputStream outHtml = mContext.openFileOutput(EMAIL_TEMPLATE_LOCALFILE_HTML, Context.MODE_PRIVATE);
         outHtml.write(response.getHtmlTemplate().getBytes(Charset.forName("UTF-8")));
         outHtml.close();
 
-        FileOutputStream outText = mContext.openFileOutput(EMAIL_TEMPLATE_LOCALFILE_TEXT, Context.MODE_PRIVATE);
+        final FileOutputStream outText = mContext.openFileOutput(EMAIL_TEMPLATE_LOCALFILE_TEXT, Context.MODE_PRIVATE);
         outText.write(response.getTextTemplate().getBytes(Charset.forName("UTF-8")));
         outText.close();
 
@@ -152,7 +153,7 @@ public class SparkPostApi extends BaseApi {
         parameterMap.put("url", shortUrl);
         parameterMap.put("replyLink", "https://peppermint.com/reply?name=" + (replyName == null ? "" : URLEncoder.encode(replyName, "UTF-8")) + "&mail=" + URLEncoder.encode(replyEmail, "UTF-8"));
 
-        StringBuffer bodyBuilder = new StringBuffer();
+        final StringBuffer bodyBuilder = new StringBuffer();
 
         InputStream inputStream;
         try {
@@ -162,53 +163,56 @@ public class SparkPostApi extends BaseApi {
             inputStream = context.getResources().openRawResource(type == TYPE_HTML ? R.raw.email_template_html : R.raw.email_template_plain);
         }
 
-        boolean insideIfBlock = false;
-        boolean doBlock = false;
+        final Stack<Boolean> blockStack = new Stack<>();
+        blockStack.push(true);  // if block stack; starts with true to include all content
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         try {
             String line;
             while((line = reader.readLine()) != null) {
-                if(!insideIfBlock || (insideIfBlock && doBlock)) {
-                    if (line.contains("{{")) {
-                        final Matcher matcher = SUBSTITUTION_PATTERN.matcher(line);
-                        while (matcher.find() && (!insideIfBlock || (insideIfBlock && doBlock))) {
-                            String entry = matcher.group(1).trim();
+                final Matcher matcher = SUBSTITUTION_PATTERN.matcher(line);
+                int lastIndex = 0;
+                while (matcher.find()) {
+                    final String before = line.substring(lastIndex, matcher.start());
+                    lastIndex = matcher.end();
+                    String entry = matcher.group(1).trim();
 
-                            if (!insideIfBlock && entry.startsWith("if ")) {
-                                insideIfBlock = true;
-                                final String key = entry.substring(3);
-                                doBlock = parameterMap.containsKey(key) && parameterMap.get(key) != null;
-                                entry = "";
-                            } else if (insideIfBlock && entry.compareToIgnoreCase("end") == 0) {
-                                insideIfBlock = false;
-                                doBlock = false;
-                                entry = "";
-                            } else {
-                                Iterator<String> keyIt = parameterMap.keySet().iterator();
-                                boolean matched = false;
-                                while (keyIt.hasNext() && !matched) {
-                                    String parameterKey = keyIt.next();
-                                    if (entry.compareTo(parameterKey) == 0) {
-                                        entry = parameterMap.get(parameterKey);
-                                        if(entry == null) { entry = ""; }
-                                        matched = true;
+                    if(blockStack.peek()) {
+                        bodyBuilder.append(before);
+                    }
+
+                    if (entry.startsWith("if ")) {
+                        // start of if block
+                        final String key = entry.substring(3);
+                        blockStack.push(parameterMap.containsKey(key) && parameterMap.get(key) != null);
+                    } else if (entry.compareToIgnoreCase("end") == 0) {
+                        // end of if block
+                        blockStack.pop();
+                    } else {
+                        if(blockStack.peek()) {
+                            Iterator<String> keyIt = parameterMap.keySet().iterator();
+                            boolean matched = false;
+                            while (keyIt.hasNext() && !matched) {
+                                String parameterKey = keyIt.next();
+                                if (entry.compareTo(parameterKey) == 0) {
+                                    entry = parameterMap.get(parameterKey);
+                                    if (entry == null) {
+                                        entry = "";
                                     }
+                                    matched = true;
                                 }
                             }
-
-                            matcher.appendReplacement(bodyBuilder, entry);
+                            bodyBuilder.append(matched ? entry : "");
                         }
-                        if(!insideIfBlock || (insideIfBlock && doBlock)) {
-                            matcher.appendTail(bodyBuilder);
-                        }
-                    } else {
-                        bodyBuilder.append(line);
                     }
+                }
+                if (blockStack.peek()) {
+                    bodyBuilder.append(line.substring(lastIndex));
                     bodyBuilder.append("\n");
                 }
             }
         } finally {
             reader.close();
+            blockStack.clear();
         }
 
         return bodyBuilder.toString();
