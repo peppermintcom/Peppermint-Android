@@ -25,6 +25,7 @@ public class FabricTracker extends TrackerApi {
     private static final String TAG = FabricTracker.class.getSimpleName();
 
     private static final String SCREEN_KEY = "ScreenId";
+    private static final String EMAIL_KEY = "Email";
 
     private Map<String, String> mValueMap;
 
@@ -82,15 +83,18 @@ public class FabricTracker extends TrackerApi {
     @Override
     public void setUserEmail(String email) {
         Crashlytics.setUserEmail(email);
+        Crashlytics.setString(EMAIL_KEY, email);
     }
 
     @Override
     public void setScreen(String screenId) {
+        Crashlytics.setString(SCREEN_KEY, screenId);
         mValueMap.put(SCREEN_KEY, screenId);
     }
 
     @Override
     public void set(String key, String value) {
+        Crashlytics.setString(key, value);
         mValueMap.put(key, value);
     }
 }

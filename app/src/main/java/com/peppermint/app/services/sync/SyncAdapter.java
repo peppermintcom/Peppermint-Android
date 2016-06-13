@@ -201,7 +201,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                                     messagesResponse.getDuration(), messagesResponse.getReadTimestamp(), true);
 
                     if (message != null) {
-                        if((boolean) message.getParameter(Message.PARAM_INSERTED)) {
+                        final Boolean paramInserted = (Boolean) message.getParameter(Message.PARAM_INSERTED);
+                        if(paramInserted != null && paramInserted) {
                             trackList.add(message.getId());
                         }
                         if(!mAffectedChatIds.contains(message.getChatId())) {

@@ -203,7 +203,11 @@ public class PlayerService extends Service {
         @Override
         public void onSensorChanged(SensorEvent event) {
             if (event.sensor.getType() == Sensor.TYPE_PROXIMITY) {
-                if (event.values[0] == 0) {
+                final float max = event.sensor.getMaximumRange();
+                final float frac = event.values[0] / (max > 10f ? 10f : max);
+                Log.d(TAG, "Proximity: " + frac +  " Val: " + event.values[0] + " Max: " + max);
+
+                if (frac <= 0.4f) {
                     //near
                     if(!mNearEar) {
                         mNearEar = true;
@@ -250,7 +254,7 @@ public class PlayerService extends Service {
         if(proximitySensor != null) {
             mSensorManager.registerListener(mProximitySensorEventListener, proximitySensor, SensorManager.SENSOR_DELAY_NORMAL);
         } else {
-            TrackerManager.getInstance(this).log("No Proximity Sensor Available!");
+            TrackerManager.getInstance(this).logException(new RuntimeException("No Proximity Sensor Available!"));
         }
     }
 
