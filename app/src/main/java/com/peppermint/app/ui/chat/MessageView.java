@@ -146,6 +146,10 @@ public class MessageView extends LinearLayout implements View.OnClickListener, S
             return;
         }
 
+        if (mMessage.isReceived() && hasWorkingSharedMessageServiceManager() && mMessage.getRecordingParameter().getTranscription() != null) {
+            mSharedMessageServiceManager.markAsPlayed(mMessage);
+        }
+
         final Recording recording = mMessage.getRecordingParameter();
 
         // transcription
