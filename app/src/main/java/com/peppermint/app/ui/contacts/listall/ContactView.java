@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.recipients;
+package com.peppermint.app.ui.contacts.listall;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -16,7 +16,7 @@ import com.peppermint.app.dal.chat.ChatManager;
 import com.peppermint.app.dal.contact.ContactRaw;
 import com.peppermint.app.dal.recipient.Recipient;
 import com.peppermint.app.ui.base.views.CustomFontTextView;
-import com.peppermint.app.ui.chat.ChatView;
+import com.peppermint.app.ui.contacts.listrecents.ChatView;
 import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.SameAsyncTaskExecutor;
 import com.peppermint.app.utils.Utils;
@@ -26,10 +26,14 @@ import java.util.List;
 /**
  * Created by Nuno Luz on 07-06-2016.
  *
- * Represents a Chat in the UI.
+ * Represents a Contact in the UI.
  */
 public class ContactView extends ChatView {
 
+    /**
+     * Delayed load of the avatar and extra chat data from the database.
+     * Speeds up {@link #setChat(Chat)} (scrolling in lists).
+     */
     private class ExtraDataLoaderExecutor extends SameAsyncTaskExecutor<ContactRaw, Void, Object[]> {
         private int mAvatarWidth, mAvatarHeight;
 
@@ -181,6 +185,7 @@ public class ContactView extends ChatView {
     }
 
     private Object mChatDataObjectListener = new Object() {
+        @SuppressWarnings("unused")
         public void onEventBackgroundThread(DataObjectEvent<Chat> chatDataObjectEvent) {
             final List<Recipient> recipientList = chatDataObjectEvent.getDataObject().getRecipientList();
             if (mContactRaw != null && recipientList != null && recipientList.size() > 0 && recipientList.get(0).getDroidContactId() == mContactRaw.getContactId()) {

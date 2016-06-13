@@ -11,6 +11,7 @@ import android.os.Bundle;
  * that extends {@link CustomActionBarActivity}.
  */
 public class CustomAuthenticatorActivity extends CustomActionBarActivity {
+
     private AccountAuthenticatorResponse mAccountAuthenticatorResponse = null;
     private Bundle mResultBundle = null;
 

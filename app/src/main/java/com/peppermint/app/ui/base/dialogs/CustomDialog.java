@@ -290,7 +290,6 @@ public class CustomDialog extends Dialog implements View.OnClickListener {
             if(mNegativeButtonListener != null) {
                 mNegativeButtonListener.onClick(v);
             }
-            //cancel();
         } else if(v.getId() == R.id.button2) {
             if(mNeutralButtonListener != null) {
                 mNeutralButtonListener.onClick(v);
@@ -299,7 +298,6 @@ public class CustomDialog extends Dialog implements View.OnClickListener {
             if(mPositiveButtonListener != null) {
                 mPositiveButtonListener.onClick(v);
             }
-            //dismiss();
         }
     }
 }

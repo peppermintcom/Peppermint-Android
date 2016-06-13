@@ -165,7 +165,7 @@
     <string name="about">Sobre</string>
     <string name="privacy_policy_terms_of_use">Política de Privacidade\n&amp; Condições de Serviço</string>
     <string name="privacy_policy_terms_of_use_singleline">Política de Privacidade &amp; Condições de Serviço</string>
-    <string name="version">Versão</string>
+    <string name="version">Versão %1$s</string>
 
 
     <!-- FEEDBACK SCREEN -->

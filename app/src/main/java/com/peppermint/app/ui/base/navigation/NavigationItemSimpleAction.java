@@ -5,8 +5,7 @@ import android.app.Fragment;
 /**
  * Created by Nuno Luz on 04-04-2016.
  *
- * Avoid having to implements all methods from
- * {@link NavigationItemAction} every time.
+ * Avoid having to implements all methods from {@link NavigationItemAction} every time.
  */
 public class NavigationItemSimpleAction implements NavigationItemAction {
     @Override

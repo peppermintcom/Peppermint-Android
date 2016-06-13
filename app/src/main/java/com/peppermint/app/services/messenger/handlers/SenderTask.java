@@ -3,15 +3,15 @@ package com.peppermint.app.services.messenger.handlers;
 import android.content.Context;
 import android.os.AsyncTask;
 
-import com.peppermint.app.services.authenticator.AuthenticationData;
-import com.peppermint.app.services.authenticator.AuthenticatorUtils;
 import com.peppermint.app.cloud.apis.google.GoogleApi;
-import com.peppermint.app.cloud.apis.peppermint.PeppermintApi;
-import com.peppermint.app.cloud.apis.sparkpost.SparkPostApi;
 import com.peppermint.app.cloud.apis.google.GoogleApiNoAuthorizationException;
+import com.peppermint.app.cloud.apis.peppermint.PeppermintApi;
 import com.peppermint.app.cloud.apis.peppermint.PeppermintApiInvalidAccessTokenException;
 import com.peppermint.app.cloud.apis.peppermint.PeppermintApiNoAccountException;
+import com.peppermint.app.cloud.apis.sparkpost.SparkPostApi;
 import com.peppermint.app.dal.message.Message;
+import com.peppermint.app.services.authenticator.AuthenticationData;
+import com.peppermint.app.services.authenticator.AuthenticatorUtils;
 import com.peppermint.app.services.messenger.handlers.gmail.GmailSender;
 import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.utils.Utils;
@@ -72,7 +72,7 @@ public abstract class SenderTask extends AsyncTask<Void, Float, Void> implements
     }
 
     protected void checkInternetConnection() throws NoInternetConnectionException {
-        if(!Utils.isInternetAvailable(getContext()) || !Utils.isInternetActive(getContext())) {
+        if(!Utils.isInternetAvailable(getContext()) || !Utils.isInternetActive()) {
             throw new NoInternetConnectionException();
         }
     }

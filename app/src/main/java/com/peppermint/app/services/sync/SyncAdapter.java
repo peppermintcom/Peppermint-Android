@@ -8,16 +8,22 @@ import android.content.ContentProviderClient;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SyncResult;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.peppermint.app.cloud.apis.peppermint.PeppermintApi;
+import com.peppermint.app.cloud.apis.peppermint.PeppermintApiInvalidAccessTokenException;
 import com.peppermint.app.cloud.apis.peppermint.objects.MessageListResponse;
 import com.peppermint.app.cloud.apis.peppermint.objects.MessagesResponse;
+import com.peppermint.app.dal.DatabaseHelper;
 import com.peppermint.app.dal.GlobalManager;
 import com.peppermint.app.dal.message.Message;
+import com.peppermint.app.dal.pendinglogout.PendingLogout;
+import com.peppermint.app.dal.pendinglogout.PendingLogoutManager;
 import com.peppermint.app.services.authenticator.AuthenticatorConstants;
+import com.peppermint.app.trackers.TrackerApi;
 import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.ui.base.PermissionsPolicyEnforcer;
 import com.peppermint.app.utils.DateContainer;
@@ -30,6 +36,9 @@ import java.util.Set;
 
 /**
  * Created by Nuno Luz on 07-06-2016.
+ *
+ * Peppermint's synchronization adapter, according to the native Android framework.
+ *
  */
 public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
@@ -76,17 +85,19 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
         final Context context = getContext();
 
+        if(!Utils.isInternetAvailable(context) || !Utils.isInternetActive()) {
+            Log.w(TAG, "Can't Sync: No Internet connection!");
+            return;
+        }
+
+        doPendingLogouts();
+
         if(mPermissionsManager.getPermissionsToAsk(context).size() > 0) {
             Log.w(TAG, "Can't Sync: Permissions are required...");
             return;
         }
 
-        if(!Utils.isInternetAvailable(context) || !Utils.isInternetActive(getContext())) {
-            Log.w(TAG, "Can't Sync: No Internet connection!");
-            return;
-        }
-
-        PeppermintApi peppermintApi = new PeppermintApi(context);
+        final PeppermintApi peppermintApi = new PeppermintApi(context);
         try {
             peppermintApi.setAuthenticationToken(mAccountManager.blockingGetAuthToken(account, AuthenticatorConstants.FULL_TOKEN_TYPE, true));
         } catch (Throwable e) {
@@ -192,10 +203,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                         if(!mAffectedChatIds.contains(message.getChatId())) {
                             mAffectedChatIds.add(message.getChatId());
                         }
-                    }
-
-                    if (mLastMessageTimestamp == null || (message != null && mLastMessageTimestamp.compareTo(message.getRegistrationTimestamp()) < 0)) {
-                        mLastMessageTimestamp = message.getRegistrationTimestamp();
+                        if (mLastMessageTimestamp == null || mLastMessageTimestamp.compareTo(message.getRegistrationTimestamp()) < 0) {
+                            mLastMessageTimestamp = message.getRegistrationTimestamp();
+                        }
                     }
 
                     long currentMs = System.currentTimeMillis();
@@ -220,10 +230,42 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
     private void setLastSyncTimestamp(String ts) {
         SharedPreferences.Editor editor = mSharedPreferences.edit();
         editor.putString(LAST_SYNC_TIMESTAMP_KEY, ts);
-        editor.commit();
+        editor.apply();
     }
 
     private String getLastSyncTimestamp() {
         return mSharedPreferences.getString(LAST_SYNC_TIMESTAMP_KEY, null);
+    }
+
+    private void doPendingLogouts() {
+        final Context context = getContext();
+        final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(context);
+        final PeppermintApi peppermintApi = new PeppermintApi(context);
+
+        final Cursor cursor = PendingLogoutManager.getInstance().getAll(databaseHelper.getReadableDatabase());
+
+        while(cursor.moveToNext()) {
+            try {
+                final PendingLogout pendingLogout = PendingLogoutManager.getInstance().getFromCursor(null, cursor);
+
+                try {
+                    peppermintApi.setAuthenticationToken(pendingLogout.getAuthenticationToken());
+                    peppermintApi.removeReceiverRecorder(null, pendingLogout.getAccountServerId(), pendingLogout.getDeviceServerId());
+                } catch (PeppermintApiInvalidAccessTokenException e) {
+                    /* just eat it up and delete the pending logout anyway
+                     * TODO how to solve this so that the request is always performed? */
+                }
+
+                databaseHelper.lock();
+                PendingLogoutManager.getInstance().delete(databaseHelper.getWritableDatabase(), pendingLogout.getId());
+                databaseHelper.unlock();
+
+                TrackerManager.getInstance(context).track(TrackerApi.TYPE_EVENT, "Performed Pending Logout for " + pendingLogout.toString(), TAG);
+            } catch (Exception e) {
+                TrackerManager.getInstance(context).logException(e);
+            }
+        }
+
+        cursor.close();
     }
 }

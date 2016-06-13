@@ -17,6 +17,8 @@ import java.util.List;
 
 /**
  * Created by Nuno Luz on 07-02-2016.
+ *
+ * {@link RelativeLayout} that implements the {@link TouchInterceptable} and {@link KeyInterceptable} interfaces.
  */
 public class TouchInterceptorView extends RelativeLayout implements TouchInterceptable, KeyInterceptable {
 

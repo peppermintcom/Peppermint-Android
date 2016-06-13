@@ -2,6 +2,8 @@ package com.peppermint.app.services.authenticator;
 
 /**
  * Created by Nuno Luz on 27-01-2016.
+ *
+ * Constants required for authentication.
  */
 public class AuthenticatorConstants {
 
@@ -9,8 +11,6 @@ public class AuthenticatorConstants {
     public static final String ACCOUNT_TYPE = "com.peppermint";
 
     // access token types
-    public static final String RECORDER_TOKEN_TYPE = "com.peppermint.jwt.recorder";
-    public static final String ACCOUNT_TOKEN_TYPE = "com.peppermint.jwt.account";
     public static final String FULL_TOKEN_TYPE = "com.peppermint.jwts";
 
     // account data

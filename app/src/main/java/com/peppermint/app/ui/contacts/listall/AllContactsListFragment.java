@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.recipients;
+package com.peppermint.app.ui.contacts.listall;
 
 import android.Manifest;
 import android.content.Context;
@@ -10,7 +10,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Toast;
@@ -27,11 +26,15 @@ import com.peppermint.app.dal.contact.ContactManager;
 import com.peppermint.app.dal.contact.ContactRaw;
 import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.ui.chat.ChatActivity;
+import com.peppermint.app.ui.contacts.ContactListFragment;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Shows the list of all contacts with search feature.
+ */
 public class AllContactsListFragment extends ContactListFragment {
 
     private static final String TAG = AllContactsListFragment.class.getSimpleName();
@@ -54,7 +57,6 @@ public class AllContactsListFragment extends ContactListFragment {
         @Override
         public void onChange(boolean selfChange) {
             super.onChange(selfChange);
-            Log.d(TAG, "Refresh Due to ContactsContentObserver!");
             refresh();
         }
     }
@@ -66,6 +68,11 @@ public class AllContactsListFragment extends ContactListFragment {
     // the recipient list
     private ContactCursorAdapter mAdapter;
     private ContactFilteredCursor mCursor;
+
+    @Override
+    protected void onAsyncRefreshStarted(Context context) {
+        /* nothing to do here */
+    }
 
     @Override
     protected Object onAsyncRefresh(Context context, String searchName, String searchVia) {
@@ -85,7 +92,7 @@ public class AllContactsListFragment extends ContactListFragment {
 
     @Override
     protected void onAsyncRefreshCancelled(Context context, Object data) {
-        Cursor cursor = (Cursor) data;
+        final Cursor cursor = (Cursor) data;
         if(cursor != null) {
             cursor.close();
         }
@@ -122,7 +129,7 @@ public class AllContactsListFragment extends ContactListFragment {
         });
 
         if(savedInstanceState != null) {
-            Bundle dialogState = savedInstanceState.getBundle(SAVED_DIALOG_STATE_KEY);
+            final Bundle dialogState = savedInstanceState.getBundle(SAVED_DIALOG_STATE_KEY);
             if (dialogState != null) {
                 mAddContactDialog.onRestoreInstanceState(dialogState);
             }
@@ -139,7 +146,7 @@ public class AllContactsListFragment extends ContactListFragment {
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         // save add contact dialog state as well
-        Bundle dialogState = mAddContactDialog.onSaveInstanceState();
+        final Bundle dialogState = mAddContactDialog.onSaveInstanceState();
         if (dialogState != null) {
             outState.putBundle(SAVED_DIALOG_STATE_KEY, dialogState);
         }
@@ -192,6 +199,7 @@ public class AllContactsListFragment extends ContactListFragment {
     protected void onSyncOngoing() {
         super.onSyncOngoing();
         if(mActivity != null) {
+            // do not keep refreshing due to changes on contacts if synchronizing
             mActivity.getContentResolver().unregisterContentObserver(mContactsObserver);
         }
     }
@@ -206,11 +214,11 @@ public class AllContactsListFragment extends ContactListFragment {
 
     @Override
     public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
-        Chat chat = ((ContactView) view).getChat();
+        final Chat chat = ((ContactView) view).getChat();
         if(chat == null) {
             showHoldPopup(view);
         } else {
-            Intent intent = new Intent(mActivity, ChatActivity.class);
+            final Intent intent = new Intent(mActivity, ChatActivity.class);
             intent.putExtra(ChatActivity.PARAM_CHAT_ID, chat.getId());
             startActivity(intent);
         }

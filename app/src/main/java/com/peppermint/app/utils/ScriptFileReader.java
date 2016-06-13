@@ -2,6 +2,8 @@ package com.peppermint.app.utils;
 
 import android.content.Context;
 
+import com.peppermint.app.trackers.TrackerManager;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -11,34 +13,36 @@ import java.io.InputStreamReader;
  */
 public class ScriptFileReader {
 
-	private Context c;
-	private BufferedReader br = null;
-	private int r_id;
+	private Context mContext;
+	private BufferedReader mBufferedReader = null;
+	private int mResourceId;
 
-	public ScriptFileReader(Context c, int r_id) {
-		this.c = c;
-		this.r_id = r_id;
+	public ScriptFileReader(Context mContext, int mResourceId) {
+		this.mContext = mContext;
+		this.mResourceId = mResourceId;
 	}
 
 	public void open() {
-		br = new BufferedReader(new InputStreamReader(c.getResources().openRawResource(r_id)));
+		mBufferedReader = new BufferedReader(new InputStreamReader(mContext.getResources().openRawResource(mResourceId)));
 	}
 
 	public void close() {
-		if (br != null) {
+		if (mBufferedReader != null) {
 			try {
-				br.close();
+				mBufferedReader.close();
 			} catch (IOException e) {
+				TrackerManager.getInstance(mContext).logException(e);
 			}
-			br = null;
+			mBufferedReader = null;
 		}
 	}
 
 	public String nextLine() {
-		if (br != null) {
+		if (mBufferedReader != null) {
 			try {
-				return br.readLine();
+				return mBufferedReader.readLine();
 			} catch (IOException e) {
+				TrackerManager.getInstance(mContext).logException(e);
 			}
 		}
 		return null;

@@ -238,15 +238,15 @@ public class AnimatedView extends TextureView {
             mExplosionFragments = new ArrayList<>(mSlicesHorizontalAmount * mSlicesVerticalAmount);
 
             for (int i = 0; i < mSlicesHorizontalAmount; i++) {
-                int x = (int) (i * mSliceWidth);    // slice x pos
+                final int x = (int) (i * mSliceWidth);    // slice x pos
 
                 for (int j = 0; j < mSlicesVerticalAmount; j++) {
-                    int y = (int) (j * mSliceHeight);       // slice y pos
+                    final int y = (int) (j * mSliceHeight);       // slice y pos
 
-                    Bitmap part = Bitmap.createBitmap(mExplosionBaseBitmap, x, y, (int) mSliceWidth, (int) mSliceHeight);
+                    final Bitmap part = Bitmap.createBitmap(mExplosionBaseBitmap, x, y, (int) mSliceWidth, (int) mSliceHeight);
 
                     // just use a rectangle/square for now
-                    Path path = new Path();
+                    final Path path = new Path();
                     path.moveTo(0, 0);
                     /*for(float jj=0; jj<=1; jj+=.2){
                         path.lineTo(mRandomizer.nextInt(sliceW), sliceH * jj);
@@ -258,7 +258,7 @@ public class AnimatedView extends TextureView {
 
                     // two halves of the cut (difference and replace)
                     //BitmapFragment diffFragment = new BitmapFragment(part, x, y, w, h, Region.Op.DIFFERENCE, tri);
-                    BitmapFragment replaceFragment = new BitmapFragment(part, x, y, Region.Op.REPLACE, path);
+                    final BitmapFragment replaceFragment = new BitmapFragment(part, x, y, Region.Op.REPLACE, path);
 
                     //diffFragment.prepare();
                     replaceFragment.prepare();
@@ -291,8 +291,8 @@ public class AnimatedView extends TextureView {
         mWidth = MeasureSpec.getSize(widthMeasureSpec);
         mHeight = MeasureSpec.getSize(heightMeasureSpec);
 
-        int wMode = MeasureSpec.getMode(widthMeasureSpec);
-        int hMode = MeasureSpec.getMode(heightMeasureSpec);
+        final int wMode = MeasureSpec.getMode(widthMeasureSpec);
+        final int hMode = MeasureSpec.getMode(heightMeasureSpec);
 
         if(wMode == MeasureSpec.UNSPECIFIED) {
             mWidth = Utils.dpToPx(getContext(), DEF_DESIRED_SIZE_DP);
@@ -321,7 +321,7 @@ public class AnimatedView extends TextureView {
     }
 
     protected synchronized void doDraw() {
-        Canvas canvas = lockCanvas();
+        final Canvas canvas = lockCanvas();
         if (canvas != null) {
             if (mDrawingListener != null) {
                 mDrawingListener.onPrepareToDraw(AnimatedView.this);
@@ -349,14 +349,14 @@ public class AnimatedView extends TextureView {
                     }
 
                     // interpolation for explosion progress
-                    float interpolation = mExplosionInterpolator.getInterpolation((float) delayedTime / (float) mExplosionDuration);
+                    final float interpolation = mExplosionInterpolator.getInterpolation((float) delayedTime / (float) mExplosionDuration);
 
                     // cleanup canvas
                     canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
                     // iterate and draw explosion fragments
                     for (int i=0; i<mExplosionFragments.size(); i++){
-                        BitmapFragment part = mExplosionFragments.get(i);
+                        final BitmapFragment part = mExplosionFragments.get(i);
 
                         // translation (slightly adjust the vector according to gravity)
                         // interpolation is not being used for translation

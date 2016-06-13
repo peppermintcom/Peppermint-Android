@@ -63,7 +63,7 @@ public class PeppermintApp extends MultiDexApplication {
             onUpgrade(lastVersion, BuildConfig.VERSION_CODE, sharedPreferences);
             final SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putInt(PREF_LAST_VERSION, BuildConfig.VERSION_CODE);
-            editor.commit();
+            editor.apply();
         }
 
         if(BuildConfig.DEBUG) {
@@ -93,7 +93,7 @@ public class PeppermintApp extends MultiDexApplication {
             // force refresh the email template
             final SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.remove(SparkPostApi.PREF_LAST_TEMPLATE_UPDATE_TIMESTAMP);
-            editor.commit();
+            editor.apply();
         }
     }
 }

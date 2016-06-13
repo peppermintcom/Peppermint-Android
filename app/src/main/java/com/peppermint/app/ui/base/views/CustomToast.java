@@ -26,7 +26,7 @@ public class CustomToast {
      *
      */
     public static Toast makeText(Context context, CharSequence text, int duration) {
-        Toast toast = Toast.makeText(context, text, duration);
+        final Toast toast = Toast.makeText(context, text, duration);
         ViewGroup v = (ViewGroup) toast.getView();
         TextView tv = (TextView) v.getChildAt(0);
         tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);

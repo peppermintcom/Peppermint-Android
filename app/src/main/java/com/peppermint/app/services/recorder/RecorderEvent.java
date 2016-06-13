@@ -29,16 +29,8 @@ public class RecorderEvent implements Serializable {
     private Chat mChat;
 
     // event data
-    private int mType;              // type of the event
+    private int mType;
     private Throwable mError;
-
-    public RecorderEvent(Recording recording, Chat chat, float loudness, int type) {
-        this(type, recording, chat, loudness, null);
-    }
-
-    public RecorderEvent(Recording recording, Chat chat, Throwable error) {
-        this(EVENT_ERROR, recording, chat, 0, error);
-    }
 
     public RecorderEvent(int type, Recording recording, Chat chat, float loudness, Throwable error) {
         this.mLoudness = loudness;

@@ -8,8 +8,8 @@ import android.widget.TextView;
 
 import com.peppermint.app.BuildConfig;
 import com.peppermint.app.R;
-import com.peppermint.app.ui.base.views.CustomActionBarView;
 import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
+import com.peppermint.app.ui.base.views.CustomActionBarView;
 
 /**
  * Created by Nuno Luz on 06-01-2016.
@@ -17,8 +17,6 @@ import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
  * About Activity.
  */
 public class AboutActivity extends CustomActionBarActivity implements View.OnClickListener {
-
-    private static final String PRIVACY_URL = "http://peppermint.com/privacy";
 
     @Override
     protected final int getContainerViewLayoutId() {
@@ -40,14 +38,14 @@ public class AboutActivity extends CustomActionBarActivity implements View.OnCli
 
         // set the version text
         final TextView txtVersion = (TextView) findViewById(R.id.txtVersion);
-        txtVersion.setText(getString(R.string.version) + " " + BuildConfig.VERSION_NAME);
+        txtVersion.setText(getString(R.string.version, BuildConfig.VERSION_NAME));
     }
 
     @Override
     public void onClick(View v) {
         // launch browser with privacy url
         final Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setData(Uri.parse(PRIVACY_URL));
+        intent.setData(Uri.parse(getString(R.string.privacy_url)));
         startActivity(intent);
     }
 }

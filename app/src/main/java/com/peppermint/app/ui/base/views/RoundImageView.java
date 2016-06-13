@@ -17,11 +17,10 @@ import android.widget.ImageView;
 import com.peppermint.app.R;
 import com.peppermint.app.utils.Utils;
 
-// Inspired on https://github.com/lopspower/CircularImageView/blob/master/CircularImageView/src/com/mikhaellopez/circularimageview/CircularImageView.java
-
 /**
  * {@link ImageView} that supports round corners.
  *
+ * Inspired on https://github.com/lopspower/CircularImageView/blob/master/CircularImageView/src/com/mikhaellopez/circularimageview/CircularImageView.java
  */
 public class RoundImageView extends View {
 
@@ -186,7 +185,7 @@ public class RoundImageView extends View {
      * Defines if the aspect ratio of the original image should be kept. <br />
      * Otherwise, it stretches both the width and height of the image to fit the view.
      *
-     * @param mKeepAspectRatio
+     * @param mKeepAspectRatio the value
      */
     public void setKeepAspectRatio(boolean mKeepAspectRatio) {
         this.mKeepAspectRatio = mKeepAspectRatio;

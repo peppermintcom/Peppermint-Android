@@ -44,18 +44,15 @@ public class NavigationListAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        View view;
+        View view = convertView;
 
-        if (convertView == null) {
-            LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        if (view == null) {
+            final LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             view = inflater.inflate(R.layout.i_navigation_layout, null);
         }
-        else {
-            view = convertView;
-        }
 
-        TextView titleView = (TextView) view.findViewById(R.id.txtName);
-        ImageView iconView = (ImageView) view.findViewById(R.id.imgIcon);
+        final TextView titleView = (TextView) view.findViewById(R.id.txtName);
+        final ImageView iconView = (ImageView) view.findViewById(R.id.imgIcon);
 
         titleView.setText(mList.get(position).getTitle());
         iconView.setImageResource(mList.get(position).getIconResId());

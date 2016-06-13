@@ -57,19 +57,20 @@ public class LoadingBoxAnimatedLayer extends AnimatedLayerBase {
 
     @Override
     public synchronized void onDraw(View view, Canvas canvas, double interpolatedElapsedTime) {
-        double halfDuration = getDuration() / 2f;
+        final double halfDuration = getDuration() / 2f;
 
         double progress;
-        boolean goTwoHalves = mProgressType == PROGRESS_BOX && !mFirstPartOnly;
+        final boolean goTwoHalves = mProgressType == PROGRESS_BOX && !mFirstPartOnly;
         if(!goTwoHalves) {
             progress = interpolatedElapsedTime / getDuration() * mTotalLength;
         } else {
             progress = (interpolatedElapsedTime < halfDuration ? (interpolatedElapsedTime / halfDuration) : (interpolatedElapsedTime - halfDuration) / halfDuration) * mTotalLength;
         }
 
-        Path fullPath = getRoundRectPath(mBounds.centerX(), mBounds.centerY(), mCornerRadius, mCornerLength, mFullSideLength, mTotalLength);
-        Path progressPath = mProgressType == PROGRESS_BOX ? getRoundRectPath(mBounds.centerX(), mBounds.centerY(), mCornerRadius, mCornerLength, mFullSideLength, (float) progress)
-                : getSinWavePath(mBounds.centerX(), mBounds.centerY(), mCornerRadius, mCornerLength, mFullSideLength, mProgressWidth, (float) (interpolatedElapsedTime / getDuration() * 20f * Math.PI));
+        final Path fullPath = getRoundRectPath(mBounds.centerX(), mBounds.centerY(), mCornerRadius, mCornerLength, mFullSideLength, mTotalLength);
+        final Path progressPath = mProgressType == PROGRESS_BOX ?
+                getRoundRectPath(mBounds.centerX(), mBounds.centerY(), mCornerRadius, mCornerLength, mFullSideLength, (float) progress) :
+                getSinWavePath(mBounds.centerX(), mBounds.centerY(), mCornerRadius, mCornerLength, mFullSideLength, mProgressWidth, (float) (interpolatedElapsedTime / getDuration() * 20f * Math.PI));
 
         // progress paths
         if(goTwoHalves && interpolatedElapsedTime >= halfDuration) {
@@ -89,7 +90,7 @@ public class LoadingBoxAnimatedLayer extends AnimatedLayerBase {
         }
 
         if(mProgressType == PROGRESS_BOX) {
-            Path maskPath = getRoundRectPath(mBounds.centerX(), mBounds.centerY(), mCornerRadius - mProgressWidth, mCornerLength, mFullSideLength - (mProgressWidth * 2f), mTotalLength);
+            final Path maskPath = getRoundRectPath(mBounds.centerX(), mBounds.centerY(), mCornerRadius - mProgressWidth, mCornerLength, mFullSideLength - (mProgressWidth * 2f), mTotalLength);
 
             if (mBackgroundPressedPaint != null && view.isPressed()) {
                 canvas.drawPath(maskPath, mBackgroundPressedPaint);
@@ -110,21 +111,21 @@ public class LoadingBoxAnimatedLayer extends AnimatedLayerBase {
 
     private static Path getRoundRectPath(float centerX, float centerY, float cornerRadius, float cornerLength, float fullSideLength, float progress) {
 
-        float halfFullSideLength = fullSideLength / 2f;
-        float sideLength = fullSideLength - (cornerRadius * 2f);
-        float sideHalfLength = sideLength / 2f;
+        final float halfFullSideLength = fullSideLength / 2f;
+        final float sideLength = fullSideLength - (cornerRadius * 2f);
+        final float sideHalfLength = sideLength / 2f;
 
         float xx, yy;
         boolean done = false;
 
-        Path p = new Path();
+        final Path p = new Path();
         p.moveTo(centerX, centerY);
         yy = centerY - halfFullSideLength;
         p.lineTo(centerX, yy);
 
         // top right half of line
         {
-            float tmpProgress = progress < sideHalfLength ? progress : sideHalfLength;
+            final float tmpProgress = progress < sideHalfLength ? progress : sideHalfLength;
             progress -= tmpProgress;
             xx = centerX + tmpProgress;
             p.lineTo(xx, yy);
@@ -132,7 +133,7 @@ public class LoadingBoxAnimatedLayer extends AnimatedLayerBase {
 
         // top right corner
         if(progress > 0) {
-            float tmpAngle = progress < cornerLength ? getAngle(progress, cornerLength) : 90f;
+            final float tmpAngle = progress < cornerLength ? getAngle(progress, cornerLength) : 90f;
             progress -= cornerLength;
             p.arcTo(new RectF(centerX + sideHalfLength - cornerRadius,      // left
                     yy,                                                     // top
@@ -146,7 +147,7 @@ public class LoadingBoxAnimatedLayer extends AnimatedLayerBase {
         // right line
         if(!done) {
             if (progress > 0) {
-                float tmpProgress = progress < sideLength ? progress : sideLength;
+                final float tmpProgress = progress < sideLength ? progress : sideLength;
                 progress -= tmpProgress;
                 xx = centerX + halfFullSideLength;
                 yy += tmpProgress + cornerRadius;
@@ -160,7 +161,7 @@ public class LoadingBoxAnimatedLayer extends AnimatedLayerBase {
         // bottom right corner
         if(!done) {
             if (progress > 0) {
-                float tmpAngle = progress < cornerLength ? getAngle(progress, cornerLength) : 90f;
+                final float tmpAngle = progress < cornerLength ? getAngle(progress, cornerLength) : 90f;
                 progress -= cornerLength;
                 p.arcTo(new RectF(centerX + sideHalfLength - cornerRadius,  // left
                         centerY - halfFullSideLength + sideLength,          // top
@@ -175,7 +176,7 @@ public class LoadingBoxAnimatedLayer extends AnimatedLayerBase {
         // bottom line
         if(!done) {
             if (progress > 0) {
-                float tmpProgress = progress < sideLength ? progress : sideLength;
+                final float tmpProgress = progress < sideLength ? progress : sideLength;
                 progress -= tmpProgress;
                 xx = centerX - sideHalfLength + (sideLength - tmpProgress);
                 yy = centerY + halfFullSideLength;
@@ -189,7 +190,7 @@ public class LoadingBoxAnimatedLayer extends AnimatedLayerBase {
         // bottom left corner
         if(!done) {
             if (progress > 0) {
-                float tmpAngle = progress < cornerLength ? getAngle(progress, cornerLength) : 90f;
+                final float tmpAngle = progress < cornerLength ? getAngle(progress, cornerLength) : 90f;
                 progress -= cornerLength;
                 p.arcTo(new RectF(centerX - halfFullSideLength,             // left
                         centerY + sideHalfLength - cornerRadius,            // top
@@ -204,7 +205,7 @@ public class LoadingBoxAnimatedLayer extends AnimatedLayerBase {
         // left line
         if(!done) {
             if (progress > 0) {
-                float tmpProgress = progress < sideLength ? progress : sideLength;
+                final float tmpProgress = progress < sideLength ? progress : sideLength;
                 progress -= tmpProgress;
                 xx = centerX - halfFullSideLength;
                 yy = centerY + sideHalfLength - tmpProgress;
@@ -218,7 +219,7 @@ public class LoadingBoxAnimatedLayer extends AnimatedLayerBase {
         // top left corner
         if(!done) {
             if (progress > 0) {
-                float tmpAngle = progress < cornerLength ? getAngle(progress, cornerLength) : 90f;
+                final float tmpAngle = progress < cornerLength ? getAngle(progress, cornerLength) : 90f;
                 progress -= cornerLength;
                 p.arcTo(new RectF(centerX - halfFullSideLength,                     //left
                         centerY - halfFullSideLength,                               // top
@@ -249,13 +250,13 @@ public class LoadingBoxAnimatedLayer extends AnimatedLayerBase {
 
     private static Path getSinWavePath(float centerX, float centerY, float cornerRadius, float cornerLength, float fullSideLength, float amplitude, float progress) {
 
-        float halfFullSideLength = fullSideLength / 2f;
-        float sideLength = fullSideLength - (cornerRadius * 2f);
-        float sideHalfLength = sideLength / 2f;
+        final float halfFullSideLength = fullSideLength / 2f;
+        final float sideLength = fullSideLength - (cornerRadius * 2f);
+        final float sideHalfLength = sideLength / 2f;
 
         float xx, yy;
 
-        Path p = new Path();
+        final Path p = new Path();
         p.moveTo(centerX + halfFullSideLength, centerY);
         yy = centerY + sideHalfLength;
         p.lineTo(centerX + halfFullSideLength, yy);
@@ -283,9 +284,9 @@ public class LoadingBoxAnimatedLayer extends AnimatedLayerBase {
         p.lineTo(xx, yy);
 
         // sin
-        float divider = fullSideLength / 10f;
-        float unitX = fullSideLength / divider;
-        float unitAngle = (float) ((2f*Math.PI) / divider);
+        final float divider = fullSideLength / 10f;
+        final float unitX = fullSideLength / divider;
+        final float unitAngle = (float) ((2f*Math.PI) / divider);
         float angle = unitAngle;
         for(float i=0; i<divider; i++) {
             yy = (float) (centerY - (Math.sin(progress + angle) * amplitude));

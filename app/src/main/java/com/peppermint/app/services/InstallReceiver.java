@@ -8,6 +8,9 @@ import com.peppermint.app.services.messenger.MessengerService;
 
 /**
  * Created by Nuno Luz on 05-01-2016.
+ *
+ * Receives Peppermint's app install event and starts all necessary services.
+ *
  */
 public class InstallReceiver extends BroadcastReceiver {
 

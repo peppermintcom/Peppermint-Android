@@ -33,7 +33,7 @@ public class AuthenticatorArrayAdapter extends ArrayAdapter<Account> {
             v = LayoutInflater.from(getContext()).inflate(R.layout.i_account_layout, parent, false);
         }
 
-        TextView txtName = (TextView) v.findViewById(R.id.txtName);
+        final TextView txtName = (TextView) v.findViewById(R.id.txtName);
         txtName.setText(mAccounts[position].name);
 
         return v;

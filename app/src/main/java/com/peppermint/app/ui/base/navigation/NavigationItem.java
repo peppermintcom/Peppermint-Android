@@ -13,12 +13,9 @@ public class NavigationItem {
     protected int mIconResId;                               // icon to present in the drawer menu
     protected boolean mShowSeparator = false;               // show a separator in the drawer menu?
 
-    // one of the following must be specified (action, fragment, or both)
-
     protected NavigationItemAction mAction;                 // to execute when tapped
     protected Class<? extends Fragment> mFragmentClass;     // fragment to show when tapped
 
-    protected int mLoadingTextResId = 0;                    // text to present while loading the fragment
     protected String mTag;                                  // tag of the fragment
 
     public NavigationItem(String title, int iconResId, Class<? extends Fragment> fragmentClass) {
@@ -30,10 +27,9 @@ public class NavigationItem {
         }
     }
 
-    public NavigationItem(String title, int iconResId, Class<? extends Fragment> fragmentClass, boolean showSeparator, int mLoadingTextResId, NavigationItemAction action) {
+    public NavigationItem(String title, int iconResId, Class<? extends Fragment> fragmentClass, boolean showSeparator, NavigationItemAction action) {
         this(title, iconResId, fragmentClass);
         this.mShowSeparator = showSeparator;
-        this.mLoadingTextResId = mLoadingTextResId;
         this.mAction = action;
     }
 
@@ -41,14 +37,6 @@ public class NavigationItem {
         this(title, iconResId, null);
         this.mShowSeparator = showSeparator;
         this.mAction = action;
-    }
-
-    public int getLoadingTextResId() {
-        return mLoadingTextResId;
-    }
-
-    public void setLoadingTextResId(int mLoadingTextResId) {
-        this.mLoadingTextResId = mLoadingTextResId;
     }
 
     public String getTitle() {

@@ -6,6 +6,8 @@ import android.view.View;
 
 /**
  * Created by Nuno Luz on 06-02-2016.
+ *
+ * Controller class for overlay views.
  */
 public class Overlay {
 

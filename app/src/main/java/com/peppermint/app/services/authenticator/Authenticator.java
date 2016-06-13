@@ -14,15 +14,15 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.ui.authentication.AuthenticatorActivity;
 import com.peppermint.app.cloud.apis.google.GoogleApi;
 import com.peppermint.app.cloud.apis.peppermint.PeppermintApi;
-import com.peppermint.app.cloud.apis.peppermint.objects.JWTsResponse;
 import com.peppermint.app.cloud.apis.peppermint.PeppermintApiInvalidAccessTokenException;
 import com.peppermint.app.cloud.apis.peppermint.PeppermintApiNoAccountException;
 import com.peppermint.app.cloud.apis.peppermint.PeppermintApiResponseException;
+import com.peppermint.app.cloud.apis.peppermint.objects.JWTsResponse;
 import com.peppermint.app.services.messenger.handlers.SenderPreferences;
 import com.peppermint.app.trackers.TrackerManager;
+import com.peppermint.app.ui.authentication.AuthenticatorActivity;
 import com.peppermint.app.utils.Utils;
 
 /**

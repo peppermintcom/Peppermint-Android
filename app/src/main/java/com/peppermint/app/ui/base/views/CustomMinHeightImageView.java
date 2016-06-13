@@ -11,6 +11,8 @@ import com.peppermint.app.R;
 
 /**
  * Created by Nuno Luz on 03-12-2015.
+ *
+ * ImageView that is hidden if the minHeight value is not satisfied.
  */
 public class CustomMinHeightImageView extends ImageView {
 
@@ -39,7 +41,7 @@ public class CustomMinHeightImageView extends ImageView {
 
     private void init(Context context, AttributeSet attrs) {
         if(attrs != null) {
-            TypedArray a = getContext().getTheme().obtainStyledAttributes(
+            TypedArray a = context.getTheme().obtainStyledAttributes(
                     attrs,
                     R.styleable.PeppermintView,
                     0, 0);

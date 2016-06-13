@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.recipients.add;
+package com.peppermint.app.ui.contacts.add;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -48,7 +48,7 @@ import java.util.Set;
 /**
  * Created by Nuno Luz on 10-11-2015.
  *
- * Activity for user authentication.
+ * Activity for new contacts.
  */
 public class NewContactActivity extends CustomActionBarActivity implements AdapterView.OnItemClickListener, View.OnClickListener {
 
@@ -108,7 +108,7 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
         final CustomActionBarView actionBarView = getCustomActionBar();
         if(actionBarView != null) {
             // inflate custom action bar
-            View v = getLayoutInflater().inflate(R.layout.v_newcontact_actionbar, null, false);
+            final View v = getLayoutInflater().inflate(R.layout.v_newcontact_actionbar, null, false);
             actionBarView.setContents(v, false);
             actionBarView.setTitle(getString(R.string.new_contact));
             // cancel new contact icon
@@ -277,7 +277,6 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
 
                     setAvatarUrl(selectedImage);
 
-
                     /*String[] filePathColumn = {MediaStore.Images.Media.DATA};
                     Cursor cursor;
 
@@ -408,9 +407,6 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
                 break;
             default:
                 // choose photo
-                /*Intent getPictureIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(getPictureIntent, CHOOSE_PHOTO_CODE);*/
-
                 startActivityForResult(
                         Intent.createChooser(
                                 new Intent(Intent.ACTION_GET_CONTENT)

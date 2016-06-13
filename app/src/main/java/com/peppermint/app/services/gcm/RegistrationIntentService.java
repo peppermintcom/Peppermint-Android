@@ -8,9 +8,9 @@ import android.util.Log;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.android.gms.iid.InstanceID;
 import com.peppermint.app.R;
+import com.peppermint.app.cloud.apis.peppermint.PeppermintApi;
 import com.peppermint.app.services.authenticator.AuthenticationData;
 import com.peppermint.app.services.authenticator.AuthenticatorUtils;
-import com.peppermint.app.cloud.apis.peppermint.PeppermintApi;
 
 /**
  * Created by Nuno Luz on 02-02-2016.
@@ -19,7 +19,7 @@ import com.peppermint.app.cloud.apis.peppermint.PeppermintApi;
  */
 public class RegistrationIntentService extends IntentService {
 
-    private static final String TAG = PeppermintInstanceIDListenerService.class.getSimpleName();
+    private static final String TAG = RegistrationIntentService.class.getSimpleName();
 
     public static final String REGISTRATION_COMPLETE_ACTION = "com.peppermint.app.cloud.gcm.REGISTRATION_COMPLETE";
     public static final String PARAM_REGISTRATION_ERROR = TAG + "_paramError";

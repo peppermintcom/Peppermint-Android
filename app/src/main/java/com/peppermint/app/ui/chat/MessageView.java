@@ -110,7 +110,7 @@ public class MessageView extends LinearLayout implements View.OnClickListener, S
         mTxtDay.setTextColor(ResourceUtils.getColor(context, R.color.dark_grey_text));
         mTxtDay.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16);
 
-        LayoutParams txtDayLayoutParams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        final LayoutParams txtDayLayoutParams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         txtDayLayoutParams.setMargins(0, Utils.dpToPx(context, 15), 0, dp10);
         addView(mTxtDay, txtDayLayoutParams);
 
@@ -189,10 +189,10 @@ public class MessageView extends LinearLayout implements View.OnClickListener, S
         // day of the message separator
         mTxtDay.setVisibility(View.VISIBLE);
         try {
-            DateContainer messageDate = new DateContainer(DateContainer.TYPE_DATE, mMessage.getRegistrationTimestamp());
+            final DateContainer messageDate = new DateContainer(DateContainer.TYPE_DATE, mMessage.getRegistrationTimestamp());
 
             if(mPreviousMessage != null) {
-                DateContainer prevMessageDate = new DateContainer(DateContainer.TYPE_DATE, mPreviousMessage.getRegistrationTimestamp());
+                final DateContainer prevMessageDate = new DateContainer(DateContainer.TYPE_DATE, mPreviousMessage.getRegistrationTimestamp());
                 if(prevMessageDate.equals(messageDate, TimeZone.getDefault())) {
                     mTxtDay.setVisibility(View.GONE);
                 }
@@ -319,7 +319,7 @@ public class MessageView extends LinearLayout implements View.OnClickListener, S
         if(hasWorkingSharedPlayerServiceManager()) {
             setPlayerLoading();
 
-            int startPercent = mSeekBar.getProgress();
+            final int startPercent = mSeekBar.getProgress();
 
             if (mMessage.isReceived() && hasWorkingSharedMessageServiceManager()) {
                 mSharedMessageServiceManager.markAsPlayed(mMessage);

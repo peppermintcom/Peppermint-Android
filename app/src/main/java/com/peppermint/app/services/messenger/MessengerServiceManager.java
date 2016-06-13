@@ -16,8 +16,8 @@ import java.util.List;
 /**
  * Created by Nuno Luz on 28/08/2015.
  *
- * Manages the Android Service that sends messages through different methods.
- * It allows an easier interaction with the Android Service API.
+ * Manages the Android Service that sends/receives messages through different methods.
+ *
  */
 public class MessengerServiceManager {
 
@@ -31,7 +31,7 @@ public class MessengerServiceManager {
     private Context mContext;
     private MessengerService.SendRecordServiceBinder mService;
     private List<ServiceListener> mServiceListenerList = new ArrayList<>();
-    protected boolean mIsBound = false;                                         // if the manager is bound to the service
+    protected boolean mIsBound = false;     // if the manager is bound to the service
     protected boolean mIsBinding = false;
 
     /**
@@ -111,10 +111,6 @@ public class MessengerServiceManager {
         return mService.send(chat, recording);
     }
 
-    public void removeAllNotifications() {
-        mService.removeAllNotifications();
-    }
-
     public void markAsPlayed(Message message) {
         mService.markAsPlayed(message);
     }
@@ -140,12 +136,6 @@ public class MessengerServiceManager {
         intent.setAction(MessengerService.ACTION_CANCEL);
         mContext.startService(intent);
         return true;
-    }
-
-    public void doPendingLogouts() {
-        Intent intent = new Intent(mContext, MessengerService.class);
-        intent.setAction(MessengerService.ACTION_DO_PENDING_LOGOUTS);
-        mContext.startService(intent);
     }
 
     public boolean isSending(Message message) {

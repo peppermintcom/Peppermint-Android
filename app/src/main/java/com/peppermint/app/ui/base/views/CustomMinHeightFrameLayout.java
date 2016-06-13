@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.widget.FrameLayout;
 
 import com.peppermint.app.R;
@@ -42,7 +41,7 @@ public class CustomMinHeightFrameLayout extends FrameLayout {
 
     private void init(Context context, AttributeSet attrs) {
         if(attrs != null) {
-            TypedArray a = getContext().getTheme().obtainStyledAttributes(
+            TypedArray a = context.getTheme().obtainStyledAttributes(
                     attrs,
                     R.styleable.PeppermintView,
                     0, 0);

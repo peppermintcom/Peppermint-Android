@@ -15,7 +15,6 @@ import android.widget.Toast;
 
 import com.google.cloud.speech.v1.nano.InitialRecognizeRequest;
 import com.peppermint.app.BuildConfig;
-import com.peppermint.app.PeppermintApp;
 import com.peppermint.app.R;
 import com.peppermint.app.cloud.apis.speech.GoogleSpeechRecognizeClient;
 import com.peppermint.app.dal.chat.Chat;
@@ -42,35 +41,39 @@ public class RecordService extends Service {
 
     private static final String TAG = RecordService.class.getSimpleName();
 
-    /** Intent action to pop recording transcription. **/
+    /**
+     * Intent action to pop recording transcription.
+     **/
     public static final String ACTION_POP_TRANSCRIPTION = "com.peppermint.app.RecordService.POP_TRANSCRIPTION";
 
-    /** Intent action to start recording. **/
+    /**
+     * Intent action to start recording.
+     **/
     public static final String ACTION_START_RECORDING = "com.peppermint.app.RecordService.START_RECORDING";
 
     /**
-        Intent extra key for a string with the file path for the transcribed file.
-        This should be supplied for the POP_TRANSCRIPTION action.
+     * Intent extra key for a string with the file path for the transcribed file.
+     * This should be supplied for the POP_TRANSCRIPTION action.
      **/
     public static final String INTENT_DATA_TRANSCRIPTION_FILEPATH = TAG + "_TranscriptionFilePath";
 
     /**
-        Intent extra key for a string with the filename prefix for the recorded file.
-        This should be supplied for the START_RECORDING action.
+     * Intent extra key for a string with the filename prefix for the recorded file.
+     * This should be supplied for the START_RECORDING action.
      **/
     public static final String INTENT_DATA_FILEPREFIX = TAG + "_FilePrefix";
 
     /**
-        Intent extra key for the {@link ContactRaw} of the recorded file.
-        This service doesn't handle the sending of files but the recipient is required to
-        keep track of the sending process in case the interface (activity) gets closed.
-        This <b>must</b> be supplied for the START_RECORDING action.
+     * Intent extra key for the {@link ContactRaw} of the recorded file.
+     * This service doesn't handle the sending of files but the recipient is required to
+     * keep track of the sending process in case the interface (activity) gets closed.
+     * This <b>must</b> be supplied for the START_RECORDING action.
      **/
     public static final String INTENT_DATA_CHAT = TAG + "_Chat";
 
     /**
-        Intent extra key for a long with the max duration for the recorded file in millis.
-        This should be supplied for the START_RECORDING action.
+     * Intent extra key for a long with the max duration for the recorded file in millis.
+     * This should be supplied for the START_RECORDING action.
      **/
     public static final String INTENT_DATA_MAXDURATION = TAG + "_MaxDuration";
 
@@ -79,6 +82,7 @@ public class RecordService extends Service {
     static {
         if(BuildConfig.DEBUG) {
             EVENT_BUS.register(new Object() {
+                @SuppressWarnings("unused")
                 public void onEventBackgroundThread(RecorderEvent event) {
                     Log.d(TAG, event.toString());
                 }
@@ -88,10 +92,6 @@ public class RecordService extends Service {
 
     public static void registerEventListener(Object listener) {
         EVENT_BUS.register(listener);
-    }
-
-    public static void registerEventListener(Object listener, int priority) {
-        EVENT_BUS.register(listener, priority);
     }
 
     public static void unregisterEventListener(Object listener) {
@@ -169,23 +169,8 @@ public class RecordService extends Service {
             RecordService.this.stop(discard);
         }
 
-        /**
-         * Shutdown the service, stopping and discarding the current recording.
-         */
-        void shutdown() {
-            stopSelf();
-        }
-
-        long getCurrentFullDuration() {
-            return mRecorder == null ? 0 : mRecorder.getFullDuration();
-        }
-
         float getCurrentLoudness() {
             return mRecorder == null ? 0 : getLoudnessFromAmplitude(mRecorder.getAmplitude());
-        }
-
-        String getCurrentFilePath() {
-            return mRecorder == null ? null : mRecorder.getFilePath();
         }
 
         Chat getCurrentChat() {
@@ -362,6 +347,7 @@ public class RecordService extends Service {
     private final GoogleSpeechRecognizeClient.RecognitionListener mSpeechRecognitionListener = new GoogleSpeechRecognizeClient.RecognitionListener() {
         @Override
         public void onRecognitionStarted(GoogleSpeechRecognizeClient client) {
+            /* nothing to do here */
         }
 
         @Override
@@ -478,12 +464,6 @@ public class RecordService extends Service {
 
         return null;
     }
-
-    boolean isTranscribing(String filePath) {
-        return mSpeechRecognizers.containsKey(filePath);
-    }
-
-    boolean isTranscribing() { return mSpeechRecognizers.size() > 0; }
 
     boolean isRecording() {
         return mRecorder != null && mRecorder.isRecording();

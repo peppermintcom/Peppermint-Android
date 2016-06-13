@@ -6,11 +6,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
 
-import com.peppermint.app.services.player.PlayerServiceManager;
-import com.peppermint.app.services.messenger.MessengerServiceManager;
 import com.peppermint.app.dal.DatabaseHelper;
 import com.peppermint.app.dal.message.Message;
 import com.peppermint.app.dal.message.MessageManager;
+import com.peppermint.app.services.messenger.MessengerServiceManager;
+import com.peppermint.app.services.player.PlayerServiceManager;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -18,7 +18,7 @@ import java.util.Set;
 /**
  * Created by Nuno Luz on 27/08/2015.
  *
- * ArrayAdapter to show chat messages in a ListView.<br />
+ * ArrayAdapter to show chat messages in a ListView.
  */
 public class ChatMessageCursorAdapter extends CursorAdapter {
 
@@ -56,7 +56,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
 
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        Message message = getMessage(cursor);
+        final Message message = getMessage(cursor);
         Message prevMessage = null;
 
         if(cursor.moveToPrevious()) {
@@ -76,7 +76,7 @@ public class ChatMessageCursorAdapter extends CursorAdapter {
     }
 
     public Message getMessage(int position) {
-        Cursor cursor = (Cursor) getItem(position);
+        final Cursor cursor = (Cursor) getItem(position);
         return getMessage(cursor);
     }
 

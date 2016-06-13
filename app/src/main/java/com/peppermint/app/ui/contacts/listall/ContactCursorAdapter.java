@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.recipients;
+package com.peppermint.app.ui.contacts.listall;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -38,7 +38,7 @@ public class ContactCursorAdapter extends CursorAdapter {
     }
 
     public ContactRaw getContactRaw(int position) {
-        Cursor cursor = (Cursor) getItem(position);
+        final Cursor cursor = (Cursor) getItem(position);
         return (cursor instanceof ContactFilteredCursor ? ((ContactFilteredCursor) cursor).getContactRaw() : ContactManager.getInstance().getRawContactFromCursor(mContext, cursor));
     }
 }

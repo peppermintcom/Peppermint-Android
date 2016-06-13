@@ -165,7 +165,7 @@
     <string name="about">Hakkında</string>
     <string name="privacy_policy_terms_of_use">Gizlilik Politikası\n&amp; Kullanım Şartları</string>
     <string name="privacy_policy_terms_of_use_singleline">Gizlilik Politikası &amp; Kullanım Şartları</string>
-    <string name="version">Versiyon</string>
+    <string name="version">Versiyon %1$s</string>
 
 
     <!-- FEEDBACK SCREEN -->

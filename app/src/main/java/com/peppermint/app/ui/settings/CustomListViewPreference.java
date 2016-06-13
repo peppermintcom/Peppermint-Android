@@ -57,8 +57,6 @@ public class CustomListViewPreference extends CustomDialogPreference implements 
         }
     }
 
-    private static final String TAG = CustomListViewPreference.class.getSimpleName();
-
     private String mContent;
     private TextView mTxtContent;
 

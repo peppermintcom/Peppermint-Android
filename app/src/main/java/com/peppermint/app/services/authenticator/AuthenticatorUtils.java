@@ -47,6 +47,22 @@ public class AuthenticatorUtils {
         refreshAccount();
     }
 
+    /**
+     * Check the {@link AccountManager} and get an updated Peppermint account instance.
+     */
+    public void refreshAccount() {
+        mAccountManager = AccountManager.get(mContext);
+        Account[] accounts = mAccountManager.getAccountsByType(AuthenticatorConstants.ACCOUNT_TYPE);
+        mAccount = accounts.length > 0 ? accounts[0] : null;
+    }
+
+    // SYNCHRONIZATION
+
+    /**
+     * Requests the immediate execution of the synchronization process.
+     *
+     * @throws PeppermintApiNoAccountException if there's no authenticated account
+     */
     public void requestSync() throws PeppermintApiNoAccountException {
         if(mAccount == null) {
             throw new PeppermintApiNoAccountException();
@@ -60,6 +76,13 @@ public class AuthenticatorUtils {
         }
     }
 
+    /**
+     * Check if the {@link com.peppermint.app.services.sync.SyncService} is currently performing
+     * the synchronization process.
+     *
+     * @return true if performing the process; false otherwise
+     * @throws PeppermintApiNoAccountException if there's no authenticated account
+     */
     public boolean isPerformingSync() throws PeppermintApiNoAccountException {
         if(mAccount == null) {
             throw new PeppermintApiNoAccountException();
@@ -67,6 +90,11 @@ public class AuthenticatorUtils {
         return ContentResolver.isSyncActive(mAccount, AuthenticatorConstants.AUTHORITY);
     }
 
+    /**
+     * Schedule the repeated execution of the synchronization process.
+     *
+     * @throws PeppermintApiNoAccountException if there's no authenticated account
+     */
     public void setupPeriodicSync() throws PeppermintApiNoAccountException {
         if(mAccount == null) {
             throw new PeppermintApiNoAccountException();
@@ -78,14 +106,7 @@ public class AuthenticatorUtils {
                 SYNC_INTERVAL);
     }
 
-    /**
-     * Check the {@link AccountManager} and get an updated Peppermint account instance.
-     */
-    public void refreshAccount() {
-        mAccountManager = AccountManager.get(mContext);
-        Account[] accounts = mAccountManager.getAccountsByType(AuthenticatorConstants.ACCOUNT_TYPE);
-        mAccount = accounts != null && accounts.length > 0 ? accounts[0] : null;
-    }
+    // ACCESS TOKENS
 
     /**
      * Get the current access token associated with the Peppermint account.
@@ -129,6 +150,8 @@ public class AuthenticatorUtils {
         }
     }
 
+    // UPDATE THE ACCOUNT
+
     /**
      * Save the device's GCM registration token in the local Peppermint account data.
      * @param gcmRegistration the GCM registration token
@@ -138,20 +161,23 @@ public class AuthenticatorUtils {
         if(mAccount == null) {
             throw new PeppermintApiNoAccountException();
         }
-
         mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_GCM_REG, gcmRegistration);
     }
 
+    /**
+     * Set the server id for the local Peppermint account.
+     * @param accountServerId the peppermint account server id
+     * @throws PeppermintApiNoAccountException if there's no authenticated account
+     */
     public void updateAccountServerId(String accountServerId) throws PeppermintApiNoAccountException {
         if(mAccount == null) {
             throw new PeppermintApiNoAccountException();
         }
-
         mAccountManager.setUserData(mAccount, AuthenticatorConstants.ACCOUNT_PARAM_ACCOUNT_SERVER_ID, accountServerId);
     }
 
     /**
-     * Set a new password for the local Peppermint account. <b>This will invalidate the current access token.</b>
+     * Set a new password for the local Peppermint account.
      * @param password the new password
      * @throws PeppermintApiNoAccountException if no Peppermint account is found
      */
@@ -159,10 +185,10 @@ public class AuthenticatorUtils {
         if(mAccount == null) {
             throw new PeppermintApiNoAccountException();
         }
-
         mAccountManager.setPassword(mAccount, password);
-        /*invalidateAccessToken();*/
     }
+
+    // INSERT/DELETE ACCOUNT
 
     /**
      * Sign out from Peppermint. This will remove the local Peppermint account from the device.
@@ -191,7 +217,12 @@ public class AuthenticatorUtils {
 
         // clear app data and preferences
         Utils.clearApplicationData(mContext);
-        clearSharedPreferences();
+
+        final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        final SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.clear();
+        editor.apply();
+
         DatabaseHelper.clearInstance();
 
         // register logout request to the backend
@@ -208,8 +239,6 @@ public class AuthenticatorUtils {
             mTrackerManager.logException(e);
         }
         databaseHelper.unlock();
-
-        messengerServiceManager.doPendingLogouts();
 
         // remove the account
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
@@ -229,24 +258,8 @@ public class AuthenticatorUtils {
         AuthenticationService.postSignOutEvent();
     }
 
-    private void clearSharedPreferences() {
-        final SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-        final SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.clear();
-        editor.commit();
-    }
-
     /**
-     * Create a local Peppermint account with the specified data (see also {@link #createAccount(String, String, String, String, String, String, String, int)}).
-     * @param accessToken the registered account access token
-     * @param data the account data
-     */
-    public void createAccount(String accessToken, AuthenticationData data) {
-        createAccount(accessToken, data.getEmail(), data.getAccountServerId(), data.getPassword(), data.getDeviceServerId(), data.getDeviceId(), data.getDeviceKey(), data.getAccountType());
-    }
-
-    /**
-     * Create a local Peppermint account with the specified data (see also {@link #createAccount(String, AuthenticationData)}).
+     * Create a local Peppermint account with the specified data.
      * @param accessToken the registered account access token
      * @param email the account email
      * @param password the account password
@@ -280,6 +293,8 @@ public class AuthenticatorUtils {
         }
     }
 
+    // GET ACCOUNT
+
     /**
      * Get the Peppermint account data in the {@link AuthenticationData} wrapper class.
      * @return the {@link AuthenticationData} instance with the account data
@@ -310,10 +325,6 @@ public class AuthenticatorUtils {
 
     public Account getAccount() {
         return mAccount;
-    }
-
-    public AccountManager getAccountManager() {
-        return mAccountManager;
     }
 
 }

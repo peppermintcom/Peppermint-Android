@@ -1,4 +1,4 @@
-package com.peppermint.app.ui.chat;
+package com.peppermint.app.ui.contacts.listrecents;
 
 import android.annotation.TargetApi;
 import android.content.Context;

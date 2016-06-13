@@ -16,9 +16,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.peppermint.app.R;
-import com.peppermint.app.services.authenticator.AuthenticatorUtils;
 import com.peppermint.app.cloud.apis.peppermint.PeppermintApiNoAccountException;
 import com.peppermint.app.cloud.apis.speech.GoogleSpeechRecognizeClient;
+import com.peppermint.app.services.authenticator.AuthenticatorUtils;
 import com.peppermint.app.services.messenger.handlers.SenderPreferences;
 import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
@@ -59,7 +59,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.pref_global);
 
-        String displayName = mPreferences.getFullName();
+        final String displayName = mPreferences.getFullName();
 
         final Preference mPrefDisplayName = findPreference(PREF_DISPLAY_NAME_KEY);
         if(displayName != null && displayName.length() >= 0) {
@@ -135,7 +135,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         super.onViewCreated(view, savedInstanceState);
 
         // inflate and init custom action bar view
-        TextView actionBarView = (TextView) LayoutInflater.from(mActivity).inflate(R.layout.v_settings_actionbar, null, false);
+        final TextView actionBarView = (TextView) LayoutInflater.from(mActivity).inflate(R.layout.v_settings_actionbar, null, false);
         mActivity.getCustomActionBar().setContents(actionBarView, false);
     }
 
@@ -158,9 +158,9 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
         // custom dialog preferences can't listen to activity events
         // so invoke the onActivityDestroy from here (this dismisses the dialog)
-        int prefCount = getPreferenceScreen().getRootAdapter().getCount();
+        final int prefCount = getPreferenceScreen().getRootAdapter().getCount();
         for(int i=0; i<prefCount; i++) {
-            Object pref = getPreferenceScreen().getRootAdapter().getItem(i);
+            final Object pref = getPreferenceScreen().getRootAdapter().getItem(i);
             if(pref instanceof CustomDialogPreference) {
                 ((CustomDialogPreference) pref).onActivityDestroy();
             }
@@ -173,13 +173,13 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        Preference pref = findPreference(key);
+        final Preference pref = findPreference(key);
         if (pref != null) {
             mPreferences.getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
             if(key.compareTo(PREF_DISPLAY_NAME_KEY) == 0) {
                 pref.setTitle(sharedPreferences.getString(PREF_DISPLAY_NAME_KEY, getString(R.string.pref_title_displayname)));
             } else if(key.compareTo(PREF_CHAT_HEADS_ENABLED_KEY) == 0) {
-                boolean isEnabled = mPreferences.areChatHeadsEnabled();
+                final boolean isEnabled = mPreferences.areChatHeadsEnabled();
                 CheckBoxPreference checkPref = (CheckBoxPreference) pref;
                 checkPref.setChecked(isEnabled);
                 if(isEnabled) {

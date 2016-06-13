@@ -6,7 +6,6 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.peppermint.app.BuildConfig;
-import com.peppermint.app.PeppermintApp;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -15,6 +14,9 @@ import de.greenrobot.event.EventBus;
 
 /**
  * Created by Nuno Luz on 07-06-2016.
+ *
+ * Service that controls data synchronization.
+ *
  */
 public class SyncService extends Service {
 
@@ -25,6 +27,7 @@ public class SyncService extends Service {
     static {
         if(BuildConfig.DEBUG) {
             EVENT_BUS.register(new Object() {
+                @SuppressWarnings("unused")
                 public void onEventBackgroundThread(SyncEvent event) {
                     Log.d(TAG, event.toString());
                 }
@@ -34,10 +37,6 @@ public class SyncService extends Service {
 
     public static void registerEventListener(Object listener) {
         EVENT_BUS.register(listener);
-    }
-
-    public static void registerEventListener(Object listener, int priority) {
-        EVENT_BUS.register(listener, priority);
     }
 
     public static void unregisterEventListener(Object listener) {

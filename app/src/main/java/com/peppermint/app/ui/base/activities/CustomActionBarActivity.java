@@ -245,10 +245,6 @@ public abstract class CustomActionBarActivity extends FragmentActivity implement
         return intent;
     }
 
-    public AuthenticationData getAuthenticationData() {
-        return getAuthenticationData(getIntentReplica());
-    }
-
     public AuthenticationData getAuthenticationData(Intent forwardAfterAuthIntent) {
         // check if the account has changed (or if there's a new account)
         mAuthenticatorUtils.refreshAccount();

@@ -7,8 +7,8 @@ import android.view.View;
 
 import com.peppermint.app.R;
 import com.peppermint.app.trackers.TrackerManager;
-import com.peppermint.app.ui.base.views.CustomActionBarView;
 import com.peppermint.app.ui.base.activities.CustomActionBarActivity;
+import com.peppermint.app.ui.base.views.CustomActionBarView;
 import com.peppermint.app.ui.base.views.CustomFontTextView;
 import com.peppermint.app.ui.base.views.RoundImageView;
 import com.peppermint.app.utils.ResourceUtils;
@@ -16,7 +16,7 @@ import com.peppermint.app.utils.ResourceUtils;
 /**
  * Created by Nuno Luz on 10-11-2015.
  *
- * Activity for user authentication.
+ * Activity for chats (lists of messages).
  */
 public class ChatActivity extends CustomActionBarActivity implements RecipientDataGUI {
 
@@ -24,7 +24,7 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
 
     public static final String PARAM_CHAT_ID = TAG + "_paramChatId";
 
-    // UI
+    // ui
     private CustomFontTextView mTxtChatName, mTxtChatVia;
     private RoundImageView mImgAvatar;
 
@@ -42,7 +42,7 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
         final CustomActionBarView actionBarView = getCustomActionBar();
         if(actionBarView != null) {
             // inflate custom action bar
-            View v = getLayoutInflater().inflate(R.layout.v_chat_actionbar, null, false);
+            final View v = getLayoutInflater().inflate(R.layout.v_chat_actionbar, null, false);
 
             // custom action bar views
             mTxtChatName = (CustomFontTextView) v.findViewById(R.id.txtChatName);
@@ -55,7 +55,7 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
 
         // get arguments
         long chatId = 0;
-        Intent paramIntent = getIntent();
+        final Intent paramIntent = getIntent();
 
         if(paramIntent != null) {
             chatId = paramIntent.getLongExtra(PARAM_CHAT_ID, 0);
@@ -103,7 +103,6 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
 
     @Override
     public void setRecipientData(String recipientName, String recipientVia, String recipientPhotoUri) {
-
         mTxtChatName.setText(recipientName);
         mTxtChatVia.setText(recipientVia);
 

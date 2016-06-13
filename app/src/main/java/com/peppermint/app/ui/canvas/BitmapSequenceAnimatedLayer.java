@@ -53,16 +53,24 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
 
     @Override
     public synchronized void onDraw(View view, Canvas canvas, double interpolatedElapsedTime) {
-        int currentFrame = (int) Math.round(interpolatedElapsedTime / getDuration() * (mBitmapSequenceRes.length - 1));
+        final int currentFrame = (int) Math.round(interpolatedElapsedTime / getDuration() * (mBitmapSequenceRes.length - 1));
         initShader(currentFrame);
 
         if(canvas != null) {
             canvas.save();
             canvas.translate(mBounds.left, mBounds.top);
             if (mBorderWidth > 0 && mBorderPaint != null) {
-                canvas.drawRoundRect(new RectF(0, 0, mBounds.width(), mBounds.height()), mCornerRadius, mCornerRadius, mBorderPaint);
+                canvas.drawRoundRect(new RectF(
+                        0, 0,
+                        mBounds.width(), mBounds.height()
+                ), mCornerRadius, mCornerRadius, mBorderPaint);
             }
-            canvas.drawRoundRect(new RectF(mBorderWidth, mBorderWidth, mBounds.width() - mBorderWidth, mBounds.height() - mBorderWidth), mCornerRadius - mBorderWidth, mCornerRadius - mBorderWidth, mPaint);
+            canvas.drawRoundRect(
+                    new RectF(
+                            mBorderWidth, mBorderWidth,
+                            mBounds.width() - mBorderWidth,
+                            mBounds.height() - mBorderWidth
+                    ), mCornerRadius - mBorderWidth, mCornerRadius - mBorderWidth, mPaint);
             canvas.restore();
         }
     }
@@ -80,7 +88,8 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
         if(mBitmapSequence != null && mBitmapSequence.length > frame) {
             bitmap = mBitmapSequence[frame];
         } else if(mBitmapSequenceRes.length > frame) {
-            bitmap = ResourceUtils.getScaledResizedBitmap(mContext, mBitmapSequenceRes[frame], mBounds.width() - mBorderWidth, mBounds.height() - mBorderWidth, false);
+            bitmap = ResourceUtils.getScaledResizedBitmap(mContext, mBitmapSequenceRes[frame],
+                    mBounds.width() - mBorderWidth, mBounds.height() - mBorderWidth, false);
             if(mLastBitmap != null && !mLastBitmap.isRecycled()) {
                 mPaint.setShader(null);
                 mLastBitmap.recycle();
@@ -89,8 +98,7 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
         }
 
         if(bitmap != null) {
-            BitmapShader shader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
-            mPaint.setShader(shader);
+            mPaint.setShader(new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
         } else {
             mPaint.setShader(null);
         }
@@ -98,16 +106,12 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
         mLastFrame = frame;
     }
 
-    public int[] getBitmapSequenceResourceIds() {
-        return mBitmapSequenceRes;
-    }
-
     public synchronized void setBitmapSequenceResourceIds(boolean decodeAsYouGo, int... mBitmapSequenceRes) {
         if(!decodeAsYouGo) {
             if(mBitmapSequence != null) {
-                for(int i=0; i<mBitmapSequence.length; i++) {
-                    if(!mBitmapSequence[i].isRecycled()) {
-                        mBitmapSequence[i].recycle();
+                for(Bitmap bitmap : mBitmapSequence) {
+                    if(!bitmap.isRecycled()) {
+                        bitmap.recycle();
                     }
                 }
             }
@@ -123,14 +127,14 @@ public class BitmapSequenceAnimatedLayer extends AnimatedLayerBase implements An
 
     public synchronized void setBitmapSequenceResourceIds(boolean decodeAsYouGo, int[]... mBitmapSequenceRes) {
 
-        List<Integer> sequenceList = new ArrayList<>();
+        final List<Integer> sequenceList = new ArrayList<>();
         for(int[] bitmapData : mBitmapSequenceRes) {
             for(int i=0; i<bitmapData[1]; i++) {
                 sequenceList.add(bitmapData[0]);
             }
         }
 
-        int [] bitmapSequenceRes = new int[sequenceList.size()];
+        final int [] bitmapSequenceRes = new int[sequenceList.size()];
         for(int i=0; i<bitmapSequenceRes.length; i++) {
             bitmapSequenceRes[i] = sequenceList.get(i);
         }

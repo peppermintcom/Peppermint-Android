@@ -25,12 +25,9 @@ import java.util.List;
  */
 public class CustomActionBarView extends RelativeLayout {
 
-    private boolean mMenuAsUpInit = false;
     private ImageButton mMenuButton;
     private RelativeLayout mContainer;
     private FrameLayout mTouchInterceptor;
-
-    private List<View> mOriginalContents;
 
     public CustomActionBarView(Context context) {
         super(context);
@@ -61,11 +58,6 @@ public class CustomActionBarView extends RelativeLayout {
         layoutInflater.inflate(R.layout.v_custom_actionbar, this);
 
         mContainer = (RelativeLayout) findViewById(R.id.customActionBarContainer);
-        mOriginalContents = new ArrayList<>();
-        childCount = mContainer.getChildCount();
-        for(int i=0; i<childCount; i++) {
-            mOriginalContents.add(mContainer.getChildAt(i));
-        }
 
         if(childViews.size() > 0) {
             mContainer.removeAllViews();
@@ -79,7 +71,7 @@ public class CustomActionBarView extends RelativeLayout {
         mContainer.addView(mTouchInterceptor);
 
         mMenuButton = (ImageButton) findViewById(R.id.btnMenu);
-        setDisplayMenuAsUpEnabled(mMenuAsUpInit);
+        setDisplayMenuAsUpEnabled(false);
 
         // bo: adjust status bar height (only do it for API 21 onwards since overlay is not working for older versions)
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -106,15 +98,6 @@ public class CustomActionBarView extends RelativeLayout {
         v.setLayoutParams(params);
         mContainer.removeAllViews();
         mContainer.addView(v);
-        mContainer.addView(mTouchInterceptor);
-        invalidate();
-    }
-
-    public void restoreContents() {
-        mContainer.removeAllViews();
-        for(int i=0; i<mOriginalContents.size(); i++) {
-            mContainer.addView(mOriginalContents.get(i));
-        }
         mContainer.addView(mTouchInterceptor);
         invalidate();
     }

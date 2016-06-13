@@ -121,17 +121,16 @@ public abstract class TrackerApi {
             if(additionalMessage != null) {
                 writer.append(additionalMessage).append("\n");
             }
+
             for(boolean e = true; t != null; t = t.getCause()) {
                 String message = t.getLocalizedMessage();
                 message = message == null ? "" : message.replaceAll("(\r\n|\n|\f)", " ");
                 String causedBy = e ? "" : "Caused by: ";
                 writer.append(causedBy).append(t.getClass().getName()).append(": ").append(message).append("\n");
                 e = false;
-                StackTraceElement[] arr$ = t.getStackTrace();
-                int len$ = arr$.length;
 
-                for(int i$ = 0; i$ < len$; ++i$) {
-                    StackTraceElement element = arr$[i$];
+                final StackTraceElement[] arr$ = t.getStackTrace();
+                for(StackTraceElement element : arr$) {
                     writer.append("\tat ").append(element.toString()).append("\n");
                 }
             }

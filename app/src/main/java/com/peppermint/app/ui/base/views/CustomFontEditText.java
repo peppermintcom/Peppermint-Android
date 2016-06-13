@@ -14,6 +14,7 @@ import java.util.WeakHashMap;
 
 /**
  * Created by Nuno Luz on 10-11-2015.
+ *
  * {@link EditText} with the custom textFont attribute.
  */
 public class CustomFontEditText extends EditText {

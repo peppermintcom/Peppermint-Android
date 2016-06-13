@@ -16,6 +16,8 @@ import com.peppermint.app.utils.ResourceUtils;
 
 /**
  * Created by Nuno Luz on 22-10-2015.
+ *
+ * Custom styled {@link CheckBoxPreference} with a {@link com.peppermint.app.ui.base.views.CustomFontTextView}.
  */
 public class CustomCheckBoxPreference extends CheckBoxPreference {
 
@@ -45,7 +47,7 @@ public class CustomCheckBoxPreference extends CheckBoxPreference {
 
     @Override
     protected View onCreateView(ViewGroup parent) {
-        ViewGroup v = (ViewGroup) super.onCreateView(parent);
+        final ViewGroup v = (ViewGroup) super.onCreateView(parent);
         mTxtContent = (TextView) v.findViewById(R.id.content);
         return v;
     }
@@ -56,8 +58,8 @@ public class CustomCheckBoxPreference extends CheckBoxPreference {
 
         mTxtContent = (TextView) view.findViewById(R.id.content);
 
-        TextView txtTitle = (TextView) view.findViewById(android.R.id.title);
-        TextView txtSummary = (TextView) view.findViewById(android.R.id.summary);
+        final TextView txtTitle = (TextView) view.findViewById(android.R.id.title);
+        final TextView txtSummary = (TextView) view.findViewById(android.R.id.summary);
 
         if(mContent == null) {
             mTxtContent.setVisibility(View.GONE);

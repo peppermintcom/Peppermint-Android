@@ -77,10 +77,10 @@ public class LoadingView extends AnimatedView {
         int textSpacing = Utils.dpToPx(getContext(), DEF_TEXT_SPACING_DP);
         mProgressText = DEF_PROGRESS_TEXT;
 
-        String textFont = "fonts/OpenSans-Semibold.ttf";
+        String textFont = getContext().getString(R.string.font_semibold);
 
         if(attrs != null) {
-            TypedArray a = getContext().getTheme().obtainStyledAttributes(
+            final TypedArray a = getContext().getTheme().obtainStyledAttributes(
                     attrs,
                     R.styleable.PeppermintView,
                     0, 0);
@@ -91,7 +91,7 @@ public class LoadingView extends AnimatedView {
                 backgroundColor1 = a.getColor(R.styleable.PeppermintView_backgroundColor1, Color.parseColor(DEF_BACKGROUND_COLOR1));
                 backgroundColor2 = a.getColor(R.styleable.PeppermintView_backgroundColor2, Color.parseColor(DEF_BACKGROUND_COLOR2));
 
-                String aTextFont = a.getString(R.styleable.PeppermintView_textFont);
+                final String aTextFont = a.getString(R.styleable.PeppermintView_textFont);
                 if(aTextFont != null) {
                     textFont = aTextFont;
                 }
@@ -107,21 +107,21 @@ public class LoadingView extends AnimatedView {
             }
         }
 
-        Paint background1Paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        final Paint background1Paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         background1Paint.setStyle(Paint.Style.FILL);
         background1Paint.setColor(backgroundColor1);
 
-        Paint background2Paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        final Paint background2Paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         background2Paint.setStyle(Paint.Style.FILL);
         background2Paint.setColor(backgroundColor2);
 
-        Paint bitmapPaint = new Paint();
+        final Paint bitmapPaint = new Paint();
         bitmapPaint.setColorFilter(new PorterDuffColorFilter(background2Paint.getColor(), PorterDuff.Mode.MULTIPLY));
         bitmapPaint.setAntiAlias(true);
         bitmapPaint.setFilterBitmap(true);
         bitmapPaint.setDither(true);
 
-        Typeface font = Typeface.createFromAsset(getContext().getAssets(), textFont);
+        final Typeface font = Typeface.createFromAsset(getContext().getAssets(), textFont);
         mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setStyle(Paint.Style.FILL);
         mTextPaint.setTextAlign(Paint.Align.CENTER);
@@ -146,7 +146,7 @@ public class LoadingView extends AnimatedView {
     protected synchronized void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
-        float smallerSide = getLocalHeight() > getLocalWidth() ? getLocalWidth() : getLocalHeight();
+        final float smallerSide = getLocalHeight() > getLocalWidth() ? getLocalWidth() : getLocalHeight();
 
         mTextSize = smallerSide / 10f;
         mTextPaint.setTextSize(mTextSize);
@@ -159,9 +159,9 @@ public class LoadingView extends AnimatedView {
         // eye bounds
         final float eyeXFactor = 7f;
         final float eyeYFactor = 5.5f;
-        int eyeRadius = (int) (smallerSide / 18f);
-        int eyeCenterX = (int) (mFullBounds.centerX() - (smallerSide / eyeXFactor));
-        int eyeCenterY = (int) (mFullBounds.centerY() - (smallerSide / eyeYFactor));
+        final int eyeRadius = (int) (smallerSide / 18f);
+        final int eyeCenterX = (int) (mFullBounds.centerX() - (smallerSide / eyeXFactor));
+        final int eyeCenterY = (int) (mFullBounds.centerY() - (smallerSide / eyeYFactor));
         mLeftEyeBounds.set(eyeCenterX - eyeRadius, eyeCenterY - eyeRadius, eyeCenterX + eyeRadius, eyeCenterY + eyeRadius);
         mLeftEye.setBounds(mLeftEyeBounds);
 
@@ -170,7 +170,7 @@ public class LoadingView extends AnimatedView {
         mRightEye.setBounds(mRightEyeBounds);
 
         // text bounds
-        int textY = (int) ((getLocalHeight() / 2f) + (smallerSide / 4f));
+        final int textY = (int) ((getLocalHeight() / 2f) + (smallerSide / 4f));
         mTextBounds.set(0, (int) (textY - mTextSize), (int) getLocalWidth(), (int) (textY + mTextSize));
         mTextLayer.setBounds(mTextBounds);
     }
