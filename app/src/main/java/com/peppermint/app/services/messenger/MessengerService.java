@@ -54,8 +54,10 @@ import com.peppermint.app.utils.Utils;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -256,6 +258,8 @@ public class MessengerService extends Service {
         }
     };
 
+    private ExecutorService mReadsExecutor = Executors.newCachedThreadPool();
+
     // broadcast receiver that handles internet connectivity status changes
     private ScheduledExecutorService mScheduledExecutor;     // a thread pool that sends queued requests
     private BroadcastReceiver mConnectivityChangeReceiver = new BroadcastReceiver() {
@@ -449,12 +453,15 @@ public class MessengerService extends Service {
 
         mSenderManager.deinit();
 
+        mReadsExecutor.shutdown();
+
         super.onDestroy();
     }
 
     private void markAsPlayed(Message message) {
-        if(!message.isPlayed()) {
-            (new MarkAsPlayedTask(message)).execute((Void) null);
+        if(!message.isPlayed() && !mMarkAsPlayedTasks.contains(message.getServerId())) {
+            mMarkAsPlayedTasks.add(message.getServerId());
+            (new MarkAsPlayedTask(message)).executeOnExecutor(mReadsExecutor);
         }
         removeNotification(message);
     }
@@ -597,6 +604,8 @@ public class MessengerService extends Service {
         notificationManager.cancel(FIRST_AUDIO_MESSAGE_NOTIFICATION_ID);
     }
 
+    private Set<String> mMarkAsPlayedTasks = new HashSet<>();
+
     private class MarkAsPlayedTask extends SenderSupportTask {
 
         public MarkAsPlayedTask(Message message) {
@@ -616,7 +625,7 @@ public class MessengerService extends Service {
             getPeppermintApi().markAsPlayedMessage(getId().toString(), message.getServerId());
         }
 
-        @SuppressWarnings("UnusedParameters")
+        @SuppressWarnings({"UnusedParameters", "unused"})
         public void onEventMainThread(SignOutEvent event) {
             cancel(true);
         }
@@ -631,6 +640,8 @@ public class MessengerService extends Service {
         protected void onCancelled(Void aVoid) {
             super.onCancelled(aVoid);
             AuthenticationService.unregisterEventListener(this);
+            final Message message = getMessage();
+            mMarkAsPlayedTasks.remove(message.getServerId());
         }
 
         @Override
@@ -648,6 +659,7 @@ public class MessengerService extends Service {
             }
             DataObjectManager.update(MessageManager.getInstance(MessengerService.this), message);
             refreshBadge();
+            mMarkAsPlayedTasks.remove(message.getServerId());
         }
     }
 }

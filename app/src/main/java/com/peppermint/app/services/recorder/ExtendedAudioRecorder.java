@@ -47,7 +47,7 @@ public class ExtendedAudioRecorder {
     }
 
     private static final String TAG = ExtendedAudioRecorder.class.getSimpleName();
-    private static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd'_'HH-mm-ss", Locale.ROOT);
+    private static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd'_'HH-mm-ss", Locale.ENGLISH);
 
     private static final int SAMPLE_SIZE = 1024;
     private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO;

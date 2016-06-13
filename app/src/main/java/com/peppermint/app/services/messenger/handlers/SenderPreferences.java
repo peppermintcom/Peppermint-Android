@@ -149,7 +149,7 @@ public class SenderPreferences {
     }
 
     public String getTranscriptionLanguageCode() {
-        return getSharedPreferences().getString(TRANSCRIPTION_LANGUAGE_CODE, Utils.toBcp47LanguageTag(Locale.getDefault()));
+        return getSharedPreferences().getString(TRANSCRIPTION_LANGUAGE_CODE, Utils.toBcp47LanguageTag(Locale.ENGLISH));
     }
 
     public boolean isAutomaticTranscription() {

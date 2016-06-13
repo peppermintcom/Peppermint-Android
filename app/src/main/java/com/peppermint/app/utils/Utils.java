@@ -57,7 +57,7 @@ public class Utils {
         long mins = totalSecs / 60;
         long secs = totalSecs % 60;
 
-        return String.format(Locale.ROOT, "%02d:%02d", mins, secs);
+        return String.format(Locale.ENGLISH, "%02d:%02d", mins, secs);
     }
 
     /**

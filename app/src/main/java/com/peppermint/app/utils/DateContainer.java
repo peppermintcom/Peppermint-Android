@@ -31,9 +31,9 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
     public static final String FRIENDLY_MONTH_DATE_FORMAT = "d MMM";
     public static final String FRIENDLY_WEEK_DATE_FORMAT = "EEEE";
 
-	private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat(DATE_FORMAT, Locale.ROOT);
-	private static final SimpleDateFormat TIME_FORMATTER = new SimpleDateFormat(TIME_FORMAT, Locale.ROOT);
-	private static final SimpleDateFormat DATE_TIME_FORMATTER = new SimpleDateFormat(DATETIME_FORMAT, Locale.ROOT);
+	private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat(DATE_FORMAT, Locale.ENGLISH);
+	private static final SimpleDateFormat TIME_FORMATTER = new SimpleDateFormat(TIME_FORMAT, Locale.ENGLISH);
+	private static final SimpleDateFormat DATE_TIME_FORMATTER = new SimpleDateFormat(DATETIME_FORMAT, Locale.ENGLISH);
 
     public static final int TYPE_DATE = 1;
     public static final int TYPE_TIME = 2;
@@ -105,7 +105,7 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
         if(customPattern == null) {
             return getAsString(timeZone);
         }
-        SimpleDateFormat formatter = new SimpleDateFormat(customPattern, Locale.ROOT);
+        SimpleDateFormat formatter = new SimpleDateFormat(customPattern, Locale.ENGLISH);
         formatter.setTimeZone(timeZone);
         return formatter.format(mInputCalendar.getTime());
 	}
@@ -252,7 +252,7 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
         Calendar refDate = (Calendar) date.getCalendar().clone();
         refDate.setTimeZone(timeZone);
 
-        SimpleDateFormat friendlyFullDateFormat = new SimpleDateFormat(FRIENDLY_FULL_DATE_FORMAT, Locale.ROOT);
+        SimpleDateFormat friendlyFullDateFormat = new SimpleDateFormat(FRIENDLY_FULL_DATE_FORMAT, Locale.ENGLISH);
         friendlyFullDateFormat.setTimeZone(timeZone);
         String label = friendlyFullDateFormat.format(refDate.getTime());
 
@@ -271,7 +271,7 @@ public class DateContainer implements Comparable<DateContainer>, Cloneable {
                 if(refDate.compareTo(tmpDate) < 0) {*/
                     refDate.add(Calendar.HOUR_OF_DAY, 24);
                     if(refDate.get(Calendar.YEAR) == tmpDate.get(Calendar.YEAR)) {
-                        SimpleDateFormat friendlyMonthDateFormat = new SimpleDateFormat(FRIENDLY_MONTH_DATE_FORMAT, Locale.ROOT);
+                        SimpleDateFormat friendlyMonthDateFormat = new SimpleDateFormat(FRIENDLY_MONTH_DATE_FORMAT, Locale.ENGLISH);
                         friendlyMonthDateFormat.setTimeZone(timeZone);
                         label = friendlyMonthDateFormat.format(refDate.getTime());
                     }

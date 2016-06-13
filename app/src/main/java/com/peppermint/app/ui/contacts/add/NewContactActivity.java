@@ -377,7 +377,7 @@ public class NewContactActivity extends CustomActionBarActivity implements Adapt
                 if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
                     File photoFile = null;
                     try {
-                        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.getDefault()).format(new Date());
+                        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.ENGLISH).format(new Date());
                         String imageFileName = "PeppermintAvatar_" + timeStamp + "_";
                         File storageDir = new File(Environment.getExternalStoragePublicDirectory(
                                 Environment.DIRECTORY_PICTURES), "Peppermint");
