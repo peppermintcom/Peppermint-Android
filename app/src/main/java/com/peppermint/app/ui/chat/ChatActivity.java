@@ -83,6 +83,7 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
         super.onStart();
         getAuthenticationData(getIntentReplica());
         mChatController.start();
+        mChatController.refreshList();
     }
 
     @Override

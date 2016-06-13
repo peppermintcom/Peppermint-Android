@@ -20,12 +20,14 @@ public class SyncEvent {
     private Set<Long> mReceivedMessageIds;
     private Set<Long> mSentMessageIds;
     private Set<Long> mAffectedChatIds;
+    private boolean mFirstSync = false;
 
-    public SyncEvent(int mType, Set<Long> mReceivedMessageIds, Set<Long> mSentMessageIds, Set<Long> mAffectedChatIds, Throwable mError) {
+    public SyncEvent(int mType, Set<Long> mReceivedMessageIds, Set<Long> mSentMessageIds, Set<Long> mAffectedChatIds, boolean isFirstSync, Throwable mError) {
         this.mType = mType;
         this.mReceivedMessageIds = mReceivedMessageIds;
         this.mSentMessageIds = mSentMessageIds;
         this.mAffectedChatIds = mAffectedChatIds;
+        this.mFirstSync = isFirstSync;
         this.mError = mError;
     }
 
@@ -67,6 +69,14 @@ public class SyncEvent {
 
     public void setError(Throwable mError) {
         this.mError = mError;
+    }
+
+    public boolean isFirstSync() {
+        return mFirstSync;
+    }
+
+    public void setFirstSync(boolean mFirstSync) {
+        this.mFirstSync = mFirstSync;
     }
 
     @Override

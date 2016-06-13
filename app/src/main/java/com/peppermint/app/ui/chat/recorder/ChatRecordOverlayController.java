@@ -69,11 +69,6 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         mMessengerServiceManager.addServiceListener(this);
         mPlayerServiceManager.addServiceListener(this);
 
-        Log.d(TAG, "Registered Event Listener");
-        SyncService.registerEventListener(this);
-        MessageManager.getInstance(mContext).registerDataListener(this);
-        MessengerService.registerEventListener(this);
-
         // start services
         mMessengerServiceManager.start();
         mPlayerServiceManager.start();
@@ -94,12 +89,23 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
 
     public void start() {
         mStarted = true;
+
+        Log.d(TAG, "Registered Event Listener");
+        SyncService.registerEventListener(this);
+        MessageManager.getInstance(mContext).registerDataListener(this);
+        MessengerService.registerEventListener(this);
+
         mMessengerServiceManager.bind();
         mPlayerServiceManager.bind();
         mChatRecordOverlay.bindService();
     }
 
     public void stop() {
+        Log.d(TAG, "Unregistered Event Listener");
+        SyncService.unregisterEventListener(this);
+        MessageManager.getInstance(mContext).unregisterDataListener(this);
+        MessengerService.unregisterEventListener(this);
+
         mChatRecordOverlay.hide(false, true);
         mChatRecordOverlay.unbindService();
         mPlayerServiceManager.unbind();
@@ -108,10 +114,6 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     }
 
     public void deinit() {
-        Log.d(TAG, "Unregistered Event Listener");
-        SyncService.unregisterEventListener(this);
-        MessageManager.getInstance(mContext).unregisterDataListener(this);
-        MessengerService.unregisterEventListener(this);
         mMessengerServiceManager.removeServiceListener(this);
         mPlayerServiceManager.removeServiceListener(this);
     }

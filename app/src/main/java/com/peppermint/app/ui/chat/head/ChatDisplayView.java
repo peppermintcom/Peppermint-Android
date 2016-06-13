@@ -61,6 +61,7 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
         this.mOverlayManager = new OverlayManager(mContext, null, (FrameLayout) mView.findViewById(R.id.lytOverlay));
 
         this.mChatController = new ChatController(mContext, this);
+        this.mChatController.setAllowSkipNotification(false);
         this.mChatController.init(mView, mOverlayManager, mView, null);
 
         super.init();

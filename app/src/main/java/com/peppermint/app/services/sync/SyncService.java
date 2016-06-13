@@ -43,13 +43,13 @@ public class SyncService extends Service {
         EVENT_BUS.unregister(listener);
     }
 
-    protected static void postSyncEvent(int type, Set<Long> receivedMessageIds, Set<Long> sentMessageIds, Set<Long> affectedChatIds, Throwable error) {
+    protected static void postSyncEvent(int type, Set<Long> receivedMessageIds, Set<Long> sentMessageIds, Set<Long> affectedChatIds, boolean isFirstSync, Throwable error) {
         if(EVENT_BUS.hasSubscriberForEvent(SyncEvent.class)) {
             EVENT_BUS.post(new SyncEvent(type,
                     receivedMessageIds != null ? new HashSet<>(receivedMessageIds) : null,
                     sentMessageIds != null ? new HashSet<>(sentMessageIds) : null,
                     affectedChatIds != null ? new HashSet<>(affectedChatIds) : null,
-                    error));
+                    isFirstSync, error));
         }
     }
 

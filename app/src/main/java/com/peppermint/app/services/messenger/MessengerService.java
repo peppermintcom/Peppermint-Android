@@ -55,6 +55,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -334,9 +335,19 @@ public class MessengerService extends Service {
 
     private Object mSyncEventReceiver = new Object() {
         @SuppressWarnings("unused") // used through reflection
-        public void onEventMainThread(SyncEvent event) {
+        public void onEventBackgroundThread(SyncEvent event) {
             if(event.getType() == SyncEvent.EVENT_FINISHED) {
                 refreshBadge();
+                if(!event.isFirstSync()) {
+                    final Set<Long> messageIdSet = event.getReceivedMessageIdSet();
+                    for (long messageId : messageIdSet) {
+                        final Message message = MessageManager.getInstance(MessengerService.this).
+                                getMessageByIdOrServerId(DatabaseHelper.getInstance(MessengerService.this).getReadableDatabase(), messageId, null, true);
+                        if(message != null) {
+                            showNotification(message);
+                        }
+                    }
+                }
             }
         }
     };
@@ -512,12 +523,20 @@ public class MessengerService extends Service {
         notificationIntent.putExtra(ChatActivity.PARAM_CHAT_ID, message.getChatId());
         PendingIntent pendingIntent = PendingIntent.getActivity(MessengerService.this, (int) message.getId(), notificationIntent, 0);
 
-        String title = message.getChatParameter().getRecipientListDisplayNames();
+        final String displayNames = message.getChatParameter().getRecipientListDisplayNames();
+
+        String title = getString(R.string.new_message);
+        String text = displayNames + " " + getString(R.string.sent_you_a_message);
+
+        if(message.getRecordingParameter().getTranscription() != null) {
+            title = displayNames;
+            text = message.getRecordingParameter().getTranscription();
+        }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(MessengerService.this)
                 .setSmallIcon(R.drawable.ic_mail_36dp)
-                .setContentTitle(getString(R.string.new_message))
-                .setContentText(title + " " + getString(R.string.sent_you_a_message))
+                .setContentTitle(title)
+                .setContentText(text)
                 .setContentIntent(pendingIntent)
                 .setSound(Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.waterdrop))
                 .setGroup(String.valueOf(message.getChatId()));
