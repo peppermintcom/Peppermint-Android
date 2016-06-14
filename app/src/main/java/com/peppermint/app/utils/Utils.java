@@ -280,7 +280,7 @@ public class Utils {
             if (cursor != null) {
                 if (cursor.getCount() == 1 && cursor.moveToFirst()) {
                     data[0] = cursor.getString(cursor.getColumnIndex(ContactsContract.Profile.DISPLAY_NAME));
-                    long photoId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Profile.PHOTO_URI));
+                    long photoId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Profile.PHOTO_ID));
                     if (photoId > 0) {
                         data[1] = ContentUris.withAppendedId(ContactsContract.Data.CONTENT_URI,
                                 photoId).toString();
