@@ -226,6 +226,10 @@ public class AllContactsListFragment extends ContactListFragment {
 
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        if(position >= mAdapter.getCount()) {
+            return false;
+        }
+
         final ContactRaw contactRaw = mAdapter.getContactRaw(position);
         if (contactRaw.getEmail() == null) {
             mAddContactDialog.setContact(contactRaw);

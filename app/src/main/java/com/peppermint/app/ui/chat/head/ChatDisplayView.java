@@ -16,6 +16,7 @@ import com.peppermint.app.ui.base.OverlayManager;
 import com.peppermint.app.ui.base.views.TouchInterceptorView;
 import com.peppermint.app.ui.chat.ChatController;
 import com.peppermint.app.ui.chat.RecipientDataGUI;
+import com.peppermint.app.utils.ResourceUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -120,7 +121,7 @@ public class ChatDisplayView extends DisplayView<TouchInterceptorView> implement
     public void setRecipientData(String recipientName, String recipientVia, String recipientPhotoUri) {
         if(mView != null) {
             TextView txtName = (TextView) mView.findViewById(R.id.txtName);
-            txtName.setText(recipientName);
+            txtName.setText(ResourceUtils.getOptionalVariableString(mContext, recipientName));
         }
     }
 

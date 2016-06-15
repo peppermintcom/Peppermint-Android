@@ -1,6 +1,7 @@
 package com.peppermint.app.ui.chat;
 
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -104,11 +105,22 @@ public class ChatActivity extends CustomActionBarActivity implements RecipientDa
 
     @Override
     public void setRecipientData(String recipientName, String recipientVia, String recipientPhotoUri) {
-        mTxtChatName.setText(recipientName);
-        mTxtChatVia.setText(recipientVia);
+        mTxtChatName.setText(ResourceUtils.getOptionalVariableString(this, recipientName));
+
+        if(recipientVia != null && recipientVia.trim().length() > 0) {
+            mTxtChatVia.setText(recipientVia);
+            mTxtChatVia.setVisibility(View.VISIBLE);
+        } else {
+            mTxtChatVia.setText("");
+            mTxtChatVia.setVisibility(View.GONE);
+        }
 
         if(recipientPhotoUri != null) {
-            mImgAvatar.setImageDrawable(ResourceUtils.getDrawableFromUri(this, Uri.parse(recipientPhotoUri)));
+            Drawable drawable = ResourceUtils.getOptionalVariableDrawable(this, recipientPhotoUri);
+            if(drawable == null) {
+                drawable = ResourceUtils.getDrawableFromUri(this, Uri.parse(recipientPhotoUri));
+            }
+            mImgAvatar.setImageDrawable(drawable);
         } else {
             mImgAvatar.setImageDrawable(null);
         }

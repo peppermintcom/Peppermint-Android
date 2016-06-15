@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.ListFragment;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ResolveInfo;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Handler;
@@ -13,15 +15,23 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.HeaderViewListAdapter;
+import android.widget.ListAdapter;
 import android.widget.PopupWindow;
+import android.widget.Toast;
 
 import com.peppermint.app.R;
 import com.peppermint.app.dal.DataObjectEvent;
+import com.peppermint.app.dal.DatabaseHelper;
 import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.dal.chat.ChatManager;
 import com.peppermint.app.dal.contact.ContactRaw;
 import com.peppermint.app.dal.message.Message;
+import com.peppermint.app.dal.recipient.Recipient;
+import com.peppermint.app.dal.recipient.RecipientManager;
 import com.peppermint.app.dal.recording.Recording;
 import com.peppermint.app.services.sync.SyncEvent;
 import com.peppermint.app.trackers.TrackerManager;
@@ -29,11 +39,14 @@ import com.peppermint.app.ui.canvas.avatar.AnimatedAvatarView;
 import com.peppermint.app.ui.chat.ChatActivity;
 import com.peppermint.app.ui.chat.recorder.ChatRecordOverlayController;
 import com.peppermint.app.ui.contacts.add.NewContactActivity;
+import com.peppermint.app.ui.contacts.listrecents.ChatView;
 import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.SameAsyncTaskExecutor;
 import com.peppermint.app.utils.Utils;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -62,6 +75,10 @@ public abstract class ContactListFragment extends ListFragment implements
     private SwipeRefreshLayout mLytSwipeRefresh;
     private SearchListBarView mSearchListBarView;
     private ViewGroup mListFooterView;
+    private View mEmptyLayout;
+
+    private ChatView mChatShareBoth, mChatShareAudio, mChatShareTranscription;
+    private ShareListDialog mShareListDialog;
 
     // hold popup
     private PopupWindow mHoldPopup;
@@ -122,6 +139,7 @@ public abstract class ContactListFragment extends ListFragment implements
             // check if data is valid and activity has not been destroyed by the main thread
             if(mActivity != null && mLytSwipeRefresh != null) {
                 mLytSwipeRefresh.setRefreshing(false);
+                checkEmpty();
             }
         }
 
@@ -131,6 +149,16 @@ public abstract class ContactListFragment extends ListFragment implements
 
             if(mActivity != null && mLytSwipeRefresh != null) {
                 mLytSwipeRefresh.setRefreshing(false);
+                checkEmpty();
+            }
+        }
+
+        private void checkEmpty() {
+            final ListAdapter listAdapter = getListView().getAdapter();
+            if(listAdapter == null || ((HeaderViewListAdapter) listAdapter).getWrappedAdapter().getCount() <= 0) {
+                mEmptyLayout.setVisibility(View.VISIBLE);
+            } else {
+                mEmptyLayout.setVisibility(View.GONE);
             }
         }
 
@@ -226,13 +254,95 @@ public abstract class ContactListFragment extends ListFragment implements
 
         // init no recipients view
         mListFooterView = (ViewGroup) inflater.inflate(R.layout.v_recipients_footer_layout, null);
+        final AbsListView.LayoutParams layoutParams = new AbsListView.LayoutParams(AbsListView.LayoutParams.MATCH_PARENT, AbsListView.LayoutParams.MATCH_PARENT);
+        mListFooterView.setLayoutParams(layoutParams);
+
+        mEmptyLayout = mListFooterView.findViewById(R.id.lytEmpty);
 
         final Button btnAddContact = (Button) mListFooterView.findViewById(R.id.btnAddContact);
-        btnAddContact.setId(0);
         btnAddContact.setOnClickListener(this);
 
-        final Button btnAddContactEmpty = (Button) v.findViewById(R.id.btnAddContact);
-        btnAddContactEmpty.setOnClickListener(this);
+        mChatShareBoth = (ChatView) mListFooterView.findViewById(R.id.chatShareBoth);
+        mChatShareAudio = (ChatView) mListFooterView.findViewById(R.id.chatShareAudio);
+        mChatShareTranscription = (ChatView) mListFooterView.findViewById(R.id.chatShareTranscription);
+
+        // dummy chats for sharing
+        final Recipient recipientTranscription = new Recipient(0, 0, 0, 0, Recipient.NAME_SHARE_TRANSCRIPTION, Recipient.SHARE_MIMETYPE, "", Recipient.PHOTO_SHARE, null, false);
+        final Recipient recipientTranscriptionAudio = new Recipient(0, 0, 0, 0, Recipient.NAME_SHARE_TRANSCRIPTION_AUDIO, Recipient.SHARE_MIMETYPE, "", Recipient.PHOTO_SHARE, null, false);
+        final Recipient recipientAudio = new Recipient(0, 0, 0, 0, Recipient.NAME_SHARE_AUDIO, Recipient.SHARE_MIMETYPE, "", Recipient.PHOTO_SHARE, null, false);
+
+        final Chat chatTranscription = new Chat(0, null, null, recipientTranscription);
+        chatTranscription.setTitle(chatTranscription.getRecipientListDisplayNames());
+        chatTranscription.setSendMode(Chat.SEND_MODE_TRANSCRIPTION);
+
+        final Chat chatTranscriptionAudio = new Chat(0, null, null, recipientTranscriptionAudio);
+        chatTranscriptionAudio.setTitle(chatTranscriptionAudio.getRecipientListDisplayNames());
+        chatTranscriptionAudio.setSendMode(Chat.SEND_MODE_BOTH);
+
+        final Chat chatAudio = new Chat(0, null, null, recipientAudio);
+        chatAudio.setTitle(chatAudio.getRecipientListDisplayNames());
+        chatAudio.setSendMode(Chat.SEND_MODE_AUDIO);
+
+        mChatShareBoth.setChat(chatTranscriptionAudio);
+        mChatShareAudio.setChat(chatAudio);
+        mChatShareTranscription.setChat(chatTranscription);
+
+        mChatShareBoth.setOnClickListener(mChatShareClickListener);
+        mChatShareBoth.setOnLongClickListener(mChatShareLongClickListener);
+
+        mChatShareAudio.setOnClickListener(mChatShareClickListener);
+        mChatShareAudio.setOnLongClickListener(mChatShareLongClickListener);
+
+        mChatShareTranscription.setOnClickListener(mChatShareClickListener);
+        mChatShareTranscription.setOnLongClickListener(mChatShareLongClickListener);
+
+        mShareListDialog = new ShareListDialog(mActivity);
+        mShareListDialog.setOnShareListener(new ShareListDialog.OnShareListener() {
+            @Override
+            public void onShare(ResolveInfo appInfo) {
+                final String packageName = appInfo.activityInfo.packageName;
+                final String componentName = appInfo.activityInfo.name;
+
+                final String recipientName = mShareListDialog.getChat().getRecipientListDisplayNames();
+                final String appName = appInfo.loadLabel(mActivity.getPackageManager()).toString();
+
+                Chat chat = new Chat(mShareListDialog.getChat());
+                final Recipient recipient = new Recipient(0, 0, 0, 0, recipientName, Recipient.SHARE_MIMETYPE,
+                        appName, "{{" + packageName + "/" + componentName + "}}", null, false);
+                recipient.setViaShare(packageName);
+                chat.setRecipientList(Arrays.asList(recipient));
+
+                final List<Chat> possibleChats = ChatManager.getInstance(mActivity).
+                        getChatsByRecipientsAndSendMode(DatabaseHelper.getInstance(mActivity).getReadableDatabase(),
+                                Arrays.asList(recipient), chat.getSendMode());
+                if(possibleChats.size() > 0) {
+                    chat = possibleChats.get(0);
+                }
+
+                if(chat.getId() <= 0) {
+                    final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(mActivity);
+                    databaseHelper.lock();
+                    try {
+                        final SQLiteDatabase db = databaseHelper.getWritableDatabase();
+                        RecipientManager.getInstance(mActivity).insertOrUpdate(db, recipient);
+                        ChatManager.getInstance(mActivity).insert(db, chat);
+                    } catch(SQLException e) {
+                        TrackerManager.getInstance(mActivity).logException(e);
+                        Toast.makeText(mActivity, R.string.msg_database_error, Toast.LENGTH_LONG).show();
+                    } finally {
+                        databaseHelper.unlock();
+                    }
+                }
+
+                mChatRecordOverlayController.getMessagesServiceManager().send(chat, mShareListDialog.getRecording());
+
+                final Intent chatIntent = new Intent(mActivity, ChatActivity.class);
+                chatIntent.putExtra(ChatActivity.PARAM_CHAT_ID, chat.getId());
+                startActivity(chatIntent);
+
+                mShareListDialog.dismiss();
+            }
+        });
 
         return v;
     }
@@ -284,11 +394,19 @@ public abstract class ContactListFragment extends ListFragment implements
             }
 
             @Override
-            protected Message sendMessage(Chat chat, Recording recording) {
+            public Message sendMessage(Chat chat, Recording recording) {
+                if(chat.getId() <= 0 && chat.getRecipientList().get(0).getMimeType().equals(Recipient.SHARE_MIMETYPE)) {
+                    mShareListDialog.setChat(chat);
+                    mShareListDialog.setRecording(recording);
+                    mShareListDialog.show();
+                    return null;
+                }
+
                 final Message message = super.sendMessage(chat, recording);
 
                 // launch chat activity
                 final long chatId = message.getChatParameter().getPeppermintChatId() > 0 ? message.getChatParameter().getPeppermintChatId() : message.getChatParameter().getId();
+
                 final Intent chatIntent = new Intent(mActivity, ChatActivity.class);
                 chatIntent.putExtra(ChatActivity.PARAM_CHAT_ID, chatId);
                 startActivity(chatIntent);
@@ -343,6 +461,10 @@ public abstract class ContactListFragment extends ListFragment implements
 
     @Override
     public void onDestroy() {
+        if(mShareListDialog.isShowing()) {
+            mShareListDialog.dismiss();
+        }
+
         if(mRefreshTask != null) {
             mRefreshTask.cancel(true);
             mRefreshTask.shutdownExecutor();
@@ -479,4 +601,20 @@ public abstract class ContactListFragment extends ListFragment implements
     public void onRefresh() {
         refresh();
     }
+
+    private final View.OnClickListener mChatShareClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            showHoldPopup(v);
+        }
+    };
+
+    private final View.OnLongClickListener mChatShareLongClickListener = new View.OnLongClickListener() {
+        @Override
+        public boolean onLongClick(View v) {
+            mChatRecordOverlayController.triggerRecording(v, ((ChatView) v).getChat());
+            getListView().requestDisallowInterceptTouchEvent(true);
+            return false;
+        }
+    };
 }

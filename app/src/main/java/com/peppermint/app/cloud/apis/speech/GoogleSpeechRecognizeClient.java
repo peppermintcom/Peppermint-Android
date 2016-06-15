@@ -290,6 +290,7 @@ public class GoogleSpeechRecognizeClient {
         HttpJSONResponse<SpeechApiHttpResponseData> response = new HttpJSONResponse<>(mHttpResponseDataParser);
         request.execute(response);
 
+        Log.d(TAG, String.valueOf(response.getBody()));
         final SpeechApiHttpResponseData responseData = response.getJsonBody();
 
         if(response.getCode() / 100 != 2) {

@@ -12,6 +12,14 @@ import java.io.Serializable;
  */
 public class Recipient extends DataObject implements Serializable {
 
+    public static final String NAME_SHARE_TRANSCRIPTION_AUDIO = "{{share_transcription_and_audio}}";
+    public static final String NAME_SHARE_TRANSCRIPTION = "{{share_transcription}}";
+    public static final String NAME_SHARE_AUDIO = "{{share_audio}}";
+
+    public static final String PHOTO_SHARE = "{{ic_share_48dp}}";
+
+    public static final String SHARE_MIMETYPE = "com.peppermint.app.cursor.item/share_v1";
+
     public static final int FIELD_DROIDCONTACT_RAW_ID = 1;
     public static final int FIELD_DROIDCONTACT_ID = 2;
     public static final int FIELD_DROIDCONTACT_DATA_ID = 3;
@@ -22,6 +30,7 @@ public class Recipient extends DataObject implements Serializable {
     public static final int FIELD_PHOTO_URI = 7;
     public static final int FIELD_ADDED_TIMESTAMP = 8;
     public static final int FIELD_PEPPERMINT = 9;
+    public static final int FIELD_VIA_SHARE = 10;
 
     private long mId, mDroidContactRawId, mDroidContactId, mDroidContactDataId;
     private String mDisplayName;
@@ -30,6 +39,7 @@ public class Recipient extends DataObject implements Serializable {
     private String mPhotoUri;
     private String mAddedTimestamp;
     private boolean mPeppermint;
+    private String mViaShare;
 
     public Recipient() {
     }
@@ -163,6 +173,16 @@ public class Recipient extends DataObject implements Serializable {
         boolean oldValue = this.mPeppermint;
         this.mPeppermint = mPeppermint;
         registerUpdate(FIELD_PEPPERMINT, oldValue, mPeppermint);
+    }
+
+    public String getViaShare() {
+        return mViaShare;
+    }
+
+    public void setViaShare(String mViaShare) {
+        String oldValue = this.mViaShare;
+        this.mViaShare = mViaShare;
+        registerUpdate(FIELD_VIA_SHARE, oldValue, mViaShare);
     }
 
     @Override

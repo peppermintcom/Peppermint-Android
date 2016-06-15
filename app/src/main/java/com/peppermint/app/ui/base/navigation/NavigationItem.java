@@ -1,6 +1,7 @@
 package com.peppermint.app.ui.base.navigation;
 
 import android.app.Fragment;
+import android.graphics.drawable.Drawable;
 
 /**
  * Created by Nuno Luz (nluz@mobaton.com) on 21-08-2015.
@@ -11,6 +12,7 @@ public class NavigationItem {
 
     protected String mTitle;                                // label to present in the drawer menu
     protected int mIconResId;                               // icon to present in the drawer menu
+    protected Drawable mIconDrawable;
     protected boolean mShowSeparator = false;               // show a separator in the drawer menu?
 
     protected NavigationItemAction mAction;                 // to execute when tapped
@@ -37,6 +39,13 @@ public class NavigationItem {
         this(title, iconResId, null);
         this.mShowSeparator = showSeparator;
         this.mAction = action;
+    }
+
+    public NavigationItem(String title, Drawable iconDrawable, NavigationItemAction action, boolean showSeparator) {
+        this(title, 0, null);
+        this.mShowSeparator = showSeparator;
+        this.mAction = action;
+        this.mIconDrawable = iconDrawable;
     }
 
     public String getTitle() {
@@ -87,4 +96,11 @@ public class NavigationItem {
         this.mAction = mAction;
     }
 
+    public Drawable getIconDrawable() {
+        return mIconDrawable;
+    }
+
+    public void setIconDrawable(Drawable mIconDrawable) {
+        this.mIconDrawable = mIconDrawable;
+    }
 }

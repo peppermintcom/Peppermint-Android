@@ -1,69 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:custom="http://schemas.android.com/apk/res-auto"
+<android.support.v4.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/swipeContainer"
     android:descendantFocusability="beforeDescendants"
     android:focusableInTouchMode="true"
-    android:id="@+id/lytContents"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <android.support.v4.widget.SwipeRefreshLayout
-        android:id="@+id/swipeContainer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <ListView android:id="@id/android:list"
-            android:fillViewport="true"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:listSelector="@null"
-            android:drawSelectorOnTop="false"
-            android:divider="@null"
-            android:dividerHeight="0dp"
-            android:background="@null" />
-
-    </android.support.v4.widget.SwipeRefreshLayout>
-
-    <LinearLayout
-        android:id="@id/android:empty"
+    <ListView android:id="@id/android:list"
+        android:fillViewport="true"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="20dp"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:fitsSystemWindows="true">
+        android:listSelector="@null"
+        android:drawSelectorOnTop="false"
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        android:background="@null" />
 
-        <com.peppermint.app.ui.base.views.CustomFontTextView
-            android:id="@+id/txtEmpty1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="30dp"
-            android:layout_marginRight="30dp"
-            android:layout_gravity="center"
-            android:gravity="center"
-            custom:textFont="@string/font_semibold"
-            android:textSize="16dp"
-            android:textColor="@color/grey_text"
-            android:text="@string/msg_no_contacts" />
-
-        <com.peppermint.app.ui.base.views.CustomMinHeightImageView
-            android:id="@+id/imgNoContacts"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="5dp"
-            android:layout_gravity="center"
-            android:src="@drawable/img_no_contacts"
-            custom:minVisibilityHeight="50dp" />
-
-        <include android:id="@+id/btnAddContactEmptyContainer"
-            layout="@layout/v_recipients_footer_layout"
-            android:layout_gravity="center"
-            android:layout_height="80dp"
-            android:layout_width="match_parent" />
-    </LinearLayout>
-
-</FrameLayout>
+</android.support.v4.widget.SwipeRefreshLayout>

@@ -14,6 +14,7 @@ import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.Utils;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -71,6 +72,7 @@ public class ChatManager extends DataObjectManager<Long, Chat> {
         ContentValues cv = new ContentValues();
         cv.put("title", chat.getTitle());
         cv.put("last_message_ts", chat.getLastMessageTimestamp());
+        cv.put("send_mode", chat.getSendMode());
 
         long id = -1;
         db.beginTransaction();
@@ -113,6 +115,7 @@ public class ChatManager extends DataObjectManager<Long, Chat> {
             cv.put("title", chat.getTitle());
         }
         cv.put("last_message_ts", chat.getLastMessageTimestamp());
+        cv.put("send_mode", chat.getSendMode());
 
         db.beginTransaction();
         try {
@@ -176,6 +179,7 @@ public class ChatManager extends DataObjectManager<Long, Chat> {
         chat.setLastMessageTimestamp(cursor.getString(cursor.getColumnIndex("last_message_ts")));
         chat.setPeppermintChatId(cursor.getLong(cursor.getColumnIndex("peppermint_chat_id")));
         chat.setPeppermint(cursor.getInt(cursor.getColumnIndex("is_peppermint")) > 0);
+        chat.setSendMode(cursor.getInt(cursor.getColumnIndex("send_mode")));
         if(db != null) {
             chat.setRecipientList(RecipientManager.getInstance(mContext).getByChatId(db, chat.getId()));
         }
@@ -251,39 +255,62 @@ public class ChatManager extends DataObjectManager<Long, Chat> {
         return chat;
     }
 
-    public Chat getChatByRecipients(SQLiteDatabase db, List<Recipient> recipientList) {
+    public List<Chat> getChatsByRecipientsAndSendMode(SQLiteDatabase db, List<Recipient> recipientList, int sendMode) {
         int recipientAmount = recipientList.size();
         String[] conditions = new String[recipientAmount];
         for(int i=0; i<recipientAmount; i++) {
             conditions[i] = Utils.joinString(" AND ", recipientList.get(i).getMimeType() != null ? "mimetype = " + DatabaseUtils.sqlEscapeString(recipientList.get(i).getMimeType()) : null,
-                    recipientList.get(i).getVia() != null ? "via = " + DatabaseUtils.sqlEscapeString(recipientList.get(i).getVia()) : null);
+                    recipientList.get(i).getVia() != null ? "via = " + DatabaseUtils.sqlEscapeString(recipientList.get(i).getVia()) : null,
+                    sendMode >= 0 ? "send_mode = " + sendMode : null);
         }
 
         String where = Utils.joinString(" OR ", conditions);
         Cursor cursor = db.rawQuery("SELECT v_chat.*, tbl_recipient.via AS via, tbl_recipient.mimetype AS mimetype FROM v_chat, tbl_chat_recipient, tbl_recipient WHERE " +
-                "v_chat.chat_id = tbl_chat_recipient.chat_id AND tbl_chat_recipient.recipient_id = tbl_recipient.recipient_id AND " + where + ";", null);
-        Chat chat = null;
-        Set<String> uniqueMimeVia = new HashSet<>();
-        while(cursor.moveToNext()) {
-            String mimetype = cursor.getString(cursor.getColumnIndex("mimetype"));
-            String via = cursor.getString(cursor.getColumnIndex("via"));
-            String key = mimetype + via;
+                "v_chat.chat_id = tbl_chat_recipient.chat_id AND tbl_chat_recipient.recipient_id = tbl_recipient.recipient_id AND " + where + " ORDER BY v_chat.chat_id;", null);
 
-            if(!uniqueMimeVia.contains(key)) {
-                uniqueMimeVia.add(key);
+        final List<Chat> chatList = new ArrayList<>();
+
+        try {
+            Chat chat = null;
+            long currentChatId = 0;
+            Set<String> uniqueMimeVia = null;
+
+            while (cursor.moveToNext()) {
+                final long chatId = cursor.getLong(cursor.getColumnIndex("chat_id"));
+                final String mimetype = cursor.getString(cursor.getColumnIndex("mimetype"));
+                final String via = cursor.getString(cursor.getColumnIndex("via"));
+
+                if (chatId != currentChatId) {
+                    if (chat != null && uniqueMimeVia.size() == recipientAmount) {
+                        chatList.add(chat);
+                    }
+                    chat = getFromCursor(db, cursor);
+                    uniqueMimeVia = new HashSet<>();
+                    currentChatId = chatId;
+                }
+
+                final String key = mimetype + via;
+                if (!uniqueMimeVia.contains(key)) {
+                    uniqueMimeVia.add(key);
+                }
             }
 
-            if(chat == null) {
-                chat = getFromCursor(db, cursor);
+            if (chat != null && uniqueMimeVia.size() == recipientAmount) {
+                chatList.add(chat);
             }
-        }
-        cursor.close();
-
-        if(uniqueMimeVia.size() != recipientAmount) {
-            return null;
+        } finally {
+            cursor.close();
         }
 
-        return chat;
+        return chatList;
+    }
+
+    public Chat getChatByRecipients(SQLiteDatabase db, List<Recipient> recipientList) {
+        List<Chat> chatList = getChatsByRecipientsAndSendMode(db, recipientList, -1);
+        if(chatList.size() > 0) {
+            return chatList.get(0);
+        }
+        return null;
     }
 
 }

@@ -21,6 +21,11 @@ public class Chat extends DataObject implements Serializable {
     public static final int FIELD_LAST_MESSAGE_TIMESTAMP = 3;
     public static final int FIELD_AMOUNT_UNOPENED = 4;
     public static final int FIELD_RECIPIENTS = 5;
+    public static final int FIELD_SEND_MODE = 6;
+
+    public static final int SEND_MODE_BOTH = 0;
+    public static final int SEND_MODE_AUDIO = 1;
+    public static final int SEND_MODE_TRANSCRIPTION = 2;
 
     private long mId;
     private String mTitle;
@@ -29,6 +34,7 @@ public class Chat extends DataObject implements Serializable {
     private List<Recipient> mRecipientList = new ArrayList<>();
     private long mPeppermintChatId = 0;
     private boolean mPeppermint = false;
+    private int mSendMode = SEND_MODE_BOTH;
 
     private int mAmountUnopened;
 
@@ -56,6 +62,14 @@ public class Chat extends DataObject implements Serializable {
         setTitle(getRecipientListDisplayNames());
         setLastMessageTimestamp(mLastMessageTimestamp);
         setRecipientList(mRecipientList);
+    }
+
+    public Chat(Chat copyChat) {
+        this(copyChat.mId, copyChat.mTitle, copyChat.mLastMessageTimestamp, new ArrayList(copyChat.mRecipientList));
+        this.mPeppermintChatId = copyChat.mPeppermintChatId;
+        this.mPeppermint = copyChat.mPeppermint;
+        this.mSendMode = copyChat.mSendMode;
+        this.mAmountUnopened = copyChat.mAmountUnopened;
     }
 
     public long getId() {
@@ -114,6 +128,16 @@ public class Chat extends DataObject implements Serializable {
         long oldValue = this.mPeppermintChatId;
         this.mPeppermintChatId = mPeppermintChatId;
         registerUpdate(FIELD_PEPPERMINT_CHAT_ID, oldValue, mPeppermintChatId);
+    }
+
+    public int getSendMode() {
+        return mSendMode;
+    }
+
+    public void setSendMode(int mSendMode) {
+        int oldValue = this.mSendMode;
+        this.mSendMode = mSendMode;
+        registerUpdate(FIELD_SEND_MODE, oldValue, mSendMode);
     }
 
     /**

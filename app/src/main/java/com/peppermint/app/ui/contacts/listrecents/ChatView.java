@@ -73,14 +73,18 @@ public class ChatView extends LinearLayout {
                 if (!sameAsyncTask.isCancelled() && params[0] != null) {
                     // for now only a single recipient is supported
                     final Recipient recipient = params[0].getRecipientList().get(0);
+
                     if (recipient != null && recipient.getPhotoUri() != null) {
-                        final Uri uri = Uri.parse(recipient.getPhotoUri());
-                        final int fixedSize = Utils.dpToPx(mContext, FIXED_AVATAR_SIZE_DP);
-                        final Bitmap scaledBitmap = ResourceUtils.getScaledBitmap(mContext, uri,
-                                mAvatarWidth > 0 ? mAvatarWidth : fixedSize,
-                                mAvatarHeight > 0 ? mAvatarHeight : fixedSize);
-                        if (scaledBitmap != null) {
-                            scaledBitmapDrawable = new BitmapDrawable(mContext.getResources(), scaledBitmap);
+                        scaledBitmapDrawable = (BitmapDrawable) ResourceUtils.getOptionalVariableDrawable(mContext, recipient.getPhotoUri());
+                        if(scaledBitmapDrawable == null) {
+                            final Uri uri = Uri.parse(recipient.getPhotoUri());
+                            final int fixedSize = Utils.dpToPx(mContext, FIXED_AVATAR_SIZE_DP);
+                            final Bitmap scaledBitmap = ResourceUtils.getScaledBitmap(mContext, uri,
+                                    mAvatarWidth > 0 ? mAvatarWidth : fixedSize,
+                                    mAvatarHeight > 0 ? mAvatarHeight : fixedSize);
+                            if (scaledBitmap != null) {
+                                scaledBitmapDrawable = new BitmapDrawable(mContext.getResources(), scaledBitmap);
+                            }
                         }
                     }
                 }
@@ -115,7 +119,7 @@ public class ChatView extends LinearLayout {
     }
 
     protected AnimatedAvatarView mImgAvatar;
-    protected CustomFontTextView mTxtName, mTxtContact;
+    protected CustomFontTextView mTxtName, mTxtContact, mTxtVia;
     protected CustomFontTextView mTxtUnreadMessages, mTxtLastMessageDate;
 
     protected Chat mChat;
@@ -153,6 +157,7 @@ public class ChatView extends LinearLayout {
         setOrientation(VERTICAL);
         LayoutInflater.from(context).inflate(R.layout.i_chat_layout, this);
 
+        mTxtVia = (CustomFontTextView) findViewById(R.id.txtVia);
         mImgAvatar = (AnimatedAvatarView) findViewById(R.id.imgPhoto);
         mTxtName = (CustomFontTextView) findViewById(R.id.txtName);
         mTxtContact = (CustomFontTextView) findViewById(R.id.txtContact);
@@ -181,11 +186,19 @@ public class ChatView extends LinearLayout {
         final Recipient recipient = mChat.getRecipientList().get(0);
 
         if(recipient != null) {
-            mTxtName.setText(recipient.getDisplayName());
+            final String name = ResourceUtils.getOptionalVariableString(mContext, recipient.getDisplayName());
+            mTxtName.setText(name);
             if(mChat.getPeppermintChatId() > 0 || mChat.isPeppermint()) {
+                mTxtVia.setVisibility(VISIBLE);
                 mTxtContact.setText(R.string.app_name);
             } else {
-                mTxtContact.setText(recipient.getVia());
+                if(recipient.getVia() != null && recipient.getVia().trim().length() > 0) {
+                    mTxtVia.setVisibility(VISIBLE);
+                    mTxtContact.setText(recipient.getVia());
+                } else {
+                    mTxtVia.setVisibility(GONE);
+                    mTxtContact.setText("");
+                }
             }
         }
 
@@ -233,6 +246,7 @@ public class ChatView extends LinearLayout {
     }
 
     private Object mMessageDataObjectListener = new Object() {
+        @SuppressWarnings("unused")
         public void onEventMainThread(DataObjectEvent<Message> messageDataObjectEvent) {
             if (mChat != null && messageDataObjectEvent.getDataObject().getChatId() == mChat.getId()) {
                 mExtraDataLoader.execute(mChat);
@@ -241,6 +255,7 @@ public class ChatView extends LinearLayout {
     };
 
     private Object mChatDataObjectListener = new Object() {
+        @SuppressWarnings("unused")
         public void onEventMainThread(DataObjectEvent<Chat> chatDataObjectEvent) {
             if (mChat != null && chatDataObjectEvent.getDataObject().getId() == mChat.getId()) {
                 synchronized (ChatView.this) {

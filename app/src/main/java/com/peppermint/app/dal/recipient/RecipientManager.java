@@ -44,7 +44,7 @@ public class RecipientManager extends DataObjectManager<Long, Recipient> {
         }
 
         String photoUri = recipient.getPhotoUri();
-        if(photoUri != null && !photoUri.endsWith(".peppermintAv")) {
+        if(photoUri != null && !photoUri.endsWith(".peppermintAv") && !photoUri.startsWith("{{")) {
             Uri uri = ResourceUtils.copyImageToLocalDir(mContext, Uri.parse(photoUri), Utils.normalizeAndCleanString(recipient.getVia() + "_" + recipient.getAddedTimestamp()) + ".peppermintAv");
             photoUri = uri == null ? null : uri.toString();
         }
@@ -55,6 +55,7 @@ public class RecipientManager extends DataObjectManager<Long, Recipient> {
         cv.put("droid_contact_id", recipient.getDroidContactId());
         cv.put("display_name", recipient.getDisplayName());
         cv.put("via", recipient.getVia());
+        cv.put("via_share", recipient.getViaShare());
         cv.put("mimetype", recipient.getMimeType());
         cv.put("photo_uri", photoUri);
         if(recipient.getAddedTimestamp() == null) {
@@ -85,6 +86,7 @@ public class RecipientManager extends DataObjectManager<Long, Recipient> {
         cv.put("droid_contact_id", recipient.getDroidContactId());
         cv.put("display_name", recipient.getDisplayName());
         cv.put("via", recipient.getVia());
+        cv.put("via_share", recipient.getViaShare());
         cv.put("mimetype", recipient.getMimeType());
         cv.put("photo_uri", recipient.getPhotoUri());
         if(recipient.getAddedTimestamp() != null) {
@@ -118,6 +120,7 @@ public class RecipientManager extends DataObjectManager<Long, Recipient> {
         recipient.setDroidContactId(cursor.getLong(cursor.getColumnIndex("droid_contact_id")));
         recipient.setDisplayName(cursor.getString(cursor.getColumnIndex("display_name")));
         recipient.setVia(cursor.getString(cursor.getColumnIndex("via")));
+        recipient.setViaShare(cursor.getString(cursor.getColumnIndex("via_share")));
         recipient.setMimeType(cursor.getString(cursor.getColumnIndex("mimetype")));
         recipient.setPhotoUri(cursor.getString(cursor.getColumnIndex("photo_uri")));
         recipient.setAddedTimestamp(cursor.getString(cursor.getColumnIndex("added_ts")));
