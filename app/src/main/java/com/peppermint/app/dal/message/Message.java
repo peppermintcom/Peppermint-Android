@@ -225,6 +225,9 @@ public class Message extends DataObject implements Serializable {
     }
 
     public void addConfirmedSentRecipientId(long chatRecipientId) {
+        if(mConfirmedSentRecipientIds.contains(chatRecipientId)) {
+            return;
+        }
         List<Long> oldValue = new ArrayList<>(mConfirmedSentRecipientIds);
         mConfirmedSentRecipientIds.add(chatRecipientId);
         registerUpdate(FIELD_CONFIRMED_RECIPIENT_IDS, oldValue, mConfirmedSentRecipientIds);
@@ -242,6 +245,9 @@ public class Message extends DataObject implements Serializable {
     }
 
     public void addRecipientId(long chatRecipientId) {
+        if(mRecipientIds.contains(chatRecipientId)) {
+            return;
+        }
         List<Long> oldValue = new ArrayList<>(mRecipientIds);
         mRecipientIds.add(chatRecipientId);
         registerUpdate(FIELD_RECIPIENT_IDS, oldValue, mRecipientIds);
@@ -268,6 +274,18 @@ public class Message extends DataObject implements Serializable {
         List<Long> oldValue = this.mRecipientIds;
         this.mRecipientIds = mRecipientIds;
         registerUpdate(FIELD_RECIPIENT_IDS, oldValue, mRecipientIds);
+    }
+
+    public void clearRecipientIds() {
+        if(this.mRecipientIds != null) {
+            this.mRecipientIds.clear();
+        }
+    }
+
+    public void clearConfirmedRecipientIds() {
+        if(this.mConfirmedSentRecipientIds != null) {
+            this.mConfirmedSentRecipientIds.clear();
+        }
     }
 
     public UUID getUUID() {

@@ -147,8 +147,8 @@ public class MessageManager extends DataObjectManager<Long, Message> {
                 throw new SQLException("Unable to update message!");
             }
 
-            deassociateRecipients(db, id);
-            associateRecipients(db, id, message.getRecipientIds(), message.getConfirmedSentRecipientIds());
+            deassociateRecipients(db, message.getId());
+            associateRecipients(db, message.getId(), message.getRecipientIds(), message.getConfirmedSentRecipientIds());
 
             db.setTransactionSuccessful();
         } finally {
@@ -184,6 +184,8 @@ public class MessageManager extends DataObjectManager<Long, Message> {
     protected Message doGetFromCursor(SQLiteDatabase db, Cursor cursor) {
         long id = cursor.getLong(cursor.getColumnIndex("message_id"));
         Message message = obtainCacheDataObject(id);
+        message.clearConfirmedRecipientIds();
+        message.clearRecipientIds();
 
         message.setEmailSubject(cursor.getString(cursor.getColumnIndex("email_subject")));
         message.setEmailBody(cursor.getString(cursor.getColumnIndex("email_body")));
