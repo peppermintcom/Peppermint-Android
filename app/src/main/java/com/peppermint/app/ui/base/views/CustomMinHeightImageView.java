@@ -56,14 +56,30 @@ public class CustomMinHeightImageView extends ImageView {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-
         int height = MeasureSpec.getSize(heightMeasureSpec);
+        final int mode = MeasureSpec.getMode(heightMeasureSpec);
 
-        if(height < mMinVisibilityHeight && getVisibility() == VISIBLE) {
-            setVisibility(INVISIBLE);
-        } else if(height >= mMinVisibilityHeight && getVisibility() == INVISIBLE) {
-            setVisibility(VISIBLE);
+        final int drawableHeight = getDrawable() != null ? getDrawable().getIntrinsicHeight() : 0;
+
+        int maxHeight = Integer.MAX_VALUE;
+        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+            maxHeight = getMaxHeight();
+        }
+
+        if(mode == MeasureSpec.AT_MOST) {
+            height = Math.min(Math.min(drawableHeight, height), maxHeight);
+        }
+
+        if((mode == MeasureSpec.EXACTLY || mode == MeasureSpec.AT_MOST) && height < mMinVisibilityHeight) {
+            if(getVisibility() == VISIBLE) {
+                setVisibility(INVISIBLE);
+            }
+            setMeasuredDimension(0, 0);
+        } else {
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+            if (getVisibility() == INVISIBLE) {
+                setVisibility(VISIBLE);
+            }
         }
     }
 }

@@ -5,7 +5,9 @@ import android.provider.ContactsContract;
 import android.util.Log;
 
 import com.peppermint.app.dal.message.Message;
+import com.peppermint.app.dal.recipient.Recipient;
 import com.peppermint.app.services.messenger.handlers.gmail.GmailSender;
+import com.peppermint.app.services.messenger.handlers.share.ShareSender;
 import com.peppermint.app.trackers.TrackerApi;
 import com.peppermint.app.trackers.TrackerManager;
 
@@ -86,11 +88,15 @@ public class SenderManager extends SenderObject implements SenderUploadListener 
 
         // here we add all available sender instances to the sender map
         // add gmail api + email intent sender chain
-        GmailSender gmailSender = new GmailSender(this, this);
+        final GmailSender gmailSender = new GmailSender(this, this);
         gmailSender.getParameters().putAll(defaultSenderParameters);
         gmailSender.setTrackerManager(mTrackerManager);
-
         mSenderMap.put(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE, gmailSender);
+
+        final ShareSender shareSender = new ShareSender(this, this);
+        shareSender.getParameters().putAll(defaultSenderParameters);
+        shareSender.setTrackerManager(mTrackerManager);
+        mSenderMap.put(Recipient.SHARE_MIMETYPE, shareSender);
     }
 
     /**

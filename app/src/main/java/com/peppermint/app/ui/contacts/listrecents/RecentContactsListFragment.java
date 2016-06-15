@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.AdapterView;
 
 import com.peppermint.app.dal.DatabaseHelper;
+import com.peppermint.app.dal.chat.Chat;
 import com.peppermint.app.dal.chat.ChatManager;
 import com.peppermint.app.ui.chat.ChatActivity;
 import com.peppermint.app.ui.contacts.ContactListFragment;
@@ -99,7 +100,11 @@ public class RecentContactsListFragment extends ContactListFragment {
 
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        mChatRecordOverlayController.triggerRecording(view, mAdapter.getChat(position));
+        if(position >= mAdapter.getCount()) {
+            return false;
+        }
+        final Chat chat = mAdapter.getChat(position);
+        mChatRecordOverlayController.triggerRecording(view, chat);
         return true;
     }
 

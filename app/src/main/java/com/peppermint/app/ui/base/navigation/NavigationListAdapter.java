@@ -53,9 +53,15 @@ public class NavigationListAdapter extends BaseAdapter {
 
         final TextView titleView = (TextView) view.findViewById(R.id.txtName);
         final ImageView iconView = (ImageView) view.findViewById(R.id.imgIcon);
+        final NavigationItem item = mList.get(position);
 
-        titleView.setText(mList.get(position).getTitle());
-        iconView.setImageResource(mList.get(position).getIconResId());
+        titleView.setText(item.getTitle());
+
+        if(item.getIconDrawable() != null) {
+            iconView.setImageDrawable(item.getIconDrawable());
+        } else {
+            iconView.setImageResource(item.getIconResId());
+        }
 
         return view;
     }

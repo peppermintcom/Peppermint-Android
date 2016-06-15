@@ -1,6 +1,8 @@
 package com.peppermint.app.utils;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -24,6 +26,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by Nuno Luz on 21-04-2016.
@@ -33,6 +37,54 @@ import java.lang.reflect.Field;
 public class ResourceUtils {
 
     private static final String TAG = ResourceUtils.class.getSimpleName();
+
+    private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\{{2}([^\\}]+)\\}{2}");
+
+    public static String getOptionalVariableString(final Context context, String entry) {
+        if(entry == null) {
+            return null;
+        }
+
+        final Matcher matcher = VARIABLE_PATTERN.matcher(entry);
+        final StringBuffer stringBuffer = new StringBuffer();
+        while (matcher.find()) {
+            final String variable = matcher.group(1).trim();
+            final int resId = context.getResources().getIdentifier(variable, "string", context.getPackageName());
+            if (resId != 0) {
+                matcher.appendReplacement(stringBuffer, context.getString(resId));
+            } else {
+                stringBuffer.append("{{"); stringBuffer.append(variable); stringBuffer.append("}}");
+            }
+        }
+        matcher.appendTail(stringBuffer);
+        return stringBuffer.toString();
+    }
+
+    public static Drawable getOptionalVariableDrawable(final Context context, String entry) {
+        if(entry == null || !entry.startsWith("{{") || !entry.endsWith("}}")) {
+            return null;
+        }
+
+        if(entry.contains(".")) {
+            try {
+                entry = entry.substring(2, entry.length() - 2);
+                final ComponentName componentName = ComponentName.unflattenFromString(entry);
+                if(componentName == null) {
+                    throw new PackageManager.NameNotFoundException(entry);
+                }
+                return context.getPackageManager().getActivityIcon(componentName);
+            } catch (PackageManager.NameNotFoundException e) {
+                TrackerManager.getInstance(context).logException(e);
+            }
+        } else {
+            final int resId = context.getResources().getIdentifier(entry.substring(2, entry.length() - 2), "drawable", context.getPackageName());
+            if (resId != 0) {
+                return getDrawable(context, resId);
+            }
+        }
+
+        return null;
+    }
 
     public static void disableChangeAnimations(final Context context, final WindowManager.LayoutParams layoutParams) {
         layoutParams.windowAnimations = 0;

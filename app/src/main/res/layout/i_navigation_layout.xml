@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         custom:textFont="@string/font_semibold"
         android:textSize="16dp"
-        android:textColor="@color/color_green_to_white_pressed"
+        android:textColor="@color/color_black_to_white_pressed"
         />
 
 </RelativeLayout>

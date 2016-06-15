@@ -7,14 +7,14 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import com.peppermint.app.R;
-import com.peppermint.app.services.messenger.handlers.SenderPreferences;
-import com.peppermint.app.dal.chat.ChatManager;
-import com.peppermint.app.dal.contact.ContactManager;
-import com.peppermint.app.dal.recipient.RecipientManager;
 import com.peppermint.app.dal.chat.Chat;
+import com.peppermint.app.dal.chat.ChatManager;
 import com.peppermint.app.dal.contact.ContactData;
+import com.peppermint.app.dal.contact.ContactManager;
 import com.peppermint.app.dal.contact.ContactRaw;
 import com.peppermint.app.dal.recipient.Recipient;
+import com.peppermint.app.dal.recipient.RecipientManager;
+import com.peppermint.app.services.messenger.handlers.SenderPreferences;
 import com.peppermint.app.trackers.TrackerManager;
 import com.peppermint.app.utils.DateContainer;
 import com.peppermint.app.utils.ScriptFileReader;
@@ -52,7 +52,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 	private static final String TAG = DatabaseHelper.class.getSimpleName();
 	private static final String DATABASE_NAME = "peppermint.db";        // database filename
-	private static final int DATABASE_VERSION = 20;                     // database version
+	private static final int DATABASE_VERSION = 21;                     // database version
 
 	private Context mContext;
     private ReentrantLock mLock = new ReentrantLock();
@@ -266,5 +266,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 				TrackerManager.getInstance(mContext).logException(e);
 			}
 		}
+
+        if(_oldVersion < 21) {
+            Log.d(TAG, "Updating Database: v21 Sharing...");
+            try {
+                execSQLScript(R.raw.db_21_share, _db);
+            } catch (Exception e) {
+                TrackerManager.getInstance(mContext).logException(e);
+            }
+        }
 	}
+
 }

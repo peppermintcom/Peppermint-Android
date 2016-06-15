@@ -4,7 +4,9 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
@@ -76,6 +78,7 @@ public class BitmapLayer extends LayerBase implements Layer {
 
         // draw to bitmap
         final Canvas canvas = new Canvas(mShaderBitmap);
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
         mDrawable.setBounds(0, 0, mBounds.width(), mBounds.height());
         mDrawable.draw(canvas);
         canvas.setBitmap(null);

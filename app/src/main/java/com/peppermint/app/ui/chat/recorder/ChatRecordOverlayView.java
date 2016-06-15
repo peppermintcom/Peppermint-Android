@@ -19,6 +19,7 @@ import android.widget.TextView;
 
 import com.peppermint.app.R;
 import com.peppermint.app.ui.base.AnimatorBuilder;
+import com.peppermint.app.utils.ResourceUtils;
 import com.peppermint.app.utils.Utils;
 
 /**
@@ -161,7 +162,7 @@ public class ChatRecordOverlayView extends FrameLayout {
     }
 
     public void setName(String name) {
-        mTxtRecordingFor.setText(String.format(getContext().getString(R.string.recording_for), name));
+        mTxtRecordingFor.setText(String.format(getContext().getString(R.string.recording_for), ResourceUtils.getOptionalVariableString(getContext(), name)));
     }
 
     public void setContentPosition(Rect rect) {

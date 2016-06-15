@@ -2,7 +2,6 @@ package com.peppermint.app.ui.chat.recorder;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 
 import com.peppermint.app.R;
@@ -90,7 +89,6 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     public void start() {
         mStarted = true;
 
-        Log.d(TAG, "Registered Event Listener");
         SyncService.registerEventListener(this);
         MessageManager.getInstance(mContext).registerDataListener(this);
         MessengerService.registerEventListener(this);
@@ -101,7 +99,6 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
     }
 
     public void stop() {
-        Log.d(TAG, "Unregistered Event Listener");
         SyncService.unregisterEventListener(this);
         MessageManager.getInstance(mContext).unregisterDataListener(this);
         MessengerService.unregisterEventListener(this);
@@ -141,7 +138,7 @@ public class ChatRecordOverlayController implements ChatRecordOverlay.OnRecordin
         sendMessage(event.getChat(), event.getRecording());
     }
 
-    protected Message sendMessage(Chat chat, Recording recording) {
+    public Message sendMessage(Chat chat, Recording recording) {
         return mMessengerServiceManager.send(chat, recording);
     }
 

@@ -58,6 +58,12 @@
 
 
     <!-- CONTACTS LAYOUT: ITEM -->
+    <string name="share_with_">Share with…</string>
+    <string name="share_transcription_and_audio">Share Audio and Transcription</string>
+    <string name="share_transcription">Share Transcription</string>
+    <string name="share_audio">Share Audio</string>
+    <string name="msg_no_transcription_sharing_audio">No transcription available. Sharing audio…</string>
+
     <string name="via">via</string>
 
     <!-- CONTACTS LAYOUT: RECORDING OVERLAY -->
