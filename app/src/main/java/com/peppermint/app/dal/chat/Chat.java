@@ -53,9 +53,9 @@ public class Chat extends DataObject implements Serializable {
     }
 
     public Chat(List<Recipient> mRecipientList, String mLastMessageTimestamp) {
+        setRecipientList(mRecipientList);
         setTitle(getRecipientListDisplayNames());
         setLastMessageTimestamp(mLastMessageTimestamp);
-        setRecipientList(mRecipientList);
     }
 
     public long getId() {
