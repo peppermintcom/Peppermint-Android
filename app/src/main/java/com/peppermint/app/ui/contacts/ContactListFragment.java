@@ -614,7 +614,7 @@ public abstract class ContactListFragment extends ListFragment implements
         public boolean onLongClick(View v) {
             mChatRecordOverlayController.triggerRecording(v, ((ChatView) v).getChat());
             getListView().requestDisallowInterceptTouchEvent(true);
-            return false;
+            return true;
         }
     };
 }
