@@ -47,6 +47,12 @@
 
 
     <!-- CONTACTS LAYOUT: ITEM -->
+    <string name="share_with_">İle paylaş…</string>
+    <string name="share_transcription_and_audio">Hisse Ses ve Transkripsiyon</string>
+    <string name="share_transcription">Hisse Transkripsiyon</string>
+    <string name="share_audio">Hisse Ses</string>
+    <string name="msg_no_transcription_sharing_audio">Henüz transkripsiyon. ses Paylaşım…</string>
+
     <string name="via">kanal</string>
 
     <!-- CONTACTS LAYOUT: RECORDING OVERLAY -->

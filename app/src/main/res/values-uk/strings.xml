@@ -46,6 +46,12 @@
     <string name="msg_press_back_again_exit">Натисніть \"Назад\" ще раз для виходу.</string>
 
     <!-- CONTACTS LAYOUT: ITEM -->
+    <string name="share_with_">Поділитися з…</string>
+    <string name="share_transcription_and_audio">Частка Аудіо та транскрипція</string>
+    <string name="share_transcription">частка Транскрипція</string>
+    <string name="share_audio">частка Аудіо</string>
+    <string name="msg_no_transcription_sharing_audio">Ні транскрипції доступні. Спільне використання аудіо…</string>
+
     <string name="via">через</string>
 
     <!-- CONTACTS LAYOUT: RECORDING OVERLAY -->

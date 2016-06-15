@@ -47,6 +47,12 @@
 
 
     <!-- CONTACTS LAYOUT: ITEM -->
+    <string name="share_with_">Partilhar…</string>
+    <string name="share_transcription_and_audio">Partilhar Áudio e Transcrição</string>
+    <string name="share_transcription">Partilhar Transcrição</string>
+    <string name="share_audio">Partilhar Áudio</string>
+    <string name="msg_no_transcription_sharing_audio">Sem transcrição disponível. A partilhar áudio…</string>
+
     <string name="via">via</string>
 
     <!-- CONTACTS LAYOUT: RECORDING OVERLAY -->

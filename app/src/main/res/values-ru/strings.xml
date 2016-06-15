@@ -48,6 +48,12 @@
 
 
     <!-- CONTACTS LAYOUT: ITEM -->
+    <string name="share_with_">Поделиться с…</string>
+    <string name="share_transcription_and_audio">Доля Аудио и транскрипция</string>
+    <string name="share_transcription">Доля Транскрипция</string>
+    <string name="share_audio">Доля Аудио</string>
+    <string name="msg_no_transcription_sharing_audio">Нет транскрипции доступны. Совместное использование аудио…</string>
+
     <string name="via">через</string>
 
     <!-- CONTACTS LAYOUT: RECORDING OVERLAY -->
